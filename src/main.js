@@ -496,6 +496,13 @@ class LatestGamesManager {
     }
   }
 
+  isActuallyDragging(e) {
+    return (
+      Math.abs(e.clientX - this.initialX) > this.dragThreshold ||
+      Math.abs(e.clientY - this.initialY) > this.dragThreshold
+    );
+  }
+
   addDragFunctionality(element) {
     element.addEventListener('mousedown', (e) => {
       // Prevent drag if the target is a child of the .latest-game-buttons element
@@ -505,28 +512,23 @@ class LatestGamesManager {
       this.wasDragging = false;
       this.initialX = e.clientX;
       this.initialY = e.clientY;
-
       this.isDragging = true;
       this.draggedElement = element;
       const rect = element.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
       this.isRightHalf = clickX > rect.width / 2;
       this.lastDragY = e.clientY;
-      this.dragOffset = {
+
+      // Store the original drag offset
+      this.originalDragOffset = {
         x: e.clientX - rect.left,
         y: e.clientY - rect.top
       };
 
-      element.classList.add('dragging');
+      // Reset the drag offset to the original one
+      this.dragOffset = { ...this.originalDragOffset };
 
-      const displayMode = this.getDisplayMode();
-      if (displayMode === 'wrap') {
-        element.style.position = 'absolute';
-        element.style.left = `${rect.left - element.parentElement.getBoundingClientRect().left}px`;
-        element.style.top = `${rect.top - element.parentElement.getBoundingClientRect().top}px`;
-        element.style.width = `${rect.width}px`;
-      }
-
+      this.parentRect = element.parentElement.getBoundingClientRect();
       this.globalEvents.handleDragMove = this.handleDragMove.bind(this);
       this.globalEvents.handleDragEnd = this.handleDragEnd.bind(this);
       document.addEventListener('mousemove', this.globalEvents.handleDragMove);
@@ -537,10 +539,20 @@ class LatestGamesManager {
   handleDragMove(e) {
     if (!this.isDragging || !this.draggedElement) return;
 
-    if (!this.wasDragging) {
-      if (Math.abs(e.clientX - this.initialX) > this.dragThreshold ||
-        Math.abs(e.clientY - this.initialY) > this.dragThreshold) {
-        this.wasDragging = true;
+    if (!this.wasDragging && this.isActuallyDragging(e)) {
+      this.wasDragging = true;
+      this.draggedElement.classList.add('dragging');
+      if (this.getDisplayMode() === 'wrap') {
+        const rect = this.draggedElement.getBoundingClientRect();
+        const parentRect = this.parentRect;
+
+        this.draggedElement.style.position = 'absolute';
+        this.draggedElement.style.left = `${rect.left - parentRect.left}px`;
+        this.draggedElement.style.top = `${rect.top - parentRect.top}px`;
+        this.draggedElement.style.width = `${rect.width}px`;
+
+        // Use the original offset, not a recalculated one
+        this.dragOffset = { ...this.originalDragOffset };
       }
     }
 
@@ -569,9 +581,9 @@ class LatestGamesManager {
         }
       }
     } else {
-      const containerRect = gamesList.getBoundingClientRect();
-      let newLeft = e.clientX - this.dragOffset.x - containerRect.left;
-      let newTop = e.clientY - this.dragOffset.y - containerRect.top;
+      const parentRect = this.parentRect;
+      let newLeft = e.clientX - this.dragOffset.x - parentRect.left;
+      let newTop = e.clientY - this.dragOffset.y - parentRect.top;
 
       newLeft = Math.max(0, Math.min(newLeft, gamesList.offsetWidth - this.draggedElement.offsetWidth));
       newTop = Math.max(0, Math.min(newTop, gamesList.offsetHeight - this.draggedElement.offsetHeight));
