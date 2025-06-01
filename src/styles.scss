@@ -48,11 +48,23 @@
 
   &.display-mode-wrap {
     max-width: none;
-    width: calc(100vw - 100px);
+    width: 95vw;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     align-items: flex-start;
+    position: fixed;
+
+    .resize-handle {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 10px;
+      height: 100%;
+      cursor: ew-resize;
+      background-color: transparent;
+      z-index: 100;
+    }
   }
 
   #latest-games {

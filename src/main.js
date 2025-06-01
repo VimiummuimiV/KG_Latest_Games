@@ -24,7 +24,7 @@ class LatestGamesManager {
     this.rotationAccumulator = 0;
     this.rotationDegreeLimit = 5;
     this.lastDragY = 0;
-    this.hidePanelDelay = 3000;
+    this.hidePanelDelay = 1000;
     this.globalEvents = {};
 
     this.gameTypes = {
@@ -380,6 +380,7 @@ class LatestGamesManager {
     const controls = this.createControls();
     container.appendChild(controls);
 
+    // Apply saved scroll position
     const savedScroll = localStorage.getItem('latest_games_scroll');
     if (savedScroll) {
       container.scrollTop = parseInt(savedScroll, 10);
@@ -401,8 +402,64 @@ class LatestGamesManager {
       this.hideContainerWithDelay();
     });
 
+    // Always add the resize handle as part of the panel
+    let handle = container.querySelector('.resize-handle');
+    if (!handle) {
+      handle = this.createElement('div', { className: 'resize-handle' });
+      container.appendChild(handle);
+    }
+
+    // Resize logic: only active in wrap mode
+    const setupResizeHandle = () => {
+      const mode = this.getDisplayMode();
+      if (mode === 'wrap') {
+        // Apply stored width if available
+        const storedWidth = localStorage.getItem('latestGamesContainerWidth') || '95vw';
+        container.style.width = storedWidth;
+        handle.style.display = '';
+        let isDragging = false, startX, startWidth;
+        const onMouseMove = (e) => {
+          if (!isDragging) return;
+          const dx = e.clientX - startX;
+          let newWidthPx = startWidth + dx;
+          // Prevent going beyond viewport and 95vw
+          const maxPx = window.innerWidth * 0.95;
+          newWidthPx = Math.max(200, Math.min(newWidthPx, maxPx));
+          const newWidthVw = Math.round((newWidthPx / window.innerWidth) * 100 * 10) / 10;
+          container.style.width = `${newWidthVw}vw`;
+        };
+        const onMouseUp = () => {
+          if (!isDragging) return;
+          isDragging = false;
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+          localStorage.setItem('latestGamesContainerWidth', container.style.width);
+        };
+        handle.onmousedown = (e) => {
+          isDragging = true;
+          startX = e.clientX;
+          startWidth = container.offsetWidth;
+          document.addEventListener('mousemove', onMouseMove);
+          document.addEventListener('mouseup', onMouseUp);
+          e.preventDefault();
+        };
+      } else {
+        handle.style.display = 'none';
+        container.style.width = '';
+        handle.onmousedown = null;
+      }
+    };
+
+    // Call once on creation
+    setupResizeHandle();
     document.body.appendChild(container);
     this.updateDisplayModeClass();
+    // Patch updateDisplayModeClass to also update the handle
+    const origUpdateDisplayModeClass = this.updateDisplayModeClass.bind(this);
+    this.updateDisplayModeClass = (...args) => {
+      origUpdateDisplayModeClass(...args);
+      setupResizeHandle();
+    };
   }
 
   loadSettings() {
