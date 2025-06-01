@@ -135,6 +135,10 @@ class LatestGamesManager {
       this.setDisplayMode(newMode);
       this.updateDisplayModeIcon(svg, newMode);
       this.updateDisplayModeClass();
+      if (newMode === 'scroll') {
+        const c = document.getElementById('latest-games-container');
+        if (c) setTimeout(() => c.scrollTop = c.scrollHeight, 0);
+      }
     });
     return toggleButton;
   }
