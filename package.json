@@ -1,0 +1,39 @@
+{
+  "name": "tampermonkey-script",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "dev": "webpack --mode development --watch",
+    "build": "webpack --mode production",
+    "build:version": "node update-version.js && webpack --mode production",
+    "build:nomin": "webpack --mode production --env minimize=false",
+    "none": "webpack --mode none"
+  },
+  "keywords": [
+    "klavogonki",
+    "games",
+    "tampermonkey",
+    "userscript",
+    "buttons"
+  ],
+  "author": "Patcher",
+  "license": "ISC",
+  "devDependencies": {
+    "css-loader": "^6.11.0",
+    "raw-loader": "^4.0.2",
+    "sass": "^1.86.0",
+    "sass-loader": "^16.0.5",
+    "style-loader": "^3.3.4",
+    "webpack": "^5.98.0",
+    "webpack-cli": "^4.10.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VimiummuimiV/tampermonkey-script.git"
+  },
+  "bugs": {
+    "url": "https://github.com/VimiummuimiV/tampermonkey-script/issues"
+  },
+  "homepage": "https://github.com/VimiummuimiV/tampermonkey-script#readme",
+  "description": "Chat application"
+}
