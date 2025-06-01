@@ -642,6 +642,10 @@ class LatestGamesManager {
 
   addDragFunctionality(element) {
     element.addEventListener('mousedown', (e) => {
+      // Prevent drag if the target is a child of the .latest-game-buttons element
+      if (e.target.closest('.latest-game-buttons')) {
+        return;
+      }
       this.wasDragging = false;
       this.initialX = e.clientX;
       this.initialY = e.clientY;
