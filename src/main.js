@@ -1,12 +1,7 @@
 import { icons } from './icons';
 import './styles.scss';
-
-// Utility to generate a unique random string id
-function generateRandomId() {
-  return Array.from(crypto.getRandomValues(new Uint8Array(9)))
-    .map(b => (b % 36).toString(36))
-    .join('');
-}
+import { generateRandomId, createElement } from './utils.js';
+import { parseGameParams, generateGameName, generateGameLink } from './gameUtils.js';
 
 class LatestGamesManager {
   constructor() {
@@ -31,35 +26,6 @@ class LatestGamesManager {
     this.lastDragY = 0;
     this.hidePanelDelay = 1000;
     this.globalEvents = {};
-
-    this.gameTypes = {
-      normal: 'Oбычный',
-      abra: 'Абракадабра',
-      referats: 'Яндекс.Рефераты',
-      noerror: 'Безошибочный',
-      marathon: 'Марафон',
-      chars: 'Буквы',
-      digits: 'Цифры',
-      sprint: 'Спринт',
-      voc: 'По словарю'
-    };
-
-    this.visibilities = {
-      normal: 'открытый',
-      private: 'дружеский',
-      practice: 'одиночный'
-    };
-
-    this.ranks = [
-      "новички", "любители", "таксисты", "профи",
-      "гонщики", "маньяки", "супермены", "кибергонщики", "экстракиберы"
-    ];
-
-    this.ranksMap = {
-      'новичков': 1, 'любителей': 2, 'таксистов': 3, 'профи': 4,
-      'гонщиков': 5, 'маньяков': 6, 'суперменов': 7,
-      'кибергонщиков': 8, 'экстракиберов': 9
-    };
 
     this.init();
   }
@@ -101,12 +67,12 @@ class LatestGamesManager {
   }
 
   createThemeToggle() {
-    const toggleButton = this.createElement('div', {
+    const toggleButton = createElement('div', {
       className: 'theme-toggle control-button',
       title: 'Изменить тему (Светлая/Темная)'
     });
 
-    const svg = this.createElement('svg', {
+    const svg = createElement('svg', {
       viewBox: '0 0 24 24'
     });
 
@@ -121,11 +87,11 @@ class LatestGamesManager {
   }
 
   createDisplayModeToggle() {
-    const toggleButton = this.createElement('div', {
+    const toggleButton = createElement('div', {
       className: 'display-mode-toggle control-button',
       title: 'Переключить режим отображения (Вертикальный/Горизонтальный)'
     });
-    const svg = this.createElement('svg', {
+    const svg = createElement('svg', {
       viewBox: '0 0 24 24'
     });
     this.updateDisplayModeIcon(svg, this.displayMode);
@@ -179,23 +145,23 @@ class LatestGamesManager {
 
   createGameElement(game, id) {
     const gametypeClass = game.pin ? ` pin-gametype-${game.params.gametype}` : '';
-    const li = this.createElement('li', {
+    const li = createElement('li', {
       className: `latest-game${game.pin ? ' pin-game' : ''}${gametypeClass}`,
       id: `latest-game-${id}`
     });
 
-    const buttons = this.createElement('div', {
+    const buttons = createElement('div', {
       className: 'latest-game-buttons'
     });
 
-    const pinButton = this.createElement('div', {
+    const pinButton = createElement('div', {
       className: 'latest-game-pin',
       title: game.pin ? 'Открепить' : 'Закрепить',
       innerHTML: icons.pin
     });
     pinButton.addEventListener('click', () => this.pinGame(id));
 
-    const deleteButton = this.createElement('div', {
+    const deleteButton = createElement('div', {
       className: 'latest-game-delete',
       title: 'Удалить',
       innerHTML: icons.delete
@@ -205,9 +171,9 @@ class LatestGamesManager {
     buttons.appendChild(pinButton);
     buttons.appendChild(deleteButton);
 
-    const link = this.createElement('a', {
-      href: this.generateGameLink(game),
-      innerHTML: this.generateGameName(game)
+    const link = createElement('a', {
+      href: generateGameLink(game),
+      innerHTML: generateGameName(game)
     });
 
     link.addEventListener('click', (e) => {
@@ -228,11 +194,11 @@ class LatestGamesManager {
   }
 
   createControls() {
-    const controlsContainer = this.createElement('div', {
+    const controlsContainer = createElement('div', {
       className: 'latest-games-controls'
     });
 
-    const pinAllBtn = this.createElement('span', {
+    const pinAllBtn = createElement('span', {
       className: 'latest-games-pinall control-button',
       title: 'Закрепить все',
       innerHTML: icons.pinAll
@@ -243,7 +209,7 @@ class LatestGamesManager {
       this.refreshContainer();
     };
 
-    const unpinAllBtn = this.createElement('span', {
+    const unpinAllBtn = createElement('span', {
       className: 'latest-games-unpinall control-button',
       title: 'Открепить все',
       innerHTML: icons.unpinAll
@@ -254,7 +220,7 @@ class LatestGamesManager {
       this.refreshContainer();
     };
 
-    const importBtn = this.createElement('span', {
+    const importBtn = createElement('span', {
       className: 'latest-games-import control-button',
       title: 'Импортировать настройки из JSON файла',
       innerHTML: icons.import
@@ -288,7 +254,7 @@ class LatestGamesManager {
       setTimeout(() => input.remove(), 1000);
     };
 
-    const exportBtn = this.createElement('span', {
+    const exportBtn = createElement('span', {
       className: 'latest-games-export control-button',
       title: 'Экспортировать все настройки в JSON файл',
       innerHTML: icons.export
@@ -311,7 +277,7 @@ class LatestGamesManager {
       }, 1000);
     };
 
-    const removeAllBtn = this.createElement('span', {
+    const removeAllBtn = createElement('span', {
       className: 'latest-games-removeall control-button',
       title: 'Удалить все настройки',
       innerHTML: icons.removeAll
@@ -324,23 +290,23 @@ class LatestGamesManager {
       this.refreshContainer();
     };
 
-    const options = this.createElement('span', {
+    const options = createElement('span', {
       id: 'latest-games-options'
     });
 
-    const decreaseBtn = this.createElement('span', {
+    const decreaseBtn = createElement('span', {
       id: 'latest-games-count-dec',
       className: 'control-button',
       title: 'Уменьшить количество сохраняемых игр',
       innerHTML: icons.decrease
     });
 
-    const countDisplay = this.createElement('span', {
+    const countDisplay = createElement('span', {
       id: 'latest-games-count',
       textContent: this.maxGameCount.toString()
     });
 
-    const increaseBtn = this.createElement('span', {
+    const increaseBtn = createElement('span', {
       id: 'latest-games-count-inc',
       className: 'control-button',
       title: 'Увеличить количество сохраняемых игр',
@@ -367,11 +333,11 @@ class LatestGamesManager {
   }
 
   createContainer() {
-    const container = this.createElement('div', {
+    const container = createElement('div', {
       id: 'latest-games-container'
     });
 
-    const gamesList = this.createElement('ul', {
+    const gamesList = createElement('ul', {
       id: 'latest-games'
     });
 
@@ -399,7 +365,7 @@ class LatestGamesManager {
     // Always add the resize handle as part of the panel
     let handle = container.querySelector('.resize-handle');
     if (!handle) {
-      handle = this.createElement('div', { className: 'resize-handle' });
+      handle = createElement('div', { className: 'resize-handle' });
       container.appendChild(handle);
     }
 
@@ -528,116 +494,6 @@ class LatestGamesManager {
     } catch (error) {
       console.warn('Could not save game data to localStorage:', error);
     }
-  }
-
-  createElement(tag, options = {}) {
-    const element = document.createElement(tag);
-
-    if (options.className) {
-      element.className = options.className;
-    }
-
-    if (options.id) {
-      element.id = options.id;
-    }
-
-    if (options.innerHTML) {
-      element.innerHTML = options.innerHTML;
-    }
-
-    if (options.textContent) {
-      element.textContent = options.textContent;
-    }
-
-    if (options.href) {
-      element.href = options.href;
-    }
-
-    if (options.title) {
-      element.title = options.title;
-    }
-
-    if (options.src) {
-      element.src = options.src;
-    }
-
-    if (options.style) {
-      Object.assign(element.style, options.style);
-    }
-
-    if (options.attributes) {
-      Object.entries(options.attributes).forEach(([key, value]) => {
-        element.setAttribute(key, value);
-      });
-    }
-
-    return element;
-  }
-
-  generateGameName(game) {
-    const gameType = this.gameTypes[game.params.gametype];
-    const { vocName, timeout, type: visibility, level_from, level_to, qual } = game.params;
-
-    const nameSpan = this.createElement('span', {
-      className: `latest-game-name gametype-${game.params.gametype}`,
-      textContent: vocName === '' ? gameType : `«${vocName}»`
-    });
-
-    const descSpan = this.createElement('span', {
-      className: 'latest-game-description'
-    });
-
-    const qualSpan = this.createElement('span', {
-      className: 'latest-game-qual',
-      textContent: qual ? ' (к)' : ''
-    });
-
-    let levelText = '';
-    if (level_from !== 1 || level_to !== 9) {
-      const levelFromName = this.ranks[level_from - 1];
-      const levelToName = this.ranks[level_to - 1];
-      levelText = ` ${levelFromName} - ${levelToName}`;
-    }
-
-    const levelsSpan = this.createElement('span', {
-      className: 'latest-game-levels',
-      textContent: levelText
-    });
-
-    descSpan.textContent = `${this.visibilities[visibility]}, ${timeout} сек.`;
-    descSpan.appendChild(qualSpan);
-    if (levelText) {
-      descSpan.appendChild(levelsSpan);
-    }
-
-    const container = this.createElement('div');
-    container.appendChild(nameSpan);
-    container.appendChild(descSpan);
-
-    return container.innerHTML;
-  }
-
-  generateGameLink(game) {
-    const { gametype, vocId, type, level_from, level_to, timeout, qual } = game.params;
-
-    const params = new URLSearchParams({
-      gametype,
-      type,
-      level_from: level_from.toString(),
-      level_to: level_to.toString(),
-      timeout: timeout.toString(),
-      submit: '1'
-    });
-
-    if (vocId !== '') {
-      params.set('voc', vocId);
-    }
-
-    if (qual) {
-      params.set('qual', '1');
-    }
-
-    return `${location.protocol}//klavogonki.ru/create/?${params.toString()}`;
   }
 
   addDragFunctionality(element) {
@@ -815,7 +671,7 @@ class LatestGamesManager {
   }
 
   createHoverArea() {
-    const hoverArea = this.createElement('div', {
+    const hoverArea = createElement('div', {
       id: 'latest-games-hover-area'
     });
 
@@ -933,7 +789,7 @@ class LatestGamesManager {
       return false;
     }
 
-    const gameParams = this.parseGameParams(span, descText);
+    const gameParams = parseGameParams(span, descText);
     const gameParamsString = JSON.stringify(gameParams);
 
     for (let i = 0; i < this.gameData.length; i++) {
@@ -961,54 +817,6 @@ class LatestGamesManager {
     this.gameData.splice(pinnedCount, 0, newGame);
     this.assignGameIds();
     this.saveGameData();
-  }
-
-  parseGameParams(span, descText) {
-    const gameType = span.className.split('-').pop();
-    const vocName = gameType === 'voc' ? span.textContent.replace(/[«»]/g, '') : '';
-
-    let vocId = '';
-    if (gameType === 'voc') {
-      const vocLink = span.querySelector('a');
-      if (vocLink) {
-        const match = vocLink.href.match(/vocs\/(\d+)/);
-        vocId = match ? parseInt(match[1], 10) : '';
-      }
-    }
-
-    let type = 'normal';
-    if (/одиночный/.test(descText)) {
-      type = 'practice';
-    } else if (/друзьями/.test(descText)) {
-      type = 'private';
-    }
-
-    let levelFrom = 1;
-    let levelTo = 9;
-    const levelMatches = descText.match(/для (\S+)–(\S+),/);
-    if (levelMatches) {
-      levelFrom = this.ranksMap[levelMatches[1]] || 1;
-      levelTo = this.ranksMap[levelMatches[2]] || 9;
-    }
-
-    const timeoutMatches = descText.match(/таймаут\s(\d+)\s(сек|мин)/);
-    const timeout = timeoutMatches
-      ? (timeoutMatches[2] === 'сек' ? parseInt(timeoutMatches[1], 10) : parseInt(timeoutMatches[1], 10) * 60)
-      : 60;
-
-    const qualification = /квалификация/.test(descText) ? 1 : 0;
-
-    return {
-      gametype: gameType,
-      vocName,
-      vocId,
-      type,
-      level_from: levelFrom,
-      level_to: levelTo,
-      timeout,
-      qual: qualification,
-      premium_abra: 0
-    };
   }
 
   changeGameCount(delta) {
