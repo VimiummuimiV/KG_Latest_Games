@@ -268,7 +268,7 @@ class LatestGamesManager {
           const data = JSON.parse(text);
           if (typeof data === 'object' && data !== null) {
             if (data.latestGamesSettings) localStorage.setItem('latestGamesSettings', JSON.stringify(data.latestGamesSettings));
-            if (data.latestGamesData) localStorage.setItem('latestGamesData', JSON.stringify(data.latestGames));
+            if (data.latestGamesData) localStorage.setItem('latestGamesData', JSON.stringify(data.latestGamesData));
             this.loadSettings();
             this.loadGameData();
             this.refreshContainer();
@@ -292,7 +292,7 @@ class LatestGamesManager {
     exportBtn.onclick = () => {
       const all = {
         latestGamesSettings: JSON.parse(localStorage.getItem('latestGamesSettings') || '{}'),
-        latestGames: JSON.parse(localStorage.getItem('latestGamesData') || '[]')
+        latestGamesData: JSON.parse(localStorage.getItem('latestGamesData') || '[]')
       };
       const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
