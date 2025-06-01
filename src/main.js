@@ -871,15 +871,5 @@ class LatestGamesManager {
   }
 })();
 
-function initializeLatestGames() {
-  if (!document.getElementById('KG_LatestGames')) {
-    new LatestGamesManager();
-
-    const marker = document.createElement('div');
-    marker.id = 'KTS_LatestGames';
-    marker.style.display = 'none';
-    document.body.appendChild(marker);
-  }
-}
-
-initializeLatestGames();
+// Initialize the LatestGamesManager instance
+window.latestGamesManager ??= new LatestGamesManager();
