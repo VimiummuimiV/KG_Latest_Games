@@ -424,7 +424,7 @@ class LatestGamesManager {
           let newWidthPx = startWidth + dx;
           // Prevent going beyond viewport and 95vw
           const maxPx = window.innerWidth * 0.95;
-          newWidthPx = Math.max(200, Math.min(newWidthPx, maxPx));
+          newWidthPx = Math.max(350, Math.min(newWidthPx, maxPx));
           const newWidthVw = Math.round((newWidthPx / window.innerWidth) * 100 * 10) / 10;
           container.style.width = `${newWidthVw}vw`;
         };
