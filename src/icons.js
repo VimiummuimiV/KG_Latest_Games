@@ -114,4 +114,11 @@ export const icons = {
       <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
     </svg>
   `,
+
+  qualification: `
+    <svg xmlns="${SVG_NS}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--rg-qualification-icon)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="8" r="7"></circle>
+      <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+    </svg>
+  `,
 };

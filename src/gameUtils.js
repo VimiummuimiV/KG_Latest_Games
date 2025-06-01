@@ -1,5 +1,6 @@
 import { createElement } from './utils.js';
 import { gameTypes, visibilities, ranks, ranksMap } from './definitions.js';
+import { icons } from './icons.js';
 
 export function parseGameParams(span, descText) {
   const gameType = span.className.split('-').pop();
@@ -64,7 +65,7 @@ export function generateGameName(game) {
 
   const qualSpan = createElement('span', {
     className: 'latest-game-qual',
-    textContent: qual ? ' (к)' : ''
+    innerHTML: qual ? icons.qualification : ''
   });
 
   let levelText = '';
