@@ -2,6 +2,7 @@ import { icons } from './icons';
 import './styles.scss';
 import { generateRandomId, createElement } from './utils.js';
 import { parseGameParams, generateGameName, generateGameLink } from './gameUtils.js';
+import { createGroup, renameGroup, removeGroup, getGroups, getCurrentGroup } from './groups.js';
 
 class LatestGamesManager {
   constructor() {
@@ -11,7 +12,8 @@ class LatestGamesManager {
     this.displayMode = 'scroll';
     this.previousScrollPosition = parseInt(localStorage.getItem('latestGamesScrollPosition')) || 0;
     this.panelWidth = '95vw';
-    this.gameData = [];
+    this.groups = [];
+    this.currentGroupId = null;
     this.hoverTimeout = null;
     this.isHovered = false;
     this.isDragging = false;
@@ -33,6 +35,13 @@ class LatestGamesManager {
   init() {
     this.loadSettings();
     this.loadGameData();
+    if (this.groups.length === 0) {
+      const defaultGroup = createGroup('Группа-1');
+      this.groups = [defaultGroup];
+      this.currentGroupId = defaultGroup.id;
+    } else if (!this.currentGroupId || !this.groups.some(g => g.id === this.currentGroupId)) {
+      this.currentGroupId = this.groups[0].id;
+    }
     this.createHoverArea();
     this.createContainer();
     this.handlePageSpecificLogic();
@@ -54,9 +63,7 @@ class LatestGamesManager {
 
   updateThemeToggle() {
     const svg = document.querySelector('#latest-games-container .theme-toggle svg');
-    if (svg) {
-      this.updateThemeIcon(svg);
-    }
+    if (svg) this.updateThemeIcon(svg);
   }
 
   toggleTheme() {
@@ -71,18 +78,10 @@ class LatestGamesManager {
       className: 'theme-toggle control-button',
       title: 'Изменить тему (Светлая/Темная)'
     });
-
-    const svg = createElement('svg', {
-      viewBox: '0 0 24 24'
-    });
-
+    const svg = createElement('svg', { viewBox: '0 0 24 24' });
     this.updateThemeIcon(svg);
     toggleButton.appendChild(svg);
-
-    toggleButton.addEventListener('click', () => {
-      this.toggleTheme();
-    });
-
+    toggleButton.addEventListener('click', () => this.toggleTheme());
     return toggleButton;
   }
 
@@ -91,9 +90,7 @@ class LatestGamesManager {
       className: 'display-mode-toggle control-button',
       title: 'Переключить режим отображения (Вертикальный/Горизонтальный)'
     });
-    const svg = createElement('svg', {
-      viewBox: '0 0 24 24'
-    });
+    const svg = createElement('svg', { viewBox: '0 0 24 24' });
     this.updateDisplayModeIcon(svg, this.displayMode);
     toggleButton.appendChild(svg);
     toggleButton.addEventListener('click', () => {
@@ -149,11 +146,7 @@ class LatestGamesManager {
       className: `latest-game${game.pin ? ' pin-game' : ''}${gametypeClass}`,
       id: `latest-game-${id}`
     });
-
-    const buttons = createElement('div', {
-      className: 'latest-game-buttons'
-    });
-
+    const buttons = createElement('div', { className: 'latest-game-buttons' });
     const pinButton = createElement('div', {
       className: 'latest-game-pin',
       title: game.pin ? 'Открепить' : 'Закрепить',
@@ -185,28 +178,73 @@ class LatestGamesManager {
 
     li.appendChild(buttons);
     li.appendChild(link);
-
-    if (game.pin) {
-      this.addDragFunctionality(li, id);
-    }
-
+    if (game.pin) this.addDragFunctionality(li, id);
     return li;
   }
 
-  createControls() {
-    const controlsContainer = createElement('div', {
-      className: 'latest-games-controls'
+  createGroupsContainer() {
+    const groupsContainer = createElement('div', { id: 'latest-games-groups' });
+    const groupTabs = createElement('div', { className: 'group-tabs' });
+
+    // Create group controls (persistent)
+    const groupControls = createElement('div', { className: 'group-controls' });
+    const addButton = createElement('span', {
+      className: 'add-group control-button',
+      title: 'Добавить группу',
+      innerHTML: icons.addGroup
     });
 
+    addButton.addEventListener('click', () => this.addGroup());
+    const renameButton = createElement('span', {
+      className: 'rename-group control-button',
+      title: 'Переименовать группу',
+      innerHTML: icons.renameGroup
+    });
+
+    renameButton.addEventListener('click', () => this.renameCurrentGroup());
+    const removeButton = createElement('span', {
+      className: 'remove-group control-button',
+      title: 'Удалить группу',
+      innerHTML: icons.remove
+    });
+    removeButton.addEventListener('click', () => this.removeCurrentGroup());
+
+    groupControls.appendChild(addButton);
+    groupControls.appendChild(renameButton);
+    groupControls.appendChild(removeButton);
+
+    // Insert group-controls as the first child of group-tabs
+    groupTabs.appendChild(groupControls);
+
+    // Then add the group tabs
+    this.groups.forEach(group => {
+      const tab = createElement('span', {
+        className: `group-tab ${group.id === this.currentGroupId ? 'active' : ''}`,
+        textContent: group.title,
+        dataset: { groupId: group.id }
+      });
+      tab.addEventListener('click', () => this.selectGroup(group.id));
+      groupTabs.appendChild(tab);
+    });
+
+    groupsContainer.appendChild(groupTabs);
+    return groupsContainer;
+  }
+
+  createControls() {
+    const controlsContainer = createElement('div', { className: 'latest-games-controls' });
     const pinAllBtn = createElement('span', {
       className: 'latest-games-pinall control-button',
       title: 'Закрепить все',
       innerHTML: icons.pinAll
     });
     pinAllBtn.onclick = () => {
-      this.gameData.forEach(g => g.pin = 1);
-      this.saveGameData();
-      this.refreshContainer();
+      const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
+      if (currentGroup) {
+        currentGroup.games.forEach(g => g.pin = 1);
+        this.saveGameData();
+        this.refreshContainer();
+      }
     };
 
     const unpinAllBtn = createElement('span', {
@@ -215,9 +253,12 @@ class LatestGamesManager {
       innerHTML: icons.unpinAll
     });
     unpinAllBtn.onclick = () => {
-      this.gameData.forEach(g => g.pin = 0);
-      this.saveGameData();
-      this.refreshContainer();
+      const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
+      if (currentGroup) {
+        currentGroup.games.forEach(g => g.pin = 0);
+        this.saveGameData();
+        this.refreshContainer();
+      }
     };
 
     const importBtn = createElement('span', {
@@ -262,7 +303,7 @@ class LatestGamesManager {
     exportBtn.onclick = () => {
       const all = {
         latestGamesSettings: JSON.parse(localStorage.getItem('latestGamesSettings') || '{}'),
-        latestGamesData: JSON.parse(localStorage.getItem('latestGamesData') || '[]')
+        latestGamesData: { groups: this.groups, currentGroupId: this.currentGroupId }
       };
       const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -280,20 +321,17 @@ class LatestGamesManager {
     const removeAllBtn = createElement('span', {
       className: 'latest-games-removeall control-button',
       title: 'Удалить все настройки',
-      innerHTML: icons.removeAll
+      innerHTML: icons.remove
     });
     removeAllBtn.onclick = () => {
       localStorage.removeItem('latestGamesSettings');
       localStorage.removeItem('latestGamesData');
-      this.gameData = [];
+      this.groups = [createGroup('Группа-1')];
+      this.currentGroupId = this.groups[0].id;
       this.saveGameData();
       this.refreshContainer();
     };
-
-    const options = createElement('span', {
-      id: 'latest-games-options'
-    });
-
+    const options = createElement('span', { id: 'latest-games-options' });
     const decreaseBtn = createElement('span', {
       id: 'latest-games-count-dec',
       className: 'control-button',
@@ -333,13 +371,11 @@ class LatestGamesManager {
   }
 
   createContainer() {
-    const container = createElement('div', {
-      id: 'latest-games-container'
-    });
+    const container = createElement('div', { id: 'latest-games-container' });
+    const groupsContainer = this.createGroupsContainer();
 
-    const gamesList = createElement('ul', {
-      id: 'latest-games'
-    });
+    container.appendChild(groupsContainer);
+    const gamesList = createElement('ul', { id: 'latest-games' });
 
     this.populateGamesList(gamesList);
     container.appendChild(gamesList);
@@ -353,16 +389,9 @@ class LatestGamesManager {
       this.previousScrollPosition = container.scrollTop;
       this.saveSettings();
     });
-
-    container.addEventListener('mouseenter', () => {
-      this.showContainer();
-    });
-
-    container.addEventListener('mouseleave', () => {
-      this.hideContainerWithDelay();
-    });
-
-    // Always add the resize handle as part of the panel
+    // Add hover listeners to show/hide the container
+    container.addEventListener('mouseenter', () => this.showContainer());
+    container.addEventListener('mouseleave', () => this.hideContainerWithDelay());
     let handle = container.querySelector('.resize-handle');
     if (!handle) {
       handle = createElement('div', { className: 'resize-handle' });
@@ -458,39 +487,66 @@ class LatestGamesManager {
 
   loadGameData() {
     try {
-      const savedGames = localStorage.getItem('latestGamesData');
-      if (savedGames) {
-        this.gameData = JSON.parse(savedGames);
-        this.migrateOldGameData();
-        this.assignGameIds();
+      let data = localStorage.getItem('latestGamesData');
+      if (data) {
+        data = JSON.parse(data);
+        if (Array.isArray(data)) {
+          this.groups = [{ id: generateRandomId(), title: 'Группа-1', games: data }];
+          this.currentGroupId = this.groups[0].id;
+        } else if (data && Array.isArray(data.groups)) {
+          this.groups = data.groups;
+          this.currentGroupId = data.currentGroupId;
+        } else {
+          this.groups = [];
+          this.currentGroupId = null;
+        }
+      } else {
+        this.groups = [];
+        this.currentGroupId = null;
       }
+      this.migrateOldGameData();
+      this.assignGameIds();
     } catch (error) {
       console.warn('Could not load game data from localStorage:', error);
-      this.gameData = [];
+      this.groups = [];
+      this.currentGroupId = null;
     }
   }
 
   migrateOldGameData() {
-    this.gameData = this.gameData.map(game => {
-      if (game.params.qual === 'on' || game.params.qual === '') {
-        game.params.qual = game.params.qual === 'on' ? 1 : 0;
-      }
-      return game;
+    this.groups.forEach(group => {
+      group.games = group.games.map(game => {
+        if (game.params.qual === 'on' || game.params.qual === '') {
+          game.params.qual = game.params.qual === 'on' ? 1 : 0;
+        }
+        return game;
+      });
     });
   }
 
   assignGameIds() {
-    this.gameData = this.gameData.map(game => {
-      if (!('id' in game) || game.id === -1 || game.id === undefined || game.id === null) {
-        return { ...game, id: generateRandomId() };
-      }
-      return game;
+    const allGameIds = new Set(this.groups.flatMap(group => group.games.map(game => game.id)));
+    this.groups.forEach(group => {
+      group.games = group.games.map(game => {
+        if (!game.id || game.id === -1 || allGameIds.has(game.id)) {
+          let newId;
+          do {
+            newId = generateRandomId();
+          } while (allGameIds.has(newId));
+          allGameIds.add(newId);
+          return { ...game, id: newId };
+        } else {
+          allGameIds.add(game.id);
+          return game;
+        }
+      });
     });
   }
 
   saveGameData() {
     try {
-      localStorage.setItem('latestGamesData', JSON.stringify(this.gameData));
+      const data = { groups: this.groups, currentGroupId: this.currentGroupId };
+      localStorage.setItem('latestGamesData', JSON.stringify(data));
     } catch (error) {
       console.warn('Could not save game data to localStorage:', error);
     }
@@ -505,10 +561,8 @@ class LatestGamesManager {
 
   addDragFunctionality(element) {
     element.addEventListener('mousedown', (e) => {
-      // Prevent drag if the target is a child of the .latest-game-buttons element
-      if (e.target.closest('.latest-game-buttons')) {
-        return;
-      }
+      // Prevent dragging if the target is a button (e.g., pin or delete)
+      if (e.target.closest('.latest-game-buttons')) return;
       this.wasDragging = false;
       this.initialX = e.clientX;
       this.initialY = e.clientY;
@@ -518,13 +572,8 @@ class LatestGamesManager {
       const clickX = e.clientX - rect.left;
       this.isRightHalf = clickX > rect.width / 2;
       this.lastDragY = e.clientY;
-
-      // Calculate the drag offset based on current mouse position relative to element
-      this.dragOffset = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-      };
-      // Store the parent's bounding rectangle from mousedown
+      // Calculate the offset from the top-left corner of the element
+      this.dragOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
       this.parentRect = element.parentElement.getBoundingClientRect();
       this.globalEvents.handleDragMove = this.handleDragMove.bind(this);
       this.globalEvents.handleDragEnd = this.handleDragEnd.bind(this);
@@ -571,9 +620,7 @@ class LatestGamesManager {
         gamesList.insertBefore(this.draggedElement, insertAfter.nextSibling);
       } else {
         const firstPinned = gamesList.querySelector('.pin-game:not(.dragging)');
-        if (firstPinned) {
-          gamesList.insertBefore(this.draggedElement, firstPinned);
-        }
+        if (firstPinned) gamesList.insertBefore(this.draggedElement, firstPinned);
       }
     } else {
       const parentRect = this.parentRect;
@@ -620,11 +667,7 @@ class LatestGamesManager {
     if (deltaY !== 0) {
       const sensitivity = 0.2;
       this.rotationAccumulator = (this.rotationAccumulator || 0) + (this.isRightHalf ? deltaY : -deltaY) * sensitivity;
-      if (this.rotationAccumulator > this.rotationDegreeLimit) {
-        this.rotationAccumulator = this.rotationDegreeLimit;
-      } else if (this.rotationAccumulator < -this.rotationDegreeLimit) {
-        this.rotationAccumulator = -this.rotationDegreeLimit;
-      }
+      this.rotationAccumulator = Math.max(-this.rotationDegreeLimit, Math.min(this.rotationDegreeLimit, this.rotationAccumulator));
       this.draggedElement.style.transform = `rotate(${this.rotationAccumulator}deg)`;
     }
   }
@@ -657,49 +700,36 @@ class LatestGamesManager {
   }
 
   updateGameOrderFromDOM() {
+    const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
+    if (!currentGroup) return;
     const gameElements = Array.from(document.querySelectorAll('#latest-games .latest-game'));
-    const newGameData = [];
-
-    gameElements.forEach(element => {
+    currentGroup.games = gameElements.map(element => {
       const id = element.id.replace('latest-game-', '');
-      const game = this.gameData.find(g => g.id === id);
-      if (game) {
-        newGameData.push(game);
-      }
-    });
-
-    this.gameData = newGameData;
-    this.assignGameIds();
+      return currentGroup.games.find(g => g.id === id);
+    }).filter(game => game !== undefined);
     this.saveGameData();
   }
 
   getPinnedGameCount() {
-    return this.gameData.filter(game => game.pin).length;
+    const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
+    return currentGroup ? currentGroup.games.filter(game => game.pin).length : 0;
   }
 
   createHoverArea() {
-    const hoverArea = createElement('div', {
-      id: 'latest-games-hover-area'
-    });
-
-    hoverArea.addEventListener('mouseenter', () => {
-      this.showContainer();
-    });
-
-    hoverArea.addEventListener('mouseleave', () => {
-      this.hideContainerWithDelay();
-    });
-
+    const hoverArea = createElement('div', { id: 'latest-games-hover-area' });
+    hoverArea.addEventListener('mouseenter', () => this.showContainer());
+    hoverArea.addEventListener('mouseleave', () => this.hideContainerWithDelay());
     document.body.appendChild(hoverArea);
   }
 
   populateGamesList(gamesList) {
     gamesList.innerHTML = '';
+    const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
+    if (!currentGroup) return;
     const pinnedCount = this.getPinnedGameCount();
-    const maxGamesToShow = Math.min(this.gameData.length, this.maxGameCount + pinnedCount);
-
+    const maxGamesToShow = Math.min(currentGroup.games.length, this.maxGameCount + pinnedCount);
     for (let i = 0; i < maxGamesToShow; i++) {
-      const game = this.gameData[i];
+      const game = currentGroup.games[i];
       const gameElement = this.createGameElement(game, game.id);
       gamesList.appendChild(gameElement);
     }
@@ -707,10 +737,8 @@ class LatestGamesManager {
 
   showContainer() {
     this.isHovered = true;
-    if (this.hoverTimeout) {
-      clearTimeout(this.hoverTimeout);
-      this.hoverTimeout = null;
-    }
+    if (this.hoverTimeout) clearTimeout(this.hoverTimeout);
+    this.hoverTimeout = null;
     const container = document.getElementById('latest-games-container');
     if (container) {
       container.classList.add('visible');
@@ -721,9 +749,7 @@ class LatestGamesManager {
 
   hideContainerWithDelay() {
     this.isHovered = false;
-    if (this.hoverTimeout) {
-      clearTimeout(this.hoverTimeout);
-    }
+    if (this.hoverTimeout) clearTimeout(this.hoverTimeout);
     this.hoverTimeout = setTimeout(() => {
       if (!this.isHovered) {
         const container = document.getElementById('latest-games-container');
@@ -736,6 +762,28 @@ class LatestGamesManager {
   }
 
   refreshContainer() {
+    const groupsContainer = document.getElementById('latest-games-groups');
+    if (groupsContainer) {
+      const groupTabs = groupsContainer.querySelector('.group-tabs');
+      if (groupTabs) {
+        // Remove only .group-tab elements, keep .group-controls
+        Array.from(groupTabs.children).forEach(child => {
+          if (child.classList.contains('group-tab')) {
+            groupTabs.removeChild(child);
+          }
+        });
+        // Add updated group tabs
+        this.groups.forEach(group => {
+          const tab = createElement('span', {
+            className: `group-tab ${group.id === this.currentGroupId ? 'active' : ''}`,
+            textContent: group.title,
+            dataset: { groupId: group.id }
+          });
+          tab.addEventListener('click', () => this.selectGroup(group.id));
+          groupTabs.appendChild(tab);
+        });
+      }
+    }
     const gamesList = document.getElementById('latest-games');
     if (gamesList) {
       this.populateGamesList(gamesList);
@@ -743,15 +791,56 @@ class LatestGamesManager {
     }
   }
 
+  selectGroup(id) {
+    if (this.groups.some(group => group.id === id)) {
+      this.currentGroupId = id;
+      this.saveGameData();
+      this.refreshContainer();
+    }
+  }
+
+  addGroup() {
+    const title = prompt('Введите название группы:')?.trim() || null;
+    const newGroup = createGroup(title, this.groups);
+    this.groups.push(newGroup);
+    this.currentGroupId = newGroup.id;
+    this.saveGameData();
+    this.refreshContainer();
+  }
+
+  renameCurrentGroup() {
+    const newTitle = prompt('Введите новое название группы:', getCurrentGroup(this.groups, this.currentGroupId)?.title)?.trim();
+    if (newTitle) {
+      renameGroup(this.groups, this.currentGroupId, newTitle);
+      this.saveGameData();
+      this.refreshContainer();
+    }
+  }
+
+  removeCurrentGroup() {
+    if (this.groups.length <= 1) {
+      alert('Нельзя удалить последнюю группу.');
+      return;
+    }
+    this.groups = removeGroup(this.groups, this.currentGroupId);
+    this.currentGroupId = this.groups[0].id;
+    this.saveGameData();
+    this.refreshContainer();
+  }
+
   findGameIndex(id) {
-    return this.gameData.findIndex(game => game.id == id);
+    for (const group of this.groups) {
+      const index = group.games.findIndex(game => game.id == id);
+      if (index !== -1) return { group, index };
+    }
+    return null;
   }
 
   deleteGame(id) {
-    const index = this.findGameIndex(id);
-    if (index === -1) return null;
-
-    const deletedGame = this.gameData.splice(index, 1)[0];
+    const result = this.findGameIndex(id);
+    if (!result) return null;
+    const { group, index } = result;
+    const deletedGame = group.games.splice(index, 1)[0];
     this.assignGameIds();
     this.saveGameData();
     this.refreshContainer();
@@ -760,19 +849,17 @@ class LatestGamesManager {
   }
 
   pinGame(id) {
-    const gameIndex = this.findGameIndex(id);
-    if (gameIndex === -1) return;
-
-    const game = this.gameData[gameIndex];
+    const result = this.findGameIndex(id);
+    if (!result) return;
+    const { group, index } = result;
+    const game = group.games[index];
     game.pin = game.pin ? 0 : 1;
-
     const insertIndex = game.pin ?
-      this.gameData.findIndex(g => !g.pin || g === game) :
-      this.gameData.findIndex(g => !g.pin && g !== game);
-
-    if (gameIndex !== insertIndex) {
-      const [gameObject] = this.gameData.splice(gameIndex, 1);
-      this.gameData.splice(insertIndex, 0, gameObject);
+      group.games.findIndex(g => !g.pin || g === game) :
+      group.games.findIndex(g => !g.pin && g !== game);
+    if (index !== insertIndex) {
+      const [gameObject] = group.games.splice(index, 1);
+      group.games.splice(insertIndex, 0, gameObject);
     }
 
     this.assignGameIds();
@@ -782,62 +869,37 @@ class LatestGamesManager {
 
   saveCurrentGameParams() {
     const gameDesc = document.getElementById('gamedesc');
-    if (!gameDesc) {
-      throw new Error('#gamedesc element not found.');
-    }
-
+    if (!gameDesc) throw new Error('#gamedesc element not found.');
     const span = gameDesc.querySelector('span');
-    if (!span) {
-      throw new Error('#gamedesc span element not found.');
-    }
-
+    if (!span) throw new Error('#gamedesc span element not found.');
     const descText = gameDesc.textContent;
-    if (/соревнование/.test(descText) || !this.maxGameCount) {
-      return false;
-    }
-
+    if (/соревнование/.test(descText) || !this.maxGameCount) return false;
     const gameParams = parseGameParams(span, descText);
     const gameParamsString = JSON.stringify(gameParams);
-
-    for (let i = 0; i < this.gameData.length; i++) {
-      if (JSON.stringify(this.gameData[i].params) === gameParamsString) {
-        if (this.gameData[i].pin) {
-          return;
-        } else {
-          this.gameData.splice(i, 1);
-          break;
-        }
+    const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
+    if (!currentGroup) return;
+    for (let i = 0; i < currentGroup.games.length; i++) {
+      if (JSON.stringify(currentGroup.games[i].params) === gameParamsString) {
+        if (currentGroup.games[i].pin) return;
+        currentGroup.games.splice(i, 1);
+        break;
       }
     }
-
     const pinnedCount = this.getPinnedGameCount();
-    while (this.gameData.length >= this.maxGameCount + pinnedCount) {
-      this.gameData.pop();
+    while (currentGroup.games.length >= this.maxGameCount + pinnedCount) {
+      currentGroup.games.pop();
     }
-
-    const newGame = {
-      params: gameParams,
-      id: generateRandomId(),
-      pin: 0
-    };
-
-    this.gameData.splice(pinnedCount, 0, newGame);
+    const newGame = { params: gameParams, id: generateRandomId(), pin: 0 };
+    currentGroup.games.splice(pinnedCount, 0, newGame);
     this.assignGameIds();
     this.saveGameData();
   }
 
   changeGameCount(delta) {
-    if (delta < 0 && this.maxGameCount > 0) {
-      this.maxGameCount--;
-    } else if (delta > 0) {
-      this.maxGameCount++;
-    }
-
+    if (delta < 0 && this.maxGameCount > 0) this.maxGameCount--;
+    else if (delta > 0) this.maxGameCount++;
     const countDisplay = document.getElementById('latest-games-count');
-    if (countDisplay) {
-      countDisplay.textContent = this.maxGameCount.toString();
-    }
-
+    if (countDisplay) countDisplay.textContent = this.maxGameCount.toString();
     this.saveSettings();
     this.refreshContainer();
   }
@@ -847,10 +909,7 @@ class LatestGamesManager {
 
     if (/https?:\/\/klavogonki\.ru\/g\/\?gmid=/.test(href)) {
       const gameLoading = document.getElementById('gameloading');
-      if (!gameLoading) {
-        throw new Error('#gameloading element not found.');
-      }
-
+      if (!gameLoading) throw new Error('#gameloading element not found.');
       if (gameLoading.style.display !== 'none') {
         const observer = new MutationObserver(() => {
           observer.disconnect();

@@ -372,6 +372,58 @@
       pointer-events: none;
     }
   }
+
+  #latest-games-groups {
+    display: flex;
+    align-items: flex-start;
+    padding: 0 10px 8px 10px;
+    margin-bottom: 0;
+
+    .group-tabs {
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .group-tab {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 16px;
+      height: 32px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 4px !important;
+      background: var(--rg-bg-card);
+      color: var(--rg-text-primary);
+      border: 1.5px solid var(--rg-border-primary);
+      cursor: pointer;
+      user-select: none;
+
+      &:hover,
+      &:focus {
+        border-color: var(--rg-border-hover);
+        background: var(--rg-bg-hover);
+        color: var(--rg-text-primary);
+      }
+
+      &.active {
+        border: 2px solid var(--rg-border-pinned-voc);
+        background: var(--rg-bg-card-pinned-voc);
+        color: var(--rg-gametype-voc) !important;
+        font-weight: 600;
+        z-index: 1;
+      }
+    }
+
+    .group-controls {
+      display: inline-flex;
+      align-items: center;
+      margin: 0 2px;
+    }
+  }
 }
 
 #latest-games-hover-area {
