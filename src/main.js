@@ -14,7 +14,7 @@ class LatestGamesManager {
     this.maxGameCount = 5;
     this.currentTheme = 'light';
     this.displayMode = 'scroll';
-    this.previousScrollPosition = 0;
+    this.previousScrollPosition = parseInt(localStorage.getItem('latestGamesScrollPosition')) || 0;
     this.panelWidth = '95vw';
     this.gameData = [];
     this.hoverTimeout = null;
