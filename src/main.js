@@ -16,7 +16,7 @@ class LatestGamesManager {
     this.isHovered = false;
     this.isDragging = false;
     this.wasDragging = false;
-    this.dragThreshold = 50;
+    this.dragThreshold = 1;
     this.draggedElement = null;
     this.dragOffset = { x: 0, y: 0 };
     this.dragDirection = 0;
@@ -524,7 +524,7 @@ class LatestGamesManager {
         x: e.clientX - rect.left,
         y: e.clientY - rect.top
       };
-
+      // Store the parent's bounding rectangle from mousedown
       this.parentRect = element.parentElement.getBoundingClientRect();
       this.globalEvents.handleDragMove = this.handleDragMove.bind(this);
       this.globalEvents.handleDragEnd = this.handleDragEnd.bind(this);
