@@ -519,14 +519,11 @@ class LatestGamesManager {
       this.isRightHalf = clickX > rect.width / 2;
       this.lastDragY = e.clientY;
 
-      // Store the original drag offset
-      this.originalDragOffset = {
+      // Calculate the drag offset based on current mouse position relative to element
+      this.dragOffset = {
         x: e.clientX - rect.left,
         y: e.clientY - rect.top
       };
-
-      // Reset the drag offset to the original one
-      this.dragOffset = { ...this.originalDragOffset };
 
       this.parentRect = element.parentElement.getBoundingClientRect();
       this.globalEvents.handleDragMove = this.handleDragMove.bind(this);
@@ -551,8 +548,6 @@ class LatestGamesManager {
         this.draggedElement.style.top = `${rect.top - parentRect.top}px`;
         this.draggedElement.style.width = `${rect.width}px`;
 
-        // Use the original offset, not a recalculated one
-        this.dragOffset = { ...this.originalDragOffset };
       }
     }
 
