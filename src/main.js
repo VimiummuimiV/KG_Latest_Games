@@ -10,7 +10,12 @@ function generateRandomId() {
 
 class LatestGamesManager {
   constructor() {
+    // Initialize settings with defaults
     this.maxGameCount = 5;
+    this.currentTheme = 'light';
+    this.displayMode = 'scroll';
+    this.previousScrollPosition = 0;
+    this.panelWidth = '95vw';
     this.gameData = [];
     this.hoverTimeout = null;
     this.isHovered = false;
@@ -56,8 +61,6 @@ class LatestGamesManager {
       'кибергонщиков': 8, 'экстракиберов': 9
     };
 
-    this.currentTheme = localStorage.getItem('latest_games_theme') || 'light';
-
     this.init();
   }
 
@@ -92,7 +95,7 @@ class LatestGamesManager {
 
   toggleTheme() {
     this.currentTheme = this.currentTheme === 'light' ? 'dark' : 'light';
-    localStorage.setItem('latest_games_theme', this.currentTheme);
+    this.saveSettings();
     this.applyTheme();
     this.updateThemeToggle();
   }
@@ -118,7 +121,6 @@ class LatestGamesManager {
   }
 
   createDisplayModeToggle() {
-    const displayMode = this.getDisplayMode();
     const toggleButton = this.createElement('div', {
       className: 'display-mode-toggle control-button',
       title: 'Переключить режим отображения (Вертикальный/Горизонтальный)'
@@ -126,7 +128,7 @@ class LatestGamesManager {
     const svg = this.createElement('svg', {
       viewBox: '0 0 24 24'
     });
-    this.updateDisplayModeIcon(svg, displayMode);
+    this.updateDisplayModeIcon(svg, this.displayMode);
     toggleButton.appendChild(svg);
     toggleButton.addEventListener('click', () => {
       const newMode = this.getDisplayMode() === 'scroll' ? 'wrap' : 'scroll';
@@ -138,11 +140,12 @@ class LatestGamesManager {
   }
 
   getDisplayMode() {
-    return localStorage.getItem('latest_games_display_mode') || 'scroll';
+    return this.displayMode;
   }
 
   setDisplayMode(mode) {
-    localStorage.setItem('latest_games_display_mode', mode);
+    this.displayMode = mode;
+    this.saveSettings();
   }
 
   updateDisplayModeIcon(svg, mode) {
@@ -252,7 +255,7 @@ class LatestGamesManager {
       title: 'Импортировать настройки из JSON файла',
       innerHTML: icons.import
     });
-    importBtn.onclick = () => {
+    importBtn.onclick = async () => {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = '.json,application/json';
@@ -264,11 +267,8 @@ class LatestGamesManager {
           const text = await file.text();
           const data = JSON.parse(text);
           if (typeof data === 'object' && data !== null) {
-            if (data.latest_games) localStorage.setItem('latest_games', JSON.stringify(data.latest_games));
-            if (data.latest_games_limit) localStorage.setItem('latest_games_limit', data.latest_games_limit);
-            if (data.latest_games_theme) localStorage.setItem('latest_games_theme', data.latest_games_theme);
-            if (data.latest_games_display_mode) localStorage.setItem('latest_games_display_mode', data.latest_games_display_mode);
-            if (data.latest_games_scroll) localStorage.setItem('latest_games_scroll', data.latest_games_scroll);
+            if (data.latestGamesSettings) localStorage.setItem('latestGamesSettings', JSON.stringify(data.latestGamesSettings));
+            if (data.latestGamesData) localStorage.setItem('latestGamesData', JSON.stringify(data.latestGames));
             this.loadSettings();
             this.loadGameData();
             this.refreshContainer();
@@ -291,11 +291,8 @@ class LatestGamesManager {
     });
     exportBtn.onclick = () => {
       const all = {
-        latest_games: JSON.parse(localStorage.getItem('latest_games') || '[]'),
-        latest_games_limit: localStorage.getItem('latest_games_limit'),
-        latest_games_theme: localStorage.getItem('latest_games_theme'),
-        latest_games_display_mode: localStorage.getItem('latest_games_display_mode'),
-        latest_games_scroll: localStorage.getItem('latest_games_scroll')
+        latestGamesSettings: JSON.parse(localStorage.getItem('latestGamesSettings') || '{}'),
+        latestGames: JSON.parse(localStorage.getItem('latestGamesData') || '[]')
       };
       const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -316,9 +313,8 @@ class LatestGamesManager {
       innerHTML: icons.removeAll
     });
     removeAllBtn.onclick = () => {
-      localStorage.removeItem('latest_games');
-      localStorage.removeItem('latest_games_limit');
-      localStorage.removeItem('latest_games_scroll');
+      localStorage.removeItem('latestGamesSettings');
+      localStorage.removeItem('latestGamesData');
       this.gameData = [];
       this.saveGameData();
       this.refreshContainer();
@@ -381,21 +377,15 @@ class LatestGamesManager {
     container.appendChild(controls);
 
     // Apply saved scroll position
-    const savedScroll = localStorage.getItem('latest_games_scroll');
-    if (savedScroll) {
-      container.scrollTop = parseInt(savedScroll, 10);
-    }
+    container.scrollTop = this.previousScrollPosition;
 
     container.addEventListener('scroll', () => {
-      localStorage.setItem('latest_games_scroll', container.scrollTop.toString());
+      this.previousScrollPosition = container.scrollTop;
+      this.saveSettings();
     });
 
     container.addEventListener('mouseenter', () => {
       this.showContainer();
-      const savedScroll = localStorage.getItem('latest_games_scroll');
-      if (savedScroll) {
-        container.scrollTop = parseInt(savedScroll, 10);
-      }
     });
 
     container.addEventListener('mouseleave', () => {
@@ -413,9 +403,8 @@ class LatestGamesManager {
     const setupResizeHandle = () => {
       const mode = this.getDisplayMode();
       if (mode === 'wrap') {
-        // Apply stored width if available
-        const storedWidth = localStorage.getItem('latestGamesContainerWidth') || '95vw';
-        container.style.width = storedWidth;
+        // Apply stored width
+        container.style.width = this.panelWidth;
         handle.style.display = '';
         let isDragging = false, startX, startWidth;
         const onMouseMove = (e) => {
@@ -433,7 +422,8 @@ class LatestGamesManager {
           isDragging = false;
           document.removeEventListener('mousemove', onMouseMove);
           document.removeEventListener('mouseup', onMouseUp);
-          localStorage.setItem('latestGamesContainerWidth', container.style.width);
+          this.panelWidth = container.style.width;
+          this.saveSettings();
         };
         handle.onmousedown = (e) => {
           isDragging = true;
@@ -464,18 +454,41 @@ class LatestGamesManager {
 
   loadSettings() {
     try {
-      const savedLimit = localStorage.getItem('latest_games_limit');
-      if (savedLimit) {
-        this.maxGameCount = Math.max(0, parseInt(savedLimit, 10));
-      }
+      const settings = JSON.parse(localStorage.getItem('latestGamesSettings')) || {};
+      this.maxGameCount = settings.gamesLimit || 5;
+      this.currentTheme = settings.theme || 'light';
+      this.displayMode = settings.displayMode || 'scroll';
+      this.previousScrollPosition = settings.previousScrollPosition || 0;
+      this.panelWidth = settings.panelWidth || '95vw';
     } catch (error) {
       console.warn('Could not load settings from localStorage:', error);
+      // Set defaults
+      this.maxGameCount = 5;
+      this.currentTheme = 'light';
+      this.displayMode = 'scroll';
+      this.previousScrollPosition = 0;
+      this.panelWidth = '95vw';
+    }
+  }
+
+  saveSettings() {
+    try {
+      const settings = {
+        gamesLimit: this.maxGameCount,
+        theme: this.currentTheme,
+        displayMode: this.displayMode,
+        previousScrollPosition: this.previousScrollPosition,
+        panelWidth: this.panelWidth
+      };
+      localStorage.setItem('latestGamesSettings', JSON.stringify(settings));
+    } catch (error) {
+      console.warn('Could not save settings to localStorage:', error);
     }
   }
 
   loadGameData() {
     try {
-      const savedGames = localStorage.getItem('latest_games');
+      const savedGames = localStorage.getItem('latestGamesData');
       if (savedGames) {
         this.gameData = JSON.parse(savedGames);
         this.migrateOldGameData();
@@ -507,17 +520,9 @@ class LatestGamesManager {
 
   saveGameData() {
     try {
-      localStorage.setItem('latest_games', JSON.stringify(this.gameData));
+      localStorage.setItem('latestGamesData', JSON.stringify(this.gameData));
     } catch (error) {
       console.warn('Could not save game data to localStorage:', error);
-    }
-  }
-
-  saveSettings() {
-    try {
-      localStorage.setItem('latest_games_limit', this.maxGameCount.toString());
-    } catch (error) {
-      console.warn('Could not save settings to localStorage:', error);
     }
   }
 
@@ -839,10 +844,7 @@ class LatestGamesManager {
     if (container) {
       container.classList.add('visible');
       container.style.left = '0';
-      const savedScroll = localStorage.getItem('latest_games_scroll');
-      if (savedScroll !== null) {
-        container.scrollTop = parseInt(savedScroll, 10) || 0;
-      }
+      container.scrollTop = this.previousScrollPosition;
     }
   }
 
