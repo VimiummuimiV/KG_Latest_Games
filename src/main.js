@@ -624,11 +624,18 @@ class LatestGamesManager {
       }
     } else {
       const parentRect = this.parentRect;
+      // Get the height of #latest-games-groups to offset the Y position
+      const groupsContainer = document.getElementById('latest-games-groups');
+      const groupsHeight = groupsContainer ? groupsContainer.offsetHeight : 0;
       let newLeft = e.clientX - this.dragOffset.x - parentRect.left;
-      let newTop = e.clientY - this.dragOffset.y - parentRect.top;
+      // Subtract both the group tabs container height and the drag offset (grab point) from Y
+      let newTop = e.clientY - this.dragOffset.y - groupsHeight;
 
       newLeft = Math.max(0, Math.min(newLeft, gamesList.offsetWidth - this.draggedElement.offsetWidth));
-      newTop = Math.max(0, Math.min(newTop, gamesList.offsetHeight - this.draggedElement.offsetHeight));
+      // Use the container's height for clamping newTop
+      const container = document.getElementById('latest-games-container');
+      const containerHeight = container ? container.offsetHeight : gamesList.offsetHeight;
+      newTop = Math.max(0, Math.min(newTop, containerHeight - this.draggedElement.offsetHeight));
 
       this.draggedElement.style.left = `${newLeft}px`;
       this.draggedElement.style.top = `${newTop}px`;
