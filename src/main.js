@@ -364,6 +364,26 @@ class LatestGamesManager {
     controlsContainer.appendChild(exportBtn);
     controlsContainer.appendChild(removeAllBtn);
 
+    // Add 'Remove all not pinned games' button
+    const removeUnpinnedBtn = createElement('span', {
+      className: 'latest-games-remove-unpinned control-button',
+      title: 'Удалить все неприкреплённые игры из всех групп',
+      innerHTML: icons.broom
+    });
+    removeUnpinnedBtn.onclick = () => {
+      let changed = false;
+      this.groups.forEach(group => {
+        const before = group.games.length;
+        group.games = group.games.filter(g => g.pin);
+        if (group.games.length !== before) changed = true;
+      });
+      if (changed) {
+        this.saveGameData();
+        this.refreshContainer();
+      }
+    };
+    controlsContainer.appendChild(removeUnpinnedBtn);
+
     return controlsContainer;
   }
 
