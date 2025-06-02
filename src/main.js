@@ -5,6 +5,7 @@ import { parseGameParams, generateGameName, generateGameLink } from './gameUtils
 import { createGroup, renameGroup, removeGroup, getCurrentGroup } from './groups.js';
 import { highlightExistingVocabularies } from './vocabularyChecker.js';
 import { showMigrationPopup } from './vocabularyMigration.js';
+import { attachVocabularyCreation } from './vocabularyCreation.js';
 
 class LatestGamesManager {
   constructor() {
@@ -798,7 +799,7 @@ class LatestGamesManager {
           this.updateContainerLeftOffset();
         }
         // Remove migration popup if present
-        const migrationPopup = document.querySelector('.migration-popup');
+        const migrationPopup = document.querySelector('.game-migration-popup');
         if (migrationPopup) migrationPopup.remove();
       }
     }, this.hidePanelDelay);
@@ -985,9 +986,10 @@ class LatestGamesManager {
         this.saveCurrentGameParams();
       }
     }
-    // Highlight vocabularies on vocs page
+    // Highlight vocabularies and attach vocabulary creation popup on vocs page
     if (/klavogonki\.ru\/vocs\//.test(href)) {
       highlightExistingVocabularies(this.groups);
+      attachVocabularyCreation(this.groups, this);
     }
   }
 

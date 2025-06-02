@@ -432,7 +432,8 @@
   }
 }
 
-.migration-popup {
+.game-migration-popup,
+.vocabulary-creation-popup {
   position: fixed;
   display: flex;
   flex-direction: column;

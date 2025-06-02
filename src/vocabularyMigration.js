@@ -1,10 +1,10 @@
 import { createElement } from './utils.js';
 
 export function showMigrationPopup(manager, groups, currentGroupId, event, gameId) {
-  const existingPopup = document.querySelector('.migration-popup');
+  const existingPopup = document.querySelector('.game-migration-popup');
   if (existingPopup) existingPopup.remove();
 
-  const popup = createElement('div', { className: 'migration-popup' });
+  const popup = createElement('div', { className: 'game-migration-popup' });
   groups.forEach(group => {
     if (group.id !== currentGroupId) {
       const button = createElement('button', {
