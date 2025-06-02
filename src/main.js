@@ -22,6 +22,7 @@ class LatestGamesManager {
     this.isDragging = false;
     this.wasDragging = false;
     this.dragThreshold = 1;
+    this.shouldAutoSave = true;
     this.draggedElement = null;
     this.dragOffset = { x: 0, y: 0 };
     this.dragDirection = 0;
@@ -341,7 +342,17 @@ class LatestGamesManager {
 
     const countDisplay = createElement('span', {
       id: 'latest-games-count',
-      textContent: this.maxGameCount.toString()
+      className: this.shouldAutoSave === false ? 'no-save' : '',
+      textContent: this.maxGameCount.toString(),
+      title: this.shouldAutoSave ? 'Автосохранение включено' : 'Автосохранение отключено'
+    });
+    // Toggle save functionality on click (do not change value, just toggle shouldAutoSave)
+    countDisplay.addEventListener('click', () => {
+      this.shouldAutoSave = !this.shouldAutoSave;
+      countDisplay.classList.toggle('no-save', this.shouldAutoSave === false);
+      countDisplay.title = this.shouldAutoSave ? 'Автосохранение включено' : 'Автосохранение отключено';
+      this.saveSettings();
+      this.refreshContainer();
     });
 
     const increaseBtn = createElement('span', {
@@ -492,6 +503,7 @@ class LatestGamesManager {
       this.displayMode = settings.displayMode || 'scroll';
       this.previousScrollPosition = settings.previousScrollPosition || 0;
       this.panelWidth = settings.panelWidth || '95vw';
+      this.shouldAutoSave = settings.shouldAutoSave !== false; // default true
     } catch (error) {
       console.warn('Could not load settings from localStorage:', error);
       // Set defaults
@@ -500,6 +512,7 @@ class LatestGamesManager {
       this.displayMode = 'scroll';
       this.previousScrollPosition = 0;
       this.panelWidth = '95vw';
+      this.shouldAutoSave = true;
     }
   }
 
@@ -510,7 +523,8 @@ class LatestGamesManager {
         theme: this.currentTheme,
         displayMode: this.displayMode,
         previousScrollPosition: this.previousScrollPosition,
-        panelWidth: this.panelWidth
+        panelWidth: this.panelWidth,
+        shouldAutoSave: this.shouldAutoSave
       };
       localStorage.setItem('latestGamesSettings', JSON.stringify(settings));
     } catch (error) {
@@ -939,7 +953,7 @@ class LatestGamesManager {
     const span = gameDesc.querySelector('span');
     if (!span) throw new Error('#gamedesc span element not found.');
     const descText = gameDesc.textContent;
-    if (/соревнование/.test(descText) || !this.maxGameCount) return false;
+    if (/соревнование/.test(descText) || !this.maxGameCount || this.shouldAutoSave === false) return false;
     const gameParams = parseGameParams(span, descText);
     const gameParamsString = JSON.stringify(gameParams);
     const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);

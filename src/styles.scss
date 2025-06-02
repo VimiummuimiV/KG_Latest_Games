@@ -299,6 +299,11 @@
     user-select: none;
   }
 
+  #latest-games-count.no-save {
+    filter: grayscale(1);
+    opacity: 0.7;
+  }
+
   #latest-games-count {
     margin: 0 6px;
     font-weight: bold;
@@ -306,6 +311,7 @@
     min-width: 18px;
     text-align: center;
     color: var(--rg-text-count);
+    cursor: pointer;
   }
 
   #latest-games-count-inc,
