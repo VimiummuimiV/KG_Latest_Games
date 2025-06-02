@@ -4,6 +4,7 @@ import { generateRandomId, createElement } from './utils.js';
 import { parseGameParams, generateGameName, generateGameLink } from './gameUtils.js';
 import { createGroup, renameGroup, removeGroup, getCurrentGroup } from './groups.js';
 import { highlightExistingVocabularies } from './vocabularyChecker.js';
+import { showMigrationPopup } from './vocabularyMigration.js';
 
 class LatestGamesManager {
   constructor() {
@@ -410,6 +411,17 @@ class LatestGamesManager {
     // Add hover listeners to show/hide the container
     container.addEventListener('mouseenter', () => this.showContainer());
     container.addEventListener('mouseleave', () => this.hideContainerWithDelay());
+
+    // Add context menu event listener
+    gamesList.addEventListener('contextmenu', (e) => {
+      const gameElement = e.target.closest('.latest-game');
+      if (gameElement) {
+        e.preventDefault();
+        const gameId = gameElement.id.replace('latest-game-', '');
+        showMigrationPopup(this, this.groups, this.currentGroupId, e, gameId);
+      }
+    });
+
     let handle = container.querySelector('.resize-handle');
     if (!handle) {
       handle = createElement('div', { className: 'resize-handle' });
@@ -616,7 +628,6 @@ class LatestGamesManager {
         this.draggedElement.style.left = `${rect.left - parentRect.left}px`;
         this.draggedElement.style.top = `${rect.top - parentRect.top}px`;
         this.draggedElement.style.width = `${rect.width}px`;
-
       }
     }
 
