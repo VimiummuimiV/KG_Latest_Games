@@ -7,13 +7,16 @@
   }
 }
 
-#latest-games-container {
-  &.light-theme {
+:root {
+  &.latest-games-light-theme {
     @include theme(light.$lightTheme);
   }
-  &.dark-theme {
+  &.latest-games-dark-theme {
     @include theme(dark.$darkTheme);
   }
+}
+
+#latest-games-container {
   display: flex;
   flex-direction: column;
   font-family: "Montserrat", sans-serif;
@@ -208,8 +211,12 @@
       }
 
       .latest-game-qual {
-        color: #f00;
-        font-weight: bold;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        margin-left: 4px;
       }
 
       .latest-game-levels {
@@ -435,4 +442,37 @@
   z-index: 3100;
   background-color: transparent;
   pointer-events: auto;
+}
+
+.latest-games-panel-toggle {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10010;
+  background: var(--rg-panel-toggle-background);
+  border: 2px solid var(--rg-panel-toggle-border);
+  border-radius: 0 0.5em 0.5em 0 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.2s;
+  outline: none;
+
+  &:hover,
+  &:focus {
+    background: var(--rg-panel-toggle-bg-hover);
+  }
+
+  svg {
+    stroke: var(--rg-panel-toggle-stroke);
+    width: 1.5em;
+    height: 1.5em;
+    display: block;
+    pointer-events: none;
+  }
 }

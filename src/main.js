@@ -44,18 +44,17 @@ class LatestGamesManager {
     }
     this.createHoverArea();
     this.createContainer();
+    this.createPanelToggleButton();
     this.handlePageSpecificLogic();
     this.exposeGlobalFunctions();
     this.applyTheme();
   }
 
   applyTheme() {
-    const container = document.getElementById('latest-games-container');
-    if (container) {
-      container.classList.remove('light-theme', 'dark-theme');
-      container.classList.add(`${this.currentTheme}-theme`);
-    }
-    // Also update the theme toggle icon
+    document.documentElement.classList.remove('latest-games-light-theme', 'latest-games-dark-theme');
+    document.documentElement.classList.add(
+      this.currentTheme === 'light' ? 'latest-games-light-theme' : 'latest-games-dark-theme'
+    );
     this.updateThemeIcon();
   }
 
@@ -954,6 +953,32 @@ class LatestGamesManager {
   exposeGlobalFunctions() {
     window.latestGamesManager = this;
   }
+
+  createPanelToggleButton() {
+    if (document.getElementById('latest-games-panel-toggle')) return;
+    const btn = createElement('button', {
+      id: 'latest-games-panel-toggle',
+      className: 'latest-games-panel-toggle',
+      type: 'button'
+    });
+    btn.innerHTML = icons.panelToggle;
+    btn.addEventListener('click', () => {
+      const container = document.getElementById('latest-games-container');
+      if (!container) return;
+      if (container.classList.contains('visible')) {
+        if (this.hoverTimeout) {
+          clearTimeout(this.hoverTimeout);
+          this.hoverTimeout = null;
+        }
+        container.classList.remove('visible');
+        this.updateContainerLeftOffset();
+      } else {
+        this.showContainer();
+      }
+    });
+    document.body.appendChild(btn);
+  }
+
 }
 
 (function addMontserratFont() {
