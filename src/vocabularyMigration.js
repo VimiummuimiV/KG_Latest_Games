@@ -20,7 +20,6 @@ export function showMigrationPopup(manager, groups, currentGroupId, event, gameI
     }
   });
 
-  popup.style.position = 'absolute';
   popup.style.left = `${event.clientX}px`;
   popup.style.top = `${event.clientY}px`;
   document.body.appendChild(popup);
