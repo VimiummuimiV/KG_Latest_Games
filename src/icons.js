@@ -146,4 +146,10 @@ export const icons = {
       <path d="M5 15.5l14 0 1.04 5.74c0.03,0.2 -0.02,0.38 -0.14,0.53 -0.13,0.15 -0.3,0.23 -0.49,0.23l-14.81 0c-0.2,0 -0.37,-0.08 -0.49,-0.23 -0.13,-0.15 -0.18,-0.33 -0.14,-0.53l1.03 -5.74z"/>
     </svg>
   `,
+
+  checkmark: `
+    <svg xmlns="${SVG_NS}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+  `,
 };

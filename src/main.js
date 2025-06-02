@@ -2,7 +2,8 @@ import { icons } from './icons';
 import './styles.scss';
 import { generateRandomId, createElement } from './utils.js';
 import { parseGameParams, generateGameName, generateGameLink } from './gameUtils.js';
-import { createGroup, renameGroup, removeGroup, getGroups, getCurrentGroup } from './groups.js';
+import { createGroup, renameGroup, removeGroup, getCurrentGroup } from './groups.js';
+import { highlightExistingVocabularies } from './vocabularyChecker.js';
 
 class LatestGamesManager {
   constructor() {
@@ -967,6 +968,10 @@ class LatestGamesManager {
       } else {
         this.saveCurrentGameParams();
       }
+    }
+    // Highlight vocabularies on vocs page
+    if (/klavogonki\.ru\/vocs\//.test(href)) {
+      highlightExistingVocabularies(this.groups);
     }
   }
 
