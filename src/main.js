@@ -344,13 +344,11 @@ class LatestGamesManager {
       id: 'latest-games-count',
       className: this.shouldAutoSave === false ? 'no-save' : '',
       textContent: this.maxGameCount.toString(),
-      title: this.shouldAutoSave ? 'Автосохранение включено' : 'Автосохранение отключено'
+      title: this.shouldAutoSave ? 'Количество сохраняемых игр' : 'Автосохранение отключено'
     });
-    // Toggle save functionality on click (do not change value, just toggle shouldAutoSave)
     countDisplay.addEventListener('click', () => {
       this.shouldAutoSave = !this.shouldAutoSave;
-      countDisplay.classList.toggle('no-save', this.shouldAutoSave === false);
-      countDisplay.title = this.shouldAutoSave ? 'Автосохранение включено' : 'Автосохранение отключено';
+      this.updateGameCountDisplay();
       this.saveSettings();
       this.refreshContainer();
     });
@@ -493,6 +491,15 @@ class LatestGamesManager {
     };
     // Add updateRemoveIcons here, after everything is in the DOM
     this.updateRemoveIcons();
+  }
+
+  updateGameCountDisplay() {
+    const countDisplay = document.getElementById('latest-games-count');
+    if (countDisplay) {
+      countDisplay.textContent = this.maxGameCount.toString();
+      countDisplay.classList.toggle('no-save', this.shouldAutoSave === false);
+      countDisplay.title = this.shouldAutoSave ? 'Количество сохраняемых игр' : 'Автосохранение отключено';
+    }
   }
 
   loadSettings() {
@@ -869,6 +876,7 @@ class LatestGamesManager {
     }
     // Immediately update the trash icons based on the latest data
     this.updateRemoveIcons();
+    this.updateGameCountDisplay();
   }
 
   selectGroup(id) {
@@ -978,8 +986,7 @@ class LatestGamesManager {
   changeGameCount(delta) {
     if (delta < 0 && this.maxGameCount > 0) this.maxGameCount--;
     else if (delta > 0) this.maxGameCount++;
-    const countDisplay = document.getElementById('latest-games-count');
-    if (countDisplay) countDisplay.textContent = this.maxGameCount.toString();
+    this.updateGameCountDisplay();
     this.saveSettings();
     this.refreshContainer();
   }
