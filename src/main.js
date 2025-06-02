@@ -55,22 +55,19 @@ class LatestGamesManager {
       container.classList.remove('light-theme', 'dark-theme');
       container.classList.add(`${this.currentTheme}-theme`);
     }
+    // Also update the theme toggle icon
+    this.updateThemeIcon();
   }
 
-  updateThemeIcon(svg) {
-    svg.innerHTML = this.currentTheme === 'light' ? icons.sun : icons.moon;
-  }
-
-  updateThemeToggle() {
+  updateThemeIcon() {
     const svg = document.querySelector('#latest-games-container .theme-toggle svg');
-    if (svg) this.updateThemeIcon(svg);
+    if (svg) svg.innerHTML = this.currentTheme === 'light' ? icons.sun : icons.moon;
   }
 
   toggleTheme() {
     this.currentTheme = this.currentTheme === 'light' ? 'dark' : 'light';
     this.saveSettings();
     this.applyTheme();
-    this.updateThemeToggle();
   }
 
   createThemeToggle() {
@@ -79,7 +76,7 @@ class LatestGamesManager {
       title: 'Изменить тему (Светлая/Темная)'
     });
     const svg = createElement('svg', { viewBox: '0 0 24 24' });
-    this.updateThemeIcon(svg);
+    svg.innerHTML = this.currentTheme === 'light' ? icons.sun : icons.moon;
     toggleButton.appendChild(svg);
     toggleButton.addEventListener('click', () => this.toggleTheme());
     return toggleButton;
@@ -283,6 +280,7 @@ class LatestGamesManager {
             this.loadSettings();
             this.loadGameData();
             this.refreshContainer();
+            this.applyTheme();
           } else {
             alert('Файл не содержит валидный JSON настроек.');
           }
