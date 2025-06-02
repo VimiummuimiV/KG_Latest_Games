@@ -593,6 +593,8 @@ class LatestGamesManager {
 
   addDragFunctionality(element) {
     element.addEventListener('mousedown', (e) => {
+      // Only allow dragging with left mouse button (LMB)
+      if (e.button !== 0) return;
       // Prevent dragging if the target is a button (e.g., pin or delete)
       if (e.target.closest('.latest-game-buttons')) return;
       this.wasDragging = false;
@@ -795,6 +797,9 @@ class LatestGamesManager {
           container.classList.remove('visible');
           this.updateContainerLeftOffset();
         }
+        // Remove migration popup if present
+        const migrationPopup = document.querySelector('.migration-popup');
+        if (migrationPopup) migrationPopup.remove();
       }
     }, this.hidePanelDelay);
   }
