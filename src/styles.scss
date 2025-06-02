@@ -89,6 +89,7 @@
 
       .latest-game {
         margin: 0 !important;
+        max-width: none;
       }
     }
 
@@ -100,7 +101,6 @@
       background-color: var(--rg-bg-card);
       transition: all 0.2s ease;
       display: inline-flex;
-      flex: fit-content;
       max-width: 300px;
 
       &.pin-game {

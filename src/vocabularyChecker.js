@@ -21,22 +21,22 @@ export function highlightExistingVocabularies(groups) {
     const match = href && href.match(/\/vocs\/(\d+)(?:\/|$)/);
     if (match) {
       const vocId = match[1];
+      // Remove any existing checkmark in the anchor's parent before adding a new one
+      const parent = anchor.parentNode;
+      const oldIcon = parent.querySelector('.kg-voc-checkmark');
+      if (oldIcon) oldIcon.remove();
       if (vocIdToGroups.has(vocId)) {
-        // Append icon before the .desc element if not already present
-        if (!anchor.querySelector('.kg-voc-checkmark')) {
-          const icon = document.createElement('span');
-          icon.className = 'kg-voc-checkmark';
-          icon.innerHTML = icons.checkmark;
-          const groupNames = vocIdToGroups.get(vocId);
-          icon.title = 'Словарь уже существует в группе: ' + groupNames.join(', ');
-          // Try to find the closest .desc element within the anchor's parent
-          const parent = anchor.parentNode;
-          const desc = parent.querySelector('.desc');
-          if (desc) {
-            parent.insertBefore(icon, desc);
-          } else {
-            anchor.appendChild(icon);
-          }
+        // Append icon before the .desc element
+        const icon = document.createElement('span');
+        icon.className = 'kg-voc-checkmark';
+        icon.innerHTML = icons.checkmark;
+        const groupNames = vocIdToGroups.get(vocId);
+        icon.title = 'Словарь уже существует в группе: ' + groupNames.join(', ');
+        const desc = parent.querySelector('.desc');
+        if (desc) {
+          parent.insertBefore(icon, desc);
+        } else {
+          anchor.appendChild(icon);
         }
       }
     }

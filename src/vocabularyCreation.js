@@ -1,4 +1,5 @@
 import { createElement, generateRandomId } from './utils.js';
+import { highlightExistingVocabularies } from './vocabularyChecker.js';
 
 /**
  * Show a popup to add a vocabulary to a group.
@@ -56,6 +57,8 @@ export function showVocabularyCreationPopup(groups, event, vocId, vocName, manag
         // Save and refresh
         manager.saveGameData();
         manager.refreshContainer();
+        // Update vocabulary checkers
+        highlightExistingVocabularies(groups);
       }
       popup.remove();
     });
