@@ -205,7 +205,7 @@ class LatestGamesManager {
     const removeButton = createElement('span', {
       className: 'remove-group control-button',
       title: 'Удалить группу',
-      innerHTML: icons.remove
+      innerHTML: icons.trashNothing // Initially show "nothing" icon
     });
     removeButton.addEventListener('click', () => this.removeCurrentGroup());
 
@@ -321,7 +321,7 @@ class LatestGamesManager {
     const removeAllBtn = createElement('span', {
       className: 'latest-games-removeall control-button',
       title: 'Удалить все настройки',
-      innerHTML: icons.remove
+      innerHTML: icons.trashNothing // Initially show "nothing" icon
     });
     removeAllBtn.onclick = () => {
       localStorage.removeItem('latestGamesSettings');
@@ -449,6 +449,8 @@ class LatestGamesManager {
       origUpdateDisplayModeClass(...args);
       setupResizeHandle();
     };
+    // Add updateRemoveIcons here, after everything is in the DOM
+    this.updateRemoveIcons();
   }
 
   loadSettings() {
@@ -768,12 +770,32 @@ class LatestGamesManager {
     }, this.hidePanelDelay);
   }
 
+  // Helper function to update the "trash" icons based on data
+  updateRemoveIcons() {
+    // Update the remove group icon inside group controls:
+    const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
+    const removeGroupBtn = document.querySelector('.group-controls .remove-group.control-button');
+    if (removeGroupBtn) {
+      removeGroupBtn.innerHTML =
+        currentGroup && currentGroup.games && currentGroup.games.length > 0
+          ? icons.trashSomething
+          : icons.trashNothing;
+    }
+    // Update the remove all icon:
+    const removeAllBtn = document.querySelector('.latest-games-removeall.control-button');
+    // Here we consider the entire data: if any group has at least one game.
+    const hasAnyData = this.groups.some(group => group.games && group.games.length > 0);
+    if (removeAllBtn) {
+      removeAllBtn.innerHTML = hasAnyData ? icons.trashSomething : icons.trashNothing;
+    }
+  }
+
   refreshContainer() {
     const groupsContainer = document.getElementById('latest-games-groups');
     if (groupsContainer) {
       const groupTabs = groupsContainer.querySelector('.group-tabs');
       if (groupTabs) {
-        // Remove only .group-tab elements, keep .group-controls
+        // Remove only .group-tab elements, keep .group-controls intact
         Array.from(groupTabs.children).forEach(child => {
           if (child.classList.contains('group-tab')) {
             groupTabs.removeChild(child);
@@ -796,6 +818,8 @@ class LatestGamesManager {
       this.populateGamesList(gamesList);
       this.updateDisplayModeClass();
     }
+    // Immediately update the trash icons based on the latest data
+    this.updateRemoveIcons();
   }
 
   selectGroup(id) {
