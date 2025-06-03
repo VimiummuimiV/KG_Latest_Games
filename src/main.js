@@ -1060,7 +1060,7 @@ class LatestGamesManager {
       id: 'latest-games-panel-toggle',
       className: 'latest-games-panel-toggle',
       type: 'button',
-      innerHTML: icons.panelToggle
+      innerHTML: this.alwaysVisiblePanel ? icons.panelToggleOpened : icons.panelToggleClosed,
     });
 
     this.alwaysVisiblePanel && btn.classList.add('always-visible');
@@ -1072,6 +1072,7 @@ class LatestGamesManager {
       if (e.ctrlKey) {
         this.alwaysVisiblePanel = !this.alwaysVisiblePanel;
         btn.classList.toggle('always-visible', this.alwaysVisiblePanel);
+        btn.innerHTML = this.alwaysVisiblePanel ? icons.panelToggleOpened : icons.panelToggleClosed;
         container.classList.toggle('visible', this.alwaysVisiblePanel);
         if (!this.alwaysVisiblePanel) this.updateContainerLeftOffset();
         this.saveSettings();
