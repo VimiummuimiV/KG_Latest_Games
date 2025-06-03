@@ -13,8 +13,9 @@ class LatestGamesManager {
     this.maxGameCount = 5;
     this.currentTheme = 'light';
     this.displayMode = 'scroll';
-    this.previousScrollPosition = parseInt(localStorage.getItem('latestGamesScrollPosition')) || 0;
+    this.previousScrollPosition = 0;
     this.panelWidth = '95vw';
+    this.panelYPosition = 0;
     this.groups = [];
     this.currentGroupId = null;
     this.hoverTimeout = null;
@@ -417,6 +418,12 @@ class LatestGamesManager {
     return controlsContainer;
   }
 
+  updateContainerYPosition() {
+    const container = document.getElementById('latest-games-container');
+    if (!container) return;
+    container.style.top = this.getDisplayMode() === 'wrap' ? `${this.panelYPosition}vh` : '';
+  }
+
   createContainer() {
     const container = createElement('div', { id: 'latest-games-container' });
     const groupsContainer = this.createGroupsContainer();
@@ -429,14 +436,12 @@ class LatestGamesManager {
     const controls = this.createControls();
     container.appendChild(controls);
 
-    // Apply saved scroll position
-    container.scrollTop = this.previousScrollPosition;
-
     container.addEventListener('scroll', () => {
       this.previousScrollPosition = container.scrollTop;
       this.saveSettings();
     });
-    // Add hover listeners to hide the container
+
+    container.addEventListener('mouseenter', () => this.showContainer());
     container.addEventListener('mouseleave', () => this.hideContainer());
 
     // Add context menu event listener
@@ -496,12 +501,62 @@ class LatestGamesManager {
       }
     };
 
-    // Call once on creation
     setupResizeHandle();
+
+    const setupYPositioning = () => {
+      const mode = this.getDisplayMode();
+      if (mode === 'wrap') {
+        this.updateContainerYPosition();
+        let isDraggingY = false, startY, startTop;
+
+        const onMouseMoveY = (e) => {
+          if (!isDraggingY) return;
+          const dy = e.clientY - startY;
+          const newTopVh = startTop + (dy / window.innerHeight) * 100;
+
+          // Calculate proper bounds: 0 at top, and bottom should leave container fully visible
+          const containerHeight = container.offsetHeight;
+          const maxTopVh = Math.max(0, ((window.innerHeight - containerHeight) / window.innerHeight) * 100);
+
+          const clampedTopVh = Math.max(0, Math.min(newTopVh, maxTopVh));
+          // Limit to one digit after the dot
+          const roundedTopVh = Math.round(clampedTopVh * 10) / 10;
+          container.style.top = `${roundedTopVh}vh`;
+        };
+
+        const onMouseUpY = () => {
+          if (!isDraggingY) return;
+          isDraggingY = false;
+          document.removeEventListener('mousemove', onMouseMoveY);
+          document.removeEventListener('mouseup', onMouseUpY);
+          // Get the actual final position, and round so it has only one digit after the decimal point
+          const finalRect = container.getBoundingClientRect();
+          this.panelYPosition = Math.round(((finalRect.top / window.innerHeight) * 100) * 10) / 10;
+          this.saveSettings();
+        };
+
+        const enableYDrag = (e) => {
+          if (e.target.closest('.latest-game, .group-tab, .control-button, .resize-handle')) return;
+          isDraggingY = true;
+          startY = e.clientY;
+          // FIX: Get the actual current position from the computed style or getBoundingClientRect
+          const rect = container.getBoundingClientRect();
+          startTop = (rect.top / window.innerHeight) * 100;
+          document.addEventListener('mousemove', onMouseMoveY);
+          document.addEventListener('mouseup', onMouseUpY);
+          e.preventDefault();
+        };
+
+        container.addEventListener('mousedown', enableYDrag);
+      } else {
+        container.style.top = '';
+      }
+    };
+
+    setupYPositioning();
+
     document.body.appendChild(container);
     this.updateDisplayModeClass();
-
-
     // Add title to tabs if they are too wide
     const allTabs = container.querySelectorAll('.group-tab');
     allTabs.forEach(tab => {
@@ -515,10 +570,14 @@ class LatestGamesManager {
     this.updateDisplayModeClass = (...args) => {
       origUpdateDisplayModeClass(...args);
       setupResizeHandle();
+      setupYPositioning();
     };
 
     // Add updateRemoveIcons here, after everything is in the DOM
     this.updateRemoveIcons();
+
+    // Apply saved scroll position after rendering
+    container.scrollTop = this.previousScrollPosition;
   }
 
   updateGameCountDisplay() {
@@ -541,6 +600,7 @@ class LatestGamesManager {
       this.shouldAutoSave = settings.shouldAutoSave !== false;
       this.enableDragging = settings.enableDragging !== undefined ? settings.enableDragging : true;
       this.alwaysVisiblePanel = settings.alwaysVisiblePanel !== undefined ? settings.alwaysVisiblePanel : false;
+      this.panelYPosition = settings.panelYPosition || 0;
     } catch (error) {
       console.warn('Could not load settings from localStorage:', error);
       // Set defaults
@@ -552,6 +612,7 @@ class LatestGamesManager {
       this.shouldAutoSave = true;
       this.enableDragging = true;
       this.alwaysVisiblePanel = false;
+      this.panelYPosition = 0;
     }
   }
 
@@ -565,7 +626,8 @@ class LatestGamesManager {
         panelWidth: this.panelWidth,
         shouldAutoSave: this.shouldAutoSave,
         enableDragging: this.enableDragging,
-        alwaysVisiblePanel: this.alwaysVisiblePanel
+        alwaysVisiblePanel: this.alwaysVisiblePanel,
+        panelYPosition: this.panelYPosition
       };
       localStorage.setItem('latestGamesSettings', JSON.stringify(settings));
     } catch (error) {
@@ -839,6 +901,10 @@ class LatestGamesManager {
     if (container) {
       container.classList.add('visible');
       container.style.left = '0';
+      // If mode is 'wrap', set the panel previous Y position
+      if (this.getDisplayMode() === 'wrap') {
+        container.style.top = `${this.panelYPosition}vh`;
+      }
       container.scrollTop = this.previousScrollPosition;
     }
   }
