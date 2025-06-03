@@ -38,7 +38,8 @@ export function createPopup(buttonConfigs, event, className = 'popup') {
 
   // Add title to buttons if they are too wide
   popup.querySelectorAll('button').forEach(btn => {
-    if (btn.getBoundingClientRect().width >= 300) btn.title = btn.textContent;
+    const isEllipsed = btn.scrollWidth > btn.clientWidth;
+    if (isEllipsed) btn.title = btn.textContent;
   });
 
   // Get popup dimensions
