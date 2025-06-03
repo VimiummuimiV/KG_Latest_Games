@@ -1,5 +1,6 @@
-import { createElement, generateRandomId } from './utils.js';
+import { generateRandomId } from './utils.js';
 import { highlightExistingVocabularies } from './vocabularyChecker.js';
+import { createPopup } from './popup.js';
 
 /**
  * Show a popup to add a vocabulary to a group.
@@ -10,31 +11,25 @@ import { highlightExistingVocabularies } from './vocabularyChecker.js';
  * @param {object} manager - The LatestGamesManager instance.
  */
 export function showVocabularyCreationPopup(groups, event, vocId, vocName, manager) {
-  const existingPopup = document.querySelector('.vocabulary-creation-popup');
-  if (existingPopup) existingPopup.remove();
-
-  const popup = createElement('div', { className: 'vocabulary-creation-popup' });
-
-  groups.forEach(group => {
-    const button = createElement('button', {
-      className: 'group-tab',
-      textContent: group.title,
-      dataset: { groupId: group.id },
-      draggable: false
-    });
-
-    button.addEventListener('click', () => {
+  // Create button configurations for each group
+  const buttonConfigs = groups.map(group => ({
+    text: group.title,
+    className: 'group-tab',
+    dataset: { groupId: group.id },
+    onClick: () => {
       // Find the group where the vocabulary already exists
       const foundGroup = groups.find(g =>
         g.games.some(game => String(game.params?.vocId) === String(vocId))
       );
+      
       if (foundGroup) {
         alert(`Этот словарь уже добавлен в ${foundGroup.title}`);
-        popup.remove();
         return;
       }
+
       // Check if the vocabulary already exists in the group (defensive)
       const alreadyExists = group.games.some(game => String(game.params?.vocId) === String(vocId));
+      
       if (!alreadyExists) {
         // Create a new game object with default parameters
         const newGame = {
@@ -52,33 +47,21 @@ export function showVocabularyCreationPopup(groups, event, vocId, vocName, manag
           },
           pin: 1 // Pinned by default
         };
+
         // Add the new game to the start of the group's games array
         group.games.unshift(newGame);
+
         // Save and refresh
         manager.saveGameData();
         manager.refreshContainer();
+
         // Update vocabulary checkers
         highlightExistingVocabularies(groups);
       }
-      popup.remove();
-    });
-
-    popup.appendChild(button);
-  });
-
-  // Position the popup near the click
-  popup.style.left = `${event.clientX}px`;
-  popup.style.top = `${event.clientY}px`;
-  document.body.appendChild(popup);
-
-  // Remove popup on outside click
-  const hidePopup = (e) => {
-    if (!popup.contains(e.target)) {
-      popup.remove();
-      document.removeEventListener('click', hidePopup);
     }
-  };
-  document.addEventListener('click', hidePopup);
+  }));
+
+  createPopup(buttonConfigs, event, 'vocabulary-creation-popup');
 }
 
 /**
