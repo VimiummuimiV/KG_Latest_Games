@@ -25,7 +25,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "n72ok6mv8",
+            "id": "mkvh3z3q5",
             "pin": 1
           },
           {
@@ -40,82 +40,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "a2tjo7nht",
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "digits",
-              "vocName": "",
-              "vocId": "",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "sjd5vdl5w",
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "sprint",
-              "vocName": "",
-              "vocId": "",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "stys08i1v",
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "noerror",
-              "vocName": "",
-              "vocId": "",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "kii6k6j6m",
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "marathon",
-              "vocName": "",
-              "vocId": "",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "x14np0bds",
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "referats",
-              "vocName": "",
-              "vocId": "",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "wxb36w0vp",
+            "id": "1ks11bw6m",
             "pin": 1
           },
           {
@@ -130,7 +55,82 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "hkkp11944",
+            "id": "8kye7a9s1",
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "digits",
+              "vocName": "",
+              "vocId": "",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "nq6dkyvjt",
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "sprint",
+              "vocName": "",
+              "vocId": "",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "5mfuvfmy3",
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "noerror",
+              "vocName": "",
+              "vocId": "",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "x42hlcqb3",
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "marathon",
+              "vocName": "",
+              "vocId": "",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "hco7yq56n",
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "referats",
+              "vocName": "",
+              "vocId": "",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "9if1leftl",
             "pin": 1
           }
         ]
@@ -139,126 +139,6 @@
         "id": "w99g5kr27",
         "title": "Английский",
         "games": [
-          {
-            "id": "gh0p3e30j",
-            "params": {
-              "gametype": "voc",
-              "vocName": "English Top 10000",
-              "vocId": "175816",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "vcallqais",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Периферия in English",
-              "vocId": "112238",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "cp00mh8dt",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Top 1000 English words",
-              "vocId": "102976",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "yuhari1a4",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Точки и запятые in English",
-              "vocId": "253323",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "8gt7vsnwk",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Common long words",
-              "vocId": "132120",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "ejxhp1xzj",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Long words",
-              "vocId": "147910",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "kikfnigol",
-            "params": {
-              "gametype": "voc",
-              "vocName": "10 000 популярных английских слов",
-              "vocId": "103013",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "voc",
-              "vocName": "Short Texts in English",
-              "vocId": 14878,
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "3i94irlsw",
-            "pin": 1
-          },
           {
             "params": {
               "gametype": "voc",
@@ -271,7 +151,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "ziozn9bd2",
+            "id": "pvi89fach",
             "pin": 1
           },
           {
@@ -286,7 +166,22 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "611u6t491",
+            "id": "jbr0yuf1k",
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "voc",
+              "vocName": "Short Texts in English",
+              "vocId": 14878,
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "o1udd1w3t",
             "pin": 1
           },
           {
@@ -301,7 +196,82 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "9kvthd6l7",
+            "id": "s3mxcnltg",
+            "pin": 1
+          },
+          {
+            "id": "se7chzav9",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Long words",
+              "vocId": "147910",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "k2tz0rsp8",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Common long words",
+              "vocId": "132120",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "rpe8bgn7u",
+            "params": {
+              "gametype": "voc",
+              "vocName": "English Top 10000",
+              "vocId": "175816",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "eymxj6r3n",
+            "params": {
+              "gametype": "voc",
+              "vocName": "10 000 популярных английских слов",
+              "vocId": "103013",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "1lxxv10ln",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Top 1000 English words",
+              "vocId": "102976",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
             "pin": 1
           },
           {
@@ -316,7 +286,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "v7wigpuvp",
+            "id": "79r10io6m",
             "pin": 1
           },
           {
@@ -331,7 +301,37 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "v9c2hjjfk",
+            "id": "0nd72g7da",
+            "pin": 1
+          },
+          {
+            "id": "t5ire9mnw",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Периферия in English",
+              "vocId": "112238",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "rhc8svq7m",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Точки и запятые in English",
+              "vocId": "253323",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
             "pin": 1
           },
           {
@@ -346,7 +346,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "6jdrl3g36",
+            "id": "agpfba06k",
             "pin": 1
           },
           {
@@ -361,7 +361,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "ad3tkqxtv",
+            "id": "i91u3498u",
             "pin": 1
           }
         ]
@@ -370,171 +370,6 @@
         "id": "o2kd1isyh",
         "title": "Русский",
         "games": [
-          {
-            "id": "zo6tj0k00",
-            "params": {
-              "gametype": "voc",
-              "vocName": "10000 частых словоформ",
-              "vocId": "46660",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "lz78xdmlh",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Частотка чата 2013",
-              "vocId": "104975",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "yzou4pwen",
-            "params": {
-              "gametype": "voc",
-              "vocName": "5000 частых словоформ",
-              "vocId": "3063",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "4z82zr9tg",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Безымянные",
-              "vocId": "8223",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "m7ul0zxwt",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Сочетания разные",
-              "vocId": "66470",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "n8plvtpfy",
-            "params": {
-              "gametype": "voc",
-              "vocName": "ОтвеТСТВенность",
-              "vocId": "11327",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "spf77sfa2",
-            "params": {
-              "gametype": "voc",
-              "vocName": "не ошибись на \"т ь б ю\"",
-              "vocId": "7799",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "1uzby8uem",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Растяжка",
-              "vocId": "239644",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "0xgcln1nq",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Буквы гласные",
-              "vocId": "3803",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "hhrd3gkw4",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Периферия",
-              "vocId": "65675",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "m1ymsnug8",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Частотный словарь",
-              "vocId": "192",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
           {
             "params": {
               "gametype": "voc",
@@ -547,22 +382,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "p0iiglrt6",
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "voc",
-              "vocName": "легкие обычки",
-              "vocId": 12726,
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "rz2danasm",
+            "id": "9gf7o40il",
             "pin": 1
           },
           {
@@ -577,7 +397,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "05igfcou1",
+            "id": "yj9tnvwha",
             "pin": 1
           },
           {
@@ -592,217 +412,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "hpxjmnf6z",
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "voc",
-              "vocName": "Русский Частотный",
-              "vocId": 4125,
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "7q0jipnn0",
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "voc",
-              "vocName": "Тренируем указательные",
-              "vocId": 226,
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "s83mners8",
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "voc",
-              "vocName": "Забористый",
-              "vocId": 13589,
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "u9fiizqxs",
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "voc",
-              "vocName": "Периферия+",
-              "vocId": 38606,
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "i1jcht2ru",
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "voc",
-              "vocName": "Мизинцы 60%",
-              "vocId": 7056,
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "4qzos0ps3",
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "voc",
-              "vocName": "Мизинцы+",
-              "vocId": 3714,
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "5i544d0qc",
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "voc",
-              "vocName": "5000 самых частых слов",
-              "vocId": 203,
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "c1m4sv32g",
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "voc",
-              "vocName": "Бодрячок",
-              "vocId": 58736,
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "5r0dpvxn6",
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "voc",
-              "vocName": "(Да ну?) - \"Ну да!\"",
-              "vocId": 1670,
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "cdk5awif1",
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "voc",
-              "vocName": "Топ 1000 Русских слов",
-              "vocId": 102955,
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "97qm4wczn",
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "voc",
-              "vocName": "средний-мизинец",
-              "vocId": 46305,
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "s10m7ekb1",
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "voc",
-              "vocName": "Средний-мизинец: восьмисоточка",
-              "vocId": 91745,
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "qxf4bmy4q",
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "voc",
-              "vocName": "Левая",
-              "vocId": 929,
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "gcs72veo2",
-            "pin": 1
-          },
-          {
-            "params": {
-              "gametype": "voc",
-              "vocName": "Левая и Правая",
-              "vocId": 148710,
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "2irblleb5",
+            "id": "78h22jfzq",
             "pin": 1
           },
           {
@@ -817,7 +427,232 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "xg9u693k8",
+            "id": "80q0sa6zw",
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "voc",
+              "vocName": "легкие обычки",
+              "vocId": 12726,
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "7s4qhfxwx",
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "voc",
+              "vocName": "Тренируем указательные",
+              "vocId": 226,
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "at8msgozx",
+            "pin": 1
+          },
+          {
+            "id": "oxbux3lho",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Частотный словарь",
+              "vocId": "192",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "tmu6q384g",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Частотка чата 2013",
+              "vocId": "104975",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "voc",
+              "vocName": "Русский Частотный",
+              "vocId": 4125,
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "r8i42g3hg",
+            "pin": 1
+          },
+          {
+            "id": "u3fh9kh6z",
+            "params": {
+              "gametype": "voc",
+              "vocName": "10000 частых словоформ",
+              "vocId": "46660",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "q60x7045p",
+            "params": {
+              "gametype": "voc",
+              "vocName": "5000 частых словоформ",
+              "vocId": "3063",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "voc",
+              "vocName": "5000 самых частых слов",
+              "vocId": 203,
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "g4gbsucp0",
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "voc",
+              "vocName": "Топ 1000 Русских слов",
+              "vocId": 102955,
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "spirsn5hw",
+            "pin": 1
+          },
+          {
+            "id": "fr912dflk",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Безымянные",
+              "vocId": "8223",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "jardawsbt",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Периферия",
+              "vocId": "65675",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "zhfaqxmqh",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Сочетания разные",
+              "vocId": "66470",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "zj8uw0zoc",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Буквы гласные",
+              "vocId": "3803",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "voc",
+              "vocName": "Левая",
+              "vocId": 929,
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "posg7q2bn",
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "voc",
+              "vocName": "Левая и Правая",
+              "vocId": 148710,
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "8954ht070",
             "pin": 1
           },
           {
@@ -832,14 +667,15 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "hs4ckc27m",
+            "id": "v2q0drd9r",
             "pin": 1
           },
           {
+            "id": "768t7ho47",
             "params": {
               "gametype": "voc",
-              "vocName": "ЗХЪ",
-              "vocId": 21700,
+              "vocName": "не ошибись на \"т ь б ю\"",
+              "vocId": "7799",
               "type": "normal",
               "level_from": 1,
               "level_to": 9,
@@ -847,7 +683,6 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "fif1g19xy",
             "pin": 1
           },
           {
@@ -862,7 +697,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "sy6659pad",
+            "id": "kfzwhse54",
             "pin": 1
           }
         ]
@@ -871,21 +706,6 @@
         "id": "l98o98ob2",
         "title": "Цифры",
         "games": [
-          {
-            "params": {
-              "gametype": "voc",
-              "vocName": "Цифросоточка",
-              "vocId": 62238,
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "id": "cway8trfi",
-            "pin": 1
-          },
           {
             "params": {
               "gametype": "voc",
@@ -898,7 +718,22 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "w74g7wphe",
+            "id": "u7z90p72v",
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "voc",
+              "vocName": "Цифросоточка",
+              "vocId": 62238,
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "yibmgyds6",
             "pin": 1
           }
         ]
@@ -908,7 +743,142 @@
         "title": "Хардкор",
         "games": [
           {
-            "id": "tsn9yftbv",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Забористый",
+              "vocId": 13589,
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "97arxcd62",
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "voc",
+              "vocName": "Мизинцы 60%",
+              "vocId": 7056,
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "yr24ghbu5",
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "voc",
+              "vocName": "Мизинцы+",
+              "vocId": 3714,
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "l06oz5ka4",
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "voc",
+              "vocName": "Периферия+",
+              "vocId": 38606,
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "7okgv612a",
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "voc",
+              "vocName": "средний-мизинец",
+              "vocId": 46305,
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "10pata709",
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "voc",
+              "vocName": "Бодрячок",
+              "vocId": 58736,
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "f1oopcj63",
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "voc",
+              "vocName": "(Да ну?) - \"Ну да!\"",
+              "vocId": 1670,
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "yj0jg16wx",
+            "pin": 1
+          },
+          {
+            "id": "eoqj0ux7v",
+            "params": {
+              "gametype": "voc",
+              "vocName": "ОтвеТСТВенность",
+              "vocId": "11327",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "vlvi1ztse",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Растяжка",
+              "vocId": "239644",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "xv3u5c0t1",
             "params": {
               "gametype": "voc",
               "vocName": "Знаки Пунктуации 3.0",
@@ -923,7 +893,7 @@
             "pin": 1
           },
           {
-            "id": "vlf74hdzx",
+            "id": "m5n61gf0m",
             "params": {
               "gametype": "voc",
               "vocName": "Русско-английский частотный",
@@ -936,6 +906,36 @@
               "premium_abra": 0
             },
             "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "voc",
+              "vocName": "Средний-мизинец: восьмисоточка",
+              "vocId": 91745,
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "eiovi9k3r",
+            "pin": 1
+          },
+          {
+            "params": {
+              "gametype": "voc",
+              "vocName": "ЗХЪ",
+              "vocId": 21700,
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "id": "pl37gtc2q",
+            "pin": 1
           }
         ]
       },
@@ -944,11 +944,11 @@
         "title": "Тренировка",
         "games": [
           {
-            "id": "s15fekrf7",
+            "id": "ks5vntrg5",
             "params": {
               "gametype": "voc",
-              "vocName": "Буквы \"чс бю\"",
-              "vocId": "6",
+              "vocName": "Буквы \"ва ол\"",
+              "vocId": "1",
               "type": "normal",
               "level_from": 1,
               "level_to": 9,
@@ -959,37 +959,7 @@
             "pin": 1
           },
           {
-            "id": "9f01qb8i3",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Буквы \"еп нр\"",
-              "vocId": "4",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "6cuz7m0k6",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Буквы \"ук гш\"",
-              "vocId": "5",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "8ycwkolcc",
+            "id": "ap266gjrz",
             "params": {
               "gametype": "voc",
               "vocName": "Буквы \"ми ть\"",
@@ -1004,11 +974,11 @@
             "pin": 1
           },
           {
-            "id": "eb4wnhyo0",
+            "id": "goxmmeeh0",
             "params": {
               "gametype": "voc",
-              "vocName": "Буквы \"фы дж\"",
-              "vocId": "2",
+              "vocName": "Буквы \"еп нр\"",
+              "vocId": "4",
               "type": "normal",
               "level_from": 1,
               "level_to": 9,
@@ -1019,11 +989,41 @@
             "pin": 1
           },
           {
-            "id": "5605gojum",
+            "id": "iokov9ecn",
             "params": {
               "gametype": "voc",
-              "vocName": "Буквы \"ва ол\"",
-              "vocId": "1",
+              "vocName": "Буквы \"чс бю\"",
+              "vocId": "6",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "k1t7btj1q",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Буквы \"ук гш\"",
+              "vocId": "5",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "h1sbco2o4",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Буквы \"фы дж\"",
+              "vocId": "2",
               "type": "normal",
               "level_from": 1,
               "level_to": 9,
