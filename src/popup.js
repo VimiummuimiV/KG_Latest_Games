@@ -36,6 +36,11 @@ export function createPopup(buttonConfigs, event, className = 'popup') {
   popup.style.visibility = 'hidden';
   document.body.appendChild(popup);
 
+  // Add title to buttons if they are too wide
+  popup.querySelectorAll('button').forEach(btn => {
+    if (btn.getBoundingClientRect().width >= 300) btn.title = btn.textContent;
+  });
+
   // Get popup dimensions
   const popupRect = popup.getBoundingClientRect();
   const viewportWidth = window.innerWidth;
@@ -61,7 +66,7 @@ export function createPopup(buttonConfigs, event, className = 'popup') {
       document.removeEventListener('click', hidePopup);
     }
   };
-  
+
   // Use setTimeout to prevent immediate closure on the same click that opened the popup
   setTimeout(() => {
     document.addEventListener('click', hidePopup);

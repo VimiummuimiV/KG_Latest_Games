@@ -499,12 +499,23 @@ class LatestGamesManager {
     setupResizeHandle();
     document.body.appendChild(container);
     this.updateDisplayModeClass();
+
+
+    // Add title to tabs if they are too wide
+    const allTabs = container.querySelectorAll('.group-tab');
+    allTabs.forEach(tab => {
+      if (tab.getBoundingClientRect().width >= 300) {
+        tab.title = tab.textContent;
+      }
+    });
+
     // Patch updateDisplayModeClass to also update the handle
     const origUpdateDisplayModeClass = this.updateDisplayModeClass.bind(this);
     this.updateDisplayModeClass = (...args) => {
       origUpdateDisplayModeClass(...args);
       setupResizeHandle();
     };
+
     // Add updateRemoveIcons here, after everything is in the DOM
     this.updateRemoveIcons();
   }
