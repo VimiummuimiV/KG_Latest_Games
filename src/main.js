@@ -24,6 +24,7 @@ class LatestGamesManager {
     this.wasDragging = false;
     this.dragThreshold = 1;
     this.shouldAutoSave = true;
+    this.alwaysVisiblePanel = false;
     this.draggedElement = null;
     this.dragOffset = { x: 0, y: 0 };
     this.dragDirection = 0;
@@ -49,6 +50,7 @@ class LatestGamesManager {
     }
     this.createHoverArea();
     this.createContainer();
+    this.alwaysVisiblePanel && this.showContainer();
     this.createPanelToggleButton();
     this.handlePageSpecificLogic();
     this.exposeGlobalFunctions();
@@ -434,9 +436,8 @@ class LatestGamesManager {
       this.previousScrollPosition = container.scrollTop;
       this.saveSettings();
     });
-    // Add hover listeners to show/hide the container
-    container.addEventListener('mouseenter', () => this.showContainer());
-    container.addEventListener('mouseleave', () => this.hideContainerWithDelay());
+    // Add hover listeners to hide the container
+    container.addEventListener('mouseleave', () => this.hideContainer());
 
     // Add context menu event listener
     gamesList.addEventListener('contextmenu', (e) => {
@@ -539,6 +540,7 @@ class LatestGamesManager {
       this.panelWidth = settings.panelWidth || '95vw';
       this.shouldAutoSave = settings.shouldAutoSave !== false;
       this.enableDragging = settings.enableDragging !== undefined ? settings.enableDragging : true;
+      this.alwaysVisiblePanel = settings.alwaysVisiblePanel !== undefined ? settings.alwaysVisiblePanel : false;
     } catch (error) {
       console.warn('Could not load settings from localStorage:', error);
       // Set defaults
@@ -549,6 +551,7 @@ class LatestGamesManager {
       this.panelWidth = '95vw';
       this.shouldAutoSave = true;
       this.enableDragging = true;
+      this.alwaysVisiblePanel = false;
     }
   }
 
@@ -561,7 +564,8 @@ class LatestGamesManager {
         previousScrollPosition: this.previousScrollPosition,
         panelWidth: this.panelWidth,
         shouldAutoSave: this.shouldAutoSave,
-        enableDragging: this.enableDragging
+        enableDragging: this.enableDragging,
+        alwaysVisiblePanel: this.alwaysVisiblePanel
       };
       localStorage.setItem('latestGamesSettings', JSON.stringify(settings));
     } catch (error) {
@@ -810,7 +814,7 @@ class LatestGamesManager {
   createHoverArea() {
     const hoverArea = createElement('div', { id: 'latest-games-hover-area' });
     hoverArea.addEventListener('mouseenter', () => this.showContainer());
-    hoverArea.addEventListener('mouseleave', () => this.hideContainerWithDelay());
+    hoverArea.addEventListener('mouseleave', () => this.hideContainer());
     document.body.appendChild(hoverArea);
   }
 
@@ -839,7 +843,8 @@ class LatestGamesManager {
     }
   }
 
-  hideContainerWithDelay() {
+  hideContainer() {
+    if (this.alwaysVisiblePanel) return; // If alwaysVisiblePanel is true, do not hide
     this.isHovered = false;
     if (this.hoverTimeout) clearTimeout(this.hoverTimeout);
     this.hoverTimeout = setTimeout(() => {
@@ -1050,26 +1055,41 @@ class LatestGamesManager {
 
   createPanelToggleButton() {
     if (document.getElementById('latest-games-panel-toggle')) return;
+
     const btn = createElement('button', {
       id: 'latest-games-panel-toggle',
       className: 'latest-games-panel-toggle',
-      type: 'button'
+      type: 'button',
+      innerHTML: icons.panelToggle
     });
-    btn.innerHTML = icons.panelToggle;
-    btn.addEventListener('click', () => {
+
+    this.alwaysVisiblePanel && btn.classList.add('always-visible');
+
+    btn.addEventListener('click', (e) => {
       const container = document.getElementById('latest-games-container');
       if (!container) return;
-      if (container.classList.contains('visible')) {
-        if (this.hoverTimeout) {
-          clearTimeout(this.hoverTimeout);
-          this.hoverTimeout = null;
-        }
-        container.classList.remove('visible');
-        this.updateContainerLeftOffset();
+
+      if (e.ctrlKey) {
+        this.alwaysVisiblePanel = !this.alwaysVisiblePanel;
+        btn.classList.toggle('always-visible', this.alwaysVisiblePanel);
+        container.classList.toggle('visible', this.alwaysVisiblePanel);
+        if (!this.alwaysVisiblePanel) this.updateContainerLeftOffset();
+        this.saveSettings();
       } else {
-        this.showContainer();
+        const isVisible = container.classList.contains('visible');
+        if (isVisible) {
+          if (this.hoverTimeout) {
+            clearTimeout(this.hoverTimeout);
+            this.hoverTimeout = null;
+          }
+          container.classList.remove('visible');
+          this.updateContainerLeftOffset();
+        } else {
+          this.showContainer();
+        }
       }
     });
+
     document.body.appendChild(btn);
   }
 
