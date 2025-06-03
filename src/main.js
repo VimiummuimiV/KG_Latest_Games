@@ -19,6 +19,7 @@ class LatestGamesManager {
     this.currentGroupId = null;
     this.hoverTimeout = null;
     this.isHovered = false;
+    this.enableDragging = true;
     this.isDragging = false;
     this.wasDragging = false;
     this.dragThreshold = 1;
@@ -136,7 +137,7 @@ class LatestGamesManager {
     if (mode === 'wrap') {
       container.style.left = 'calc(-1 * (100vw - 100px))';
     } else {
-      container.style.left = '-350px';
+      container.style.left = '-320px';
     }
   }
 
@@ -178,7 +179,7 @@ class LatestGamesManager {
 
     li.appendChild(buttons);
     li.appendChild(link);
-    if (game.pin) this.addDragFunctionality(li, id);
+    if (game.pin && this.enableDragging) this.addDragFunctionality(li, id);
     return li;
   }
 
@@ -233,6 +234,43 @@ class LatestGamesManager {
 
   createControls() {
     const controlsContainer = createElement('div', { className: 'latest-games-controls' });
+    const controlsLimiter = createElement('div', { className: 'controls-limiter' });
+    const controlsButtons = createElement('div', { className: 'controls-buttons' });
+    controlsContainer.append(controlsLimiter, controlsButtons);
+
+    const options = createElement('span', { id: 'latest-games-options' });
+    const decreaseBtn = createElement('span', {
+      id: 'latest-games-count-dec',
+      className: 'control-button',
+      title: 'Уменьшить количество сохраняемых игр',
+      innerHTML: icons.decrease
+    });
+
+    const countDisplay = createElement('span', {
+      id: 'latest-games-count',
+      className: this.shouldAutoSave === false ? 'rg-disabled' : '',
+      textContent: this.maxGameCount.toString(),
+      title: this.shouldAutoSave ? 'Количество сохраняемых игр' : 'Автосохранение отключено'
+    });
+    countDisplay.addEventListener('click', () => {
+      this.shouldAutoSave = !this.shouldAutoSave;
+      this.updateGameCountDisplay();
+      this.saveSettings();
+      this.refreshContainer();
+    });
+
+    const increaseBtn = createElement('span', {
+      id: 'latest-games-count-inc',
+      className: 'control-button',
+      title: 'Увеличить количество сохраняемых игр',
+      innerHTML: icons.increase
+    });
+
+    decreaseBtn.addEventListener('click', () => this.changeGameCount(-1));
+    increaseBtn.addEventListener('click', () => this.changeGameCount(1));
+
+    options.append(decreaseBtn, countDisplay, increaseBtn);
+
     const pinAllBtn = createElement('span', {
       className: 'latest-games-pinall control-button',
       title: 'Закрепить все',
@@ -332,51 +370,7 @@ class LatestGamesManager {
       this.saveGameData();
       this.refreshContainer();
     };
-    const options = createElement('span', { id: 'latest-games-options' });
-    const decreaseBtn = createElement('span', {
-      id: 'latest-games-count-dec',
-      className: 'control-button',
-      title: 'Уменьшить количество сохраняемых игр',
-      innerHTML: icons.decrease
-    });
 
-    const countDisplay = createElement('span', {
-      id: 'latest-games-count',
-      className: this.shouldAutoSave === false ? 'no-save' : '',
-      textContent: this.maxGameCount.toString(),
-      title: this.shouldAutoSave ? 'Количество сохраняемых игр' : 'Автосохранение отключено'
-    });
-    countDisplay.addEventListener('click', () => {
-      this.shouldAutoSave = !this.shouldAutoSave;
-      this.updateGameCountDisplay();
-      this.saveSettings();
-      this.refreshContainer();
-    });
-
-    const increaseBtn = createElement('span', {
-      id: 'latest-games-count-inc',
-      className: 'control-button',
-      title: 'Увеличить количество сохраняемых игр',
-      innerHTML: icons.increase
-    });
-
-    decreaseBtn.addEventListener('click', () => this.changeGameCount(-1));
-    increaseBtn.addEventListener('click', () => this.changeGameCount(1));
-
-    options.appendChild(decreaseBtn);
-    options.appendChild(countDisplay);
-    options.appendChild(increaseBtn);
-
-    controlsContainer.appendChild(options);
-    controlsContainer.appendChild(this.createThemeToggle());
-    controlsContainer.appendChild(this.createDisplayModeToggle());
-    controlsContainer.appendChild(pinAllBtn);
-    controlsContainer.appendChild(unpinAllBtn);
-    controlsContainer.appendChild(importBtn);
-    controlsContainer.appendChild(exportBtn);
-    controlsContainer.appendChild(removeAllBtn);
-
-    // Add 'Remove all not pinned games' button
     const removeUnpinnedBtn = createElement('span', {
       className: 'latest-games-remove-unpinned control-button',
       title: 'Удалить все неприкреплённые игры из всех групп',
@@ -394,7 +388,29 @@ class LatestGamesManager {
         this.refreshContainer();
       }
     };
-    controlsContainer.appendChild(removeUnpinnedBtn);
+
+    const dragToggleBtn = createElement('span', {
+      className: 'latest-games-drag-toggle control-button',
+      title: this.enableDragging ? 'Перетаскивание включено' : 'Перетаскивание отключено',
+      innerHTML: icons.dragToggle
+    });
+
+    // Disable button if dragging is not enabled
+    dragToggleBtn.classList.toggle('rg-disabled', !this.enableDragging);
+
+    dragToggleBtn.onclick = () => {
+      this.enableDragging = !this.enableDragging;
+      this.saveSettings();
+      this.refreshContainer();
+      dragToggleBtn.title = this.enableDragging ? 'Перетаскивание включено' : 'Перетаскивание отключено';
+
+      // Update the class to reflect the state
+      dragToggleBtn.classList.toggle('rg-disabled', !this.enableDragging);
+    };
+
+    controlsLimiter.appendChild(options);
+    controlsButtons.append(this.createThemeToggle(), this.createDisplayModeToggle(),
+      pinAllBtn, unpinAllBtn, importBtn, exportBtn, removeAllBtn, removeUnpinnedBtn, dragToggleBtn);
 
     return controlsContainer;
   }
@@ -497,7 +513,7 @@ class LatestGamesManager {
     const countDisplay = document.getElementById('latest-games-count');
     if (countDisplay) {
       countDisplay.textContent = this.maxGameCount.toString();
-      countDisplay.classList.toggle('no-save', this.shouldAutoSave === false);
+      countDisplay.classList.toggle('rg-disabled', this.shouldAutoSave === false);
       countDisplay.title = this.shouldAutoSave ? 'Количество сохраняемых игр' : 'Автосохранение отключено';
     }
   }
@@ -510,7 +526,8 @@ class LatestGamesManager {
       this.displayMode = settings.displayMode || 'scroll';
       this.previousScrollPosition = settings.previousScrollPosition || 0;
       this.panelWidth = settings.panelWidth || '95vw';
-      this.shouldAutoSave = settings.shouldAutoSave !== false; // default true
+      this.shouldAutoSave = settings.shouldAutoSave !== false;
+      this.enableDragging = settings.enableDragging !== undefined ? settings.enableDragging : true;
     } catch (error) {
       console.warn('Could not load settings from localStorage:', error);
       // Set defaults
@@ -520,6 +537,7 @@ class LatestGamesManager {
       this.previousScrollPosition = 0;
       this.panelWidth = '95vw';
       this.shouldAutoSave = true;
+      this.enableDragging = true;
     }
   }
 
@@ -531,7 +549,8 @@ class LatestGamesManager {
         displayMode: this.displayMode,
         previousScrollPosition: this.previousScrollPosition,
         panelWidth: this.panelWidth,
-        shouldAutoSave: this.shouldAutoSave
+        shouldAutoSave: this.shouldAutoSave,
+        enableDragging: this.enableDragging
       };
       localStorage.setItem('latestGamesSettings', JSON.stringify(settings));
     } catch (error) {
