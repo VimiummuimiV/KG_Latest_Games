@@ -82,6 +82,9 @@ function clampIndex(idx, isMinHandle) {
  * @returns {HTMLElement} The created popup element
  */
 export function createGamePopup(game, event, className = 'game-popup') {
+  const existingPopup = document.querySelector(`.${className}`);
+  existingPopup && existingPopup.remove();
+  
   const popup = createElement('div', { className });
 
   const header = createElement('div', { className: 'popup-header' });

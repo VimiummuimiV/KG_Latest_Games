@@ -189,6 +189,7 @@ class LatestGamesManager {
     createCustomTooltip(link, `
       [Клик] Перейти к игре с текущими параметрами
       [Shift + Клик] Перейти к игре с альтернативными параметрами
+      [Удерживание (ЛКМ)] аналогично (Shift + Клик)
     `);
 
     li.appendChild(buttons);
@@ -482,6 +483,48 @@ class LatestGamesManager {
     container.addEventListener('mouseenter', () => this.showContainer());
     container.addEventListener('mouseleave', () => this.hideContainer());
 
+    let longPressTimer = null;
+    let suppressClick = false;
+
+    const showGamePopup = (e) => {
+      const gameElement = e.target.closest('.latest-game');
+      if (!gameElement) return;
+      const gameId = gameElement.id.replace('latest-game-', '');
+      const game = this.findGameById(gameId);
+      if (game) createGamePopup(game, e);
+    };
+
+    gamesList.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return; // Only left button
+
+      if (e.shiftKey) {
+        // Immediate Shift+press
+        suppressClick = true;
+        e.preventDefault();
+        showGamePopup(e);
+      } else {
+        // Start long-press timer
+        longPressTimer = setTimeout(() => {
+          suppressClick = true;
+          e.preventDefault();
+          showGamePopup(e);
+        }, 300);
+      }
+    });
+
+    gamesList.addEventListener('mouseup', () => {
+      clearTimeout(longPressTimer);
+    });
+
+    // Capture-phase click listener to block the “click” after a long press or Shift press
+    gamesList.addEventListener('click', (e) => {
+      if (suppressClick) {
+        e.stopImmediatePropagation(); // Prevent any further click handling
+        e.preventDefault(); // Prevent default action
+        suppressClick = false;
+      }
+    }, { capture: true });
+
     // Add context menu event listener
     gamesList.addEventListener('contextmenu', (e) => {
       const gameElement = e.target.closest('.latest-game');
@@ -489,21 +532,6 @@ class LatestGamesManager {
         e.preventDefault();
         const gameId = gameElement.id.replace('latest-game-', '');
         showMigrationPopup(this, this.groups, this.currentGroupId, e, gameId);
-      }
-    });
-
-    // Add click event listener for Ctrl + Click on game elements
-    gamesList.addEventListener('click', (e) => {
-      if (e.shiftKey) {
-        const gameElement = e.target.closest('.latest-game');
-        if (gameElement) {
-          e.preventDefault();
-          const gameId = gameElement.id.replace('latest-game-', '');
-          const game = this.findGameById(gameId);
-          if (game) {
-            createGamePopup(game, e);
-          }
-        }
       }
     });
 
