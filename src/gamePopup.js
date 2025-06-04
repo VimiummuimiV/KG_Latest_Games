@@ -98,7 +98,8 @@ export function createGamePopup(game, event, className = 'game-popup') {
 
   // Set qualification visibility based on qualification setting
   let qualificationEnabled = settingsHelper.getQualificationState();
-  qualification.classList.toggle('latest-games-disabled', qualificationEnabled);
+  qualification.classList.toggle('latest-games-disabled', !qualificationEnabled);
+  createCustomTooltip(qualification, `Квалификация ${qualificationEnabled ? 'включена' : 'выключена'}`);
 
   // Add click handler for qualification toggle
   qualification.addEventListener('click', (e) => {
@@ -107,7 +108,8 @@ export function createGamePopup(game, event, className = 'game-popup') {
     qualificationEnabled = !qualificationEnabled;
     settingsHelper.saveQualificationState(qualificationEnabled);
     
-    qualification.classList.toggle('latest-games-disabled', qualificationEnabled);
+    qualification.classList.toggle('latest-games-disabled', !qualificationEnabled);
+    createCustomTooltip(qualification, `Квалификация ${qualificationEnabled ? 'включена' : 'выключена'}`);
     
     // Update all button links with new qualification setting
     updateButtonLinks();
