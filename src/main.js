@@ -68,8 +68,10 @@ class LatestGamesManager {
   }
 
   updateThemeIcon() {
-    const svg = document.querySelector('#latest-games-container .theme-toggle svg');
-    if (svg) svg.innerHTML = this.currentTheme === 'light' ? icons.sun : icons.moon;
+    const toggleThemeButton = document.querySelector('#latest-games-container .theme-toggle');
+    if (toggleThemeButton) {
+      toggleThemeButton.innerHTML = this.currentTheme === 'light' ? icons.sun : icons.moon;
+    }
   }
 
   toggleTheme(button) {
@@ -83,9 +85,7 @@ class LatestGamesManager {
     const toggleThemeButton = createElement('div', {
       className: 'theme-toggle control-button'
     });
-    const svg = createElement('svg', { viewBox: '0 0 24 24' });
-    svg.innerHTML = this.currentTheme === 'light' ? icons.sun : icons.moon;
-    toggleThemeButton.appendChild(svg);
+    toggleThemeButton.innerHTML = this.currentTheme === 'light' ? icons.sun : icons.moon;
     toggleThemeButton.addEventListener('click', () => this.toggleTheme(toggleThemeButton));
     createCustomTooltip(toggleThemeButton, `Изменить тему на ${this.currentTheme === 'light' ? 'тёмную' : 'светлую'}`);
     return toggleThemeButton;
@@ -95,21 +95,29 @@ class LatestGamesManager {
     const toggleButton = createElement('div', {
       className: 'display-mode-toggle control-button'
     });
-    const svg = createElement('svg', { viewBox: '0 0 24 24' });
-    this.updateDisplayModeIcon(svg, this.displayMode);
-    toggleButton.appendChild(svg);
+    toggleButton.innerHTML = this.displayMode === 'wrap' ? icons.wrap : icons.scroll;
+    createCustomTooltip(toggleButton, this.displayMode === 'wrap'
+      ? 'Переключить режим отображения в вертикальный вид'
+      : 'Переключить режим отображения в горизонтальный вид');
+
     toggleButton.addEventListener('click', () => {
       const newMode = this.getDisplayMode() === 'scroll' ? 'wrap' : 'scroll';
       this.setDisplayMode(newMode);
-      this.updateDisplayModeIcon(svg, newMode);
+      this.updateDisplayModeIcon(toggleButton, newMode);
       this.updateDisplayModeClass();
+      createCustomTooltip(toggleButton, newMode === 'wrap'
+        ? 'Переключить режим отображения в вертикальный вид'
+        : 'Переключить режим отображения в горизонтальный вид');
       if (newMode === 'scroll') {
         const c = document.getElementById('latest-games-container');
         if (c) setTimeout(() => c.scrollTop = c.scrollHeight, 0);
       }
     });
-    createCustomTooltip(toggleButton, 'Переключить режим отображения (Вертикальный/Горизонтальный)');
     return toggleButton;
+  }
+
+  updateDisplayModeIcon(toggleButton, mode) {
+    toggleButton.innerHTML = mode === 'wrap' ? icons.wrap : icons.scroll;
   }
 
   getDisplayMode() {
@@ -119,10 +127,6 @@ class LatestGamesManager {
   setDisplayMode(mode) {
     this.displayMode = mode;
     this.saveSettings();
-  }
-
-  updateDisplayModeIcon(svg, mode) {
-    svg.innerHTML = mode === 'wrap' ? icons.wrap : icons.scroll;
   }
 
   updateDisplayModeClass() {

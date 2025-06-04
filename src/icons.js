@@ -105,9 +105,9 @@ export const icons = {
 
   scroll: `
     <svg xmlns="${SVG_NS}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="4" y="4" width="16" height="16" rx="2"/>
-      <line x1="4" y1="9" x2="20" y2="9"/>
-      <line x1="4" y1="15" x2="20" y2="15"/>
+      <rect x="2" y="2" width="20" height="20" rx="2"/>
+      <line x1="2" y1="8" x2="22" y2="8"/>
+      <line x1="2" y1="16" x2="22" y2="16"/>
     </svg>
   `,
 
