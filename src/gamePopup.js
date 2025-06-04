@@ -84,7 +84,7 @@ function clampIndex(idx, isMinHandle) {
 export function createGamePopup(game, event, className = 'game-popup') {
   const existingPopup = document.querySelector(`.${className}`);
   existingPopup && existingPopup.remove();
-  
+
   const popup = createElement('div', { className });
 
   const header = createElement('div', { className: 'popup-header' });
@@ -110,10 +110,10 @@ export function createGamePopup(game, event, className = 'game-popup') {
     e.stopPropagation();
     qualificationEnabled = !qualificationEnabled;
     settingsHelper.saveQualificationState(qualificationEnabled);
-    
+
     qualification.classList.toggle('latest-games-disabled', !qualificationEnabled);
     createCustomTooltip(qualification, `Квалификация ${qualificationEnabled ? 'включена' : 'выключена'}`);
-    
+
     // Update all button links with new qualification setting
     updateButtonLinks();
   });
@@ -381,6 +381,7 @@ function setupPopupPositioning(popup, event) {
       // Allow dragging on headers and non-interactive containers
       const draggableSelectors = [
         '.popup-header',
+        '.popup-header-title',
         '.popup-subheader',
         '.rank-slider-display',
         '.timeouts-container'
