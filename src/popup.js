@@ -6,14 +6,24 @@ import { createElement } from './utils.js';
  * @param {Array} buttonConfigs - Array of button configuration objects
  * @param {MouseEvent} event - The mouse event for positioning
  * @param {string} className - CSS class name for the popup
+ * @param {string} header - Optional header text to display at the top
  * @returns {HTMLElement} The created popup element
  */
-export function createPopup(buttonConfigs, event, className = 'popup') {
+export function createPopup(buttonConfigs, event, className = 'popup', header) {
   // Remove any existing popup with the same class
   const existingPopup = document.querySelector(`.${className}`);
   if (existingPopup) existingPopup.remove();
 
   const popup = createElement('div', { className });
+
+  // Add header if provided
+  if (header) {
+    const headerElem = createElement('div', {
+      className: 'popup-header',
+      textContent: header
+    });
+    popup.appendChild(headerElem);
+  }
 
   // Create buttons from configurations
   buttonConfigs.forEach(config => {

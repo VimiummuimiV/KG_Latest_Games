@@ -12,56 +12,48 @@ import { createPopup } from './popup.js';
  */
 export function showVocabularyCreationPopup(groups, event, vocId, vocName, manager) {
   // Create button configurations for each group
-  const buttonConfigs = groups.map(group => ({
-    text: group.title,
-    className: 'group-tab',
-    dataset: { groupId: group.id },
-    onClick: () => {
-      // Find the group where the vocabulary already exists
-      const foundGroup = groups.find(g =>
-        g.games.some(game => String(game.params?.vocId) === String(vocId))
-      );
-      
-      if (foundGroup) {
-        alert(`Этот словарь уже добавлен в ${foundGroup.title}`);
-        return;
+  const buttonConfigs = groups.map(group => {
+    const alreadyExists = group.games.some(game => String(game.params?.vocId) === String(vocId));
+    return {
+      text: group.title,
+      className: `group-tab${alreadyExists ? ' active' : ''}`,
+      dataset: { groupId: group.id },
+      onClick: () => {
+        // Find the group where the vocabulary already exists
+        const foundGroup = groups.find(g =>
+          g.games.some(game => String(game.params?.vocId) === String(vocId))
+        );
+        if (foundGroup) {
+          alert(`Этот словарь уже добавлен в ${foundGroup.title}`);
+          return;
+        }
+        if (!alreadyExists) {
+          // Create a new game object with default parameters
+          const newGame = {
+            id: generateRandomId(),
+            params: {
+              gametype: 'voc',
+              vocName: vocName,
+              vocId: vocId,
+              type: 'normal',
+              level_from: 1,
+              level_to: 9,
+              timeout: 10,
+              qual: 0,
+              premium_abra: 0
+            },
+            pin: 1 // Pinned by default
+          };
+          group.games.unshift(newGame);
+          manager.saveGameData();
+          manager.refreshContainer();
+          highlightExistingVocabularies(groups);
+        }
       }
+    };
+  });
 
-      // Check if the vocabulary already exists in the group (defensive)
-      const alreadyExists = group.games.some(game => String(game.params?.vocId) === String(vocId));
-      
-      if (!alreadyExists) {
-        // Create a new game object with default parameters
-        const newGame = {
-          id: generateRandomId(),
-          params: {
-            gametype: 'voc',
-            vocName: vocName,
-            vocId: vocId,
-            type: 'normal',
-            level_from: 1,
-            level_to: 9,
-            timeout: 10,
-            qual: 0,
-            premium_abra: 0
-          },
-          pin: 1 // Pinned by default
-        };
-
-        // Add the new game to the start of the group's games array
-        group.games.unshift(newGame);
-
-        // Save and refresh
-        manager.saveGameData();
-        manager.refreshContainer();
-
-        // Update vocabulary checkers
-        highlightExistingVocabularies(groups);
-      }
-    }
-  }));
-
-  createPopup(buttonConfigs, event, 'vocabulary-creation-popup');
+  createPopup(buttonConfigs, event, 'vocabulary-creation-popup', 'Добавить');
 }
 
 /**

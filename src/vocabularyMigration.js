@@ -13,7 +13,7 @@ export function showMigrationPopup(manager, groups, currentGroupId, event, gameI
       }
     }));
 
-  createPopup(buttonConfigs, event, 'game-migration-popup');
+  createPopup(buttonConfigs, event, 'game-migration-popup', 'Переместить');
 }
 
 export function migrateGame(manager, gameId, targetGroupId) {

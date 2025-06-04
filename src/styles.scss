@@ -435,7 +435,6 @@
         border: 2px solid var(--rg-border-pinned-voc);
         background: var(--rg-bg-card-pinned-voc);
         color: var(--rg-gametype-voc) !important;
-        font-weight: 600;
         z-index: 1;
       }
     }
@@ -465,6 +464,13 @@
   scrollbar-width: none;
   z-index: 1022;
 
+  .popup-header {
+    display: inline-flex;
+    font: 600 14px "Montserrat", sans-serif;
+    color: var(--rg-header-text);
+    padding: 6px;
+  }
+
   .group-tab {
     display: inline-block;
     padding: 6px 16px;
@@ -485,6 +491,13 @@
       border-color: var(--rg-border-hover);
       background: var(--rg-bg-hover);
       color: var(--rg-text-primary);
+    }
+
+    &.active {
+      border: 2px solid var(--rg-border-pinned-voc);
+      background: var(--rg-bg-card-pinned-voc);
+      color: var(--rg-gametype-voc) !important;
+      z-index: 1;
     }
   }
 }
