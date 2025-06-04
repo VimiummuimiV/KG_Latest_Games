@@ -2,6 +2,7 @@ import { createCustomTooltip } from './tooltip.js';
 import { createElement } from './utils.js';
 import { visibilities, timeouts, ranks } from './definitions.js';
 import { generateGameLink } from './gameUtils.js';
+import { icons } from './icons.js';
 
 const visibilityTypes = Object.keys(visibilities);
 const SETTINGS_KEY = 'latestGamesSettings';
@@ -72,11 +73,22 @@ function clampIndex(idx, isMinHandle) {
 export function createGamePopup(game, event, className = 'game-popup') {
   const popup = createElement('div', { className });
 
-  const headerElem = createElement('div', {
-    className: 'popup-header',
+  const header = createElement('div', { className: 'popup-header' });
+
+  const headerTitle = createElement('div', {
+    className: 'popup-header-title',
     textContent: 'Выбрать'
   });
-  popup.appendChild(headerElem);
+
+  const qualification = createElement('span', {
+    className: 'popup-header-qualification',
+    innerHTML: icons.qualification
+  });
+
+  // Set qualification visibility based on game params
+
+  header.append(headerTitle, qualification);
+  popup.appendChild(header);
 
   // --- Dual-range slider for rank selection ---
   const rankSliderContainer = createElement('div', { className: 'rank-slider-container' });
@@ -344,7 +356,8 @@ function setupPopupPositioning(popup, event) {
         '.game-popup-button',
         '.rank-slider-handle',
         '.rank-slider-track',
-        '.rank-slider-range'
+        '.rank-slider-range',
+        '.popup-header-qualification'
       ];
 
       return interactiveSelectors.some(selector =>

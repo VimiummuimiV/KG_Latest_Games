@@ -263,7 +263,7 @@ class LatestGamesManager {
 
     const countDisplay = createElement('span', {
       id: 'latest-games-count',
-      className: this.shouldAutoSave === false ? 'rg-disabled' : '',
+      className: this.shouldAutoSave === false ? 'latest-games-disabled' : '',
       textContent: this.maxGameCount.toString()
     });
     createCustomTooltip(countDisplay, this.shouldAutoSave ? 'Автосохранение включено' : 'Автосохранение отключено');
@@ -436,14 +436,14 @@ class LatestGamesManager {
       innerHTML: icons.dragToggle
     });
     createCustomTooltip(dragToggleBtn, this.enableDragging ? 'Перетаскивание включено' : 'Перетаскивание отключено');
-    dragToggleBtn.classList.toggle('rg-disabled', !this.enableDragging);
+    dragToggleBtn.classList.toggle('latest-games-disabled', !this.enableDragging);
 
     dragToggleBtn.onclick = () => {
       this.enableDragging = !this.enableDragging;
       this.saveSettings();
       this.refreshContainer();
       createCustomTooltip(dragToggleBtn, this.enableDragging ? 'Перетаскивание включено' : 'Перетаскивание отключено');
-      dragToggleBtn.classList.toggle('rg-disabled', !this.enableDragging);
+      dragToggleBtn.classList.toggle('latest-games-disabled', !this.enableDragging);
     };
 
     controlsLimiter.appendChild(options);
@@ -637,7 +637,7 @@ class LatestGamesManager {
     const countDisplay = document.getElementById('latest-games-count');
     if (countDisplay) {
       countDisplay.textContent = this.maxGameCount.toString();
-      countDisplay.classList.toggle('rg-disabled', this.shouldAutoSave === false);
+      countDisplay.classList.toggle('latest-games-disabled', this.shouldAutoSave === false);
       createCustomTooltip(countDisplay, this.shouldAutoSave ? 'Автосохранение включено' : 'Автосохранение отключено');
     }
   }

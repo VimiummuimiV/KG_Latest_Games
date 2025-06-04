@@ -42,11 +42,6 @@
   scrollbar-width: none;
   color: var(--rg-text-primary);
 
-  .rg-disabled {
-    filter: grayscale(1);
-    opacity: 0.5;
-  }
-
   &.visible {
     left: 0 !important;
     opacity: 1;
@@ -466,11 +461,21 @@
   z-index: 1022;
   user-select: none;
 
+  .popup-header-qualification {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+
   .popup-header {
     display: inline-flex;
     font: 600 14px "Montserrat", sans-serif;
     color: var(--rg-header-text);
     padding: 6px;
+    justify-content: space-between;
   }
 
   .popup-subheader {
@@ -673,4 +678,9 @@
     font-weight: bold !important;
     color: var(--rg-text-count) !important;
   }
+}
+
+.latest-games-disabled {
+  filter: grayscale(1);
+  opacity: 0.5;
 }
