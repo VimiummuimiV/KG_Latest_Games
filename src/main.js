@@ -283,8 +283,8 @@ class LatestGamesManager {
       innerHTML: icons.pinAll
     });
     createCustomTooltip(pinAllBtn, `
-      [Клик] Закрепить все в текущей группе
-      [Ctrl + Клик] Закрепить все во всех группах
+      [Клик] Закрепить все игры в текущей группе
+      [Ctrl + Клик] Закрепить все игры во всех группах
     `);
     pinAllBtn.onclick = (e) => {
       if (e.ctrlKey) {
@@ -306,8 +306,8 @@ class LatestGamesManager {
       innerHTML: icons.unpinAll
     });
     createCustomTooltip(unpinAllBtn, `
-      [Клик] Открепить все в текущей группе
-      [Ctrl + Клик] Открепить все во всех группах
+      [Клик] Открепить все игры в текущей группе
+      [Ctrl + Клик] Открепить все игры во всех группах
     `);
     unpinAllBtn.onclick = (e) => {
       if (e.ctrlKey) {
@@ -400,18 +400,26 @@ class LatestGamesManager {
       className: 'latest-games-remove-unpinned control-button',
       innerHTML: icons.broom
     });
-    createCustomTooltip(removeUnpinnedBtn, 'Удалить все неприкреплённые игры из всех групп');
-    removeUnpinnedBtn.onclick = () => {
-      let changed = false;
-      this.groups.forEach(group => {
-        const before = group.games.length;
-        group.games = group.games.filter(g => g.pin);
-        if (group.games.length !== before) changed = true;
-      });
-      if (changed) {
-        this.saveGameData();
-        this.refreshContainer();
+    createCustomTooltip(removeUnpinnedBtn, `
+      [Клик] Удалить все незакреплённые игры в текущей группе
+      [Ctrl + Клик] Удалить все незакреплённые игры во всех группах
+    `);
+
+    removeUnpinnedBtn.onclick = (e) => {
+      if (e.ctrlKey) {
+        // Ctrl + Click: Remove unpinned games from all groups
+        this.groups.forEach(group => {
+          group.games = group.games.filter(game => game.pin);
+        });
+      } else {
+        // Click: Remove unpinned games only from current group
+        const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
+        if (currentGroup) {
+          currentGroup.games = currentGroup.games.filter(game => game.pin);
+        }
       }
+      this.saveGameData();
+      this.refreshContainer();
     };
 
     const dragToggleBtn = createElement('span', {
@@ -1149,6 +1157,10 @@ class LatestGamesManager {
       type: 'button',
       innerHTML: this.alwaysVisiblePanel ? icons.panelToggleOpened : icons.panelToggleClosed,
     });
+    createCustomTooltip(btn, `
+      [Клик] (Показать/Скрыть) панель
+      [Ctrl + Клик] (Закрепить/Открепить) панель`
+    );
 
     this.alwaysVisiblePanel && btn.classList.add('always-visible');
 
