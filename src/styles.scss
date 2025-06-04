@@ -464,6 +464,7 @@
   overflow-y: auto;
   scrollbar-width: none;
   z-index: 1022;
+  user-select: none;
 
   .popup-header {
     display: inline-flex;

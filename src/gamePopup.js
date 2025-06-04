@@ -14,6 +14,9 @@ const RANK_CONSTRAINTS = {
   maxTo: 8
 };
 
+// Add margin to avoid edge clipping
+const margin = 10;
+
 /**
  * Settings helper functions
  */
@@ -266,15 +269,15 @@ export function createGamePopup(game, event, className = 'game-popup') {
   });
 
   // Position popup and add tooltips
-  setupPopupPositioning(popup, event);
+  setupPopupPositioning(popup, event, headerElem);
 
   return popup;
 }
 
 /**
- * Handle popup positioning and tooltip setup
+ * Handle popup positioning, tooltip setup, and drag functionality
  */
-function setupPopupPositioning(popup, event) {
+function setupPopupPositioning(popup, event, headerElem) {
   // Add popup to body temporarily to measure dimensions
   popup.style.visibility = 'hidden';
   document.body.appendChild(popup);
@@ -287,40 +290,110 @@ function setupPopupPositioning(popup, event) {
   });
 
   // Calculate and set position
-  const popupRect = popup.getBoundingClientRect();
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
-  const margin = 10;
 
-  let left = Math.max(margin, Math.min(event.clientX, viewportWidth - popupRect.width - margin));
-  let top = Math.max(margin, Math.min(event.clientY, viewportHeight - popupRect.height - margin));
+  // Helper function to constrain popup position within viewport bounds
+  const constrainPosition = (left, top) => {
+    // Get viewport dimensions in real-time
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    const popupRect = popup.getBoundingClientRect();
+    const maxLeft = viewportWidth - popupRect.width - margin;
+    const maxTop = viewportHeight - popupRect.height - margin;
+
+    return {
+      left: Math.max(margin, Math.min(left, maxLeft)),
+      top: Math.max(margin, Math.min(top, maxTop))
+    };
+  };
+
+  const { left, top } = constrainPosition(event.clientX, event.clientY);
 
   popup.style.left = `${left}px`;
   popup.style.top = `${top}px`;
   popup.style.visibility = 'visible';
 
+  // Store event handlers for cleanup in a single object
+  const eventHandlers = {
+    clickOutside: null,
+    keydown: null,
+    headerMouseDown: null,
+    currentDrag: null
+  };
+
+  // Setup drag functionality on header
+  eventHandlers.headerMouseDown = (e) => {
+    if (e.button !== 0) return; // Only left mouse button
+
+    e.preventDefault();
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startLeft = parseInt(popup.style.left, margin);
+    const startTop = parseInt(popup.style.top, margin);
+
+    const onMouseMove = (e) => {
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+
+      const newLeft = startLeft + deltaX;
+      const newTop = startTop + deltaY;
+
+      // Use helper function to constrain position
+      const { left, top } = constrainPosition(newLeft, newTop);
+
+      popup.style.left = `${left}px`;
+      popup.style.top = `${top}px`;
+    };
+
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      eventHandlers.currentDrag = null;
+    };
+    eventHandlers.currentDrag = { onMouseMove, onMouseUp };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+  headerElem.addEventListener('mousedown', eventHandlers.headerMouseDown);
+  headerElem.style.cursor = 'move';
+
   // Setup event handlers for closing popup
   const hidePopup = (e) => {
     if (e && e.type === 'keydown' && e.key !== 'Escape') return;
+
+    // Remove all event listeners
+    if (eventHandlers.clickOutside) {
+      document.removeEventListener('click', eventHandlers.clickOutside);
+    }
+    if (eventHandlers.keydown) {
+      document.removeEventListener('keydown', eventHandlers.keydown);
+    }
+    if (eventHandlers.headerMouseDown) {
+      headerElem.removeEventListener('mousedown', eventHandlers.headerMouseDown);
+    }
+    if (eventHandlers.currentDrag) {
+      document.removeEventListener('mousemove', eventHandlers.currentDrag.onMouseMove);
+      document.removeEventListener('mouseup', eventHandlers.currentDrag.onMouseUp);
+    }
+
     popup.remove();
-    document.removeEventListener('click', clickOutsideHandler);
-    document.removeEventListener('keydown', keydownHandler);
   };
 
-  const clickOutsideHandler = (e) => {
+  eventHandlers.clickOutside = (e) => {
     if (!popup.contains(e.target)) {
       hidePopup(e);
     }
   };
 
-  const keydownHandler = (e) => {
+  eventHandlers.keydown = (e) => {
     if (e.key === 'Escape') {
       hidePopup(e);
     }
   };
 
   requestAnimationFrame(() => {
-    document.addEventListener('click', clickOutsideHandler);
-    document.addEventListener('keydown', keydownHandler);
+    document.addEventListener('click', eventHandlers.clickOutside);
+    document.addEventListener('keydown', eventHandlers.keydown);
   });
 }
