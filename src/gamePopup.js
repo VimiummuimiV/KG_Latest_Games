@@ -33,15 +33,15 @@ export function createGamePopup(game, event, className = 'game-popup') {
 
     // Create a container for buttons for this type
     const typeButtonsContainer = createElement('div', { className: 'timeouts-container' });
-    
+
     timeouts.forEach(timeout => {
-      const modifiedGame = { 
-        ...game, 
-        params: { 
-          ...game.params, 
-          type: type, 
-          timeout: timeout 
-        } 
+      const modifiedGame = {
+        ...game,
+        params: {
+          ...game.params,
+          type: type,
+          timeout: timeout
+        }
       };
       const link = generateGameLink(modifiedGame);
       const btn = createElement('a', {
@@ -55,7 +55,7 @@ export function createGamePopup(game, event, className = 'game-popup') {
       });
       typeButtonsContainer.appendChild(btn);
     });
-    
+
     // Append the container for buttons after the subheader
     popup.appendChild(typeButtonsContainer);
   });
