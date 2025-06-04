@@ -1,3 +1,4 @@
+import { createCustomTooltip } from './tooltip.js';
 import { createElement } from './utils.js';
 
 /**
@@ -39,7 +40,7 @@ export function createPopup(buttonConfigs, event, className = 'popup') {
   // Add title to buttons if they are too wide
   popup.querySelectorAll('button').forEach(btn => {
     const isEllipsed = btn.scrollWidth > btn.clientWidth;
-    if (isEllipsed) btn.title = btn.textContent;
+    isEllipsed && createCustomTooltip(btn, btn.textContent);
   });
 
   // Get popup dimensions

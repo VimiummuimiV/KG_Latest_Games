@@ -1,4 +1,5 @@
 import { icons } from './icons.js';
+import { createCustomTooltip } from './tooltip.js';
 
 export function highlightExistingVocabularies(groups) {
   // Map vocId to group name(s)
@@ -31,7 +32,7 @@ export function highlightExistingVocabularies(groups) {
         icon.className = 'kg-voc-checkmark';
         icon.innerHTML = icons.checkmark;
         const groupNames = vocIdToGroups.get(vocId);
-        icon.title = 'Словарь уже существует в группе: ' + groupNames.join(', ');
+        createCustomTooltip(icon, 'Словарь уже существует в группе: ' + groupNames.join(', '));
         const desc = parent.querySelector('.desc');
         if (desc) {
           parent.insertBefore(icon, desc);

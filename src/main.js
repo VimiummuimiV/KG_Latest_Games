@@ -6,6 +6,7 @@ import { createGroup, renameGroup, removeGroup, getCurrentGroup } from './groups
 import { highlightExistingVocabularies } from './vocabularyChecker.js';
 import { showMigrationPopup } from './vocabularyMigration.js';
 import { attachVocabularyCreation } from './vocabularyCreation.js';
+import { createCustomTooltip } from './tooltip.js';
 
 class LatestGamesManager {
   constructor() {
@@ -71,28 +72,28 @@ class LatestGamesManager {
     if (svg) svg.innerHTML = this.currentTheme === 'light' ? icons.sun : icons.moon;
   }
 
-  toggleTheme() {
+  toggleTheme(button) {
     this.currentTheme = this.currentTheme === 'light' ? 'dark' : 'light';
+    createCustomTooltip(button, `Изменить тему на ${this.currentTheme === 'light' ? 'тёмную' : 'светлую'}`);
     this.saveSettings();
     this.applyTheme();
   }
 
   createThemeToggle() {
-    const toggleButton = createElement('div', {
-      className: 'theme-toggle control-button',
-      title: 'Изменить тему (Светлая/Темная)'
+    const toggleThemeButton = createElement('div', {
+      className: 'theme-toggle control-button'
     });
     const svg = createElement('svg', { viewBox: '0 0 24 24' });
     svg.innerHTML = this.currentTheme === 'light' ? icons.sun : icons.moon;
-    toggleButton.appendChild(svg);
-    toggleButton.addEventListener('click', () => this.toggleTheme());
-    return toggleButton;
+    toggleThemeButton.appendChild(svg);
+    toggleThemeButton.addEventListener('click', () => this.toggleTheme(toggleThemeButton));
+    createCustomTooltip(toggleThemeButton, `Изменить тему на ${this.currentTheme === 'light' ? 'тёмную' : 'светлую'}`);
+    return toggleThemeButton;
   }
 
   createDisplayModeToggle() {
     const toggleButton = createElement('div', {
-      className: 'display-mode-toggle control-button',
-      title: 'Переключить режим отображения (Вертикальный/Горизонтальный)'
+      className: 'display-mode-toggle control-button'
     });
     const svg = createElement('svg', { viewBox: '0 0 24 24' });
     this.updateDisplayModeIcon(svg, this.displayMode);
@@ -107,6 +108,7 @@ class LatestGamesManager {
         if (c) setTimeout(() => c.scrollTop = c.scrollHeight, 0);
       }
     });
+    createCustomTooltip(toggleButton, 'Переключить режим отображения (Вертикальный/Горизонтальный)');
     return toggleButton;
   }
 
@@ -153,16 +155,16 @@ class LatestGamesManager {
     const buttons = createElement('div', { className: 'latest-game-buttons' });
     const pinButton = createElement('div', {
       className: 'latest-game-pin',
-      title: game.pin ? 'Открепить' : 'Закрепить',
       innerHTML: icons.pin
     });
+    createCustomTooltip(pinButton, game.pin ? 'Открепить' : 'Закрепить');
     pinButton.addEventListener('click', () => this.pinGame(id));
 
     const deleteButton = createElement('div', {
       className: 'latest-game-delete',
-      title: 'Удалить',
       innerHTML: icons.delete
     });
+    createCustomTooltip(deleteButton, 'Удалить');
     deleteButton.addEventListener('click', () => this.deleteGame(id));
 
     buttons.appendChild(pinButton);
@@ -194,23 +196,24 @@ class LatestGamesManager {
     const groupControls = createElement('div', { className: 'group-controls' });
     const addButton = createElement('span', {
       className: 'add-group control-button',
-      title: 'Добавить группу',
       innerHTML: icons.addGroup
     });
+    createCustomTooltip(addButton, 'Добавить группу');
 
     addButton.addEventListener('click', () => this.addGroup());
     const renameButton = createElement('span', {
       className: 'rename-group control-button',
-      title: 'Переименовать группу',
       innerHTML: icons.renameGroup
     });
+    createCustomTooltip(renameButton, 'Переименовать группу');
 
     renameButton.addEventListener('click', () => this.renameCurrentGroup());
     const removeButton = createElement('span', {
       className: 'remove-group control-button',
-      title: 'Удалить группу',
-      innerHTML: icons.trashNothing // Initially show "nothing" icon
+      innerHTML: icons.trashNothing
     });
+    createCustomTooltip(removeButton, 'Удалить группу');
+
     removeButton.addEventListener('click', () => this.removeCurrentGroup());
 
     groupControls.appendChild(addButton);
@@ -245,16 +248,17 @@ class LatestGamesManager {
     const decreaseBtn = createElement('span', {
       id: 'latest-games-count-dec',
       className: 'control-button',
-      title: 'Уменьшить количество сохраняемых игр',
       innerHTML: icons.decrease
     });
+    createCustomTooltip(decreaseBtn, 'Уменьшить количество сохраняемых игр');
 
     const countDisplay = createElement('span', {
       id: 'latest-games-count',
       className: this.shouldAutoSave === false ? 'rg-disabled' : '',
-      textContent: this.maxGameCount.toString(),
-      title: this.shouldAutoSave ? 'Количество сохраняемых игр' : 'Автосохранение отключено'
+      textContent: this.maxGameCount.toString()
     });
+    createCustomTooltip(countDisplay, this.shouldAutoSave ? 'Автосохранение включено' : 'Автосохранение отключено');
+
     countDisplay.addEventListener('click', () => {
       this.shouldAutoSave = !this.shouldAutoSave;
       this.updateGameCountDisplay();
@@ -265,9 +269,9 @@ class LatestGamesManager {
     const increaseBtn = createElement('span', {
       id: 'latest-games-count-inc',
       className: 'control-button',
-      title: 'Увеличить количество сохраняемых игр',
       innerHTML: icons.increase
     });
+    createCustomTooltip(increaseBtn, 'Увеличить количество сохраняемых игр');
 
     decreaseBtn.addEventListener('click', () => this.changeGameCount(-1));
     increaseBtn.addEventListener('click', () => this.changeGameCount(1));
@@ -276,37 +280,55 @@ class LatestGamesManager {
 
     const pinAllBtn = createElement('span', {
       className: 'latest-games-pinall control-button',
-      title: 'Закрепить все',
       innerHTML: icons.pinAll
     });
-    pinAllBtn.onclick = () => {
-      const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
-      if (currentGroup) {
-        currentGroup.games.forEach(g => g.pin = 1);
-        this.saveGameData();
-        this.refreshContainer();
+    createCustomTooltip(pinAllBtn, `
+      [Клик] Закрепить все в текущей группе
+      [Ctrl + Клик] Закрепить все во всех группах
+    `);
+    pinAllBtn.onclick = (e) => {
+      if (e.ctrlKey) {
+        // Ctrl + Click: Pin all games in all groups
+        this.groups.forEach(group => group.games.forEach(game => game.pin = 1));
+      } else {
+        // Single Click: Pin all games only in current group
+        const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
+        if (currentGroup) {
+          currentGroup.games.forEach(game => game.pin = 1);
+        }
       }
+      this.saveGameData();
+      this.refreshContainer();
     };
 
     const unpinAllBtn = createElement('span', {
       className: 'latest-games-unpinall control-button',
-      title: 'Открепить все',
       innerHTML: icons.unpinAll
     });
-    unpinAllBtn.onclick = () => {
-      const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
-      if (currentGroup) {
-        currentGroup.games.forEach(g => g.pin = 0);
-        this.saveGameData();
-        this.refreshContainer();
+    createCustomTooltip(unpinAllBtn, `
+      [Клик] Открепить все в текущей группе
+      [Ctrl + Клик] Открепить все во всех группах
+    `);
+    unpinAllBtn.onclick = (e) => {
+      if (e.ctrlKey) {
+        // Ctrl + Click: Unpin all games in all groups
+        this.groups.forEach(group => group.games.forEach(game => game.pin = 0));
+      } else {
+        // Single Click: Unpin games only in current group
+        const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
+        if (currentGroup) {
+          currentGroup.games.forEach(game => game.pin = 0);
+        }
       }
+      this.saveGameData();
+      this.refreshContainer();
     };
 
     const importBtn = createElement('span', {
       className: 'latest-games-import control-button',
-      title: 'Импортировать настройки из JSON файла',
       innerHTML: icons.import
     });
+    createCustomTooltip(importBtn, 'Импортировать настройки из JSON файла');
     importBtn.onclick = async () => {
       const input = document.createElement('input');
       input.type = 'file';
@@ -339,9 +361,9 @@ class LatestGamesManager {
 
     const exportBtn = createElement('span', {
       className: 'latest-games-export control-button',
-      title: 'Экспортировать все настройки в JSON файл',
       innerHTML: icons.export
     });
+    createCustomTooltip(exportBtn, 'Экспортировать все настройки в JSON файл');
     exportBtn.onclick = () => {
       const all = {
         latestGamesSettings: JSON.parse(localStorage.getItem('latestGamesSettings') || '{}'),
@@ -362,9 +384,9 @@ class LatestGamesManager {
 
     const removeAllBtn = createElement('span', {
       className: 'latest-games-removeall control-button',
-      title: 'Удалить все настройки',
-      innerHTML: icons.trashNothing // Initially show "nothing" icon
+      innerHTML: icons.trashNothing
     });
+    createCustomTooltip(removeAllBtn, 'Удалить все настройки');
     removeAllBtn.onclick = () => {
       localStorage.removeItem('latestGamesSettings');
       localStorage.removeItem('latestGamesData');
@@ -376,9 +398,9 @@ class LatestGamesManager {
 
     const removeUnpinnedBtn = createElement('span', {
       className: 'latest-games-remove-unpinned control-button',
-      title: 'Удалить все неприкреплённые игры из всех групп',
       innerHTML: icons.broom
     });
+    createCustomTooltip(removeUnpinnedBtn, 'Удалить все неприкреплённые игры из всех групп');
     removeUnpinnedBtn.onclick = () => {
       let changed = false;
       this.groups.forEach(group => {
@@ -394,26 +416,25 @@ class LatestGamesManager {
 
     const dragToggleBtn = createElement('span', {
       className: 'latest-games-drag-toggle control-button',
-      title: this.enableDragging ? 'Перетаскивание включено' : 'Перетаскивание отключено',
       innerHTML: icons.dragToggle
     });
-
-    // Disable button if dragging is not enabled
+    createCustomTooltip(dragToggleBtn, this.enableDragging ? 'Перетаскивание включено' : 'Перетаскивание отключено');
     dragToggleBtn.classList.toggle('rg-disabled', !this.enableDragging);
 
     dragToggleBtn.onclick = () => {
       this.enableDragging = !this.enableDragging;
       this.saveSettings();
       this.refreshContainer();
-      dragToggleBtn.title = this.enableDragging ? 'Перетаскивание включено' : 'Перетаскивание отключено';
-
-      // Update the class to reflect the state
+      createCustomTooltip(dragToggleBtn, this.enableDragging ? 'Перетаскивание включено' : 'Перетаскивание отключено');
       dragToggleBtn.classList.toggle('rg-disabled', !this.enableDragging);
     };
 
     controlsLimiter.appendChild(options);
-    controlsButtons.append(this.createThemeToggle(), this.createDisplayModeToggle(),
-      pinAllBtn, unpinAllBtn, importBtn, exportBtn, removeAllBtn, removeUnpinnedBtn, dragToggleBtn);
+    controlsButtons.append(
+      this.createThemeToggle(),
+      this.createDisplayModeToggle(),
+      pinAllBtn, unpinAllBtn, importBtn, exportBtn, removeAllBtn, removeUnpinnedBtn, dragToggleBtn
+    );
 
     return controlsContainer;
   }
@@ -561,7 +582,7 @@ class LatestGamesManager {
     const allTabs = container.querySelectorAll('.group-tab');
     allTabs.forEach(tab => {
       if (tab.getBoundingClientRect().width >= 300) {
-        tab.title = tab.textContent;
+        createCustomTooltip(tab, tab.textContent);
       }
     });
 
@@ -585,7 +606,7 @@ class LatestGamesManager {
     if (countDisplay) {
       countDisplay.textContent = this.maxGameCount.toString();
       countDisplay.classList.toggle('rg-disabled', this.shouldAutoSave === false);
-      countDisplay.title = this.shouldAutoSave ? 'Количество сохраняемых игр' : 'Автосохранение отключено';
+      createCustomTooltip(countDisplay, this.shouldAutoSave ? 'Автосохранение включено' : 'Автосохранение отключено');
     }
   }
 
