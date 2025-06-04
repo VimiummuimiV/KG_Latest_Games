@@ -82,6 +82,10 @@ function clampIndex(idx, isMinHandle) {
  * @returns {HTMLElement} The created popup element
  */
 export function createGamePopup(game, event, className = 'game-popup') {
+  const existingTooltip = document.querySelector('.custom-tooltip-popup');
+  // Set display none for existing tooltip to avoid conflicts
+  if (existingTooltip) existingTooltip.style.display = 'none';
+
   const existingPopup = document.querySelector(`.${className}`);
   existingPopup && existingPopup.remove();
 
