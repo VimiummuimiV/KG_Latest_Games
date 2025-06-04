@@ -1219,7 +1219,7 @@ class LatestGamesManager {
     });
     createCustomTooltip(btn, `
       [Клик] (Показать/Скрыть) панель
-      [Ctrl + Клик] (Закрепить/Открепить) панель`
+      [Shift + Клик] (Закрепить/Открепить) панель`
     );
 
     this.alwaysVisiblePanel && btn.classList.add('always-visible');
@@ -1228,7 +1228,7 @@ class LatestGamesManager {
       const container = document.getElementById('latest-games-container');
       if (!container) return;
 
-      if (e.ctrlKey || e.metaKey) {
+      if (e.shiftKey) {
         this.alwaysVisiblePanel = !this.alwaysVisiblePanel;
         btn.classList.toggle('always-visible', this.alwaysVisiblePanel);
         btn.innerHTML = this.alwaysVisiblePanel ? icons.panelToggleOpened : icons.panelToggleClosed;
