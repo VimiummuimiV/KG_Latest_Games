@@ -359,6 +359,7 @@ function setupPopupPositioning(popup, event) {
 
     e.preventDefault();
 
+    // Store initial position and popup position
     const startX = e.clientX;
     const startY = e.clientY;
     const startLeft = parseInt(popup.style.left, margin);
