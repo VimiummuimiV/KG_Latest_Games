@@ -53,20 +53,15 @@ export function createPopup(buttonConfigs, event, className = 'popup', header) {
     isEllipsed && createCustomTooltip(btn, btn.textContent);
   });
 
-  // Get popup dimensions
+  // Calculate and set position
   const popupRect = popup.getBoundingClientRect();
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
+  const margin = 10;
 
-  // Calculate initial position
-  let left = event.clientX;
-  let top = event.clientY;
+  let left = Math.max(margin, Math.min(event.clientX, viewportWidth - popupRect.width - margin));
+  let top = Math.max(margin, Math.min(event.clientY, viewportHeight - popupRect.height - margin));
 
-  // Keep popup within screen boundaries with 10px margin
-  left = Math.max(10, Math.min(left, viewportWidth - popupRect.width - 10));
-  top = Math.max(10, Math.min(top, viewportHeight - popupRect.height - 10));
-
-  // Apply final position and make visible
   popup.style.left = `${left}px`;
   popup.style.top = `${top}px`;
   popup.style.visibility = 'visible';

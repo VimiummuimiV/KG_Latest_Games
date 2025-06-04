@@ -473,7 +473,7 @@
   }
 
   .popup-subheader {
-    font: 600 12px "Montserrat", sans-serif;
+    font: 600 14px "Montserrat", sans-serif;
     color: var(--rg-text-secondary);
     padding: 6px;
   }
@@ -535,6 +535,67 @@
       background: var(--rg-bg-card-pinned-voc);
       color: var(--rg-gametype-voc) !important;
       z-index: 1;
+    }
+  }
+
+  .rank-slider-container {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    margin: 6px;
+
+    .rank-slider-display {
+      margin: 0 0 12px;
+      font: 600 14px "Montserrat", sans-serif;
+      color: var(--rg-text-secondary);
+    }
+
+    .rank-slider-track {
+      position: relative;
+      height: 8px;
+      background: var(--rg-rank-slider-track-bg);
+      border-radius: 4px !important;
+      cursor: pointer;
+      border: 2px solid var(--rg-rank-slider-border);
+      box-sizing: border-box;
+    }
+
+    .rank-slider-range {
+      position: absolute;
+      height: 100%;
+      background: var(--rg-rank-slider-range);
+      border-radius: 4px !important;
+      z-index: 1;
+    }
+
+    .rank-slider-handle {
+      position: absolute;
+      top: 50%;
+      width: 18px;
+      height: 18px;
+      background: var(--rg-rank-slider-handle-bg);
+      border: 2px solid var(--rg-rank-slider-border);
+      border-radius: 50% !important;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08) !important;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .rank-slider-handle:focus {
+      outline: none;
+      border-color: var(--rg-rank-slider-border-focus);
+    }
+
+    .rank-slider-handle.overlap-left {
+      /* Move left handle fully to the left so it just touches the right handle */
+      transform: translate(-100%, -50%);
+    }
+
+    .rank-slider-handle.overlap-right {
+      /* Move right handle fully to the right so it just touches the left handle */
+      transform: translate(0, -50%);
     }
   }
 }
