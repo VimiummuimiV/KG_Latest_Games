@@ -269,7 +269,7 @@ export function createGamePopup(game, event, className = 'game-popup') {
   });
 
   // Position popup and add tooltips
-  setupPopupPositioning(popup, event, headerElem);
+  setupPopupPositioning(popup, event);
 
   return popup;
 }
@@ -277,7 +277,7 @@ export function createGamePopup(game, event, className = 'game-popup') {
 /**
  * Handle popup positioning, tooltip setup, and drag functionality
  */
-function setupPopupPositioning(popup, event, headerElem) {
+function setupPopupPositioning(popup, event) {
   // Add popup to body temporarily to measure dimensions
   popup.style.visibility = 'hidden';
   document.body.appendChild(popup);
@@ -289,10 +289,8 @@ function setupPopupPositioning(popup, event, headerElem) {
     }
   });
 
-  // Calculate and set position
-
-  // Helper function to constrain popup position within viewport bounds
-  const constrainPosition = (left, top) => {
+  // Helper function to set popup position within viewport bounds
+  const setPosition = (left, top) => {
     // Get viewport dimensions in real-time
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
@@ -301,29 +299,63 @@ function setupPopupPositioning(popup, event, headerElem) {
     const maxLeft = viewportWidth - popupRect.width - margin;
     const maxTop = viewportHeight - popupRect.height - margin;
 
-    return {
-      left: Math.max(margin, Math.min(left, maxLeft)),
-      top: Math.max(margin, Math.min(top, maxTop))
-    };
+    const constrainedLeft = Math.max(margin, Math.min(left, maxLeft));
+    const constrainedTop = Math.max(margin, Math.min(top, maxTop));
+
+    popup.style.left = `${constrainedLeft}px`;
+    popup.style.top = `${constrainedTop}px`;
   };
 
-  const { left, top } = constrainPosition(event.clientX, event.clientY);
-
-  popup.style.left = `${left}px`;
-  popup.style.top = `${top}px`;
+  // Set initial position
+  setPosition(event.clientX, event.clientY);
   popup.style.visibility = 'visible';
 
   // Store event handlers for cleanup in a single object
   const eventHandlers = {
     clickOutside: null,
     keydown: null,
-    headerMouseDown: null,
+    popupMouseDown: null,
     currentDrag: null
   };
 
-  // Setup drag functionality on header
-  eventHandlers.headerMouseDown = (e) => {
-    if (e.button !== 0) return; // Only left mouse button
+  // Setup drag functionality on popup itself, but ignore interactive elements
+  eventHandlers.popupMouseDown = (e) => {
+    // Only allow dragging on specific elements that should support it
+    const isDraggable = (target) => {
+      // Check if target is the popup itself or a draggable child
+      if (target === popup) return true;
+
+      // Allow dragging on headers and non-interactive containers
+      const draggableSelectors = [
+        '.popup-header',
+        '.popup-subheader',
+        '.rank-slider-display',
+        '.timeouts-container'
+      ];
+
+      return draggableSelectors.some(selector =>
+        target.matches && target.matches(selector)
+      );
+    };
+
+    // Prevent dragging on interactive elements
+    const isInteractive = (target) => {
+      const interactiveSelectors = [
+        '.game-popup-button',
+        '.rank-slider-handle',
+        '.rank-slider-track',
+        '.rank-slider-range'
+      ];
+
+      return interactiveSelectors.some(selector =>
+        target.matches && (target.matches(selector) || target.closest(selector))
+      );
+    };
+
+    // Ignore if not draggable or is interactive
+    if (!isDraggable(e.target) || isInteractive(e.target)) return;
+    // Only left mouse button
+    if (e.button !== 0) return;
 
     e.preventDefault();
 
@@ -339,11 +371,7 @@ function setupPopupPositioning(popup, event, headerElem) {
       const newLeft = startLeft + deltaX;
       const newTop = startTop + deltaY;
 
-      // Use helper function to constrain position
-      const { left, top } = constrainPosition(newLeft, newTop);
-
-      popup.style.left = `${left}px`;
-      popup.style.top = `${top}px`;
+      setPosition(newLeft, newTop);
     };
 
     const onMouseUp = () => {
@@ -351,12 +379,16 @@ function setupPopupPositioning(popup, event, headerElem) {
       document.removeEventListener('mouseup', onMouseUp);
       eventHandlers.currentDrag = null;
     };
+
     eventHandlers.currentDrag = { onMouseMove, onMouseUp };
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
   };
-  headerElem.addEventListener('mousedown', eventHandlers.headerMouseDown);
-  headerElem.style.cursor = 'move';
+
+  popup.addEventListener('mousedown', eventHandlers.popupMouseDown);
+
+  // Set cursor style for draggable areas
+  popup.style.cursor = 'move';
 
   // Setup event handlers for closing popup
   const hidePopup = (e) => {
@@ -369,8 +401,8 @@ function setupPopupPositioning(popup, event, headerElem) {
     if (eventHandlers.keydown) {
       document.removeEventListener('keydown', eventHandlers.keydown);
     }
-    if (eventHandlers.headerMouseDown) {
-      headerElem.removeEventListener('mousedown', eventHandlers.headerMouseDown);
+    if (eventHandlers.popupMouseDown) {
+      popup.removeEventListener('mousedown', eventHandlers.popupMouseDown);
     }
     if (eventHandlers.currentDrag) {
       document.removeEventListener('mousemove', eventHandlers.currentDrag.onMouseMove);
