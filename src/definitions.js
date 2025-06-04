@@ -12,8 +12,8 @@ export const gameTypes = {
 
 export const visibilities = {
   normal: 'открытый',
-  private: 'дружеский',
-  practice: 'одиночный'
+  practice: 'одиночный',
+  private: 'дружеский'
 };
 
 export const ranks = [

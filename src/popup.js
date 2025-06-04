@@ -71,18 +71,30 @@ export function createPopup(buttonConfigs, event, className = 'popup', header) {
   popup.style.top = `${top}px`;
   popup.style.visibility = 'visible';
 
-  // Add click-outside-to-close functionality
+  // Define a function to hide popup and remove event listeners
   const hidePopup = (e) => {
+    if (e && e.type === 'keydown' && e.key !== 'Escape') return;
+    popup.remove();
+    document.removeEventListener('click', clickOutsideHandler);
+    document.removeEventListener('keydown', keydownHandler);
+  };
+
+  const clickOutsideHandler = (e) => {
     if (!popup.contains(e.target)) {
-      popup.remove();
-      document.removeEventListener('click', hidePopup);
+      hidePopup(e);
     }
   };
 
-  // Use setTimeout to prevent immediate closure on the same click that opened the popup
-  setTimeout(() => {
-    document.addEventListener('click', hidePopup);
-  }, 0);
+  const keydownHandler = (e) => {
+    if (e.key === 'Escape') {
+      hidePopup(e);
+    }
+  };
+
+  requestAnimationFrame(() => {
+    document.addEventListener('click', clickOutsideHandler);
+    document.addEventListener('keydown', keydownHandler);
+  });
 
   return popup;
 }

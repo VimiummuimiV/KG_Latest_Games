@@ -80,7 +80,7 @@ export function generateGameName(game) {
     textContent: levelText
   });
 
-  descSpan.textContent = `${visibilities[visibility]}, ${timeout} сек.`;
+  descSpan.textContent = `${visibilities[visibility]}, ${timeout} секунд`;
   descSpan.appendChild(qualSpan);
   if (levelText) {
     descSpan.appendChild(levelsSpan);

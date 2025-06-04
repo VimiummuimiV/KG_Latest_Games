@@ -7,6 +7,7 @@ import { highlightExistingVocabularies } from './vocabularyChecker.js';
 import { showMigrationPopup } from './vocabularyMigration.js';
 import { attachVocabularyCreation } from './vocabularyCreation.js';
 import { createCustomTooltip } from './tooltip.js';
+import { createGamePopup } from './gamePopup.js';
 
 class LatestGamesManager {
   constructor() {
@@ -185,6 +186,10 @@ class LatestGamesManager {
         this.wasDragging = false;
       }
     });
+    createCustomTooltip(link, `
+      [Клик] Перейти к игре с текущими параметрами
+      [Shift + Клик] Перейти к игре с альтернативными параметрами
+    `);
 
     li.appendChild(buttons);
     li.appendChild(link);
@@ -291,7 +296,7 @@ class LatestGamesManager {
       [Ctrl + Клик] Закрепить все игры во всех группах
     `);
     pinAllBtn.onclick = (e) => {
-      if (e.ctrlKey) {
+      if (e.ctrlKey || e.metaKey) {
         // Ctrl + Click: Pin all games in all groups
         this.groups.forEach(group => group.games.forEach(game => game.pin = 1));
       } else {
@@ -314,7 +319,7 @@ class LatestGamesManager {
       [Ctrl + Клик] Открепить все игры во всех группах
     `);
     unpinAllBtn.onclick = (e) => {
-      if (e.ctrlKey) {
+      if (e.ctrlKey || e.metaKey) {
         // Ctrl + Click: Unpin all games in all groups
         this.groups.forEach(group => group.games.forEach(game => game.pin = 0));
       } else {
@@ -410,7 +415,7 @@ class LatestGamesManager {
     `);
 
     removeUnpinnedBtn.onclick = (e) => {
-      if (e.ctrlKey) {
+      if (e.ctrlKey || e.metaKey) {
         // Ctrl + Click: Remove unpinned games from all groups
         this.groups.forEach(group => {
           group.games = group.games.filter(game => game.pin);
@@ -484,6 +489,21 @@ class LatestGamesManager {
         e.preventDefault();
         const gameId = gameElement.id.replace('latest-game-', '');
         showMigrationPopup(this, this.groups, this.currentGroupId, e, gameId);
+      }
+    });
+
+    // Add click event listener for Ctrl + Click on game elements
+    gamesList.addEventListener('click', (e) => {
+      if (e.shiftKey) {
+        const gameElement = e.target.closest('.latest-game');
+        if (gameElement) {
+          e.preventDefault();
+          const gameId = gameElement.id.replace('latest-game-', '');
+          const game = this.findGameById(gameId);
+          if (game) {
+            createGamePopup(game, e);
+          }
+        }
       }
     });
 
@@ -1058,6 +1078,14 @@ class LatestGamesManager {
     return null;
   }
 
+  findGameById(id) {
+    for (const group of this.groups) {
+      const game = group.games.find(g => g.id === id);
+      if (game) return game;
+    }
+    return null;
+  }
+
   deleteGame(id) {
     const result = this.findGameIndex(id);
     if (!result) return null;
@@ -1172,7 +1200,7 @@ class LatestGamesManager {
       const container = document.getElementById('latest-games-container');
       if (!container) return;
 
-      if (e.ctrlKey) {
+      if (e.ctrlKey || e.metaKey) {
         this.alwaysVisiblePanel = !this.alwaysVisiblePanel;
         btn.classList.toggle('always-visible', this.alwaysVisiblePanel);
         btn.innerHTML = this.alwaysVisiblePanel ? icons.panelToggleOpened : icons.panelToggleClosed;
