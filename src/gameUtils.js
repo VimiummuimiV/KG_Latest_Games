@@ -37,7 +37,7 @@ export function parseGameParams(span, descText) {
 
   const qualification = /квалификация/.test(descText) ? 1 : 0;
 
-  return {
+  const result = {
     gametype: gameType,
     vocName,
     vocId,
@@ -48,6 +48,8 @@ export function parseGameParams(span, descText) {
     qual: qualification,
     premium_abra: 0
   };
+
+  return result;
 }
 
 export function generateGameName(game) {
@@ -99,11 +101,15 @@ export function generateGameLink(game) {
   const params = new URLSearchParams({
     gametype,
     type,
-    level_from: level_from.toString(),
-    level_to: level_to.toString(),
     timeout: timeout.toString(),
     submit: '1'
   });
+
+  // Only add level_from and level_to for normal type
+  if (type !== 'practice' && type !== 'private') {
+    params.set('level_from', level_from.toString());
+    params.set('level_to', level_to.toString());
+  }
 
   if (vocId !== '') {
     params.set('voc', vocId);

@@ -231,6 +231,9 @@ export function createGamePopup(game, event, className = 'game-popup') {
     const typeButtonsContainer = createElement('div', { className: 'timeouts-container' });
 
     timeouts.forEach(timeout => {
+      // Skip 5-second timeout for the normal type
+      if (type === 'normal' && timeout === 5) return;
+
       const isRangeModified = minIdx !== RANK_CONSTRAINTS.minFrom || maxIdx !== RANK_CONSTRAINTS.maxTo;
       const modifiedGame = {
         ...game,
