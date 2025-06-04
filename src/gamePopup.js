@@ -47,6 +47,17 @@ const settingsHelper = {
     const settings = this.load();
     settings.rankRange = [minIdx, maxIdx];
     this.save(settings);
+  },
+
+  getQualificationState() {
+    const settings = this.load();
+    return settings.qualificationEnabled !== undefined ? settings.qualificationEnabled : false;
+  },
+
+  saveQualificationState(enabled) {
+    const settings = this.load();
+    settings.qualificationEnabled = enabled;
+    this.save(settings);
   }
 };
 
@@ -85,7 +96,22 @@ export function createGamePopup(game, event, className = 'game-popup') {
     innerHTML: icons.qualification
   });
 
-  // Set qualification visibility based on game params
+  // Set qualification visibility based on qualification setting
+  let qualificationEnabled = settingsHelper.getQualificationState();
+  qualification.classList.toggle('latest-games-disabled', qualificationEnabled);
+
+  // Add click handler for qualification toggle
+  qualification.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    qualificationEnabled = !qualificationEnabled;
+    settingsHelper.saveQualificationState(qualificationEnabled);
+    
+    qualification.classList.toggle('latest-games-disabled', qualificationEnabled);
+    
+    // Update all button links with new qualification setting
+    updateButtonLinks();
+  });
 
   header.append(headerTitle, qualification);
   popup.appendChild(header);
@@ -160,6 +186,11 @@ export function createGamePopup(game, event, className = 'game-popup') {
           level_to: isRangeModified ? maxIdx + 1 : game.params.level_to
         }
       };
+
+      // Add qualification parameter if enabled
+      if (qualificationEnabled) {
+        modifiedGame.params.qual = 1;
+      }
 
       const link = generateGameLink(modifiedGame);
       btn.setAttribute('href', link);
@@ -260,6 +291,11 @@ export function createGamePopup(game, event, className = 'game-popup') {
           level_to: isRangeModified ? maxIdx + 1 : game.params.level_to
         }
       };
+
+      // Add qualification parameter if enabled
+      if (qualificationEnabled) {
+        modifiedGame.params.qual = 1;
+      }
 
       const link = generateGameLink(modifiedGame);
       const btn = createElement('a', {
