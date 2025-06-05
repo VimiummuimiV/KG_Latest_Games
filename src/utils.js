@@ -4,6 +4,10 @@ export function generateRandomId() {
     .join('');
 }
 
+export function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export function createElement(tag, options = {}) {
   const element = document.createElement(tag);
 

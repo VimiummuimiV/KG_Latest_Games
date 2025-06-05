@@ -1,6 +1,6 @@
 import { icons } from './icons';
 import './styles.scss';
-import { generateRandomId, createElement } from './utils.js';
+import { generateRandomId, sleep, createElement } from './utils.js';
 import { parseGameParams, generateGameName, generateGameLink } from './gameUtils.js';
 import { createGroup, renameGroup, removeGroup, getCurrentGroup } from './groups.js';
 import { highlightExistingVocabularies } from './vocabularyChecker.js';
@@ -37,6 +37,10 @@ class LatestGamesManager {
     this.lastDragY = 0;
     this.hidePanelDelay = 1000;
     this.globalEvents = {};
+    this.shouldStart = false;
+    this.startDelay = 1000;
+    this.shouldReplay = false;
+    this.replayDelay = 1000;
 
     this.init();
   }
@@ -288,6 +292,74 @@ class LatestGamesManager {
 
     options.append(decreaseBtn, countDisplay, increaseBtn);
 
+    const playBtn = createElement('span', {
+      className: 'latest-games-play control-button',
+      innerHTML: icons.play
+    });
+    playBtn.classList.toggle('latest-games-disabled', !this.shouldStart);
+    createCustomTooltip(playBtn, `
+      [Клик] ${this.shouldStart ? 'Автозапуск игры включен' : 'Автозапуск игры отключен'}
+      [Ctrl + Клик] Изменить задержку запуска игры в миллисекундах
+    `);
+    playBtn.classList.toggle('latest-games-disabled', !this.shouldStart);
+
+    playBtn.onclick = (e) => {
+      if (e.ctrlKey) {
+        const newDelay = prompt('Введите задержку запуска в миллисекундах:', "");
+        if (newDelay !== null) {
+          const delayValue = parseInt(newDelay, 10);
+          if (!isNaN(delayValue) && delayValue >= 0) {
+            this.startDelay = delayValue;
+            this.saveSettings();
+          } else {
+            alert('Пожалуйста, введите корректное значение задержки запуска.');
+          }
+        }
+      } else {
+        this.shouldStart = !this.shouldStart;
+        this.saveSettings();
+        playBtn.classList.toggle('latest-games-disabled', !this.shouldStart);
+      }
+      createCustomTooltip(playBtn, `
+        [Клик] ${this.shouldStart ? 'Автозапуск игры включен' : 'Автозапуск игры отключен'}
+        [Ctrl + Клик] Изменить задержку запуска игры в миллисекундах
+      `);
+    };
+
+    const replayBtn = createElement('span', {
+      className: 'latest-games-replay control-button',
+      innerHTML: icons.replay
+    });
+    createCustomTooltip(replayBtn, `
+      [Клик] ${this.shouldReplay ? 'Автоповтор игры включен' : 'Автоповтор игры отключен'}
+      [Ctrl + Клик] Изменить задержку автоповтора в миллисекундах
+    `);
+    replayBtn.classList.toggle('latest-games-disabled', !this.shouldReplay);
+    replayBtn.classList.toggle('latest-games-disabled', !this.shouldReplay);
+
+    replayBtn.onclick = (e) => {
+      if (e.ctrlKey) {
+        const newDelay = prompt('Введите задержку автоповтора в миллисекундах:', "");
+        if (newDelay !== null) {
+          const delayValue = parseInt(newDelay, 10);
+          if (!isNaN(delayValue) && delayValue >= 0) {
+            this.replayDelay = delayValue;
+            this.saveSettings();
+          } else {
+            alert('Пожалуйста, введите корректное значение задержки автоповтора.');
+          }
+        }
+      } else {
+        this.shouldReplay = !this.shouldReplay;
+        this.saveSettings();
+        replayBtn.classList.toggle('latest-games-disabled', !this.shouldReplay);
+      }
+      createCustomTooltip(replayBtn, `
+        [Клик] ${this.shouldReplay ? 'Автоповтор игры включен' : 'Автоповтор игры отключен'}
+        [Ctrl + Клик] Изменить задержку автоповтора в миллисекундах
+      `);
+    };
+
     const pinAllBtn = createElement('span', {
       className: 'latest-games-pinall control-button',
       innerHTML: icons.pinAll
@@ -451,7 +523,7 @@ class LatestGamesManager {
     controlsButtons.append(
       this.createThemeToggle(),
       this.createDisplayModeToggle(),
-      pinAllBtn, unpinAllBtn, importBtn, exportBtn, removeAllBtn, removeUnpinnedBtn, dragToggleBtn
+      playBtn, replayBtn, pinAllBtn, unpinAllBtn, importBtn, exportBtn, removeAllBtn, removeUnpinnedBtn, dragToggleBtn
     );
 
     return controlsContainer;
@@ -681,6 +753,10 @@ class LatestGamesManager {
       this.shouldAutoSave = settings.shouldAutoSave !== false;
       this.enableDragging = settings.enableDragging !== undefined ? settings.enableDragging : true;
       this.alwaysVisiblePanel = settings.alwaysVisiblePanel !== undefined ? settings.alwaysVisiblePanel : false;
+      this.shouldStart = settings.shouldStart !== undefined ? settings.shouldStart : false;
+      this.shouldReplay = settings.shouldReplay !== undefined ? settings.shouldReplay : false;
+      this.startDelay = settings.startDelay !== undefined ? settings.startDelay : this.startDelay;
+      this.replayDelay = settings.replayDelay !== undefined ? settings.replayDelay : this.replayDelay;
       this.panelYPosition = settings.panelYPosition || 0;
     } catch (error) {
       console.warn('Could not load settings from localStorage:', error);
@@ -693,6 +769,10 @@ class LatestGamesManager {
       this.shouldAutoSave = true;
       this.enableDragging = true;
       this.alwaysVisiblePanel = false;
+      this.shouldStart = false;
+      this.shouldReplay = false;
+      this.startDelay = 1000;
+      this.replayDelay = 1000;
       this.panelYPosition = 0;
     }
   }
@@ -708,6 +788,10 @@ class LatestGamesManager {
         shouldAutoSave: this.shouldAutoSave,
         enableDragging: this.enableDragging,
         alwaysVisiblePanel: this.alwaysVisiblePanel,
+        shouldStart: this.shouldStart,
+        shouldReplay: this.shouldReplay,
+        startDelay: this.startDelay,
+        replayDelay: this.replayDelay,
         panelYPosition: this.panelYPosition
       };
       localStorage.setItem('latestGamesSettings', JSON.stringify(settings));
@@ -1132,14 +1216,8 @@ class LatestGamesManager {
     const { group, index } = result;
     const game = group.games[index];
     game.pin = game.pin ? 0 : 1;
-    const insertIndex = game.pin ?
-      group.games.findIndex(g => !g.pin || g === game) :
-      group.games.findIndex(g => !g.pin && g !== game);
-    if (index !== insertIndex) {
-      const [gameObject] = group.games.splice(index, 1);
-      group.games.splice(insertIndex, 0, gameObject);
-    }
-
+    // Sort games: pinned (pin=1) first, unpinned (pin=0) after
+    group.games.sort((a, b) => b.pin - a.pin);
     this.assignGameIds();
     this.saveGameData();
     this.refreshContainer();
@@ -1156,21 +1234,56 @@ class LatestGamesManager {
     const gameParamsString = JSON.stringify(gameParams);
     const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
     if (!currentGroup) return;
-    for (let i = 0; i < currentGroup.games.length; i++) {
-      if (JSON.stringify(currentGroup.games[i].params) === gameParamsString) {
-        if (currentGroup.games[i].pin) return;
-        currentGroup.games.splice(i, 1);
-        break;
-      }
+
+    // Check if a game with the same parameters already exists (pinned or unpinned)
+    const gameExists = currentGroup.games.some(game => JSON.stringify(game.params) === gameParamsString);
+    if (gameExists) {
+      return;
     }
-    const pinnedCount = this.getPinnedGameCount();
-    while (currentGroup.games.length >= this.maxGameCount + pinnedCount) {
-      currentGroup.games.pop();
-    }
+
+    // Create new game object (unpinned)
     const newGame = { params: gameParams, id: generateRandomId(), pin: 0 };
+
+    // Insert after pinned games
+    const pinnedCount = currentGroup.games.filter(g => g.pin).length;
     currentGroup.games.splice(pinnedCount, 0, newGame);
+
+    // Enforce the limit: remove excess unpinned games from the end
+    const maxGamesToKeep = pinnedCount + this.maxGameCount;
+    if (currentGroup.games.length > maxGamesToKeep) {
+      currentGroup.games.splice(maxGamesToKeep, currentGroup.games.length - maxGamesToKeep);
+    }
+
     this.assignGameIds();
     this.saveGameData();
+  }
+
+  handleGameActions() {
+    // Handle auto-start
+    if (this.shouldStart) {
+      const pausedElement = document.querySelector('#status-inner #paused');
+      if (pausedElement && pausedElement.style.display !== 'none') {
+        if (typeof game !== 'undefined' && game.hostStart) {
+          sleep(this.startDelay).then(() => {
+            game.hostStart();
+          });
+        }
+      }
+    }
+
+    // Handle auto-replay
+    if (this.shouldReplay) {
+      const finishedElement = document.querySelector('#status-inner #finished');
+      if (finishedElement && finishedElement.style.display !== 'none') {
+        const gameIdMatch = location.href.match(/gmid=(\d+)/);
+        if (gameIdMatch) {
+          const gameId = gameIdMatch[1];
+          sleep(this.replayDelay).then(() => {
+            window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
+          });
+        }
+      }
+    }
   }
 
   changeGameCount(delta) {
@@ -1183,20 +1296,20 @@ class LatestGamesManager {
 
   handlePageSpecificLogic() {
     const { href } = location;
-
     if (/https?:\/\/klavogonki\.ru\/g\/\?gmid=/.test(href)) {
-      const gameLoading = document.getElementById('gameloading');
-      if (!gameLoading) throw new Error('#gameloading element not found.');
-      if (gameLoading.style.display !== 'none') {
+      this.saveCurrentGameParams();
+      this.handleGameActions();
+
+      const finished = document.getElementById('finished');
+      if (finished) {
         const observer = new MutationObserver(() => {
           observer.disconnect();
-          this.saveCurrentGameParams();
+          this.handleGameActions();
         });
-        observer.observe(gameLoading, { attributes: true });
-      } else {
-        this.saveCurrentGameParams();
+        observer.observe(finished, { attributes: true });
       }
     }
+
     // Highlight vocabularies and attach vocabulary creation popup on vocs page
     if (/klavogonki\.ru\/vocs\//.test(href)) {
       highlightExistingVocabularies(this.groups);
