@@ -292,73 +292,73 @@ class LatestGamesManager {
 
     options.append(decreaseBtn, countDisplay, increaseBtn);
 
+    // Helper function to update tooltip (using your preferred format)
+    const updateTooltip = (button, isEnabled, enabledText, disabledText, delay, delayText) => {
+      createCustomTooltip(button, `
+        [Клик] ${isEnabled ? enabledText : disabledText}
+        [Ctrl + Клик] ${delayText + (delay ? ` (${delay} мс)` : '')}
+      `);
+    };
+
+    // Helper function to create control button with click handler
+    const setupControlButton = (button, context, property, delayProperty, texts) => {
+      const { enabledText, disabledText, delayText, delayPromptText, delayErrorText } = texts;
+
+      // Set initial state
+      const isInitiallyEnabled = context[property];
+      button.classList.toggle('latest-games-disabled', !isInitiallyEnabled);
+      updateTooltip(button, isInitiallyEnabled, enabledText, disabledText, context[delayProperty], delayText);
+
+      // Add click handler
+      button.onclick = (e) => {
+        if (e.ctrlKey) {
+          const newDelay = prompt(delayPromptText, "");
+          if (newDelay !== null) {
+            const delayValue = parseInt(newDelay, 10);
+            if (!isNaN(delayValue) && delayValue >= 0) {
+              context[delayProperty] = delayValue;
+              context.saveSettings();
+              updateTooltip(button, context[property], enabledText, disabledText, delayValue, delayText);
+            } else {
+              alert(delayErrorText);
+            }
+          }
+        } else {
+          context[property] = !context[property];
+          context.saveSettings();
+          button.classList.toggle('latest-games-disabled', !context[property]);
+          updateTooltip(button, context[property], enabledText, disabledText, context[delayProperty], delayText);
+        }
+      };
+    };
+
+    // Create play button
     const playBtn = createElement('span', {
       className: 'latest-games-play control-button',
       innerHTML: icons.play
     });
-    playBtn.classList.toggle('latest-games-disabled', !this.shouldStart);
-    createCustomTooltip(playBtn, `
-      [Клик] ${this.shouldStart ? 'Автозапуск игры включен' : 'Автозапуск игры отключен'}
-      [Ctrl + Клик] Изменить задержку запуска игры в миллисекундах
-    `);
-    playBtn.classList.toggle('latest-games-disabled', !this.shouldStart);
 
-    playBtn.onclick = (e) => {
-      if (e.ctrlKey) {
-        const newDelay = prompt('Введите задержку запуска в миллисекундах:', "");
-        if (newDelay !== null) {
-          const delayValue = parseInt(newDelay, 10);
-          if (!isNaN(delayValue) && delayValue >= 0) {
-            this.startDelay = delayValue;
-            this.saveSettings();
-          } else {
-            alert('Пожалуйста, введите корректное значение задержки запуска.');
-          }
-        }
-      } else {
-        this.shouldStart = !this.shouldStart;
-        this.saveSettings();
-        playBtn.classList.toggle('latest-games-disabled', !this.shouldStart);
-      }
-      createCustomTooltip(playBtn, `
-        [Клик] ${this.shouldStart ? 'Автозапуск игры включен' : 'Автозапуск игры отключен'}
-        [Ctrl + Клик] Изменить задержку запуска игры в миллисекундах
-      `);
-    };
+    setupControlButton(playBtn, this, 'shouldStart', 'startDelay', {
+      enabledText: 'Автозапуск игры включен',
+      disabledText: 'Автозапуск игры отключен',
+      delayText: 'Изменить задержку запуска в миллисекундах',
+      delayPromptText: 'Введите задержку запуска в миллисекундах:',
+      delayErrorText: 'Пожалуйста, введите корректное значение задержки запуска.'
+    });
 
+    // Create replay button
     const replayBtn = createElement('span', {
       className: 'latest-games-replay control-button',
       innerHTML: icons.replay
     });
-    createCustomTooltip(replayBtn, `
-      [Клик] ${this.shouldReplay ? 'Автоповтор игры включен' : 'Автоповтор игры отключен'}
-      [Ctrl + Клик] Изменить задержку автоповтора в миллисекундах
-    `);
-    replayBtn.classList.toggle('latest-games-disabled', !this.shouldReplay);
-    replayBtn.classList.toggle('latest-games-disabled', !this.shouldReplay);
 
-    replayBtn.onclick = (e) => {
-      if (e.ctrlKey) {
-        const newDelay = prompt('Введите задержку автоповтора в миллисекундах:', "");
-        if (newDelay !== null) {
-          const delayValue = parseInt(newDelay, 10);
-          if (!isNaN(delayValue) && delayValue >= 0) {
-            this.replayDelay = delayValue;
-            this.saveSettings();
-          } else {
-            alert('Пожалуйста, введите корректное значение задержки автоповтора.');
-          }
-        }
-      } else {
-        this.shouldReplay = !this.shouldReplay;
-        this.saveSettings();
-        replayBtn.classList.toggle('latest-games-disabled', !this.shouldReplay);
-      }
-      createCustomTooltip(replayBtn, `
-        [Клик] ${this.shouldReplay ? 'Автоповтор игры включен' : 'Автоповтор игры отключен'}
-        [Ctrl + Клик] Изменить задержку автоповтора в миллисекундах
-      `);
-    };
+    setupControlButton(replayBtn, this, 'shouldReplay', 'replayDelay', {
+      enabledText: 'Автоповтор игры включен',
+      disabledText: 'Автоповтор игры отключен',
+      delayText: 'Изменить задержку автоповтора в миллисекундах',
+      delayPromptText: 'Введите задержку автоповтора в миллисекундах:',
+      delayErrorText: 'Пожалуйста, введите корректное значение задержки автоповтора.'
+    });
 
     const pinAllBtn = createElement('span', {
       className: 'latest-games-pinall control-button',
