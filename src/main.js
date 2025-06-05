@@ -1298,9 +1298,9 @@ class LatestGamesManager {
     const { href } = location;
     if (/https?:\/\/klavogonki\.ru\/g\/\?gmid=/.test(href)) {
       const observer = new MutationObserver(() => {
-        const status = document.querySelector('#status-inner');
-        if (status) {
-          observer.disconnect(); // Stop observing after finding the status
+        const gameDescription = document.querySelector('#gamedesc');
+        if (gameDescription && gameDescription.textContent) {
+          observer.disconnect(); // Stop observing once the game description is found
           this.saveCurrentGameParams();
           this.handleGameActions();
         }
