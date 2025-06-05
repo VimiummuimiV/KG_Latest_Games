@@ -1297,8 +1297,15 @@ class LatestGamesManager {
   handlePageSpecificLogic() {
     const { href } = location;
     if (/https?:\/\/klavogonki\.ru\/g\/\?gmid=/.test(href)) {
-      this.saveCurrentGameParams();
-      this.handleGameActions();
+      const observer = new MutationObserver(() => {
+        const status = document.querySelector('#status-inner');
+        if (status) {
+          observer.disconnect(); // Stop observing after finding the status
+          this.saveCurrentGameParams();
+          this.handleGameActions();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
 
       const finished = document.getElementById('finished');
       if (finished) {
