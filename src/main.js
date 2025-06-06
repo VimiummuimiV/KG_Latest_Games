@@ -339,8 +339,8 @@ class LatestGamesManager {
     });
 
     setupControlButton(playBtn, this, 'shouldStart', 'startDelay', {
-      enabledText: 'Автозапуск игры включен',
-      disabledText: 'Автозапуск игры отключен',
+      enabledText: 'Отключить автозапуск игры',
+      disabledText: 'Включить автозапуск игры',
       delayText: 'Изменить задержку запуска в миллисекундах',
       delayPromptText: 'Введите задержку запуска в миллисекундах:',
       delayErrorText: 'Пожалуйста, введите корректное значение задержки запуска.'
@@ -353,8 +353,8 @@ class LatestGamesManager {
     });
 
     setupControlButton(replayBtn, this, 'shouldReplay', 'replayDelay', {
-      enabledText: 'Автоповтор игры включен',
-      disabledText: 'Автоповтор игры отключен',
+      enabledText: 'Отключить автоповтор игры',
+      disabledText: 'Включить автоповтор игры',
       delayText: 'Изменить задержку автоповтора в миллисекундах',
       delayPromptText: 'Введите задержку автоповтора в миллисекундах:',
       delayErrorText: 'Пожалуйста, введите корректное значение задержки автоповтора.'
