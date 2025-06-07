@@ -207,7 +207,7 @@ class LatestGamesManager {
     const toggleButton = createElement('div', {
       className: 'group-view-toggle control-button'
     });
-    toggleButton.innerHTML = this.groupViewMode === 'tabs' ? icons.wrap: icons.scroll;
+    toggleButton.innerHTML = this.groupViewMode === 'tabs' ? icons.wrap : icons.scroll;
     createCustomTooltip(toggleButton, this.groupViewMode === 'tabs'
       ? 'Переключить в единый вид со всеми играми'
       : 'Переключить в режим вкладок по группам');
@@ -239,82 +239,56 @@ class LatestGamesManager {
   createGroupsContainer() {
     const groupsContainer = createElement('div', { id: 'latest-games-groups' });
 
-    if (this.groupViewMode === 'tabs') {
-      const groupTabs = createElement('div', { className: 'group-tabs' });
+    // Create group controls (persistent across both view modes)
+    const groupControls = createElement('div', {
+      className: 'group-controls' + (this.groupViewMode === 'unified' ? ' unified-controls' : '')
+    });
+    const addButton = createElement('span', {
+      className: 'add-group control-button',
+      innerHTML: icons.addGroup
+    });
+    createCustomTooltip(addButton, 'Добавить группу');
+    addButton.addEventListener('click', () => this.addGroup());
 
-      // Create group controls (persistent)
-      const groupControls = createElement('div', { className: 'group-controls' });
-      const addButton = createElement('span', {
-        className: 'add-group control-button',
-        innerHTML: icons.addGroup
+    const renameButton = createElement('span', {
+      className: 'rename-group control-button',
+      innerHTML: icons.renameGroup
+    });
+    createCustomTooltip(renameButton, 'Переименовать группу');
+    renameButton.addEventListener('click', () => this.renameCurrentGroup());
+
+    const removeButton = createElement('span', {
+      className: 'remove-group control-button',
+      innerHTML: icons.trashNothing
+    });
+    createCustomTooltip(removeButton, 'Удалить группу');
+    removeButton.addEventListener('click', () => this.removeCurrentGroup());
+
+    const groupViewToggle = this.createGroupViewToggle();
+
+    groupControls.appendChild(addButton);
+    groupControls.appendChild(renameButton);
+    groupControls.appendChild(removeButton);
+    groupControls.appendChild(groupViewToggle);
+
+    groupsContainer.appendChild(groupControls);
+
+    // Create tabs-container for group tabs
+    const tabsContainer = createElement('div', { className: 'tabs-container' });
+    this.groups.forEach(group => {
+      const tab = createElement('span', {
+        className: `group-tab ${group.id === this.currentGroupId ? 'active' : ''}`,
+        textContent: group.title,
+        dataset: { groupId: group.id }
       });
-      createCustomTooltip(addButton, 'Добавить группу');
+      tab.addEventListener('click', () => this.selectGroup(group.id));
+      tabsContainer.appendChild(tab);
+    });
+    groupsContainer.appendChild(tabsContainer);
 
-      addButton.addEventListener('click', () => this.addGroup());
-      const renameButton = createElement('span', {
-        className: 'rename-group control-button',
-        innerHTML: icons.renameGroup
-      });
-      createCustomTooltip(renameButton, 'Переименовать группу');
-
-      renameButton.addEventListener('click', () => this.renameCurrentGroup());
-      const removeButton = createElement('span', {
-        className: 'remove-group control-button',
-        innerHTML: icons.trashNothing
-      });
-      createCustomTooltip(removeButton, 'Удалить группу');
-
-      removeButton.addEventListener('click', () => this.removeCurrentGroup());
-
-      // Add the new group view toggle button
-      const groupViewToggle = this.createGroupViewToggle();
-
-      groupControls.appendChild(addButton);
-      groupControls.appendChild(renameButton);
-      groupControls.appendChild(removeButton);
-      groupControls.appendChild(groupViewToggle);
-
-      // Insert group-controls as the first child of group-tabs
-      groupTabs.appendChild(groupControls);
-
-      // Then add the group tabs
-      this.groups.forEach(group => {
-        const tab = createElement('span', {
-          className: `group-tab ${group.id === this.currentGroupId ? 'active' : ''}`,
-          textContent: group.title,
-          dataset: { groupId: group.id }
-        });
-        tab.addEventListener('click', () => this.selectGroup(group.id));
-        groupTabs.appendChild(tab);
-      });
-
-      groupsContainer.appendChild(groupTabs);
-    } else {
-      // Unified mode - only show controls without tabs
-      const groupControls = createElement('div', { className: 'group-controls unified-controls' });
-      const addButton = createElement('span', {
-        className: 'add-group control-button',
-        innerHTML: icons.addGroup
-      });
-      createCustomTooltip(addButton, 'Добавить группу');
-
-      addButton.addEventListener('click', () => this.addGroup());
-      const removeButton = createElement('span', {
-        className: 'remove-group control-button',
-        innerHTML: icons.trashNothing
-      });
-      createCustomTooltip(removeButton, 'Удалить группу');
-
-      removeButton.addEventListener('click', () => this.removeCurrentGroup());
-
-      // Add the new group view toggle button
-      const groupViewToggle = this.createGroupViewToggle();
-
-      groupControls.appendChild(addButton);
-      groupControls.appendChild(removeButton);
-      groupControls.appendChild(groupViewToggle);
-
-      groupsContainer.appendChild(groupControls);
+    // Hide tabs-container in unified view
+    if (this.groupViewMode === 'unified') {
+      tabsContainer.classList.add('latest-games-hidden');
     }
 
     return groupsContainer;
@@ -1208,24 +1182,32 @@ class LatestGamesManager {
   refreshContainer() {
     const groupsContainer = document.getElementById('latest-games-groups');
     if (groupsContainer) {
-      const groupTabs = groupsContainer.querySelector('.group-tabs');
-      if (groupTabs) {
-        // Remove only .group-tab elements, keep .group-controls intact
-        Array.from(groupTabs.children).forEach(child => {
-          if (child.classList.contains('group-tab')) {
-            groupTabs.removeChild(child);
-          }
-        });
-        // Add updated group tabs
-        this.groups.forEach(group => {
-          const tab = createElement('span', {
-            className: `group-tab ${group.id === this.currentGroupId ? 'active' : ''}`,
-            textContent: group.title,
-            dataset: { groupId: group.id }
+      // Update groupControls class based on view mode
+      const groupControls = groupsContainer.querySelector('.group-controls');
+      if (groupControls) {
+        groupControls.className = 'group-controls' + (this.groupViewMode === 'unified' ? ' unified-controls' : '');
+      }
+
+      // Update tabs-container
+      const tabsContainer = groupsContainer.querySelector('.tabs-container');
+      if (tabsContainer) {
+        tabsContainer.innerHTML = ''; // Clear existing tabs
+        if (this.groupViewMode === 'tabs') {
+          // Populate tabs and show tabs-container
+          this.groups.forEach(group => {
+            const tab = createElement('span', {
+              className: `group-tab ${group.id === this.currentGroupId ? 'active' : ''}`,
+              textContent: group.title,
+              dataset: { groupId: group.id }
+            });
+            tab.addEventListener('click', () => this.selectGroup(group.id));
+            tabsContainer.appendChild(tab);
           });
-          tab.addEventListener('click', () => this.selectGroup(group.id));
-          groupTabs.appendChild(tab);
-        });
+          tabsContainer.classList.remove('latest-games-hidden');
+        } else {
+          // Hide tabs-container in unified mode
+          tabsContainer.classList.add('latest-games-hidden');
+        }
       }
     }
     const gamesList = document.getElementById('latest-games');
@@ -1233,7 +1215,6 @@ class LatestGamesManager {
       this.populateGamesList(gamesList);
       this.updateDisplayModeClass();
     }
-    // Immediately update the trash icons based on the latest data
     this.updateRemoveIcons();
     this.updateGameCountDisplay();
   }
