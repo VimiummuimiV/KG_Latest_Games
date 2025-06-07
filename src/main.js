@@ -287,7 +287,6 @@ class LatestGamesManager {
       });
       tab.addEventListener('click', () => {
         this.selectGroup(group.id);
-        this.updateActiveGroup();
       });
       tabsContainer.appendChild(tab);
     });
@@ -1240,6 +1239,7 @@ class LatestGamesManager {
     if (this.groups.some(group => group.id === id)) {
       this.currentGroupId = id;
       this.saveGameData();
+      this.updateActiveGroup();
       this.refreshContainer();
     }
   }

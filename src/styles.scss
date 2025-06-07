@@ -84,18 +84,20 @@
 
     .group-header {
       display: inline-flex;
-      width: 100%;
+      width: inherit;
       font-weight: bold;
       font-size: 14px;
       padding: 10px 0 10px 10px;
+      margin: 0 10px;
       color: var(--rg-text-secondary);
+      border: 2px solid transparent !important;
       cursor: pointer;
 
       &.active {
         color: var(--rg-gametype-normal) !important;
         background-color: var(--rg-bg-card-pinned-normal) !important;
-        border-left: 2px solid var(--rg-border-pinned-normal) !important;
-        border-radius: 0 4px 4px 0 !important;
+        border: 2px solid var(--rg-border-pinned-normal) !important;
+        border-radius: 4px !important;
       }
     }
 
@@ -108,7 +110,8 @@
       overflow-y: visible;
       margin: 0 10px;
 
-      .latest-game {
+      .latest-game,
+      .group-header {
         margin: 0 !important;
         max-width: none;
       }
@@ -310,7 +313,7 @@
     align-items: flex-start;
     padding: 0 10px;
     margin-top: 10px;
-    
+
     .controls-buttons {
       gap: 2px;
     }
