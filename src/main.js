@@ -228,12 +228,27 @@ class LatestGamesManager {
       : 'Переключить в режим вкладок по группам');
   }
 
-  createGroupHeader(groupTitle) {
+  createGroupHeader(group) {
     const header = createElement('div', {
-      className: 'group-header',
-      textContent: groupTitle
+      className: `group-header ${group.id === this.currentGroupId ? 'active' : ''}`,
+      textContent: group.title,
+      dataset: { groupId: group.id }
+    });
+    header.addEventListener('click', () => {
+      this.selectGroup(group.id);
     });
     return header;
+  }
+
+  updateActiveGroupHeader() {
+    const headers = document.querySelectorAll('.group-header');
+    headers.forEach(header => {
+      if (header.dataset.groupId === this.currentGroupId) {
+        header.classList.add('active');
+      } else {
+        header.classList.remove('active');
+      }
+    });
   }
 
   createGroupsContainer() {
@@ -1108,8 +1123,8 @@ class LatestGamesManager {
       // Unified view - show all groups with headers
       this.groups.forEach(group => {
         if (group.games.length > 0) {
-          // Add group header
-          const groupHeader = this.createGroupHeader(group.title);
+          // Add group header with the group object
+          const groupHeader = this.createGroupHeader(group);
           gamesList.appendChild(groupHeader);
 
           // Add games for this group
@@ -1223,7 +1238,11 @@ class LatestGamesManager {
     if (this.groups.some(group => group.id === id)) {
       this.currentGroupId = id;
       this.saveGameData();
-      this.refreshContainer();
+      if (this.groupViewMode === 'tabs') {
+        this.refreshContainer();
+      } else {
+        this.updateActiveGroupHeader();
+      }
     }
   }
 
