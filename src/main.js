@@ -41,6 +41,7 @@ class LatestGamesManager {
     this.startDelay = 1000;
     this.shouldReplay = false;
     this.replayDelay = 1000;
+    this.groupViewMode = 'tabs';
 
     this.init();
   }
@@ -202,53 +203,120 @@ class LatestGamesManager {
     return li;
   }
 
+  createGroupViewToggle() {
+    const toggleButton = createElement('div', {
+      className: 'group-view-toggle control-button'
+    });
+    toggleButton.innerHTML = this.groupViewMode === 'tabs' ? icons.wrap: icons.scroll;
+    createCustomTooltip(toggleButton, this.groupViewMode === 'tabs'
+      ? 'Переключить в единый вид со всеми играми'
+      : 'Переключить в режим вкладок по группам');
+
+    toggleButton.addEventListener('click', () => {
+      this.groupViewMode = this.groupViewMode === 'tabs' ? 'unified' : 'tabs';
+      this.saveSettings();
+      this.updateGroupViewToggle(toggleButton);
+      this.refreshContainer();
+    });
+    return toggleButton;
+  }
+
+  updateGroupViewToggle(toggleButton) {
+    toggleButton.innerHTML = this.groupViewMode === 'tabs' ? icons.wrap : icons.scroll;
+    createCustomTooltip(toggleButton, this.groupViewMode === 'tabs'
+      ? 'Переключить в единый вид со всеми играми'
+      : 'Переключить в режим вкладок по группам');
+  }
+
+  createGroupHeader(groupTitle) {
+    const header = createElement('div', {
+      className: 'group-header',
+      textContent: groupTitle
+    });
+    return header;
+  }
+
   createGroupsContainer() {
     const groupsContainer = createElement('div', { id: 'latest-games-groups' });
-    const groupTabs = createElement('div', { className: 'group-tabs' });
 
-    // Create group controls (persistent)
-    const groupControls = createElement('div', { className: 'group-controls' });
-    const addButton = createElement('span', {
-      className: 'add-group control-button',
-      innerHTML: icons.addGroup
-    });
-    createCustomTooltip(addButton, 'Добавить группу');
+    if (this.groupViewMode === 'tabs') {
+      const groupTabs = createElement('div', { className: 'group-tabs' });
 
-    addButton.addEventListener('click', () => this.addGroup());
-    const renameButton = createElement('span', {
-      className: 'rename-group control-button',
-      innerHTML: icons.renameGroup
-    });
-    createCustomTooltip(renameButton, 'Переименовать группу');
-
-    renameButton.addEventListener('click', () => this.renameCurrentGroup());
-    const removeButton = createElement('span', {
-      className: 'remove-group control-button',
-      innerHTML: icons.trashNothing
-    });
-    createCustomTooltip(removeButton, 'Удалить группу');
-
-    removeButton.addEventListener('click', () => this.removeCurrentGroup());
-
-    groupControls.appendChild(addButton);
-    groupControls.appendChild(renameButton);
-    groupControls.appendChild(removeButton);
-
-    // Insert group-controls as the first child of group-tabs
-    groupTabs.appendChild(groupControls);
-
-    // Then add the group tabs
-    this.groups.forEach(group => {
-      const tab = createElement('span', {
-        className: `group-tab ${group.id === this.currentGroupId ? 'active' : ''}`,
-        textContent: group.title,
-        dataset: { groupId: group.id }
+      // Create group controls (persistent)
+      const groupControls = createElement('div', { className: 'group-controls' });
+      const addButton = createElement('span', {
+        className: 'add-group control-button',
+        innerHTML: icons.addGroup
       });
-      tab.addEventListener('click', () => this.selectGroup(group.id));
-      groupTabs.appendChild(tab);
-    });
+      createCustomTooltip(addButton, 'Добавить группу');
 
-    groupsContainer.appendChild(groupTabs);
+      addButton.addEventListener('click', () => this.addGroup());
+      const renameButton = createElement('span', {
+        className: 'rename-group control-button',
+        innerHTML: icons.renameGroup
+      });
+      createCustomTooltip(renameButton, 'Переименовать группу');
+
+      renameButton.addEventListener('click', () => this.renameCurrentGroup());
+      const removeButton = createElement('span', {
+        className: 'remove-group control-button',
+        innerHTML: icons.trashNothing
+      });
+      createCustomTooltip(removeButton, 'Удалить группу');
+
+      removeButton.addEventListener('click', () => this.removeCurrentGroup());
+
+      // Add the new group view toggle button
+      const groupViewToggle = this.createGroupViewToggle();
+
+      groupControls.appendChild(addButton);
+      groupControls.appendChild(renameButton);
+      groupControls.appendChild(removeButton);
+      groupControls.appendChild(groupViewToggle);
+
+      // Insert group-controls as the first child of group-tabs
+      groupTabs.appendChild(groupControls);
+
+      // Then add the group tabs
+      this.groups.forEach(group => {
+        const tab = createElement('span', {
+          className: `group-tab ${group.id === this.currentGroupId ? 'active' : ''}`,
+          textContent: group.title,
+          dataset: { groupId: group.id }
+        });
+        tab.addEventListener('click', () => this.selectGroup(group.id));
+        groupTabs.appendChild(tab);
+      });
+
+      groupsContainer.appendChild(groupTabs);
+    } else {
+      // Unified mode - only show controls without tabs
+      const groupControls = createElement('div', { className: 'group-controls unified-controls' });
+      const addButton = createElement('span', {
+        className: 'add-group control-button',
+        innerHTML: icons.addGroup
+      });
+      createCustomTooltip(addButton, 'Добавить группу');
+
+      addButton.addEventListener('click', () => this.addGroup());
+      const removeButton = createElement('span', {
+        className: 'remove-group control-button',
+        innerHTML: icons.trashNothing
+      });
+      createCustomTooltip(removeButton, 'Удалить группу');
+
+      removeButton.addEventListener('click', () => this.removeCurrentGroup());
+
+      // Add the new group view toggle button
+      const groupViewToggle = this.createGroupViewToggle();
+
+      groupControls.appendChild(addButton);
+      groupControls.appendChild(removeButton);
+      groupControls.appendChild(groupViewToggle);
+
+      groupsContainer.appendChild(groupControls);
+    }
+
     return groupsContainer;
   }
 
@@ -758,6 +826,7 @@ class LatestGamesManager {
       this.startDelay = settings.startDelay !== undefined ? settings.startDelay : this.startDelay;
       this.replayDelay = settings.replayDelay !== undefined ? settings.replayDelay : this.replayDelay;
       this.panelYPosition = settings.panelYPosition || 0;
+      this.groupViewMode = settings.groupViewMode || 'tabs';
     } catch (error) {
       console.warn('Could not load settings from localStorage:', error);
       // Set defaults
@@ -774,6 +843,7 @@ class LatestGamesManager {
       this.startDelay = 1000;
       this.replayDelay = 1000;
       this.panelYPosition = 0;
+      this.groupViewMode = 'tabs';
     }
   }
 
@@ -792,7 +862,8 @@ class LatestGamesManager {
         shouldReplay: this.shouldReplay,
         startDelay: this.startDelay,
         replayDelay: this.replayDelay,
-        panelYPosition: this.panelYPosition
+        panelYPosition: this.panelYPosition,
+        groupViewMode: this.groupViewMode
       };
       localStorage.setItem('latestGamesSettings', JSON.stringify(settings));
     } catch (error) {
@@ -1047,14 +1118,36 @@ class LatestGamesManager {
 
   populateGamesList(gamesList) {
     gamesList.innerHTML = '';
-    const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
-    if (!currentGroup) return;
-    const pinnedCount = this.getPinnedGameCount();
-    const maxGamesToShow = Math.min(currentGroup.games.length, this.maxGameCount + pinnedCount);
-    for (let i = 0; i < maxGamesToShow; i++) {
-      const game = currentGroup.games[i];
-      const gameElement = this.createGameElement(game, game.id);
-      gamesList.appendChild(gameElement);
+
+    if (this.groupViewMode === 'tabs') {
+      // Original tab-based behavior
+      const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
+      if (!currentGroup) return;
+      const pinnedCount = this.getPinnedGameCount();
+      const maxGamesToShow = Math.min(currentGroup.games.length, this.maxGameCount + pinnedCount);
+      for (let i = 0; i < maxGamesToShow; i++) {
+        const game = currentGroup.games[i];
+        const gameElement = this.createGameElement(game, game.id);
+        gamesList.appendChild(gameElement);
+      }
+    } else {
+      // Unified view - show all groups with headers
+      this.groups.forEach(group => {
+        if (group.games.length > 0) {
+          // Add group header
+          const groupHeader = this.createGroupHeader(group.title);
+          gamesList.appendChild(groupHeader);
+
+          // Add games for this group
+          const pinnedCount = group.games.filter(game => game.pin).length;
+          const maxGamesToShow = Math.min(group.games.length, this.maxGameCount + pinnedCount);
+          for (let i = 0; i < maxGamesToShow; i++) {
+            const game = group.games[i];
+            const gameElement = this.createGameElement(game, game.id);
+            gamesList.appendChild(gameElement);
+          }
+        }
+      });
     }
   }
 

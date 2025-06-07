@@ -82,6 +82,15 @@
     flex-direction: column;
     gap: 5px;
 
+    .group-header {
+      display: inline-flex;
+      width: 100%;
+      font-weight: bold;
+      font-size: 14px;
+      padding: 14px 0;
+      color: var(--rg-text-secondary);
+    }
+
     &.display-mode-wrap {
       display: flex;
       flex-direction: row;
