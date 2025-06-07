@@ -240,17 +240,6 @@ class LatestGamesManager {
     return header;
   }
 
-  updateActiveGroupHeader() {
-    const headers = document.querySelectorAll('.group-header');
-    headers.forEach(header => {
-      if (header.dataset.groupId === this.currentGroupId) {
-        header.classList.add('active');
-      } else {
-        header.classList.remove('active');
-      }
-    });
-  }
-
   createGroupsContainer() {
     const groupsContainer = createElement('div', { id: 'latest-games-groups' });
 
@@ -296,7 +285,10 @@ class LatestGamesManager {
         textContent: group.title,
         dataset: { groupId: group.id }
       });
-      tab.addEventListener('click', () => this.selectGroup(group.id));
+      tab.addEventListener('click', () => {
+        this.selectGroup(group.id);
+        this.updateActiveGroup();
+      });
       tabsContainer.appendChild(tab);
     });
 
@@ -1233,9 +1225,11 @@ class LatestGamesManager {
   }
 
   updateActiveGroup() {
+    // Update group headers (only present in unified mode)
     document.querySelectorAll('.group-header').forEach(header =>
       header.classList.toggle('active', header.dataset.groupId === this.currentGroupId)
     );
+    // Update tabs (present in both modes, but hidden in unified)
     document.querySelectorAll('.group-tab').forEach(tab =>
       tab.classList.toggle('active', tab.dataset.groupId === this.currentGroupId)
     );
@@ -1246,8 +1240,7 @@ class LatestGamesManager {
     if (this.groups.some(group => group.id === id)) {
       this.currentGroupId = id;
       this.saveGameData();
-      this.refreshContainer(); // Refresh to rebuild UI
-      this.updateActiveGroup(); // Update active states
+      this.refreshContainer();
     }
   }
 

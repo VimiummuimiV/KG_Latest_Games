@@ -90,6 +90,13 @@
       padding: 10px 0 10px 10px;
       color: var(--rg-text-secondary);
       cursor: pointer;
+
+      &.active {
+        color: var(--rg-gametype-normal) !important;
+        background-color: var(--rg-bg-card-pinned-normal) !important;
+        border-left: 2px solid var(--rg-border-pinned-normal) !important;
+        border-radius: 0 4px 4px 0 !important;
+      }
     }
 
     &.display-mode-wrap {
