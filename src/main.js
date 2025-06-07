@@ -288,7 +288,7 @@ class LatestGamesManager {
 
     groupsContainer.appendChild(groupControls);
 
-    // Create tabs-container for group tabs
+    // Create tabs-container for group tabs only
     const tabsContainer = createElement('div', { className: 'tabs-container' });
     this.groups.forEach(group => {
       const tab = createElement('span', {
@@ -299,13 +299,13 @@ class LatestGamesManager {
       tab.addEventListener('click', () => this.selectGroup(group.id));
       tabsContainer.appendChild(tab);
     });
-    groupsContainer.appendChild(tabsContainer);
 
     // Hide tabs-container in unified view
     if (this.groupViewMode === 'unified') {
       tabsContainer.classList.add('latest-games-hidden');
     }
 
+    groupsContainer.appendChild(tabsContainer);
     return groupsContainer;
   }
 
@@ -1109,7 +1109,7 @@ class LatestGamesManager {
     gamesList.innerHTML = '';
 
     if (this.groupViewMode === 'tabs') {
-      // Original tab-based behavior
+      // In tabs mode, only show games for the current group, no headers
       const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
       if (!currentGroup) return;
       const pinnedCount = this.getPinnedGameCount();
@@ -1120,14 +1120,12 @@ class LatestGamesManager {
         gamesList.appendChild(gameElement);
       }
     } else {
-      // Unified view - show all groups with headers
+      // In unified mode, show headers and games for all groups
       this.groups.forEach(group => {
         if (group.games.length > 0) {
-          // Add group header with the group object
+          // Add group header to separate groups
           const groupHeader = this.createGroupHeader(group);
           gamesList.appendChild(groupHeader);
-
-          // Add games for this group
           const pinnedCount = group.games.filter(game => game.pin).length;
           const maxGamesToShow = Math.min(group.games.length, this.maxGameCount + pinnedCount);
           for (let i = 0; i < maxGamesToShow; i++) {
@@ -1234,15 +1232,22 @@ class LatestGamesManager {
     this.updateGameCountDisplay();
   }
 
+  updateActiveGroup() {
+    document.querySelectorAll('.group-header').forEach(header =>
+      header.classList.toggle('active', header.dataset.groupId === this.currentGroupId)
+    );
+    document.querySelectorAll('.group-tab').forEach(tab =>
+      tab.classList.toggle('active', tab.dataset.groupId === this.currentGroupId)
+    );
+  }
+
+  // Update references to the renamed method
   selectGroup(id) {
     if (this.groups.some(group => group.id === id)) {
       this.currentGroupId = id;
       this.saveGameData();
-      if (this.groupViewMode === 'tabs') {
-        this.refreshContainer();
-      } else {
-        this.updateActiveGroupHeader();
-      }
+      this.refreshContainer(); // Refresh to rebuild UI
+      this.updateActiveGroup(); // Update active states
     }
   }
 
