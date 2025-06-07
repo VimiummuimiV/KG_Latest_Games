@@ -296,7 +296,7 @@ class LatestGamesManager {
     const updateTooltip = (button, isEnabled, enabledText, disabledText, delay, delayText) => {
       createCustomTooltip(button, `
         [Клик] ${isEnabled ? enabledText : disabledText}
-        [Ctrl + Клик] ${delayText + (delay ? ` (${delay} мс)` : '')}
+        [Shift + Клик] ${delayText + (delay ? ` (${delay} мс)` : '')}
       `);
     };
 
@@ -311,7 +311,7 @@ class LatestGamesManager {
 
       // Add click handler
       button.onclick = (e) => {
-        if (e.ctrlKey) {
+        if (e.shiftKey) {
           const newDelay = prompt(delayPromptText, "");
           if (newDelay !== null) {
             const delayValue = parseInt(newDelay, 10);
@@ -366,11 +366,11 @@ class LatestGamesManager {
     });
     createCustomTooltip(pinAllBtn, `
       [Клик] Закрепить все игры в текущей группе
-      [Ctrl + Клик] Закрепить все игры во всех группах
+      [Shift + Клик] Закрепить все игры во всех группах
     `);
     pinAllBtn.onclick = (e) => {
-      if (e.ctrlKey || e.metaKey) {
-        // Ctrl + Click: Pin all games in all groups
+      if (e.shiftKey) {
+        // Shift + Click: Pin all games in all groups
         this.groups.forEach(group => group.games.forEach(game => game.pin = 1));
       } else {
         // Single Click: Pin all games only in current group
@@ -389,11 +389,11 @@ class LatestGamesManager {
     });
     createCustomTooltip(unpinAllBtn, `
       [Клик] Открепить все игры в текущей группе
-      [Ctrl + Клик] Открепить все игры во всех группах
+      [Shift + Клик] Открепить все игры во всех группах
     `);
     unpinAllBtn.onclick = (e) => {
-      if (e.ctrlKey || e.metaKey) {
-        // Ctrl + Click: Unpin all games in all groups
+      if (e.shiftKey) {
+        // Shift + Click: Unpin all games in all groups
         this.groups.forEach(group => group.games.forEach(game => game.pin = 0));
       } else {
         // Single Click: Unpin games only in current group
@@ -484,12 +484,12 @@ class LatestGamesManager {
     });
     createCustomTooltip(removeUnpinnedBtn, `
       [Клик] Удалить все незакреплённые игры в текущей группе
-      [Ctrl + Клик] Удалить все незакреплённые игры во всех группах
+      [Shift + Клик] Удалить все незакреплённые игры во всех группах
     `);
 
     removeUnpinnedBtn.onclick = (e) => {
-      if (e.ctrlKey || e.metaKey) {
-        // Ctrl + Click: Remove unpinned games from all groups
+      if (e.shiftKey) {
+        // Shift + Click: Remove unpinned games from all groups
         this.groups.forEach(group => {
           group.games = group.games.filter(game => game.pin);
         });
