@@ -688,6 +688,7 @@ class LatestGamesManager {
           this.saveSettings();
         };
         handle.onmousedown = (e) => {
+          if (e.button !== 0) return; // Only allow left mouse button
           isDragging = true;
           startX = e.clientX;
           startWidth = container.offsetWidth;
@@ -737,6 +738,7 @@ class LatestGamesManager {
         };
 
         const enableYDrag = (e) => {
+          if (e.button !== 0) return; // Only allow left mouse button
           if (e.target.closest('.latest-game, .group-tab, .control-button, .resize-handle')) return;
           isDraggingY = true;
           startY = e.clientY;
