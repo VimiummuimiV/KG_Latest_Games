@@ -984,24 +984,109 @@ class LatestGamesManager {
     );
   }
 
+  getDragBounds(element) {
+    const rect = element.getBoundingClientRect();
+    const parentRect = element.parentElement.getBoundingClientRect();
+    const parentElement = element.parentElement;
+
+    return {
+      element: {
+        rect: rect,
+        width: element.offsetWidth,
+        height: element.offsetHeight
+      },
+      parent: {
+        rect: parentRect,
+        width: parentElement.offsetWidth,
+        height: parentElement.offsetHeight
+      }
+    };
+  }
+
+  // Helper function to handle element positioning in wrap mode
+  handleWrapModePositioning(e, gamesList) {
+    const bounds = this.getDragBounds(this.draggedElement);
+
+    // Calculate constrained position
+    let newLeft = e.clientX - this.dragOffset.x - bounds.parent.rect.left;
+    let newTop = e.clientY - this.dragOffset.y - bounds.parent.rect.top;
+    newLeft = Math.max(0, Math.min(newLeft, bounds.parent.width - bounds.element.width));
+    newTop = Math.max(0, Math.min(newTop, bounds.parent.height - bounds.element.height));
+
+    this.draggedElement.style.left = `${newLeft}px`;
+    this.draggedElement.style.top = `${newTop}px`;
+
+    // Handle element insertion
+    const pinnedGames = Array.from(gamesList.querySelectorAll('.pin-game:not(.dragging)'));
+    let closestElement = null;
+    let minDistance = Infinity;
+
+    pinnedGames.forEach(game => {
+      const rect = game.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const distance = Math.hypot(e.clientX - centerX, e.clientY - centerY);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestElement = game;
+      }
+    });
+
+    if (closestElement) {
+      const rect = closestElement.getBoundingClientRect();
+      const isLeftHalf = e.clientX < rect.left + rect.width / 2;
+      if (isLeftHalf) {
+        gamesList.insertBefore(this.draggedElement, closestElement);
+      } else {
+        gamesList.insertBefore(this.draggedElement, closestElement.nextSibling);
+      }
+    }
+  }
+
+  // Helper function to handle element positioning in scroll mode
+  handleScrollModePositioning(e, gamesList) {
+    const pinnedGames = Array.from(gamesList.querySelectorAll('.pin-game:not(.dragging)'));
+    let insertAfter = null;
+
+    for (const pinnedGame of pinnedGames) {
+      const rect = pinnedGame.getBoundingClientRect();
+      const middle = rect.top + rect.height / 2;
+      if (e.clientY < middle) break;
+      insertAfter = pinnedGame;
+    }
+
+    if (insertAfter) {
+      gamesList.insertBefore(this.draggedElement, insertAfter.nextSibling);
+    } else {
+      const firstPinned = gamesList.querySelector('.pin-game:not(.dragging)');
+      if (firstPinned) gamesList.insertBefore(this.draggedElement, firstPinned);
+    }
+  }
+
   addDragFunctionality(element) {
     element.addEventListener('mousedown', (e) => {
       // Only allow dragging with left mouse button (LMB)
       if (e.button !== 0) return;
       // Prevent dragging if the target is a button (e.g., pin or delete)
       if (e.target.closest('.latest-game-buttons')) return;
+
       this.wasDragging = false;
       this.initialX = e.clientX;
       this.initialY = e.clientY;
       this.isDragging = true;
       this.draggedElement = element;
-      const rect = element.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      this.isRightHalf = clickX > rect.width / 2;
+
+      const bounds = this.getDragBounds(element);
+      const clickX = e.clientX - bounds.element.rect.left;
+      this.isRightHalf = clickX > bounds.element.rect.width / 2;
       this.lastPanelDragY = e.clientY;
       // Calculate the offset from the top-left corner of the element
-      this.dragOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-      this.parentRect = element.parentElement.getBoundingClientRect();
+      this.dragOffset = {
+        x: e.clientX - bounds.element.rect.left,
+        y: e.clientY - bounds.element.rect.top
+      };
+      this.parentRect = bounds.parent.rect;
+
       this.globalEvents.handleDragMove = this.handleDragMove.bind(this);
       this.globalEvents.handleDragEnd = this.handleDragEnd.bind(this);
       document.addEventListener('mousemove', this.globalEvents.handleDragMove);
@@ -1016,13 +1101,11 @@ class LatestGamesManager {
       this.wasDragging = true;
       this.draggedElement.classList.add('dragging');
       if (this.getDisplayMode() === 'wrap') {
-        const rect = this.draggedElement.getBoundingClientRect();
-        const parentRect = this.parentRect;
-
+        const bounds = this.getDragBounds(this.draggedElement);
         this.draggedElement.style.position = 'absolute';
-        this.draggedElement.style.left = `${rect.left - parentRect.left}px`;
-        this.draggedElement.style.top = `${rect.top - parentRect.top}px`;
-        this.draggedElement.style.width = `${rect.width}px`;
+        this.draggedElement.style.left = `${bounds.element.rect.left - bounds.parent.rect.left}px`;
+        this.draggedElement.style.top = `${bounds.element.rect.top - bounds.parent.rect.top}px`;
+        this.draggedElement.style.width = `${bounds.element.rect.width}px`;
       }
     }
 
@@ -1032,72 +1115,12 @@ class LatestGamesManager {
     const gamesList = document.getElementById('latest-games');
 
     if (displayMode === 'scroll') {
-      const pinnedGames = Array.from(gamesList.querySelectorAll('.pin-game:not(.dragging)'));
-      let insertAfter = null;
-
-      for (const pinnedGame of pinnedGames) {
-        const rect = pinnedGame.getBoundingClientRect();
-        const middle = rect.top + rect.height / 2;
-        if (e.clientY < middle) break;
-        insertAfter = pinnedGame;
-      }
-
-      if (insertAfter) {
-        gamesList.insertBefore(this.draggedElement, insertAfter.nextSibling);
-      } else {
-        const firstPinned = gamesList.querySelector('.pin-game:not(.dragging)');
-        if (firstPinned) gamesList.insertBefore(this.draggedElement, firstPinned);
-      }
+      this.handleScrollModePositioning(e, gamesList);
     } else {
-      // Get fresh parent rect to account for any layout changes
-      const parentRect = this.draggedElement.parentElement.getBoundingClientRect();
-      let newLeft = e.clientX - this.dragOffset.x - parentRect.left;
-      let newTop = e.clientY - this.dragOffset.y - parentRect.top;
-
-      // Get the actual parent element dimensions for proper boundary checking
-      const parentElement = this.draggedElement.parentElement;
-      const parentWidth = parentElement.offsetWidth;
-      const parentHeight = parentElement.offsetHeight;
-
-      // Get element dimensions
-      const elementWidth = this.draggedElement.offsetWidth;
-      const elementHeight = this.draggedElement.offsetHeight;
-
-      // Clamp position to stay within parent bounds
-      newLeft = Math.max(0, Math.min(newLeft, parentWidth - elementWidth));
-      newTop = Math.max(0, Math.min(newTop, parentHeight - elementHeight));
-
-      this.draggedElement.style.left = `${newLeft}px`;
-      this.draggedElement.style.top = `${newTop}px`;
-
-      const pinnedGames = Array.from(gamesList.querySelectorAll('.pin-game:not(.dragging)'));
-      let closestElement = null;
-      let minDistance = Infinity;
-      const cursorX = e.clientX;
-      const cursorY = e.clientY;
-
-      pinnedGames.forEach(game => {
-        const rect = game.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        const distance = Math.hypot(cursorX - centerX, cursorY - centerY);
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestElement = game;
-        }
-      });
-
-      if (closestElement) {
-        const rect = closestElement.getBoundingClientRect();
-        const isLeftHalf = cursorX < rect.left + rect.width / 2;
-        if (isLeftHalf) {
-          gamesList.insertBefore(this.draggedElement, closestElement);
-        } else {
-          gamesList.insertBefore(this.draggedElement, closestElement.nextSibling);
-        }
-      }
+      this.handleWrapModePositioning(e, gamesList);
     }
 
+    // Handle rotation
     const currentY = e.clientY;
     const deltaY = currentY - this.lastPanelDragY;
     this.lastPanelDragY = currentY;
