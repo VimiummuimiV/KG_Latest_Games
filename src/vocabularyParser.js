@@ -92,16 +92,8 @@ function showTooltip(anchor, content) {
   currentAnchor = anchor;
   currentTooltip = createVocabularyTooltip(content);
   
-  // Position tooltip
+  // Position and show tooltip
   positionTooltip(anchor, currentTooltip);
-  
-  // Show tooltip
-  currentTooltip.style.display = 'block';
-  setTimeout(() => {
-    if (currentTooltip) {
-      currentTooltip.style.opacity = '1';
-    }
-  }, 10);
   
   // Add event listeners to tooltip for hover behavior
   currentTooltip.addEventListener('mouseenter', () => {
@@ -143,11 +135,8 @@ function positionTooltip(anchor, tooltip) {
   const viewportHeight = window.innerHeight;
   const margin = 10;
   
-  // Get tooltip dimensions after making it visible but transparent
-  tooltip.style.visibility = 'hidden';
-  tooltip.style.display = 'block';
+  // Get tooltip dimensions
   const tooltipRect = tooltip.getBoundingClientRect();
-  tooltip.style.visibility = 'visible';
   
   let left = anchorRect.left;
   let top = anchorRect.bottom + 5;
