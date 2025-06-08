@@ -12,7 +12,7 @@ const dragState = {
   rotationAccumulator: 0,
   rotationDegreeLimit: 5,
   globalEvents: {},
-  
+
   // Reset method to clean up state
   reset() {
     this.draggedElement = null;
@@ -25,6 +25,18 @@ const dragState = {
     this.initialX = 0;
     this.initialY = 0;
     this.rotationAccumulator = 0;
+    // Clear event references
+    this.globalEvents = {};
+  },
+
+  // Add cleanup method
+  cleanup() {
+    if (this.globalEvents.handleDragMove) {
+      document.removeEventListener('mousemove', this.globalEvents.handleDragMove);
+    }
+    if (this.globalEvents.handleDragEnd) {
+      document.removeEventListener('mouseup', this.globalEvents.handleDragEnd);
+    }
     this.globalEvents = {};
   }
 };
@@ -116,11 +128,17 @@ function handleScrollModePositioning(e, gamesList) {
 }
 
 export function addDragFunctionality(manager, element) {
+  // Clean up any existing listeners first
+  dragState.cleanup();
+
   element.addEventListener('mousedown', (e) => {
     // Only allow dragging with left mouse button (LMB)
     if (e.button !== 0) return;
     // Prevent dragging if the target is a button (e.g., pin or delete)
     if (e.target.closest('.latest-game-buttons')) return;
+
+    // Clean up any existing listeners before adding new ones
+    dragState.cleanup();
 
     manager.wasDragging = false;
     dragState.initialX = e.clientX;
@@ -138,8 +156,10 @@ export function addDragFunctionality(manager, element) {
       y: e.clientY - bounds.element.rect.top
     };
 
+    // Create bound functions and store references
     dragState.globalEvents.handleDragMove = (e) => handleDragMove(e, manager);
     dragState.globalEvents.handleDragEnd = () => handleDragEnd(manager);
+    
     document.addEventListener('mousemove', dragState.globalEvents.handleDragMove);
     document.addEventListener('mouseup', dragState.globalEvents.handleDragEnd);
   });
@@ -177,10 +197,10 @@ function handleDragMove(e, manager) {
   dragState.lastPanelDragY = currentY;
   if (deltaY !== 0) {
     const sensitivity = 0.2;
-    dragState.rotationAccumulator = (dragState.rotationAccumulator || 0) + 
+    dragState.rotationAccumulator = (dragState.rotationAccumulator || 0) +
       (dragState.isRightHalf ? deltaY : -deltaY) * sensitivity;
     dragState.rotationAccumulator = Math.max(
-      -dragState.rotationDegreeLimit, 
+      -dragState.rotationDegreeLimit,
       Math.min(dragState.rotationDegreeLimit, dragState.rotationAccumulator)
     );
     dragState.draggedElement.style.transform = `rotate(${dragState.rotationAccumulator}deg)`;
@@ -188,7 +208,13 @@ function handleDragMove(e, manager) {
 }
 
 function handleDragEnd(manager) {
-  if (!dragState.isDragging || !dragState.draggedElement) return;
+  // Always clean up listeners first, regardless of state
+  dragState.cleanup();
+
+  if (!dragState.isDragging || !dragState.draggedElement) {
+    dragState.reset();
+    return;
+  }
 
   dragState.isDragging = false;
   dragState.draggedElement.classList.remove('dragging');
@@ -203,12 +229,6 @@ function handleDragEnd(manager) {
   dragState.draggedElement.style.transform = '';
 
   manager.updateGameOrderFromDOM();
-
-  // Remove event listeners before resetting state
-  if (dragState.globalEvents.handleDragMove) {
-    document.removeEventListener('mousemove', dragState.globalEvents.handleDragMove);
-    document.removeEventListener('mouseup', dragState.globalEvents.handleDragEnd);
-  }
 
   // Clean up drag state
   dragState.reset();
