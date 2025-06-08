@@ -1,10 +1,16 @@
 let draggedElement = null;
-let dragOffset = { x: 0, y: 0 };
+let isDragging = false;
+let isRightHalf = false;
 let dragDirection = 0;
 let lastDragDirection = 0;
+let lastPanelDragY = 0;
+let dragOffset = { x: 0, y: 0 };
 let initialX = 0;
 let initialY = 0;
 let dragThreshold = 1;
+let rotationAccumulator = 0;
+let rotationDegreeLimit = 5;
+let globalEvents = {};
 
 function isActuallyDragging(e) {
   return (
@@ -34,16 +40,16 @@ function getDragBounds(element) {
 
 // Helper function to handle element positioning in wrap mode
 function handleWrapModePositioning(e, gamesList) {
-  const bounds = this.getDragBounds(this.draggedElement);
+  const bounds = getDragBounds(draggedElement);
 
   // Calculate constrained position
-  let newLeft = e.clientX - this.dragOffset.x - bounds.parent.rect.left;
-  let newTop = e.clientY - this.dragOffset.y - bounds.parent.rect.top;
+  let newLeft = e.clientX - dragOffset.x - bounds.parent.rect.left;
+  let newTop = e.clientY - dragOffset.y - bounds.parent.rect.top;
   newLeft = Math.max(0, Math.min(newLeft, bounds.parent.width - bounds.element.width));
   newTop = Math.max(0, Math.min(newTop, bounds.parent.height - bounds.element.height));
 
-  this.draggedElement.style.left = `${newLeft}px`;
-  this.draggedElement.style.top = `${newTop}px`;
+  draggedElement.style.left = `${newLeft}px`;
+  draggedElement.style.top = `${newTop}px`;
 
   // Handle element insertion
   const pinnedGames = Array.from(gamesList.querySelectorAll('.pin-game:not(.dragging)'));
@@ -65,9 +71,9 @@ function handleWrapModePositioning(e, gamesList) {
     const rect = closestElement.getBoundingClientRect();
     const isLeftHalf = e.clientX < rect.left + rect.width / 2;
     if (isLeftHalf) {
-      gamesList.insertBefore(this.draggedElement, closestElement);
+      gamesList.insertBefore(draggedElement, closestElement);
     } else {
-      gamesList.insertBefore(this.draggedElement, closestElement.nextSibling);
+      gamesList.insertBefore(draggedElement, closestElement.nextSibling);
     }
   }
 }
@@ -85,56 +91,56 @@ function handleScrollModePositioning(e, gamesList) {
   }
 
   if (insertAfter) {
-    gamesList.insertBefore(this.draggedElement, insertAfter.nextSibling);
+    gamesList.insertBefore(draggedElement, insertAfter.nextSibling);
   } else {
     const firstPinned = gamesList.querySelector('.pin-game:not(.dragging)');
-    if (firstPinned) gamesList.insertBefore(this.draggedElement, firstPinned);
+    if (firstPinned) gamesList.insertBefore(draggedElement, firstPinned);
   }
 }
 
-function addDragFunctionality(element) {
+export function addDragFunctionality(manager, element) {
   element.addEventListener('mousedown', (e) => {
     // Only allow dragging with left mouse button (LMB)
     if (e.button !== 0) return;
     // Prevent dragging if the target is a button (e.g., pin or delete)
     if (e.target.closest('.latest-game-buttons')) return;
 
-    this.wasDragging = false;
-    this.initialX = e.clientX;
-    this.initialY = e.clientY;
-    this.isDragging = true;
-    this.draggedElement = element;
+    manager.wasDragging = false;
+    initialX = e.clientX;
+    initialY = e.clientY;
+    isDragging = true;
+    draggedElement = element;
 
-    const bounds = this.getDragBounds(element);
+    const bounds = getDragBounds(element);
     const clickX = e.clientX - bounds.element.rect.left;
-    this.isRightHalf = clickX > bounds.element.rect.width / 2;
-    this.lastPanelDragY = e.clientY;
+    isRightHalf = clickX > bounds.element.rect.width / 2;
+    lastPanelDragY = e.clientY;
     // Calculate the offset from the top-left corner of the element
-    this.dragOffset = {
+    dragOffset = {
       x: e.clientX - bounds.element.rect.left,
       y: e.clientY - bounds.element.rect.top
     };
     this.parentRect = bounds.parent.rect;
 
-    this.globalEvents.handleDragMove = this.handleDragMove.bind(this);
-    this.globalEvents.handleDragEnd = this.handleDragEnd.bind(this);
-    document.addEventListener('mousemove', this.globalEvents.handleDragMove);
-    document.addEventListener('mouseup', this.globalEvents.handleDragEnd);
+    globalEvents.handleDragMove = handleDragMove.bind(this);
+    globalEvents.handleDragEnd = handleDragEnd.bind(this);
+    document.addEventListener('mousemove', globalEvents.handleDragMove);
+    document.addEventListener('mouseup', globalEvents.handleDragEnd);
   });
 }
 
 function handleDragMove(e) {
-  if (!this.isDragging || !this.draggedElement) return;
+  if (!isDragging || !draggedElement) return;
 
-  if (!this.wasDragging && this.isActuallyDragging(e)) {
+  if (!this.wasDragging && isActuallyDragging(e)) {
     this.wasDragging = true;
-    this.draggedElement.classList.add('dragging');
+    draggedElement.classList.add('dragging');
     if (this.getDisplayMode() === 'wrap') {
-      const bounds = this.getDragBounds(this.draggedElement);
-      this.draggedElement.style.position = 'absolute';
-      this.draggedElement.style.left = `${bounds.element.rect.left - bounds.parent.rect.left}px`;
-      this.draggedElement.style.top = `${bounds.element.rect.top - bounds.parent.rect.top}px`;
-      this.draggedElement.style.width = `${bounds.element.rect.width}px`;
+      const bounds = getDragBounds(draggedElement);
+      draggedElement.style.position = 'absolute';
+      draggedElement.style.left = `${bounds.element.rect.left - bounds.parent.rect.left}px`;
+      draggedElement.style.top = `${bounds.element.rect.top - bounds.parent.rect.top}px`;
+      draggedElement.style.width = `${bounds.element.rect.width}px`;
     }
   }
 
@@ -144,46 +150,46 @@ function handleDragMove(e) {
   const gamesList = document.getElementById('latest-games');
 
   if (displayMode === 'scroll') {
-    this.handleScrollModePositioning(e, gamesList);
+    handleScrollModePositioning(e, gamesList);
   } else {
-    this.handleWrapModePositioning(e, gamesList);
+    handleWrapModePositioning(e, gamesList);
   }
 
   // Handle rotation
   const currentY = e.clientY;
-  const deltaY = currentY - this.lastPanelDragY;
-  this.lastPanelDragY = currentY;
+  const deltaY = currentY - lastPanelDragY;
+  lastPanelDragY = currentY;
   if (deltaY !== 0) {
     const sensitivity = 0.2;
-    this.rotationAccumulator = (this.rotationAccumulator || 0) + (this.isRightHalf ? deltaY : -deltaY) * sensitivity;
-    this.rotationAccumulator = Math.max(-this.rotationDegreeLimit, Math.min(this.rotationDegreeLimit, this.rotationAccumulator));
-    this.draggedElement.style.transform = `rotate(${this.rotationAccumulator}deg)`;
+    rotationAccumulator = (rotationAccumulator || 0) + (isRightHalf ? deltaY : -deltaY) * sensitivity;
+    rotationAccumulator = Math.max(-rotationDegreeLimit, Math.min(rotationDegreeLimit, rotationAccumulator));
+    draggedElement.style.transform = `rotate(${rotationAccumulator}deg)`;
   }
 }
 
 function handleDragEnd() {
-  if (!this.isDragging || !this.draggedElement) return;
+  if (!isDragging || !draggedElement) return;
 
-  this.isDragging = false;
-  this.draggedElement.classList.remove('dragging');
+  isDragging = false;
+  draggedElement.classList.remove('dragging');
 
   const displayMode = this.getDisplayMode();
   if (displayMode === 'wrap') {
-    this.draggedElement.style.position = '';
-    this.draggedElement.style.left = '';
-    this.draggedElement.style.top = '';
-    this.draggedElement.style.width = '';
+    draggedElement.style.position = '';
+    draggedElement.style.left = '';
+    draggedElement.style.top = '';
+    draggedElement.style.width = '';
   }
-  this.draggedElement.style.transform = '';
+  draggedElement.style.transform = '';
 
   this.updateGameOrderFromDOM();
 
-  this.draggedElement = null;
-  this.dragDirection = 0;
-  this.lastPanelDragY = 0;
+  draggedElement = null;
+  dragDirection = 0;
+  lastPanelDragY = 0;
 
-  if (this.globalEvents) {
-    document.removeEventListener('mousemove', this.globalEvents.handleDragMove);
-    document.removeEventListener('mouseup', this.globalEvents.handleDragEnd);
+  if (globalEvents) {
+    document.removeEventListener('mousemove', globalEvents.handleDragMove);
+    document.removeEventListener('mouseup', globalEvents.handleDragEnd);
   }
 }

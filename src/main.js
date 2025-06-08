@@ -8,6 +8,7 @@ import { showMigrationPopup } from './vocabularyMigration.js';
 import { attachVocabularyCreation } from './vocabularyCreation.js';
 import { createCustomTooltip } from './tooltip.js';
 import { createGamePopup } from './gamePopup.js';
+import { addDragFunctionality } from './drag.js';
 
 class LatestGamesManager {
   constructor() {
@@ -25,21 +26,25 @@ class LatestGamesManager {
 
     // Dragging settings
     this.enableDragging = true;
-    this.isDragging = false;
+    // this.draggedElement = null;
+    // this.dragOffset = { x: 0, y: 0 };
+    // this.dragDirection = 0;
+    // this.lastDragDirection = 0;
+    // this.initialX = 0;
+    // this.initialY = 0;
+    // this.isDragging = false;
     this.wasDragging = false;
-
-
-
+    // this.dragThreshold = 1;
 
     this.shouldAutoSave = true;
     this.alwaysVisiblePanel = false;
 
-    this.rotationAccumulator = 0;
-    this.rotationDegreeLimit = 5;
+    // this.rotationAccumulator = 0;
+    // this.rotationDegreeLimit = 5;
     this.panelYPosition = 0;
-    this.lastPanelDragY = 0;
+    // this.lastPanelDragY = 0;
     this.hidePanelDelay = 1000;
-    this.globalEvents = {};
+    // this.globalEvents = {};
 
     // Game start/replay settings
     this.shouldStart = false;
@@ -203,7 +208,7 @@ class LatestGamesManager {
 
     li.appendChild(buttons);
     li.appendChild(link);
-    if (game.pin && this.enableDragging) this.addDragFunctionality(li, id);
+    if (game.pin && this.enableDragging) addDragFunctionality(this, li);
     return li;
   }
 
@@ -973,7 +978,7 @@ class LatestGamesManager {
     }
   }
 
-
+  // Here to change
 
   updateGameOrderFromDOM() {
     const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
