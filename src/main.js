@@ -17,27 +17,35 @@ class LatestGamesManager {
     this.displayMode = 'scroll';
     this.groupViewMode = 'tabs';
     this.previousScrollPosition = 0;
-    this.panelYPosition = 0;
     this.panelWidth = '95vw';
     this.groups = [];
     this.currentGroupId = null;
     this.hoverTimeout = null;
     this.isHovered = false;
+
+    // Dragging settings
     this.enableDragging = true;
-    this.isDragging = false;
-    this.wasDragging = false;
-    this.dragThreshold = 1;
-    this.shouldAutoSave = true;
-    this.alwaysVisiblePanel = false;
     this.draggedElement = null;
     this.dragOffset = { x: 0, y: 0 };
     this.dragDirection = 0;
     this.lastDragDirection = 0;
+    this.initialX = 0;
+    this.initialY = 0;
+    this.isDragging = false;
+    this.wasDragging = false;
+    this.dragThreshold = 1;
+
+    this.shouldAutoSave = true;
+    this.alwaysVisiblePanel = false;
+
     this.rotationAccumulator = 0;
     this.rotationDegreeLimit = 5;
-    this.lastDragY = 0;
+    this.panelYPosition = 0;
+    this.lastPanelDragY = 0;
     this.hidePanelDelay = 1000;
     this.globalEvents = {};
+
+    // Game start/replay settings
     this.shouldStart = false;
     this.startDelay = 1000;
     this.shouldReplay = false;
@@ -990,7 +998,7 @@ class LatestGamesManager {
       const rect = element.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
       this.isRightHalf = clickX > rect.width / 2;
-      this.lastDragY = e.clientY;
+      this.lastPanelDragY = e.clientY;
       // Calculate the offset from the top-left corner of the element
       this.dragOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
       this.parentRect = element.parentElement.getBoundingClientRect();
@@ -1042,12 +1050,8 @@ class LatestGamesManager {
       }
     } else {
       const parentRect = this.parentRect;
-      // Get the height of #latest-games-groups to offset the Y position
-      const groupsContainer = document.getElementById('latest-games-groups');
-      const groupsHeight = groupsContainer ? groupsContainer.offsetHeight : 0;
       let newLeft = e.clientX - this.dragOffset.x - parentRect.left;
-      // Subtract both the group tabs container height and the drag offset (grab point) from Y
-      let newTop = e.clientY - this.dragOffset.y - groupsHeight;
+      let newTop = e.clientY - this.dragOffset.y - parentRect.top;
 
       newLeft = Math.max(0, Math.min(newLeft, gamesList.offsetWidth - this.draggedElement.offsetWidth));
       // Use the container's height for clamping newTop
@@ -1087,8 +1091,8 @@ class LatestGamesManager {
     }
 
     const currentY = e.clientY;
-    const deltaY = currentY - this.lastDragY;
-    this.lastDragY = currentY;
+    const deltaY = currentY - this.lastPanelDragY;
+    this.lastPanelDragY = currentY;
     if (deltaY !== 0) {
       const sensitivity = 0.2;
       this.rotationAccumulator = (this.rotationAccumulator || 0) + (this.isRightHalf ? deltaY : -deltaY) * sensitivity;
@@ -1116,7 +1120,7 @@ class LatestGamesManager {
 
     this.draggedElement = null;
     this.dragDirection = 0;
-    this.lastDragY = 0;
+    this.lastPanelDragY = 0;
 
     if (this.globalEvents) {
       document.removeEventListener('mousemove', this.globalEvents.handleDragMove);
