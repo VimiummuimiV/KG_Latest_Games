@@ -11,6 +11,9 @@ import { createPopup } from './popup.js';
  * @param {object} manager - The LatestGamesManager instance.
  */
 export function showVocabularyCreationPopup(groups, event, vocId, vocName, manager) {
+  const existingVocabularyPopup = document.querySelector('.vocabulary-tooltip-popup');
+  existingVocabularyPopup?.remove(); // Remove any existing popup
+
   // Create button configurations for each group
   const buttonConfigs = groups.map(group => {
     const alreadyExists = group.games.some(game => String(game.params?.vocId) === String(vocId));
