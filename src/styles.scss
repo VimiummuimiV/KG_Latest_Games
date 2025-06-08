@@ -688,13 +688,32 @@
   max-height: 400px;
   overflow-y: auto;
   overflow-x: hidden;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(140,140,140) rgb(22,22,22);
   word-wrap: break-word;
   overflow-wrap: break-word;
 
   .tooltip-number {
     color: rgb(140, 140, 140);
     opacity: 0.8;
+  }
+
+  // WebKit browsers (Chrome, Safari, Edge)
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgb(22, 22, 22) !important;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgb(140, 140, 140) !important;
+
+    &:hover {
+      background-color: rgb(160, 160, 160) !important;
+    }
   }
 }
 

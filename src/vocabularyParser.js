@@ -58,6 +58,7 @@ async function fetchVocabularyContent(vocId) {
 // Tooltip management
 let currentTooltip = null;
 let hideTimeout = null;
+let showTimeout = null;
 let currentAnchor = null;
 
 function createVocabularyTooltip(content) {
@@ -73,10 +74,14 @@ function createVocabularyTooltip(content) {
 }
 
 function showTooltip(anchor, content) {
-  // Clear any existing timeout
+  // Clear any existing timeouts
   if (hideTimeout) {
     clearTimeout(hideTimeout);
     hideTimeout = null;
+  }
+  if (showTimeout) {
+    clearTimeout(showTimeout);
+    showTimeout = null;
   }
   
   // If tooltip already exists for same anchor, just keep it visible
@@ -89,23 +94,28 @@ function showTooltip(anchor, content) {
     hideTooltip();
   }
   
-  currentAnchor = anchor;
-  currentTooltip = createVocabularyTooltip(content);
-  
-  // Position and show tooltip
-  positionTooltip(anchor, currentTooltip);
-  
-  // Add event listeners to tooltip for hover behavior
-  currentTooltip.addEventListener('mouseenter', () => {
-    if (hideTimeout) {
-      clearTimeout(hideTimeout);
-      hideTimeout = null;
-    }
-  });
-  
-  currentTooltip.addEventListener('mouseleave', () => {
-    startHideTimeout();
-  });
+  // Set up delayed show
+  showTimeout = setTimeout(() => {
+    currentAnchor = anchor;
+    currentTooltip = createVocabularyTooltip(content);
+    
+    // Position and show tooltip
+    positionTooltip(anchor, currentTooltip);
+    
+    // Add event listeners to tooltip for hover behavior
+    currentTooltip.addEventListener('mouseenter', () => {
+      if (hideTimeout) {
+        clearTimeout(hideTimeout);
+        hideTimeout = null;
+      }
+    });
+    
+    currentTooltip.addEventListener('mouseleave', () => {
+      startHideTimeout();
+    });
+    
+    showTimeout = null;
+  }, 400); // 400ms delay before showing
 }
 
 function hideTooltip() {
@@ -117,6 +127,10 @@ function hideTooltip() {
   if (hideTimeout) {
     clearTimeout(hideTimeout);
     hideTimeout = null;
+  }
+  if (showTimeout) {
+    clearTimeout(showTimeout);
+    showTimeout = null;
   }
 }
 
@@ -211,6 +225,11 @@ export function attachVocabularyParser() {
     const anchor = e.target.closest('a.name[href*="/vocs/"]');
     if (anchor && currentAnchor === anchor) {
       startHideTimeout();
+    }
+    // Also cancel show timeout if mouse leaves before tooltip appears
+    if (showTimeout) {
+      clearTimeout(showTimeout);
+      showTimeout = null;
     }
   }, { capture: true });
 }
