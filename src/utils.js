@@ -4,6 +4,12 @@ export function generateRandomId() {
     .join('');
 }
 
+export function hideTooltip() {
+  const existingTooltip = document.querySelector('.custom-tooltip-popup');
+  // Set display none for existing tooltip to avoid conflicts
+  if (existingTooltip) existingTooltip.style.display = 'none';
+}
+
 export function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }

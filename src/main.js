@@ -1158,9 +1158,6 @@ class LatestGamesManager {
           container.classList.remove('visible');
           this.updateContainerLeftOffset();
         }
-        // Remove migration popup if present
-        const migrationPopup = document.querySelector('.game-migration-popup');
-        if (migrationPopup) migrationPopup.remove();
       }
     }, this.hidePanelDelay);
   }
