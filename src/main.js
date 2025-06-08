@@ -23,22 +23,12 @@ class LatestGamesManager {
     this.currentGroupId = null;
     this.hoverTimeout = null;
     this.isHovered = false;
-
-    // Dragging settings
     this.enableDragging = true;
-
     this.wasDragging = false;
-    // this.dragThreshold = 1;
-
     this.shouldAutoSave = true;
     this.alwaysVisiblePanel = false;
-
-    // this.rotationAccumulator = 0;
-    // this.rotationDegreeLimit = 5;
     this.panelYPosition = 0;
-    // this.lastPanelDragY = 0;
     this.hidePanelDelay = 1000;
-    // this.globalEvents = {};
 
     // Game start/replay settings
     this.shouldStart = false;
@@ -971,8 +961,6 @@ class LatestGamesManager {
       console.warn('Could not save game data to localStorage:', error);
     }
   }
-
-  // Here to change
 
   updateGameOrderFromDOM() {
     const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);

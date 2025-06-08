@@ -132,6 +132,7 @@ export function addDragFunctionality(manager, element) {
   dragState.cleanup();
 
   element.addEventListener('mousedown', (e) => {
+    e.preventDefault(); // Prevent native drag from starting
     // Only allow dragging with left mouse button (LMB)
     if (e.button !== 0) return;
     // Prevent dragging if the target is a button (e.g., pin or delete)
@@ -159,7 +160,7 @@ export function addDragFunctionality(manager, element) {
     // Create bound functions and store references
     dragState.globalEvents.handleDragMove = (e) => handleDragMove(e, manager);
     dragState.globalEvents.handleDragEnd = () => handleDragEnd(manager);
-    
+
     document.addEventListener('mousemove', dragState.globalEvents.handleDragMove);
     document.addEventListener('mouseup', dragState.globalEvents.handleDragEnd);
   });
