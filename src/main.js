@@ -9,6 +9,7 @@ import { attachVocabularyCreation } from './vocabularyCreation.js';
 import { createCustomTooltip } from './tooltip.js';
 import { createGamePopup } from './gamePopup.js';
 import { addDragFunctionality } from './drag.js';
+import { attachVocabularyParser } from './vocabularyParser.js';
 
 class LatestGamesManager {
   constructor() {
@@ -1299,6 +1300,7 @@ class LatestGamesManager {
     if (/klavogonki\.ru\/vocs\//.test(href)) {
       highlightExistingVocabularies(this.groups);
       attachVocabularyCreation(this.groups, this);
+      attachVocabularyParser();
     }
   }
 
