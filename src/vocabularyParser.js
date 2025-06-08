@@ -72,24 +72,6 @@ let currentTooltip = null;
 let hideTimeout = null;
 let showTimeout = null;
 let currentAnchor = null;
-let isShiftPressed = false;
-
-// Track shift key state
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Shift') {
-    isShiftPressed = true;
-  }
-});
-
-document.addEventListener('keyup', (e) => {
-  if (e.key === 'Shift') {
-    isShiftPressed = false;
-    // Hide tooltip when shift is released
-    if (currentTooltip) {
-      hideTooltip();
-    }
-  }
-});
 
 function createVocabularyTooltip(content) {
   const tooltip = document.createElement('div');
@@ -104,11 +86,6 @@ function createVocabularyTooltip(content) {
 }
 
 function showTooltip(anchor, content) {
-  // Only show if shift is pressed
-  if (!isShiftPressed) {
-    return;
-  }
-  
   // Clear any existing timeouts
   if (hideTimeout) {
     clearTimeout(hideTimeout);
@@ -131,11 +108,6 @@ function showTooltip(anchor, content) {
   
   // Set up delayed show
   showTimeout = setTimeout(() => {
-    // Double-check shift is still pressed
-    if (!isShiftPressed) {
-      return;
-    }
-    
     currentAnchor = anchor;
     currentTooltip = createVocabularyTooltip(content);
     
@@ -234,7 +206,7 @@ export function attachVocabularyParser() {
   
   voclist.addEventListener('mouseenter', async (e) => {
     const anchor = e.target.closest('a.name[href*="/vocs/"]');
-    if (anchor && isShiftPressed) {
+    if (anchor) {
       // Extract vocId from href (e.g., /vocs/1885/)
       const href = anchor.getAttribute('href');
       const match = href.match(/\/vocs\/(\d+)(?:\/|$)/);
@@ -251,7 +223,7 @@ export function attachVocabularyParser() {
         fetchVocabularyContent(vocId).then(content => {
           // Cache the content
           anchor._tooltipContent = content;
-          // Show tooltip with parsed content (only if shift still pressed)
+          // Show tooltip with parsed content
           showTooltip(anchor, content);
         });
       } else {
