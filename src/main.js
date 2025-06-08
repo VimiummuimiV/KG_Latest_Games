@@ -26,13 +26,7 @@ class LatestGamesManager {
 
     // Dragging settings
     this.enableDragging = true;
-    // this.draggedElement = null;
-    // this.dragOffset = { x: 0, y: 0 };
-    // this.dragDirection = 0;
-    // this.lastDragDirection = 0;
-    // this.initialX = 0;
-    // this.initialY = 0;
-    // this.isDragging = false;
+
     this.wasDragging = false;
     // this.dragThreshold = 1;
 

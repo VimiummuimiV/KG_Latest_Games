@@ -1,21 +1,38 @@
-let draggedElement = null;
-let isDragging = false;
-let isRightHalf = false;
-let dragDirection = 0;
-let lastDragDirection = 0;
-let lastPanelDragY = 0;
-let dragOffset = { x: 0, y: 0 };
-let initialX = 0;
-let initialY = 0;
-let dragThreshold = 1;
-let rotationAccumulator = 0;
-let rotationDegreeLimit = 5;
-let globalEvents = {};
+const dragState = {
+  draggedElement: null,
+  isDragging: false,
+  isRightHalf: false,
+  dragDirection: 0,
+  lastDragDirection: 0,
+  lastPanelDragY: 0,
+  dragOffset: { x: 0, y: 0 },
+  initialX: 0,
+  initialY: 0,
+  dragThreshold: 1,
+  rotationAccumulator: 0,
+  rotationDegreeLimit: 5,
+  globalEvents: {},
+  
+  // Reset method to clean up state
+  reset() {
+    this.draggedElement = null;
+    this.isDragging = false;
+    this.isRightHalf = false;
+    this.dragDirection = 0;
+    this.lastDragDirection = 0;
+    this.lastPanelDragY = 0;
+    this.dragOffset = { x: 0, y: 0 };
+    this.initialX = 0;
+    this.initialY = 0;
+    this.rotationAccumulator = 0;
+    this.globalEvents = {};
+  }
+};
 
 function isActuallyDragging(e) {
   return (
-    Math.abs(e.clientX - initialX) > dragThreshold ||
-    Math.abs(e.clientY - initialY) > dragThreshold
+    Math.abs(e.clientX - dragState.initialX) > dragState.dragThreshold ||
+    Math.abs(e.clientY - dragState.initialY) > dragState.dragThreshold
   );
 }
 
@@ -40,16 +57,16 @@ function getDragBounds(element) {
 
 // Helper function to handle element positioning in wrap mode
 function handleWrapModePositioning(e, gamesList) {
-  const bounds = getDragBounds(draggedElement);
+  const bounds = getDragBounds(dragState.draggedElement);
 
   // Calculate constrained position
-  let newLeft = e.clientX - dragOffset.x - bounds.parent.rect.left;
-  let newTop = e.clientY - dragOffset.y - bounds.parent.rect.top;
+  let newLeft = e.clientX - dragState.dragOffset.x - bounds.parent.rect.left;
+  let newTop = e.clientY - dragState.dragOffset.y - bounds.parent.rect.top;
   newLeft = Math.max(0, Math.min(newLeft, bounds.parent.width - bounds.element.width));
   newTop = Math.max(0, Math.min(newTop, bounds.parent.height - bounds.element.height));
 
-  draggedElement.style.left = `${newLeft}px`;
-  draggedElement.style.top = `${newTop}px`;
+  dragState.draggedElement.style.left = `${newLeft}px`;
+  dragState.draggedElement.style.top = `${newTop}px`;
 
   // Handle element insertion
   const pinnedGames = Array.from(gamesList.querySelectorAll('.pin-game:not(.dragging)'));
@@ -71,9 +88,9 @@ function handleWrapModePositioning(e, gamesList) {
     const rect = closestElement.getBoundingClientRect();
     const isLeftHalf = e.clientX < rect.left + rect.width / 2;
     if (isLeftHalf) {
-      gamesList.insertBefore(draggedElement, closestElement);
+      gamesList.insertBefore(dragState.draggedElement, closestElement);
     } else {
-      gamesList.insertBefore(draggedElement, closestElement.nextSibling);
+      gamesList.insertBefore(dragState.draggedElement, closestElement.nextSibling);
     }
   }
 }
@@ -91,10 +108,10 @@ function handleScrollModePositioning(e, gamesList) {
   }
 
   if (insertAfter) {
-    gamesList.insertBefore(draggedElement, insertAfter.nextSibling);
+    gamesList.insertBefore(dragState.draggedElement, insertAfter.nextSibling);
   } else {
     const firstPinned = gamesList.querySelector('.pin-game:not(.dragging)');
-    if (firstPinned) gamesList.insertBefore(draggedElement, firstPinned);
+    if (firstPinned) gamesList.insertBefore(dragState.draggedElement, firstPinned);
   }
 }
 
@@ -106,47 +123,46 @@ export function addDragFunctionality(manager, element) {
     if (e.target.closest('.latest-game-buttons')) return;
 
     manager.wasDragging = false;
-    initialX = e.clientX;
-    initialY = e.clientY;
-    isDragging = true;
-    draggedElement = element;
+    dragState.initialX = e.clientX;
+    dragState.initialY = e.clientY;
+    dragState.isDragging = true;
+    dragState.draggedElement = element;
 
     const bounds = getDragBounds(element);
     const clickX = e.clientX - bounds.element.rect.left;
-    isRightHalf = clickX > bounds.element.rect.width / 2;
-    lastPanelDragY = e.clientY;
+    dragState.isRightHalf = clickX > bounds.element.rect.width / 2;
+    dragState.lastPanelDragY = e.clientY;
     // Calculate the offset from the top-left corner of the element
-    dragOffset = {
+    dragState.dragOffset = {
       x: e.clientX - bounds.element.rect.left,
       y: e.clientY - bounds.element.rect.top
     };
-    this.parentRect = bounds.parent.rect;
 
-    globalEvents.handleDragMove = handleDragMove.bind(this);
-    globalEvents.handleDragEnd = handleDragEnd.bind(this);
-    document.addEventListener('mousemove', globalEvents.handleDragMove);
-    document.addEventListener('mouseup', globalEvents.handleDragEnd);
+    dragState.globalEvents.handleDragMove = (e) => handleDragMove(e, manager);
+    dragState.globalEvents.handleDragEnd = () => handleDragEnd(manager);
+    document.addEventListener('mousemove', dragState.globalEvents.handleDragMove);
+    document.addEventListener('mouseup', dragState.globalEvents.handleDragEnd);
   });
 }
 
-function handleDragMove(e) {
-  if (!isDragging || !draggedElement) return;
+function handleDragMove(e, manager) {
+  if (!dragState.isDragging || !dragState.draggedElement) return;
 
-  if (!this.wasDragging && isActuallyDragging(e)) {
-    this.wasDragging = true;
-    draggedElement.classList.add('dragging');
-    if (this.getDisplayMode() === 'wrap') {
-      const bounds = getDragBounds(draggedElement);
-      draggedElement.style.position = 'absolute';
-      draggedElement.style.left = `${bounds.element.rect.left - bounds.parent.rect.left}px`;
-      draggedElement.style.top = `${bounds.element.rect.top - bounds.parent.rect.top}px`;
-      draggedElement.style.width = `${bounds.element.rect.width}px`;
+  if (!manager.wasDragging && isActuallyDragging(e)) {
+    manager.wasDragging = true;
+    dragState.draggedElement.classList.add('dragging');
+    if (manager.getDisplayMode() === 'wrap') {
+      const bounds = getDragBounds(dragState.draggedElement);
+      dragState.draggedElement.style.position = 'absolute';
+      dragState.draggedElement.style.left = `${bounds.element.rect.left - bounds.parent.rect.left}px`;
+      dragState.draggedElement.style.top = `${bounds.element.rect.top - bounds.parent.rect.top}px`;
+      dragState.draggedElement.style.width = `${bounds.element.rect.width}px`;
     }
   }
 
   e.preventDefault();
 
-  const displayMode = this.getDisplayMode();
+  const displayMode = manager.getDisplayMode();
   const gamesList = document.getElementById('latest-games');
 
   if (displayMode === 'scroll') {
@@ -157,39 +173,44 @@ function handleDragMove(e) {
 
   // Handle rotation
   const currentY = e.clientY;
-  const deltaY = currentY - lastPanelDragY;
-  lastPanelDragY = currentY;
+  const deltaY = currentY - dragState.lastPanelDragY;
+  dragState.lastPanelDragY = currentY;
   if (deltaY !== 0) {
     const sensitivity = 0.2;
-    rotationAccumulator = (rotationAccumulator || 0) + (isRightHalf ? deltaY : -deltaY) * sensitivity;
-    rotationAccumulator = Math.max(-rotationDegreeLimit, Math.min(rotationDegreeLimit, rotationAccumulator));
-    draggedElement.style.transform = `rotate(${rotationAccumulator}deg)`;
+    dragState.rotationAccumulator = (dragState.rotationAccumulator || 0) + 
+      (dragState.isRightHalf ? deltaY : -deltaY) * sensitivity;
+    dragState.rotationAccumulator = Math.max(
+      -dragState.rotationDegreeLimit, 
+      Math.min(dragState.rotationDegreeLimit, dragState.rotationAccumulator)
+    );
+    dragState.draggedElement.style.transform = `rotate(${dragState.rotationAccumulator}deg)`;
   }
 }
 
-function handleDragEnd() {
-  if (!isDragging || !draggedElement) return;
+function handleDragEnd(manager) {
+  if (!dragState.isDragging || !dragState.draggedElement) return;
 
-  isDragging = false;
-  draggedElement.classList.remove('dragging');
+  dragState.isDragging = false;
+  dragState.draggedElement.classList.remove('dragging');
 
-  const displayMode = this.getDisplayMode();
+  const displayMode = manager.getDisplayMode();
   if (displayMode === 'wrap') {
-    draggedElement.style.position = '';
-    draggedElement.style.left = '';
-    draggedElement.style.top = '';
-    draggedElement.style.width = '';
+    dragState.draggedElement.style.position = '';
+    dragState.draggedElement.style.left = '';
+    dragState.draggedElement.style.top = '';
+    dragState.draggedElement.style.width = '';
   }
-  draggedElement.style.transform = '';
+  dragState.draggedElement.style.transform = '';
 
-  this.updateGameOrderFromDOM();
+  manager.updateGameOrderFromDOM();
 
-  draggedElement = null;
-  dragDirection = 0;
-  lastPanelDragY = 0;
+  // Clean up drag state
+  const currentDraggedElement = dragState.draggedElement;
+  dragState.reset();
 
-  if (globalEvents) {
-    document.removeEventListener('mousemove', globalEvents.handleDragMove);
-    document.removeEventListener('mouseup', globalEvents.handleDragEnd);
+  // Remove event listeners
+  if (dragState.globalEvents.handleDragMove) {
+    document.removeEventListener('mousemove', dragState.globalEvents.handleDragMove);
+    document.removeEventListener('mouseup', dragState.globalEvents.handleDragEnd);
   }
 }
