@@ -13,27 +13,21 @@ async function fetchVocabularyContent(vocId) {
       return 'Vocabulary content not found';
     }
     
-    // Extract all table rows with both number and text
+    // Extract all table rows with text content
     const rows = wordsDiv.querySelectorAll('tr');
     if (rows.length === 0) {
       console.warn(`No table rows found for vocId ${vocId}`);
       return 'No words available';
     }
     
-    // Build the text, preserving line breaks and including numbers
+    // Build the text, handling both numbered and non-numbered formats
     const vocabularyText = Array.from(rows)
-      .map(row => {
+      .map((row, index) => {
         const numElement = row.querySelector('td.num');
         const textElement = row.querySelector('td.text');
         
-        if (!numElement || !textElement) {
-          return null;
-        }
-        
-        const num = numElement.textContent.trim();
-        
-        // Skip empty rows (like the "..." row)
-        if (num === '' || num === '…' || textElement.textContent.trim() === '…') {
+        // Skip rows without text content
+        if (!textElement) {
           return null;
         }
         
@@ -43,7 +37,25 @@ async function fetchVocabularyContent(vocId) {
           .replace(/<[^>]*>/g, '') // Remove any other HTML tags
           .trim();
         
-        return `${num}. ${textWithBreaks}`;
+        // Skip empty rows or placeholder rows
+        if (textWithBreaks === '' || textWithBreaks === '…') {
+          return null;
+        }
+        
+        // Handle numbered format
+        if (numElement) {
+          const num = numElement.textContent.trim();
+          
+          // Skip empty or placeholder numbers
+          if (num === '' || num === '…') {
+            return null;
+          }
+          
+          return `${num}. ${textWithBreaks}`;
+        } else {
+          // Handle non-numbered format - add sequential numbering
+          return `${index + 1}. ${textWithBreaks}`;
+        }
       })
       .filter(item => item !== null)
       .join('\n\n');
