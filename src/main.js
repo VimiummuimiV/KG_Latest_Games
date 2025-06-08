@@ -15,9 +15,10 @@ class LatestGamesManager {
     this.maxGameCount = 5;
     this.currentTheme = 'light';
     this.displayMode = 'scroll';
+    this.groupViewMode = 'tabs';
     this.previousScrollPosition = 0;
-    this.panelWidth = '95vw';
     this.panelYPosition = 0;
+    this.panelWidth = '95vw';
     this.groups = [];
     this.currentGroupId = null;
     this.hoverTimeout = null;
@@ -41,7 +42,6 @@ class LatestGamesManager {
     this.startDelay = 1000;
     this.shouldReplay = false;
     this.replayDelay = 1000;
-    this.groupViewMode = 'tabs';
 
     this.init();
   }
@@ -798,34 +798,34 @@ class LatestGamesManager {
       this.maxGameCount = settings.gamesLimit || 5;
       this.currentTheme = settings.theme || 'light';
       this.displayMode = settings.displayMode || 'scroll';
+      this.groupViewMode = settings.groupViewMode || 'tabs';
       this.previousScrollPosition = settings.previousScrollPosition || 0;
+      this.panelYPosition = settings.panelYPosition || 0;
       this.panelWidth = settings.panelWidth || '95vw';
       this.shouldAutoSave = settings.shouldAutoSave !== false;
       this.enableDragging = settings.enableDragging !== undefined ? settings.enableDragging : true;
       this.alwaysVisiblePanel = settings.alwaysVisiblePanel !== undefined ? settings.alwaysVisiblePanel : false;
       this.shouldStart = settings.shouldStart !== undefined ? settings.shouldStart : false;
-      this.shouldReplay = settings.shouldReplay !== undefined ? settings.shouldReplay : false;
       this.startDelay = settings.startDelay !== undefined ? settings.startDelay : this.startDelay;
+      this.shouldReplay = settings.shouldReplay !== undefined ? settings.shouldReplay : false;
       this.replayDelay = settings.replayDelay !== undefined ? settings.replayDelay : this.replayDelay;
-      this.panelYPosition = settings.panelYPosition || 0;
-      this.groupViewMode = settings.groupViewMode || 'tabs';
     } catch (error) {
       console.warn('Could not load settings from localStorage:', error);
       // Set defaults
       this.maxGameCount = 5;
       this.currentTheme = 'light';
       this.displayMode = 'scroll';
+      this.groupViewMode = 'tabs';
       this.previousScrollPosition = 0;
+      this.panelYPosition = 0;
       this.panelWidth = '95vw';
       this.shouldAutoSave = true;
       this.enableDragging = true;
       this.alwaysVisiblePanel = false;
       this.shouldStart = false;
-      this.shouldReplay = false;
       this.startDelay = 1000;
+      this.shouldReplay = false;
       this.replayDelay = 1000;
-      this.panelYPosition = 0;
-      this.groupViewMode = 'tabs';
     }
   }
 
@@ -835,17 +835,17 @@ class LatestGamesManager {
         gamesLimit: this.maxGameCount,
         theme: this.currentTheme,
         displayMode: this.displayMode,
+        groupViewMode: this.groupViewMode,
         previousScrollPosition: this.previousScrollPosition,
+        panelYPosition: this.panelYPosition,
         panelWidth: this.panelWidth,
         shouldAutoSave: this.shouldAutoSave,
         enableDragging: this.enableDragging,
         alwaysVisiblePanel: this.alwaysVisiblePanel,
         shouldStart: this.shouldStart,
-        shouldReplay: this.shouldReplay,
         startDelay: this.startDelay,
-        replayDelay: this.replayDelay,
-        panelYPosition: this.panelYPosition,
-        groupViewMode: this.groupViewMode
+        shouldReplay: this.shouldReplay,
+        replayDelay: this.replayDelay
       };
       localStorage.setItem('latestGamesSettings', JSON.stringify(settings));
     } catch (error) {
