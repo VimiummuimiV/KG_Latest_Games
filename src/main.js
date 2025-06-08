@@ -228,6 +228,33 @@ class LatestGamesManager {
       : 'Переключить в режим вкладок по группам');
   }
 
+  moveGroup(direction) {
+    const currentIndex = this.groups.findIndex(group => group.id === this.currentGroupId);
+    if (currentIndex === -1) return;
+
+    const newIndex = currentIndex + direction;
+    if (newIndex < 0 || newIndex >= this.groups.length) return;
+
+    const temp = this.groups[currentIndex];
+    this.groups[currentIndex] = this.groups[newIndex];
+    this.groups[newIndex] = temp;
+
+    this.saveGameData();
+    this.refreshContainer();
+  }
+
+  updateGroupControlStates() {
+    const moveLeftButton = document.querySelector('.move-group-left');
+    const moveRightButton = document.querySelector('.move-group-right');
+    if (moveLeftButton && moveRightButton) {
+      const currentIndex = this.groups.findIndex(group => group.id === this.currentGroupId);
+      const isFirst = currentIndex === 0;
+      const isLast = currentIndex === this.groups.length - 1;
+      moveLeftButton.classList.toggle('latest-games-disabled', isFirst);
+      moveRightButton.classList.toggle('latest-games-disabled', isLast);
+    }
+  }
+
   createGroupHeader(group) {
     const header = createElement('div', {
       className: `group-header ${group.id === this.currentGroupId ? 'active' : ''}`,
@@ -247,6 +274,7 @@ class LatestGamesManager {
     const groupControls = createElement('div', {
       className: 'group-controls' + (this.groupViewMode === 'unified' ? ' unified-controls' : '')
     });
+
     const addButton = createElement('span', {
       className: 'add-group control-button',
       innerHTML: icons.addGroup
@@ -270,10 +298,29 @@ class LatestGamesManager {
 
     const groupViewToggle = this.createGroupViewToggle();
 
-    groupControls.appendChild(addButton);
-    groupControls.appendChild(renameButton);
-    groupControls.appendChild(removeButton);
-    groupControls.appendChild(groupViewToggle);
+    const moveLeftButton = createElement('span', {
+      className: 'move-group-left control-button',
+      innerHTML: icons.decrease
+    });
+    createCustomTooltip(moveLeftButton, 'Переместить вкладку назад');
+    moveLeftButton.addEventListener('click', () => {
+      if (!moveLeftButton.classList.contains('latest-games-disabled')) {
+        this.moveGroup(-1);
+      }
+    });
+
+    const moveRightButton = createElement('span', {
+      className: 'move-group-right control-button',
+      innerHTML: icons.increase
+    });
+    createCustomTooltip(moveRightButton, 'Переместить вкладку вперёд');
+    moveRightButton.addEventListener('click', () => {
+      if (!moveRightButton.classList.contains('latest-games-disabled')) {
+        this.moveGroup(1);
+      }
+    });
+
+    groupControls.append(addButton, renameButton, removeButton, groupViewToggle, moveLeftButton, moveRightButton);
 
     groupsContainer.appendChild(groupControls);
 
@@ -759,6 +806,8 @@ class LatestGamesManager {
     setupYPositioning();
 
     document.body.appendChild(container);
+
+    this.updateGroupControlStates();
     this.updateDisplayModeClass();
     // Add title to tabs if they are too wide
     const allTabs = container.querySelectorAll('.group-tab');
@@ -1220,6 +1269,7 @@ class LatestGamesManager {
     }
     this.updateRemoveIcons();
     this.updateGameCountDisplay();
+    this.updateGroupControlStates();
   }
 
   updateActiveGroup() {
