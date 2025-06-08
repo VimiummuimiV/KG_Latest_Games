@@ -204,13 +204,12 @@ function handleDragEnd(manager) {
 
   manager.updateGameOrderFromDOM();
 
-  // Clean up drag state
-  const currentDraggedElement = dragState.draggedElement;
-  dragState.reset();
-
-  // Remove event listeners
+  // Remove event listeners before resetting state
   if (dragState.globalEvents.handleDragMove) {
     document.removeEventListener('mousemove', dragState.globalEvents.handleDragMove);
     document.removeEventListener('mouseup', dragState.globalEvents.handleDragEnd);
   }
+
+  // Clean up drag state
+  dragState.reset();
 }
