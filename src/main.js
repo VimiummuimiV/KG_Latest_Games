@@ -1049,15 +1049,23 @@ class LatestGamesManager {
         if (firstPinned) gamesList.insertBefore(this.draggedElement, firstPinned);
       }
     } else {
-      const parentRect = this.parentRect;
+      // Get fresh parent rect to account for any layout changes
+      const parentRect = this.draggedElement.parentElement.getBoundingClientRect();
       let newLeft = e.clientX - this.dragOffset.x - parentRect.left;
       let newTop = e.clientY - this.dragOffset.y - parentRect.top;
 
-      newLeft = Math.max(0, Math.min(newLeft, gamesList.offsetWidth - this.draggedElement.offsetWidth));
-      // Use the container's height for clamping newTop
-      const container = document.getElementById('latest-games-container');
-      const containerHeight = container ? container.offsetHeight : gamesList.offsetHeight;
-      newTop = Math.max(0, Math.min(newTop, containerHeight - this.draggedElement.offsetHeight));
+      // Get the actual parent element dimensions for proper boundary checking
+      const parentElement = this.draggedElement.parentElement;
+      const parentWidth = parentElement.offsetWidth;
+      const parentHeight = parentElement.offsetHeight;
+
+      // Get element dimensions
+      const elementWidth = this.draggedElement.offsetWidth;
+      const elementHeight = this.draggedElement.offsetHeight;
+
+      // Clamp position to stay within parent bounds
+      newLeft = Math.max(0, Math.min(newLeft, parentWidth - elementWidth));
+      newTop = Math.max(0, Math.min(newTop, parentHeight - elementHeight));
 
       this.draggedElement.style.left = `${newLeft}px`;
       this.draggedElement.style.top = `${newTop}px`;
