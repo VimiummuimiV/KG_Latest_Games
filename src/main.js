@@ -658,7 +658,7 @@ class LatestGamesManager {
       if (!gameElement) return;
       const gameId = gameElement.id.replace('latest-game-', '');
       const game = this.findGameById(gameId);
-      if (game) createGamePopup(game, e);
+      if (game && !this.enableDragging) createGamePopup(game, e); // Show popup only if dragging is disabled
     };
 
     gamesList.addEventListener('mousedown', (e) => {
