@@ -146,7 +146,7 @@ class LatestGamesManager {
     if (mode === 'wrap') {
       container.style.left = 'calc(-1 * (100vw - 100px))';
     } else {
-      container.style.left = '-320px';
+      container.style.left = '-330px';
     }
   }
 
@@ -341,6 +341,33 @@ class LatestGamesManager {
     return groupsContainer;
   }
 
+  isCyrillic(char) {
+    const code = char.charCodeAt(0);
+    return (code >= 1040 && code <= 1103) || code === 1025 || code === 1105;
+  }
+
+  compareGameNames(a, b) {
+    const nameA = generateGameName(a).toLowerCase();
+    const nameB = generateGameName(b).toLowerCase();
+    const isCyrillicA = this.isCyrillic(nameA[0]);
+    const isCyrillicB = this.isCyrillic(nameB[0]);
+    if (isCyrillicA && !isCyrillicB) return -1;
+    if (!isCyrillicA && isCyrillicB) return 1;
+    return nameA.localeCompare(nameB, 'ru');
+  }
+
+  sortCurrentGroupGames() {
+    const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
+    if (!currentGroup) return;
+    const pinnedGames = currentGroup.games.filter(game => game.pin);
+    const unpinnedGames = currentGroup.games.filter(game => !game.pin);
+    pinnedGames.sort((a, b) => this.compareGameNames(a, b));
+    unpinnedGames.sort((a, b) => this.compareGameNames(a, b));
+    currentGroup.games = [...pinnedGames, ...unpinnedGames];
+    this.saveGameData();
+    this.refreshContainer();
+  }
+
   createControls() {
     const controlsContainer = createElement('div', { className: 'latest-games-controls' });
     const controlsLimiter = createElement('div', { className: 'controls-limiter' });
@@ -495,6 +522,13 @@ class LatestGamesManager {
       this.refreshContainer();
     };
 
+    const sortBtn = createElement('span', {
+      className: 'latest-games-sort control-button',
+      innerHTML: icons.sort
+    });
+    createCustomTooltip(sortBtn, 'Сортировать игры в текущей группе по алфавиту');
+    sortBtn.addEventListener('click', () => this.sortCurrentGroupGames());
+
     const importBtn = createElement('span', {
       className: 'latest-games-import control-button',
       innerHTML: icons.import
@@ -612,7 +646,7 @@ class LatestGamesManager {
     controlsButtons.append(
       this.createThemeToggle(),
       this.createDisplayModeToggle(),
-      playBtn, replayBtn, pinAllBtn, unpinAllBtn, importBtn, exportBtn, removeAllBtn, removeUnpinnedBtn, dragToggleBtn
+      playBtn, replayBtn, pinAllBtn, unpinAllBtn, sortBtn, importBtn, exportBtn, removeAllBtn, removeUnpinnedBtn, dragToggleBtn
     );
 
     return controlsContainer;
