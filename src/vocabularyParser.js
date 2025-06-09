@@ -245,3 +245,5 @@ export function attachVocabularyParser() {
     }
   }, { capture: true });
 }
+
+export { hideTooltip };

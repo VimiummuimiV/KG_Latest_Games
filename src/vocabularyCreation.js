@@ -1,6 +1,7 @@
 import { generateRandomId } from './utils.js';
 import { highlightExistingVocabularies } from './vocabularyChecker.js';
 import { createPopup } from './popup.js';
+import { hideTooltip } from './vocabularyParser.js';
 
 /**
  * Show a popup to add a vocabulary to a group.
@@ -11,8 +12,7 @@ import { createPopup } from './popup.js';
  * @param {object} manager - The LatestGamesManager instance.
  */
 export function showVocabularyCreationPopup(groups, event, vocId, vocName, manager) {
-  const existingVocabularyPopup = document.querySelector('.vocabulary-tooltip-popup');
-  existingVocabularyPopup?.remove(); // Remove any existing popup
+  hideTooltip(); // Hide any existing tooltip
 
   // Create button configurations for each group
   const buttonConfigs = groups.map(group => {
