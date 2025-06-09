@@ -1,5 +1,5 @@
-import { createCustomTooltip } from './tooltip.js';
-import { createElement, hideTooltip } from './utils.js';
+import { createCustomTooltip, hideTooltipElement } from './tooltip.js';
+import { createElement } from './utils.js';
 import { visibilities, timeouts, ranks } from './definitions.js';
 import { generateGameLink } from './gameUtils.js';
 import { icons } from './icons.js';
@@ -82,7 +82,7 @@ function clampIndex(idx, isMinHandle) {
  * @returns {HTMLElement} The created popup element
  */
 export function createGamePopup(game, event, className = 'game-popup') {
-  hideTooltip(); // Hide any existing tooltip to avoid conflicts
+  hideTooltipElement(); // Hide any existing tooltip
 
   const existingPopup = document.querySelector(`.${className}`);
   existingPopup && existingPopup.remove();

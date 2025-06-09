@@ -130,7 +130,7 @@ function showTooltip(anchor, content) {
   }, 400); // 400ms delay before showing
 }
 
-function hideTooltip() {
+export function hideTooltip() {
   if (currentTooltip) {
     currentTooltip.remove();
     currentTooltip = null;
@@ -245,5 +245,3 @@ export function attachVocabularyParser() {
     }
   }, { capture: true });
 }
-
-export { hideTooltip };

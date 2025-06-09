@@ -16,7 +16,7 @@ const positionTooltip = (clientX, clientY) => {
 
 const tooltipTrackMouse = e => tooltipEl && positionTooltip(e.clientX, e.clientY);
 
-const hideTooltipElement = () => {
+export function hideTooltipElement() {
   tooltipIsVisible = false;
   tooltipCurrentTarget = null;
   clearTimeout(tooltipShowTimer);

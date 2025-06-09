@@ -1,8 +1,8 @@
 import { createPopup } from './popup.js';
-import { hideTooltip } from './utils.js';
+import { hideTooltipElement } from './tooltip.js';
 
 export function showMigrationPopup(manager, groups, currentGroupId, event, gameId) {
-  hideTooltip(); // Hide any existing tooltip to avoid conflicts
+  hideTooltipElement(); // Hide any existing tooltip
 
   // Create button configurations for groups (excluding current group)
   const buttonConfigs = groups
