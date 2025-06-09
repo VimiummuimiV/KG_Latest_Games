@@ -256,9 +256,12 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: auto;
-        height: 16px;
         margin-left: 4px;
+
+        svg {
+          width: 14px;
+          height: 14px;
+        }
       }
 
       .latest-game-levels {
