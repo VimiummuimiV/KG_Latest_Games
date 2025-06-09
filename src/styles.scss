@@ -273,11 +273,10 @@
 
       .latest-game-buttons {
         position: relative;
-        justify-content: center;
+        justify-content: space-around;
         display: flex;
         flex-direction: column;
-        gap: 4px;
-        margin-right: 4px;
+        margin-right: 2px;
         opacity: 0;
         transition: opacity 0.2s ease;
         order: 1;
