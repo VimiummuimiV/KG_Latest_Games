@@ -1,4 +1,4 @@
-import { icons } from './icons';
+import { icons } from './icons.js';
 import './styles.scss';
 import { generateRandomId, sleep, createElement } from './utils.js';
 import { parseGameParams, generateGameName, generateGameLink } from './gameUtils.js';
