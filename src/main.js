@@ -10,6 +10,7 @@ import { createCustomTooltip } from './tooltip.js';
 import { createGamePopup } from './gamePopup.js';
 import { addDragFunctionality } from './drag.js';
 import { attachVocabularyParser } from './vocabularyParser.js';
+import { setupFonts } from './font.js';
 
 class LatestGamesManager {
   constructor() {
@@ -1389,15 +1390,7 @@ class LatestGamesManager {
 
 }
 
-(function addMontserratFont() {
-  if (!document.getElementById('kg-latest-games-montserrat-font')) {
-    const link = document.createElement('link');
-    link.id = 'kg-latest-games-montserrat-font';
-    link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Montserrat&display=swap';
-    document.head.appendChild(link);
-  }
-})();
+setupFonts();
 
 // Initialize the LatestGamesManager instance
 window.latestGamesManager ??= new LatestGamesManager();
