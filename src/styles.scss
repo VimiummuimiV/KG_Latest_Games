@@ -247,17 +247,16 @@
       }
 
       .latest-game-description {
-        display: block;
+        display: inline-flex;
         font-size: 10px;
         color: var(--rg-text-secondary);
-        line-height: 1.2;
       }
 
       .latest-game-qual {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 16px;
+        width: auto;
         height: 16px;
         margin-left: 4px;
       }
