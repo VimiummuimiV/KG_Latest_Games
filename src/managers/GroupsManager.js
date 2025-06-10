@@ -22,11 +22,13 @@ export class GroupsManager {
 
   createGroup(title) {
     const base = (title && title.trim()) || "Группа";
-    let candidate = base;
     let counter = 1;
+    let candidate = `${base}-${counter}`;
+
     while (this.groups.some(g => g.title === candidate)) {
       candidate = `${base}-${++counter}`;
     }
+
     return {
       id: this.generateUniqueGroupId(),
       title: candidate,
