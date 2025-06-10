@@ -1,7 +1,6 @@
 import { highlightExistingVocabularies } from '../vocabularyChecker.js';
 import { attachVocabularyCreation } from '../vocabularyCreation.js';
 import { attachVocabularyParser } from '../vocabularyParser.js';
-import { parseGameParams } from './GamesManager.js';
 import { sleep, generateRandomId } from '../utils.js';
 
 export class PageHandler {
