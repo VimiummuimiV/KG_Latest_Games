@@ -16,6 +16,7 @@ import { DEFAULTS } from './definitions.js';
 import { ThemeManager } from './managers/ThemeManager.js';
 import { SettingsManager } from './managers/SettingsManager.js';
 import { GroupsManager } from './managers/GroupsManager.js';
+import { ViewManager } from './managers/ViewManager.js';
 
 class LatestGamesManager {
   constructor() {
@@ -32,6 +33,7 @@ class LatestGamesManager {
     this.themeManager = new ThemeManager(this);
     this.settingsManager = new SettingsManager(this);
     this.groupsManager = new GroupsManager(this);
+    this.viewManager = new ViewManager(this);
   }
 
   init() {
@@ -45,65 +47,6 @@ class LatestGamesManager {
     this.handlePageSpecificLogic();
     this.exposeGlobalFunctions();
     this.themeManager.applyTheme();
-  }
-
-  createDisplayModeToggle() {
-    const toggleButton = createElement('div', {
-      className: 'display-mode-toggle control-button'
-    });
-    toggleButton.innerHTML = this.displayMode === 'wrap' ? icons.wrap : icons.scroll;
-    createCustomTooltip(toggleButton, this.displayMode === 'wrap'
-      ? 'Переключить режим отображения в вертикальный вид'
-      : 'Переключить режим отображения в горизонтальный вид');
-
-    toggleButton.addEventListener('click', () => {
-      const newMode = this.getDisplayMode() === 'scroll' ? 'wrap' : 'scroll';
-      this.setDisplayMode(newMode);
-      this.updateDisplayModeIcon(toggleButton, newMode);
-      this.updateDisplayModeClass();
-      createCustomTooltip(toggleButton, newMode === 'wrap'
-        ? 'Переключить режим отображения в вертикальный вид'
-        : 'Переключить режим отображения в горизонтальный вид');
-      if (newMode === 'scroll') {
-        const c = document.getElementById('latest-games-container');
-        if (c) setTimeout(() => c.scrollTop = c.scrollHeight, 0);
-      }
-    });
-    return toggleButton;
-  }
-
-  updateDisplayModeIcon(toggleButton, mode) {
-    toggleButton.innerHTML = mode === 'wrap' ? icons.wrap : icons.scroll;
-  }
-
-  getDisplayMode() {
-    return this.displayMode;
-  }
-
-  setDisplayMode(mode) {
-    this.displayMode = mode;
-    this.settingsManager.saveSettings();
-  }
-
-  updateDisplayModeClass() {
-    const container = document.getElementById('latest-games-container');
-    const gamesList = document.getElementById('latest-games');
-    if (!container || !gamesList) return;
-    const mode = this.getDisplayMode();
-    container.classList.toggle('display-mode-wrap', mode === 'wrap');
-    gamesList.classList.toggle('display-mode-wrap', mode === 'wrap');
-    this.updateContainerLeftOffset();
-  }
-
-  updateContainerLeftOffset() {
-    const container = document.getElementById('latest-games-container');
-    if (!container) return;
-    const mode = this.getDisplayMode();
-    if (mode === 'wrap') {
-      container.style.left = 'calc(-1 * (100vw - 100px))';
-    } else {
-      container.style.left = '-330px';
-    }
   }
 
   createGameElement(game, id) {
@@ -430,7 +373,7 @@ class LatestGamesManager {
     controlsLimiter.appendChild(options);
     controlsButtons.append(
       this.themeManager.createThemeToggle(),
-      this.createDisplayModeToggle(),
+      this.viewManager.createDisplayModeToggle(),
       playBtn, replayBtn, pinAllBtn, unpinAllBtn, sortBtn, importBtn, exportBtn, removeAllBtn, removeUnpinnedBtn, dragToggleBtn
     );
 
@@ -440,7 +383,7 @@ class LatestGamesManager {
   updateContainerYPosition() {
     const container = document.getElementById('latest-games-container');
     if (!container) return;
-    container.style.top = this.getDisplayMode() === 'wrap' ? `${this.panelYPosition}vh` : '';
+    container.style.top = this.viewManager.getDisplayMode() === 'wrap' ? `${this.panelYPosition}vh` : '';
   }
 
   createContainer() {
@@ -523,7 +466,7 @@ class LatestGamesManager {
 
     // Resize logic: only active in wrap mode
     const setupResizeHandle = () => {
-      const mode = this.getDisplayMode();
+      const mode = this.viewManager.getDisplayMode();
       if (mode === 'wrap') {
         // Apply stored width
         container.style.width = this.panelWidth;
@@ -566,7 +509,7 @@ class LatestGamesManager {
     setupResizeHandle();
 
     const setupYPositioning = () => {
-      const mode = this.getDisplayMode();
+      const mode = this.viewManager.getDisplayMode();
       if (mode === 'wrap') {
         this.updateContainerYPosition();
         let isDraggingY = false, startY, startTop;
@@ -621,7 +564,7 @@ class LatestGamesManager {
     document.body.appendChild(container);
 
     this.groupsManager.updateGroupControlStates();
-    this.updateDisplayModeClass();
+    this.viewManager.updateDisplayModeClass();
     // Add title to tabs if they are too wide
     const allTabs = container.querySelectorAll('.group-tab');
     allTabs.forEach(tab => {
@@ -631,8 +574,8 @@ class LatestGamesManager {
     });
 
     // Patch updateDisplayModeClass to also update the handle
-    const origUpdateDisplayModeClass = this.updateDisplayModeClass.bind(this);
-    this.updateDisplayModeClass = (...args) => {
+    const origUpdateDisplayModeClass = this.viewManager.updateDisplayModeClass.bind(this.viewManager);
+    this.viewManager.updateDisplayModeClass = (...args) => {
       origUpdateDisplayModeClass(...args);
       setupResizeHandle();
       setupYPositioning();
@@ -781,7 +724,7 @@ class LatestGamesManager {
       container.classList.add('visible');
       container.style.left = '0';
       // If mode is 'wrap', set the panel previous Y position
-      if (this.getDisplayMode() === 'wrap') {
+      if (this.viewManager.getDisplayMode() === 'wrap') {
         container.style.top = `${this.panelYPosition}vh`;
       }
       container.scrollTop = this.previousScrollPosition;
@@ -797,7 +740,7 @@ class LatestGamesManager {
         const container = document.getElementById('latest-games-container');
         if (container) {
           container.classList.remove('visible');
-          this.updateContainerLeftOffset();
+          this.viewManager.updateContainerLeftOffset();
         }
       }
     }, this.hidePanelDelay);
@@ -828,7 +771,7 @@ class LatestGamesManager {
     const gamesList = document.getElementById('latest-games');
     if (gamesList) {
       this.populateGamesList(gamesList);
-      this.updateDisplayModeClass();
+      this.viewManager.updateDisplayModeClass();
     }
     this.groupsManager.updateRemoveIcons();
     this.updateGameCountDisplay();
