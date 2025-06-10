@@ -11,10 +11,16 @@ import { createGamePopup } from './gamePopup.js';
 import { addDragFunctionality } from './drag.js';
 import { attachVocabularyParser } from './vocabularyParser.js';
 import { setupFonts } from './font.js';
+import { ThemeManager } from './managers/ThemeManager.js';
 
 class LatestGamesManager {
   constructor() {
-    // Initialize settings with defaults
+    this.initializeDefaults();
+    this.initializeManagers();
+    this.init();
+  }
+
+  initializeDefaults() {
     this.maxGameCount = 5;
     this.currentTheme = 'light';
     this.displayMode = 'scroll';
@@ -37,8 +43,11 @@ class LatestGamesManager {
     this.startDelay = 1000;
     this.shouldReplay = false;
     this.replayDelay = 1000;
+  }
 
-    this.init();
+  initializeManagers() {
+    this.themeManager = new ThemeManager(this);
+    // Add other managers here as you modularize further
   }
 
   init() {
@@ -57,39 +66,7 @@ class LatestGamesManager {
     this.createPanelToggleButton();
     this.handlePageSpecificLogic();
     this.exposeGlobalFunctions();
-    this.applyTheme();
-  }
-
-  applyTheme() {
-    document.documentElement.classList.remove('latest-games-light-theme', 'latest-games-dark-theme');
-    document.documentElement.classList.add(
-      this.currentTheme === 'light' ? 'latest-games-light-theme' : 'latest-games-dark-theme'
-    );
-    this.updateThemeIcon();
-  }
-
-  updateThemeIcon() {
-    const toggleThemeButton = document.querySelector('#latest-games-container .theme-toggle');
-    if (toggleThemeButton) {
-      toggleThemeButton.innerHTML = this.currentTheme === 'light' ? icons.sun : icons.moon;
-    }
-  }
-
-  toggleTheme(button) {
-    this.currentTheme = this.currentTheme === 'light' ? 'dark' : 'light';
-    createCustomTooltip(button, `Изменить тему на ${this.currentTheme === 'light' ? 'тёмную' : 'светлую'}`);
-    this.saveSettings();
-    this.applyTheme();
-  }
-
-  createThemeToggle() {
-    const toggleThemeButton = createElement('div', {
-      className: 'theme-toggle control-button'
-    });
-    toggleThemeButton.innerHTML = this.currentTheme === 'light' ? icons.sun : icons.moon;
-    toggleThemeButton.addEventListener('click', () => this.toggleTheme(toggleThemeButton));
-    createCustomTooltip(toggleThemeButton, `Изменить тему на ${this.currentTheme === 'light' ? 'тёмную' : 'светлую'}`);
-    return toggleThemeButton;
+    this.themeManager.applyTheme();
   }
 
   createDisplayModeToggle() {
@@ -552,7 +529,7 @@ class LatestGamesManager {
             this.loadSettings();
             this.loadGameData();
             this.refreshContainer();
-            this.applyTheme();
+            this.themeManager.applyTheme();
           } else {
             alert('Файл не содержит валидный JSON настроек.');
           }
@@ -645,7 +622,7 @@ class LatestGamesManager {
 
     controlsLimiter.appendChild(options);
     controlsButtons.append(
-      this.createThemeToggle(),
+      this.themeManager.createThemeToggle(),
       this.createDisplayModeToggle(),
       playBtn, replayBtn, pinAllBtn, unpinAllBtn, sortBtn, importBtn, exportBtn, removeAllBtn, removeUnpinnedBtn, dragToggleBtn
     );
@@ -1389,6 +1366,12 @@ class LatestGamesManager {
   }
 
 }
+
+// Remove theme-related methods from this class, now handled by ThemeManager
+// applyTheme() {}
+// updateThemeIcon() {}
+// toggleTheme(button) {}
+// createThemeToggle() {}
 
 setupFonts();
 
