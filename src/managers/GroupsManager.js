@@ -89,7 +89,6 @@ export class GroupsManager {
 
     toggleButton.addEventListener('click', () => {
       this.groupViewMode = this.groupViewMode === 'tabs' ? 'unified' : 'tabs';
-      this.settings.saveSettings();
       this.main.settingsManager.saveSettings();
       this.updateGroupViewToggle(toggleButton);
       this.main.refreshContainer();
