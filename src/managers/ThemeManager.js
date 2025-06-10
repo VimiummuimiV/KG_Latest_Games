@@ -5,6 +5,7 @@ import { createElement } from '../utils.js';
 export class ThemeManager {
   constructor(main) {
     this.main = main;
+    this.settings = main.settingsManager;
   }
 
   applyTheme() {
@@ -25,7 +26,7 @@ export class ThemeManager {
   toggleTheme(button) {
     this.main.currentTheme = this.main.currentTheme === 'light' ? 'dark' : 'light';
     createCustomTooltip(button, `Изменить тему на ${this.main.currentTheme === 'light' ? 'тёмную' : 'светлую'}`);
-    this.main.settingsManager.saveSettings();
+    this.settings.saveSettings();
     this.applyTheme();
   }
 
