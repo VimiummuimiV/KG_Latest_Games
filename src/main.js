@@ -10,6 +10,7 @@ import { createGamePopup } from './gamePopup.js';
 import { addDragFunctionality } from './drag.js';
 import { attachVocabularyParser } from './vocabularyParser.js';
 import { setupFonts } from './font.js';
+import { DEFAULTS } from './definitions.js';
 
 // Managers
 import { ThemeManager } from './managers/ThemeManager.js';
@@ -24,25 +25,7 @@ class LatestGamesManager {
   }
 
   initializeDefaults() {
-    this.maxGameCount = 5;
-    this.currentTheme = 'light';
-    this.displayMode = 'scroll';
-    this.previousScrollPosition = 0;
-    this.panelWidth = '95vw';
-    this.hoverTimeout = null;
-    this.isHovered = false;
-    this.enableDragging = true;
-    this.wasDragging = false;
-    this.shouldAutoSave = true;
-    this.alwaysVisiblePanel = false;
-    this.panelYPosition = 0;
-    this.hidePanelDelay = 1000;
-
-    // Game start/replay settings
-    this.shouldStart = false;
-    this.startDelay = 1000;
-    this.shouldReplay = false;
-    this.replayDelay = 1000;
+    Object.assign(this, DEFAULTS);
   }
 
   initializeManagers() {
@@ -350,7 +333,7 @@ class LatestGamesManager {
           if (typeof data === 'object' && data !== null) {
             if (data.latestGamesSettings) localStorage.setItem('latestGamesSettings', JSON.stringify(data.latestGamesSettings));
             if (data.latestGamesData) localStorage.setItem('latestGamesData', JSON.stringify(data.latestGamesData));
-            this.loadSettings();
+            this.settingsManager.loadSettings();
             this.loadGameData();
             this.refreshContainer();
             this.themeManager.applyTheme();

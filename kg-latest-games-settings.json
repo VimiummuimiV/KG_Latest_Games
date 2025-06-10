@@ -1,7 +1,7 @@
 {
   "latestGamesSettings": {
-    "gamesLimit": 20,
-    "theme": "dark",
+    "maxGameCount": 20,
+    "currentTheme": "dark",
     "displayMode": "wrap",
     "groupViewMode": "tabs",
     "previousScrollPosition": 0,

@@ -28,3 +28,26 @@ export const ranksMap = {
 };
 
 export const timeouts = [5, 10, 20, 30, 45, 60];
+
+// Centralized default values for LatestGamesManager and related managers
+export const DEFAULTS = {
+  maxGameCount: 5,
+  currentTheme: 'light',
+  displayMode: 'scroll',
+  previousScrollPosition: 0,
+  panelWidth: '95vw',
+  hoverTimeout: null,
+  isHovered: false,
+  enableDragging: true,
+  wasDragging: false,
+  shouldAutoSave: true,
+  alwaysVisiblePanel: false,
+  panelYPosition: 0,
+  hidePanelDelay: 1000,
+
+  // Game start and replay settings
+  shouldStart: false,
+  startDelay: 1000,
+  shouldReplay: false,
+  replayDelay: 1000
+};

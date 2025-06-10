@@ -5,7 +5,6 @@ import { createCustomTooltip } from '../tooltip.js';
 export class GroupsManager {
   constructor(main) {
     this.main = main;
-    this.settings = main.settingsManager;
     this.groups = [];
     this.currentGroupId = null;
     this.groupViewMode = 'tabs';
@@ -91,6 +90,7 @@ export class GroupsManager {
     toggleButton.addEventListener('click', () => {
       this.groupViewMode = this.groupViewMode === 'tabs' ? 'unified' : 'tabs';
       this.settings.saveSettings();
+      this.main.settingsManager.saveSettings();
       this.updateGroupViewToggle(toggleButton);
       this.main.refreshContainer();
     });
