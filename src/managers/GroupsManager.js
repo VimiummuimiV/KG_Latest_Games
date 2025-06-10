@@ -20,17 +20,20 @@ export class GroupsManager {
   }
 
   createGroup(title) {
-    const base = (title && title.trim()) || "Группа";
-    let counter = 1;
-    let candidate = `${base}-${counter}`;
-
-    while (this.groups.some(g => g.title === candidate)) {
-      candidate = `${base}-${++counter}`;
+    let groupTitle;
+    if (title && title.trim()) {
+      groupTitle = title.trim();
+    } else {
+      let counter = 1;
+      let candidate;
+      do {
+        candidate = `Группа-${counter++}`;
+      } while (this.groups.some(g => g.title === candidate));
+      groupTitle = candidate;
     }
-
     return {
       id: this.generateUniqueGroupId(),
-      title: candidate,
+      title: groupTitle,
       games: []
     };
   }
