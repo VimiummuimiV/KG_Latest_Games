@@ -178,8 +178,11 @@ export class GroupsManager {
       className: 'remove-group control-button',
       innerHTML: icons.trashNothing
     });
-    createCustomTooltip(removeButton, 'Удалить группу');
-    removeButton.addEventListener('click', () => this.removeActiveGroup());
+    createCustomTooltip(removeButton, `
+      [Клик] Удалить группу и сделать предыдущую активной
+      [Shift + Клик] Удалить группу и сделать следующую активной
+    `);
+    removeButton.addEventListener('click', (e) => this.removeActiveGroup(e));
 
     const groupViewToggle = this.createGroupViewToggle();
 
@@ -277,13 +280,23 @@ export class GroupsManager {
   }
 
   // Remove the active group
-  removeActiveGroup() {
+  removeActiveGroup(event) {
     if (this.groups.length <= 1) {
       alert('Нельзя удалить последнюю группу.');
       return;
     }
+    const currentIdx = this.groups.findIndex(g => g.id === this.currentGroupId);
     this.removeGroup(this.currentGroupId);
-    this.currentGroupId = this.groups[0].id;
+    let newIdx;
+    // Make next group active
+    if (event && event.shiftKey) {
+      newIdx = currentIdx >= this.groups.length ? this.groups.length - 1 : currentIdx;
+      // make previous group active
+    } else {
+      newIdx = currentIdx - 1;
+      if (newIdx < 0) newIdx = 0;
+    }
+    this.currentGroupId = this.groups[newIdx].id;
     this.main.gamesManager.saveGameData();
     this.main.uiManager.refreshContainer();
   }
