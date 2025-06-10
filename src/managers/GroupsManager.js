@@ -256,8 +256,9 @@ export class GroupsManager {
 
   // Add a new group
   addGroup() {
-    const title = prompt('Введите название группы:')?.trim() || null;
-    const newGroup = this.createGroup(title);
+    const title = prompt('Введите название группы:');
+    if (title === null) return; // User cancelled prompt
+    const newGroup = this.createGroup(title?.trim() || null);
     this.groups.push(newGroup);
     this.currentGroupId = newGroup.id;
     this.main.gamesManager.saveGameData();
