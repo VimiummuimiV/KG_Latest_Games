@@ -1,7 +1,6 @@
 import { createCustomTooltip, hideTooltipElement } from './tooltip.js';
 import { createElement } from './utils.js';
 import { visibilities, timeouts, ranks } from './definitions.js';
-import { generateGameLink } from './gameUtils.js';
 import { icons } from './icons.js';
 
 const visibilityTypes = Object.keys(visibilities);
@@ -78,10 +77,11 @@ function clampIndex(idx, isMinHandle) {
  * After the subheader for each type, a container for type buttons is created and each button is appended inside.
  * @param {Object} game - The game object containing parameters
  * @param {MouseEvent} event - The mouse event for positioning
+ * @param {Object} gameManager - The GameManager instance to access its methods
  * @param {string} className - CSS class name for the popup (default: 'game-popup')
  * @returns {HTMLElement} The created popup element
  */
-export function createGamePopup(game, event, className = 'game-popup') {
+export function createGamePopup(game, event, gameManager, className = 'game-popup') {
   hideTooltipElement(); // Hide any existing tooltip
 
   const existingPopup = document.querySelector(`.${className}`);
@@ -199,7 +199,7 @@ export function createGamePopup(game, event, className = 'game-popup') {
         modifiedGame.params.qual = 1;
       }
 
-      const link = generateGameLink(modifiedGame);
+      const link = gameManager.generateGameLink(modifiedGame);
       btn.setAttribute('href', link);
       btn.onclick = (e) => {
         e.preventDefault();
@@ -304,7 +304,7 @@ export function createGamePopup(game, event, className = 'game-popup') {
         modifiedGame.params.qual = 1;
       }
 
-      const link = generateGameLink(modifiedGame);
+      const link = gameManager.generateGameLink(modifiedGame);
       const btn = createElement('a', {
         href: link,
         className: 'game-popup-button',

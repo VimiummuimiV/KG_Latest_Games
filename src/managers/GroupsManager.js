@@ -1,7 +1,6 @@
 import { icons } from '../icons.js';
 import { createElement, generateRandomId } from '../utils.js';
 import { createCustomTooltip } from '../tooltip.js';
-import { generateGameName } from '../gameUtils.js';
 
 export class GroupsManager {
   constructor(main) {
@@ -119,7 +118,7 @@ export class GroupsManager {
     this.groups[currentIndex] = this.groups[newIndex];
     this.groups[newIndex] = temp;
 
-    this.main.saveGameData();
+    this.main.gamesManager.saveGameData();
     this.main.uiManager.refreshContainer();
   }
 
@@ -234,7 +233,7 @@ export class GroupsManager {
   selectGroup(id) {
     if (this.groups.some(group => group.id === id)) {
       this.currentGroupId = id;
-      this.main.saveGameData();
+      this.main.gamesManager.saveGameData();
       this.updateActiveGroup();
       this.main.uiManager.refreshContainer();
     }
@@ -258,7 +257,7 @@ export class GroupsManager {
     const newGroup = this.createGroup(title);
     this.groups.push(newGroup);
     this.currentGroupId = newGroup.id;
-    this.main.saveGameData();
+    this.main.gamesManager.saveGameData();
     this.main.uiManager.refreshContainer();
   }
 
@@ -268,7 +267,7 @@ export class GroupsManager {
     const newTitle = prompt('Введите новое название группы:', activeGroup?.title)?.trim();
     if (newTitle) {
       this.renameGroup(this.currentGroupId, newTitle);
-      this.main.saveGameData();
+      this.main.gamesManager.saveGameData();
       this.main.uiManager.refreshContainer();
     }
   }
@@ -281,7 +280,7 @@ export class GroupsManager {
     }
     this.removeGroup(this.currentGroupId);
     this.currentGroupId = this.groups[0].id;
-    this.main.saveGameData();
+    this.main.gamesManager.saveGameData();
     this.main.uiManager.refreshContainer();
   }
 
@@ -326,8 +325,8 @@ export class GroupsManager {
   }
 
   compareGameNames(a, b) {
-    const nameA = generateGameName(a).toLowerCase();
-    const nameB = generateGameName(b).toLowerCase();
+    const nameA = this.main.gamesManager.generateGameName(a).toLowerCase();
+    const nameB = this.main.gamesManager.generateGameName(b).toLowerCase();
     const isCyrillicA = this.isCyrillic(nameA[0]);
     const isCyrillicB = this.isCyrillic(nameB[0]);
     if (isCyrillicA && !isCyrillicB) return -1;
@@ -344,7 +343,7 @@ export class GroupsManager {
     pinnedGames.sort((a, b) => this.compareGameNames(a, b));
     unpinnedGames.sort((a, b) => this.compareGameNames(a, b));
     activeGroup.games = [...pinnedGames, ...unpinnedGames];
-    this.main.saveGameData();
+    this.main.gamesManager.saveGameData();
     this.main.uiManager.refreshContainer();
   }
 

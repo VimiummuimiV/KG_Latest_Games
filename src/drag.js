@@ -229,7 +229,7 @@ function handleDragEnd(manager) {
   }
   dragState.draggedElement.style.transform = '';
 
-  manager.updateGameOrderFromDOM();
+  manager.gamesManager.updateGameOrderFromDOM();
 
   // Clean up drag state
   dragState.reset();

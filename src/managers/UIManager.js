@@ -1,6 +1,5 @@
 import { icons } from '../icons.js';
 import { createElement } from '../utils.js';
-import { generateGameName, generateGameLink } from '../gameUtils.js';
 import { showMigrationPopup } from '../vocabularyMigration.js';
 import { createCustomTooltip } from '../tooltip.js';
 import { createGamePopup } from '../gamePopup.js';
@@ -23,21 +22,21 @@ export class UIManager {
       innerHTML: icons.pin
     });
     createCustomTooltip(pinButton, game.pin ? 'Открепить' : 'Закрепить');
-    pinButton.addEventListener('click', () => this.main.pinGame(id));
+    pinButton.addEventListener('click', () => this.main.gamesManager.pinGame(id));
 
     const deleteButton = createElement('div', {
       className: 'latest-game-delete',
       innerHTML: icons.delete
     });
     createCustomTooltip(deleteButton, 'Удалить');
-    deleteButton.addEventListener('click', () => this.main.deleteGame(id));
+    deleteButton.addEventListener('click', () => this.main.gamesManager.deleteGame(id));
 
     buttons.appendChild(pinButton);
     buttons.appendChild(deleteButton);
 
     const link = createElement('a', {
-      href: generateGameLink(game),
-      innerHTML: generateGameName(game)
+      href: this.main.gamesManager.generateGameLink(game),
+      innerHTML: this.main.gamesManager.generateGameName(game)
     });
 
     link.addEventListener('click', (e) => {
@@ -93,8 +92,8 @@ export class UIManager {
     });
     createCustomTooltip(increaseBtn, 'Увеличить количество сохраняемых игр');
 
-    decreaseBtn.addEventListener('click', () => this.main.changeGameCount(-1));
-    increaseBtn.addEventListener('click', () => this.main.changeGameCount(1));
+    decreaseBtn.addEventListener('click', () => this.main.gamesManager.changeGameCount(-1));
+    increaseBtn.addEventListener('click', () => this.main.gamesManager.changeGameCount(1));
 
     options.append(decreaseBtn, countDisplay, increaseBtn);
 
@@ -185,7 +184,7 @@ export class UIManager {
           currentGroup.games.forEach(game => game.pin = 1);
         }
       }
-      this.main.saveGameData();
+      this.main.gamesManager.saveGameData();
       this.refreshContainer();
     };
 
@@ -208,7 +207,7 @@ export class UIManager {
           currentGroup.games.forEach(game => game.pin = 0);
         }
       }
-      this.main.saveGameData();
+      this.main.gamesManager.saveGameData();
       this.refreshContainer();
     };
 
@@ -262,7 +261,7 @@ export class UIManager {
           currentGroup.games = currentGroup.games.filter(game => game.pin);
         }
       }
-      this.main.saveGameData();
+      this.main.gamesManager.saveGameData();
       this.refreshContainer();
     };
 
@@ -324,8 +323,8 @@ export class UIManager {
       const gameElement = e.target.closest('.latest-game');
       if (!gameElement) return;
       const gameId = gameElement.id.replace('latest-game-', '');
-      const game = this.main.findGameById(gameId);
-      if (game && !this.main.enableDragging) createGamePopup(game, e); // Show popup only if dragging is disabled
+      const game = this.main.gamesManager.findGameById(gameId);
+      if (game && !this.main.enableDragging) createGamePopup(game, e, this.main.gamesManager); // Show popup only if dragging is disabled
     };
 
     gamesList.addEventListener('mousedown', (e) => {

@@ -1,7 +1,7 @@
 import { highlightExistingVocabularies } from '../vocabularyChecker.js';
 import { attachVocabularyCreation } from '../vocabularyCreation.js';
 import { attachVocabularyParser } from '../vocabularyParser.js';
-import { parseGameParams } from '../gameUtils.js';
+import { parseGameParams } from './GamesManager.js';
 import { sleep, generateRandomId } from '../utils.js';
 
 export class PageHandler {
@@ -47,7 +47,7 @@ export class PageHandler {
     if (!span) throw new Error('#gamedesc span element not found.');
     const descText = gameDesc.textContent;
     if (/соревнование/.test(descText) || !this.main.maxGameCount || this.main.shouldAutoSave === false) return false;
-    const gameParams = parseGameParams(span, descText);
+    const gameParams = this.main.gamesManager.parseGameParams(span, descText);
     const gameParamsString = JSON.stringify(gameParams);
     const currentGroup = this.main.groupsManager.getCurrentGroup(this.main.groupsManager.groups, this.main.groupsManager.currentGroupId);
     if (!currentGroup) return;
