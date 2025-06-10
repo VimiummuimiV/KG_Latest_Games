@@ -1,6 +1,5 @@
 import { icons } from '../icons.js';
-import { createElement } from '../utils.js';
-import { createGroup, renameGroup, removeGroup, getCurrentGroup } from '../groups.js';
+import { createElement, generateRandomId } from '../utils.js';
 import { createCustomTooltip } from '../tooltip.js';
 
 export class GroupsManager {
@@ -11,10 +10,48 @@ export class GroupsManager {
     this.groupViewMode = 'tabs';
   }
 
-  // Initialize groups data
+  // Generate unique group ID
+  generateUniqueGroupId() {
+    let id;
+    do {
+      id = generateRandomId();
+    } while (this.groups.some(group => group.id === id));
+    return id;
+  }
+
+  // Create a new group and ensure unique title and id
+  createGroup(title) {
+    // If no title, generate a unique default title like 'Группа-N'
+    let baseTitle = title && title.trim() ? title.trim() : 'Группа-1';
+    let uniqueTitle = baseTitle;
+    let i = 2;
+    while (this.groups.some(g => g.title === uniqueTitle)) {
+      uniqueTitle = `Группа-${i++}`;
+    }
+    return {
+      id: this.generateUniqueGroupId(),
+      title: uniqueTitle,
+      games: []
+    };
+  }
+
+  // Rename group by ID (replaces renameGroup from groups.js)
+  renameGroup(groupId, newTitle) {
+    const group = this.groups.find(g => g.id === groupId);
+    if (group) group.title = newTitle;
+  }
+
+  // Remove group by ID (replaces removeGroup from groups.js)
+  removeGroup(groupId) {
+    const index = this.groups.findIndex(g => g.id === groupId);
+    if (index !== -1) this.groups.splice(index, 1);
+    return this.groups;
+  }
+
+  // Initialize groups data (uses createGroup for default group)
   initializeGroups() {
     if (this.groups.length === 0) {
-      const defaultGroup = createGroup('Группа-1');
+      const defaultGroup = this.createGroup();
       this.groups = [defaultGroup];
       this.currentGroupId = defaultGroup.id;
     } else if (!this.currentGroupId || !this.groups.some(g => g.id === this.currentGroupId)) {
@@ -22,9 +59,8 @@ export class GroupsManager {
     }
   }
 
-  // Get current group
   getCurrentGroup() {
-    return getCurrentGroup(this.groups, this.currentGroupId);
+    return this.groups.find(g => g.id === this.currentGroupId) || null;
   }
 
   // Set groups data
@@ -133,14 +169,14 @@ export class GroupsManager {
       innerHTML: icons.renameGroup
     });
     createCustomTooltip(renameButton, 'Переименовать группу');
-    renameButton.addEventListener('click', () => this.renameCurrentGroup());
+    renameButton.addEventListener('click', () => this.renameActiveGroup());
 
     const removeButton = createElement('span', {
       className: 'remove-group control-button',
       innerHTML: icons.trashNothing
     });
     createCustomTooltip(removeButton, 'Удалить группу');
-    removeButton.addEventListener('click', () => this.removeCurrentGroup());
+    removeButton.addEventListener('click', () => this.removeActiveGroup());
 
     const groupViewToggle = this.createGroupViewToggle();
 
@@ -218,31 +254,31 @@ export class GroupsManager {
   // Add a new group
   addGroup() {
     const title = prompt('Введите название группы:')?.trim() || null;
-    const newGroup = createGroup(title, this.groups);
+    const newGroup = this.createGroup(title);
     this.groups.push(newGroup);
     this.currentGroupId = newGroup.id;
     this.main.saveGameData();
     this.main.refreshContainer();
   }
 
-  // Rename the current group
-  renameCurrentGroup() {
-    const currentGroup = this.getCurrentGroup();
-    const newTitle = prompt('Введите новое название группы:', currentGroup?.title)?.trim();
+  // Rename the active group
+  renameActiveGroup() {
+    const activeGroup = this.getCurrentGroup();
+    const newTitle = prompt('Введите новое название группы:', activeGroup?.title)?.trim();
     if (newTitle) {
-      renameGroup(this.groups, this.currentGroupId, newTitle);
+      this.renameGroup(this.currentGroupId, newTitle);
       this.main.saveGameData();
       this.main.refreshContainer();
     }
   }
 
-  // Remove the current group
-  removeCurrentGroup() {
+  // Remove the active group
+  removeActiveGroup() {
     if (this.groups.length <= 1) {
       alert('Нельзя удалить последнюю группу.');
       return;
     }
-    this.groups = removeGroup(this.groups, this.currentGroupId);
+    this.removeGroup(this.currentGroupId);
     this.currentGroupId = this.groups[0].id;
     this.main.saveGameData();
     this.main.refreshContainer();
@@ -298,33 +334,33 @@ export class GroupsManager {
     return nameA.localeCompare(nameB, 'ru');
   }
 
-  // Sort games in current group alphabetically
-  sortCurrentGroupGames() {
-    const currentGroup = this.getCurrentGroup();
-    if (!currentGroup) return;
-    const pinnedGames = currentGroup.games.filter(game => game.pin);
-    const unpinnedGames = currentGroup.games.filter(game => !game.pin);
-    pinnedGames.sort((a, b) => compareGameNames(a, b));
-    unpinnedGames.sort((a, b) => compareGameNames(a, b));
-    currentGroup.games = [...pinnedGames, ...unpinnedGames];
+  // Sort games in active group alphabetically
+  sortActiveGroupGames() {
+    const activeGroup = this.getCurrentGroup();
+    if (!activeGroup) return;
+    const pinnedGames = activeGroup.games.filter(game => game.pin);
+    const unpinnedGames = activeGroup.games.filter(game => !game.pin);
+    pinnedGames.sort((a, b) => this.compareGameNames(a, b));
+    unpinnedGames.sort((a, b) => this.compareGameNames(a, b));
+    activeGroup.games = [...pinnedGames, ...unpinnedGames];
     this.main.saveGameData();
     this.main.refreshContainer();
   }
 
-  // Get pinned game count for current group
+  // Get pinned game count for active group
   getPinnedGameCount() {
-    const currentGroup = this.getCurrentGroup();
-    return currentGroup ? currentGroup.games.filter(game => game.pin).length : 0;
+    const activeGroup = this.getCurrentGroup();
+    return activeGroup ? activeGroup.games.filter(game => game.pin).length : 0;
   }
 
   // Update remove icons based on data
   updateRemoveIcons() {
     // Update the remove group icon inside group controls:
-    const currentGroup = this.getCurrentGroup();
+    const activeGroup = this.getCurrentGroup();
     const removeGroupBtn = document.querySelector('.group-controls .remove-group.control-button');
     if (removeGroupBtn) {
       removeGroupBtn.innerHTML =
-        currentGroup && currentGroup.games && currentGroup.games.length > 0
+        activeGroup && activeGroup.games && activeGroup.games.length > 0
           ? icons.trashSomething
           : icons.trashNothing;
     }

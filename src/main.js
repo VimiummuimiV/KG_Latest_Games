@@ -2,7 +2,6 @@ import { icons } from './icons.js';
 import './styles.scss';
 import { generateRandomId, sleep, createElement } from './utils.js';
 import { parseGameParams, generateGameName, generateGameLink } from './gameUtils.js';
-import { createGroup } from './groups.js';
 import { highlightExistingVocabularies } from './vocabularyChecker.js';
 import { showMigrationPopup } from './vocabularyMigration.js';
 import { attachVocabularyCreation } from './vocabularyCreation.js';
@@ -398,7 +397,7 @@ class LatestGamesManager {
     removeAllBtn.onclick = () => {
       localStorage.removeItem('latestGamesSettings');
       localStorage.removeItem('latestGamesData');
-      this.groupsManager.groups = [createGroup('Группа-1')];
+      this.groupsManager.groups = [this.groupsManager.createGroup('Группа-1')];
       this.groupsManager.currentGroupId = this.groupsManager.groups[0].id;
       this.saveGameData();
       this.refreshContainer();
