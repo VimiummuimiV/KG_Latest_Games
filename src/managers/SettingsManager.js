@@ -70,7 +70,7 @@ export class SettingsManager {
           if (data.latestGamesData) localStorage.setItem('latestGamesData', JSON.stringify(data.latestGamesData));
           main.settingsManager.loadSettings();
           main.loadGameData();
-          main.refreshContainer();
+          main.uiManager.refreshContainer();
           main.themeManager.applyTheme();
         } else {
           alert('Файл не содержит валидный JSON настроек.');
@@ -108,6 +108,6 @@ export class SettingsManager {
     main.groupsManager.groups = [main.groupsManager.createGroup('Группа-1')];
     main.groupsManager.currentGroupId = main.groupsManager.groups[0].id;
     main.saveGameData();
-    main.refreshContainer();
+    main.uiManager.refreshContainer();
   }
 }

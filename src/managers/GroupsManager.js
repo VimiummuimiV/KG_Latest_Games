@@ -1,6 +1,7 @@
 import { icons } from '../icons.js';
 import { createElement, generateRandomId } from '../utils.js';
 import { createCustomTooltip } from '../tooltip.js';
+import { generateGameName } from '../gameUtils.js';
 
 export class GroupsManager {
   constructor(main) {
@@ -91,7 +92,7 @@ export class GroupsManager {
       this.groupViewMode = this.groupViewMode === 'tabs' ? 'unified' : 'tabs';
       this.main.settingsManager.saveSettings();
       this.updateGroupViewToggle(toggleButton);
-      this.main.refreshContainer();
+      this.main.uiManager.refreshContainer();
     });
     return toggleButton;
   }
@@ -117,7 +118,7 @@ export class GroupsManager {
     this.groups[newIndex] = temp;
 
     this.main.saveGameData();
-    this.main.refreshContainer();
+    this.main.uiManager.refreshContainer();
   }
 
   // Update group control states (enable/disable move buttons)
@@ -233,7 +234,7 @@ export class GroupsManager {
       this.currentGroupId = id;
       this.main.saveGameData();
       this.updateActiveGroup();
-      this.main.refreshContainer();
+      this.main.uiManager.refreshContainer();
     }
   }
 
@@ -256,7 +257,7 @@ export class GroupsManager {
     this.groups.push(newGroup);
     this.currentGroupId = newGroup.id;
     this.main.saveGameData();
-    this.main.refreshContainer();
+    this.main.uiManager.refreshContainer();
   }
 
   // Rename the active group
@@ -266,7 +267,7 @@ export class GroupsManager {
     if (newTitle) {
       this.renameGroup(this.currentGroupId, newTitle);
       this.main.saveGameData();
-      this.main.refreshContainer();
+      this.main.uiManager.refreshContainer();
     }
   }
 
@@ -279,7 +280,7 @@ export class GroupsManager {
     this.removeGroup(this.currentGroupId);
     this.currentGroupId = this.groups[0].id;
     this.main.saveGameData();
-    this.main.refreshContainer();
+    this.main.uiManager.refreshContainer();
   }
 
   // Refresh groups container in the DOM
@@ -342,25 +343,12 @@ export class GroupsManager {
     unpinnedGames.sort((a, b) => this.compareGameNames(a, b));
     activeGroup.games = [...pinnedGames, ...unpinnedGames];
     this.main.saveGameData();
-    this.main.refreshContainer();
+    this.main.uiManager.refreshContainer();
   }
 
   // Get pinned game count for active group
   getPinnedGameCount() {
     const activeGroup = this.getCurrentGroup();
     return activeGroup ? activeGroup.games.filter(game => game.pin).length : 0;
-  }
-
-  // Update remove icons based on data
-  updateRemoveIcons() {
-    // Update the remove group icon inside group controls:
-    const activeGroup = this.getCurrentGroup();
-    const removeGroupBtn = document.querySelector('.group-controls .remove-group.control-button');
-    if (removeGroupBtn) {
-      removeGroupBtn.innerHTML =
-        activeGroup && activeGroup.games && activeGroup.games.length > 0
-          ? icons.trashSomething
-          : icons.trashNothing;
-    }
   }
 }

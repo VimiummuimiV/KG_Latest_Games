@@ -172,7 +172,7 @@ function handleDragMove(e, manager) {
   if (!manager.wasDragging && isActuallyDragging(e)) {
     manager.wasDragging = true;
     dragState.draggedElement.classList.add('dragging');
-    if (manager.getDisplayMode() === 'wrap') {
+    if (manager.viewManager.getDisplayMode() === 'wrap') {
       const bounds = getDragBounds(dragState.draggedElement);
       dragState.draggedElement.style.position = 'absolute';
       dragState.draggedElement.style.left = `${bounds.element.rect.left - bounds.parent.rect.left}px`;
@@ -183,7 +183,7 @@ function handleDragMove(e, manager) {
 
   e.preventDefault();
 
-  const displayMode = manager.getDisplayMode();
+  const displayMode = manager.viewManager.getDisplayMode();
   const gamesList = document.getElementById('latest-games');
 
   if (displayMode === 'scroll') {
@@ -220,7 +220,7 @@ function handleDragEnd(manager) {
   dragState.isDragging = false;
   dragState.draggedElement.classList.remove('dragging');
 
-  const displayMode = manager.getDisplayMode();
+  const displayMode = manager.viewManager.getDisplayMode();
   if (displayMode === 'wrap') {
     dragState.draggedElement.style.position = '';
     dragState.draggedElement.style.left = '';
