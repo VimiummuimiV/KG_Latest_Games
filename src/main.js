@@ -2,7 +2,7 @@ import { icons } from './icons.js';
 import './styles.scss';
 import { generateRandomId, sleep, createElement } from './utils.js';
 import { parseGameParams, generateGameName, generateGameLink } from './gameUtils.js';
-import { createGroup, renameGroup, removeGroup, getCurrentGroup } from './groups.js';
+import { createGroup } from './groups.js';
 import { highlightExistingVocabularies } from './vocabularyChecker.js';
 import { showMigrationPopup } from './vocabularyMigration.js';
 import { attachVocabularyCreation } from './vocabularyCreation.js';
@@ -15,6 +15,7 @@ import { setupFonts } from './font.js';
 // Managers
 import { ThemeManager } from './managers/ThemeManager.js';
 import { SettingsManager } from './managers/SettingsManager.js';
+import { GroupsManager } from './managers/GroupsManager.js';
 
 class LatestGamesManager {
   constructor() {
@@ -27,11 +28,8 @@ class LatestGamesManager {
     this.maxGameCount = 5;
     this.currentTheme = 'light';
     this.displayMode = 'scroll';
-    this.groupViewMode = 'tabs';
     this.previousScrollPosition = 0;
     this.panelWidth = '95vw';
-    this.groups = [];
-    this.currentGroupId = null;
     this.hoverTimeout = null;
     this.isHovered = false;
     this.enableDragging = true;
@@ -51,18 +49,13 @@ class LatestGamesManager {
   initializeManagers() {
     this.themeManager = new ThemeManager(this);
     this.settingsManager = new SettingsManager(this);
+    this.groupsManager = new GroupsManager(this);
   }
 
   init() {
     this.settingsManager.loadSettings();
     this.loadGameData();
-    if (this.groups.length === 0) {
-      const defaultGroup = createGroup('Группа-1');
-      this.groups = [defaultGroup];
-      this.currentGroupId = defaultGroup.id;
-    } else if (!this.currentGroupId || !this.groups.some(g => g.id === this.currentGroupId)) {
-      this.currentGroupId = this.groups[0].id;
-    }
+    this.groupsManager.initializeGroups();
     this.createHoverArea();
     this.createContainer();
     this.alwaysVisiblePanel && this.showContainer();
@@ -176,177 +169,6 @@ class LatestGamesManager {
     li.appendChild(link);
     if (game.pin && this.enableDragging) addDragFunctionality(this, li);
     return li;
-  }
-
-  createGroupViewToggle() {
-    const toggleButton = createElement('div', {
-      className: 'group-view-toggle control-button'
-    });
-    toggleButton.innerHTML = this.groupViewMode === 'tabs' ? icons.wrap : icons.scroll;
-    createCustomTooltip(toggleButton, this.groupViewMode === 'tabs'
-      ? 'Переключить в единый вид со всеми играми'
-      : 'Переключить в режим вкладок по группам');
-
-    toggleButton.addEventListener('click', () => {
-      this.groupViewMode = this.groupViewMode === 'tabs' ? 'unified' : 'tabs';
-      this.settingsManager.saveSettings();
-      this.updateGroupViewToggle(toggleButton);
-      this.refreshContainer();
-    });
-    return toggleButton;
-  }
-
-  updateGroupViewToggle(toggleButton) {
-    toggleButton.innerHTML = this.groupViewMode === 'tabs' ? icons.wrap : icons.scroll;
-    createCustomTooltip(toggleButton, this.groupViewMode === 'tabs'
-      ? 'Переключить в единый вид со всеми играми'
-      : 'Переключить в режим вкладок по группам');
-  }
-
-  moveGroup(direction) {
-    const currentIndex = this.groups.findIndex(group => group.id === this.currentGroupId);
-    if (currentIndex === -1) return;
-
-    const newIndex = currentIndex + direction;
-    if (newIndex < 0 || newIndex >= this.groups.length) return;
-
-    const temp = this.groups[currentIndex];
-    this.groups[currentIndex] = this.groups[newIndex];
-    this.groups[newIndex] = temp;
-
-    this.saveGameData();
-    this.refreshContainer();
-  }
-
-  updateGroupControlStates() {
-    const moveLeftButton = document.querySelector('.move-group-left');
-    const moveRightButton = document.querySelector('.move-group-right');
-    if (moveLeftButton && moveRightButton) {
-      const currentIndex = this.groups.findIndex(group => group.id === this.currentGroupId);
-      const isFirst = currentIndex === 0;
-      const isLast = currentIndex === this.groups.length - 1;
-      moveLeftButton.classList.toggle('latest-games-disabled', isFirst);
-      moveRightButton.classList.toggle('latest-games-disabled', isLast);
-    }
-  }
-
-  createGroupHeader(group) {
-    const header = createElement('div', {
-      className: `group-header ${group.id === this.currentGroupId ? 'active' : ''}`,
-      textContent: group.title,
-      dataset: { groupId: group.id }
-    });
-    header.addEventListener('click', () => {
-      this.selectGroup(group.id);
-    });
-    return header;
-  }
-
-  createGroupsContainer() {
-    const groupsContainer = createElement('div', { id: 'latest-games-groups' });
-
-    // Create group controls (persistent across both view modes)
-    const groupControls = createElement('div', {
-      className: 'group-controls' + (this.groupViewMode === 'unified' ? ' unified-controls' : '')
-    });
-
-    const addButton = createElement('span', {
-      className: 'add-group control-button',
-      innerHTML: icons.addGroup
-    });
-    createCustomTooltip(addButton, 'Добавить группу');
-    addButton.addEventListener('click', () => this.addGroup());
-
-    const renameButton = createElement('span', {
-      className: 'rename-group control-button',
-      innerHTML: icons.renameGroup
-    });
-    createCustomTooltip(renameButton, 'Переименовать группу');
-    renameButton.addEventListener('click', () => this.renameCurrentGroup());
-
-    const removeButton = createElement('span', {
-      className: 'remove-group control-button',
-      innerHTML: icons.trashNothing
-    });
-    createCustomTooltip(removeButton, 'Удалить группу');
-    removeButton.addEventListener('click', () => this.removeCurrentGroup());
-
-    const groupViewToggle = this.createGroupViewToggle();
-
-    const moveLeftButton = createElement('span', {
-      className: 'move-group-left control-button',
-      innerHTML: icons.decrease
-    });
-    createCustomTooltip(moveLeftButton, 'Переместить вкладку назад');
-    moveLeftButton.addEventListener('click', () => {
-      if (!moveLeftButton.classList.contains('latest-games-disabled')) {
-        this.moveGroup(-1);
-      }
-    });
-
-    const moveRightButton = createElement('span', {
-      className: 'move-group-right control-button',
-      innerHTML: icons.increase
-    });
-    createCustomTooltip(moveRightButton, 'Переместить вкладку вперёд');
-    moveRightButton.addEventListener('click', () => {
-      if (!moveRightButton.classList.contains('latest-games-disabled')) {
-        this.moveGroup(1);
-      }
-    });
-
-    groupControls.append(addButton, renameButton, removeButton, groupViewToggle, moveLeftButton, moveRightButton);
-
-    groupsContainer.appendChild(groupControls);
-
-    // Create tabs-container for group tabs only
-    const tabsContainer = createElement('div', { className: 'tabs-container' });
-    this.groups.forEach(group => {
-      const tab = createElement('span', {
-        className: `group-tab ${group.id === this.currentGroupId ? 'active' : ''}`,
-        textContent: group.title,
-        dataset: { groupId: group.id }
-      });
-      tab.addEventListener('click', () => {
-        this.selectGroup(group.id);
-      });
-      tabsContainer.appendChild(tab);
-    });
-
-    // Hide tabs-container in unified view
-    if (this.groupViewMode === 'unified') {
-      tabsContainer.classList.add('latest-games-hidden');
-    }
-
-    groupsContainer.appendChild(tabsContainer);
-    return groupsContainer;
-  }
-
-  isCyrillic(char) {
-    const code = char.charCodeAt(0);
-    return (code >= 1040 && code <= 1103) || code === 1025 || code === 1105;
-  }
-
-  compareGameNames(a, b) {
-    const nameA = generateGameName(a).toLowerCase();
-    const nameB = generateGameName(b).toLowerCase();
-    const isCyrillicA = this.isCyrillic(nameA[0]);
-    const isCyrillicB = this.isCyrillic(nameB[0]);
-    if (isCyrillicA && !isCyrillicB) return -1;
-    if (!isCyrillicA && isCyrillicB) return 1;
-    return nameA.localeCompare(nameB, 'ru');
-  }
-
-  sortCurrentGroupGames() {
-    const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
-    if (!currentGroup) return;
-    const pinnedGames = currentGroup.games.filter(game => game.pin);
-    const unpinnedGames = currentGroup.games.filter(game => !game.pin);
-    pinnedGames.sort((a, b) => this.compareGameNames(a, b));
-    unpinnedGames.sort((a, b) => this.compareGameNames(a, b));
-    currentGroup.games = [...pinnedGames, ...unpinnedGames];
-    this.saveGameData();
-    this.refreshContainer();
   }
 
   createControls() {
@@ -468,10 +290,10 @@ class LatestGamesManager {
     pinAllBtn.onclick = (e) => {
       if (e.shiftKey) {
         // Shift + Click: Pin all games in all groups
-        this.groups.forEach(group => group.games.forEach(game => game.pin = 1));
+        this.groupsManager.groups.forEach(group => group.games.forEach(game => game.pin = 1));
       } else {
         // Single Click: Pin all games only in current group
-        const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
+        const currentGroup = this.groupsManager.getCurrentGroup(this.groupsManager.groups, this.groupsManager.currentGroupId);
         if (currentGroup) {
           currentGroup.games.forEach(game => game.pin = 1);
         }
@@ -491,10 +313,10 @@ class LatestGamesManager {
     unpinAllBtn.onclick = (e) => {
       if (e.shiftKey) {
         // Shift + Click: Unpin all games in all groups
-        this.groups.forEach(group => group.games.forEach(game => game.pin = 0));
+        this.groupsManager.groups.forEach(group => group.games.forEach(game => game.pin = 0));
       } else {
         // Single Click: Unpin games only in current group
-        const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
+        const currentGroup = this.groupsManager.getCurrentGroup(this.groupsManager.groups, this.groupsManager.currentGroupId);
         if (currentGroup) {
           currentGroup.games.forEach(game => game.pin = 0);
         }
@@ -553,7 +375,7 @@ class LatestGamesManager {
     exportBtn.onclick = () => {
       const all = {
         latestGamesSettings: JSON.parse(localStorage.getItem('latestGamesSettings') || '{}'),
-        latestGamesData: { groups: this.groups, currentGroupId: this.currentGroupId }
+        latestGamesData: { groups: this.groupsManager.groups, currentGroupId: this.groupsManager.currentGroupId }
       };
       const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -576,8 +398,8 @@ class LatestGamesManager {
     removeAllBtn.onclick = () => {
       localStorage.removeItem('latestGamesSettings');
       localStorage.removeItem('latestGamesData');
-      this.groups = [createGroup('Группа-1')];
-      this.currentGroupId = this.groups[0].id;
+      this.groupsManager.groups = [createGroup('Группа-1')];
+      this.groupsManager.currentGroupId = this.groupsManager.groups[0].id;
       this.saveGameData();
       this.refreshContainer();
     };
@@ -594,12 +416,12 @@ class LatestGamesManager {
     removeUnpinnedBtn.onclick = (e) => {
       if (e.shiftKey) {
         // Shift + Click: Remove unpinned games from all groups
-        this.groups.forEach(group => {
+        this.groupsManager.groups.forEach(group => {
           group.games = group.games.filter(game => game.pin);
         });
       } else {
         // Click: Remove unpinned games only from current group
-        const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
+        const currentGroup = this.groupsManager.getCurrentGroup(this.groupsManager.groups, this.groupsManager.currentGroupId);
         if (currentGroup) {
           currentGroup.games = currentGroup.games.filter(game => game.pin);
         }
@@ -641,7 +463,7 @@ class LatestGamesManager {
 
   createContainer() {
     const container = createElement('div', { id: 'latest-games-container' });
-    const groupsContainer = this.createGroupsContainer();
+    const groupsContainer = this.groupsManager.createGroupsContainer();
 
     container.appendChild(groupsContainer);
     const gamesList = createElement('ul', { id: 'latest-games' });
@@ -707,7 +529,7 @@ class LatestGamesManager {
       if (gameElement) {
         e.preventDefault();
         const gameId = gameElement.id.replace('latest-game-', '');
-        showMigrationPopup(this, this.groups, this.currentGroupId, e, gameId);
+        showMigrationPopup(this, this.groupsManager.groups, this.groupsManager.currentGroupId, e, gameId);
       }
     });
 
@@ -816,7 +638,7 @@ class LatestGamesManager {
 
     document.body.appendChild(container);
 
-    this.updateGroupControlStates();
+    this.groupsManager.updateGroupControlStates();
     this.updateDisplayModeClass();
     // Add title to tabs if they are too wide
     const allTabs = container.querySelectorAll('.group-tab');
@@ -856,30 +678,39 @@ class LatestGamesManager {
       if (data) {
         data = JSON.parse(data);
         if (Array.isArray(data)) {
-          this.groups = [{ id: generateRandomId(), title: 'Группа-1', games: data }];
-          this.currentGroupId = this.groups[0].id;
+          const groups = [{ id: generateRandomId(), title: 'Группа-1', games: data }];
+          const currentGroupId = groups[0].id;
+          this.groupsManager.setGroups(groups, currentGroupId);
         } else if (data && Array.isArray(data.groups)) {
-          this.groups = data.groups;
-          this.currentGroupId = data.currentGroupId;
+          this.groupsManager.setGroups(data.groups, data.currentGroupId);
         } else {
-          this.groups = [];
-          this.currentGroupId = null;
+          this.groupsManager.setGroups([], null);
         }
       } else {
-        this.groups = [];
-        this.currentGroupId = null;
+        this.groupsManager.setGroups([], null);
       }
       this.migrateOldGameData();
       this.assignGameIds();
     } catch (error) {
       console.warn('Could not load game data from localStorage:', error);
-      this.groups = [];
-      this.currentGroupId = null;
+      this.groupsManager.setGroups([], null);
+    }
+  }
+
+  saveGameData() {
+    try {
+      const data = {
+        groups: this.groupsManager.groups,
+        currentGroupId: this.groupsManager.currentGroupId
+      };
+      localStorage.setItem('latestGamesData', JSON.stringify(data));
+    } catch (error) {
+      console.warn('Could not save game data to localStorage:', error);
     }
   }
 
   migrateOldGameData() {
-    this.groups.forEach(group => {
+    this.groupsManager.groups.forEach(group => {
       group.games = group.games.map(game => {
         if (game.params.qual === 'on' || game.params.qual === '') {
           game.params.qual = game.params.qual === 'on' ? 1 : 0;
@@ -890,8 +721,8 @@ class LatestGamesManager {
   }
 
   assignGameIds() {
-    const allGameIds = new Set(this.groups.flatMap(group => group.games.map(game => game.id)));
-    this.groups.forEach(group => {
+    const allGameIds = new Set(this.groupsManager.groups.flatMap(group => group.games.map(game => game.id)));
+    this.groupsManager.groups.forEach(group => {
       group.games = group.games.map(game => {
         if (!game.id || game.id === -1 || allGameIds.has(game.id)) {
           let newId;
@@ -908,17 +739,8 @@ class LatestGamesManager {
     });
   }
 
-  saveGameData() {
-    try {
-      const data = { groups: this.groups, currentGroupId: this.currentGroupId };
-      localStorage.setItem('latestGamesData', JSON.stringify(data));
-    } catch (error) {
-      console.warn('Could not save game data to localStorage:', error);
-    }
-  }
-
   updateGameOrderFromDOM() {
-    const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
+    const currentGroup = this.groupsManager.getCurrentGroup(this.groupsManager.groups, this.groupsManager.currentGroupId);
     if (!currentGroup) return;
     const gameElements = Array.from(document.querySelectorAll('#latest-games .latest-game'));
     currentGroup.games = gameElements.map(element => {
@@ -926,11 +748,6 @@ class LatestGamesManager {
       return currentGroup.games.find(g => g.id === id);
     }).filter(game => game !== undefined);
     this.saveGameData();
-  }
-
-  getPinnedGameCount() {
-    const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
-    return currentGroup ? currentGroup.games.filter(game => game.pin).length : 0;
   }
 
   createHoverArea() {
@@ -943,11 +760,11 @@ class LatestGamesManager {
   populateGamesList(gamesList) {
     gamesList.innerHTML = '';
 
-    if (this.groupViewMode === 'tabs') {
+    if (this.groupsManager.getGroupViewMode() === 'tabs') {
       // In tabs mode, only show games for the current group, no headers
-      const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
+      const currentGroup = this.groupsManager.getCurrentGroup();
       if (!currentGroup) return;
-      const pinnedCount = this.getPinnedGameCount();
+      const pinnedCount = this.groupsManager.getPinnedGameCount();
       const maxGamesToShow = Math.min(currentGroup.games.length, this.maxGameCount + pinnedCount);
       for (let i = 0; i < maxGamesToShow; i++) {
         const game = currentGroup.games[i];
@@ -956,7 +773,7 @@ class LatestGamesManager {
       }
     } else {
       // In unified mode, show headers and games for all groups
-      this.groups.forEach(group => {
+      this.groupsManager.groups.forEach(group => {
         if (group.games.length > 0) {
           // Add group header to separate groups
           const groupHeader = this.createGroupHeader(group);
@@ -1007,7 +824,7 @@ class LatestGamesManager {
   // Helper function to update the "trash" icons based on data
   updateRemoveIcons() {
     // Update the remove group icon inside group controls:
-    const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
+    const currentGroup = this.groupsManager.getCurrentGroup(this.groupsManager.groups, this.groupsManager.currentGroupId);
     const removeGroupBtn = document.querySelector('.group-controls .remove-group.control-button');
     if (removeGroupBtn) {
       removeGroupBtn.innerHTML =
@@ -1018,105 +835,25 @@ class LatestGamesManager {
     // Update the remove all icon:
     const removeAllBtn = document.querySelector('.latest-games-removeall.control-button');
     // Here we consider the entire data: if any group has at least one game.
-    const hasAnyData = this.groups.some(group => group.games && group.games.length > 0);
+    const hasAnyData = this.groupsManager.groups.some(group => group.games && group.games.length > 0);
     if (removeAllBtn) {
       removeAllBtn.innerHTML = hasAnyData ? icons.trashSomething : icons.trashNothing;
     }
   }
 
   refreshContainer() {
-    const groupsContainer = document.getElementById('latest-games-groups');
-    if (groupsContainer) {
-      // Update groupControls class based on view mode
-      const groupControls = groupsContainer.querySelector('.group-controls');
-      if (groupControls) {
-        groupControls.className = 'group-controls' + (this.groupViewMode === 'unified' ? ' unified-controls' : '');
-      }
-
-      // Update tabs-container
-      const tabsContainer = groupsContainer.querySelector('.tabs-container');
-      if (tabsContainer) {
-        tabsContainer.innerHTML = ''; // Clear existing tabs
-        if (this.groupViewMode === 'tabs') {
-          // Populate tabs and show tabs-container
-          this.groups.forEach(group => {
-            const tab = createElement('span', {
-              className: `group-tab ${group.id === this.currentGroupId ? 'active' : ''}`,
-              textContent: group.title,
-              dataset: { groupId: group.id }
-            });
-            tab.addEventListener('click', () => this.selectGroup(group.id));
-            tabsContainer.appendChild(tab);
-          });
-          tabsContainer.classList.remove('latest-games-hidden');
-        } else {
-          // Hide tabs-container in unified mode
-          tabsContainer.classList.add('latest-games-hidden');
-        }
-      }
-    }
+    this.groupsManager.refreshGroupsContainer();
     const gamesList = document.getElementById('latest-games');
     if (gamesList) {
       this.populateGamesList(gamesList);
       this.updateDisplayModeClass();
     }
-    this.updateRemoveIcons();
+    this.groupsManager.updateRemoveIcons();
     this.updateGameCountDisplay();
-    this.updateGroupControlStates();
-  }
-
-  updateActiveGroup() {
-    // Update group headers (only present in unified mode)
-    document.querySelectorAll('.group-header').forEach(header =>
-      header.classList.toggle('active', header.dataset.groupId === this.currentGroupId)
-    );
-    // Update tabs (present in both modes, but hidden in unified)
-    document.querySelectorAll('.group-tab').forEach(tab =>
-      tab.classList.toggle('active', tab.dataset.groupId === this.currentGroupId)
-    );
-  }
-
-  // Update references to the renamed method
-  selectGroup(id) {
-    if (this.groups.some(group => group.id === id)) {
-      this.currentGroupId = id;
-      this.saveGameData();
-      this.updateActiveGroup();
-      this.refreshContainer();
-    }
-  }
-
-  addGroup() {
-    const title = prompt('Введите название группы:')?.trim() || null;
-    const newGroup = createGroup(title, this.groups);
-    this.groups.push(newGroup);
-    this.currentGroupId = newGroup.id;
-    this.saveGameData();
-    this.refreshContainer();
-  }
-
-  renameCurrentGroup() {
-    const newTitle = prompt('Введите новое название группы:', getCurrentGroup(this.groups, this.currentGroupId)?.title)?.trim();
-    if (newTitle) {
-      renameGroup(this.groups, this.currentGroupId, newTitle);
-      this.saveGameData();
-      this.refreshContainer();
-    }
-  }
-
-  removeCurrentGroup() {
-    if (this.groups.length <= 1) {
-      alert('Нельзя удалить последнюю группу.');
-      return;
-    }
-    this.groups = removeGroup(this.groups, this.currentGroupId);
-    this.currentGroupId = this.groups[0].id;
-    this.saveGameData();
-    this.refreshContainer();
   }
 
   findGameIndex(id) {
-    for (const group of this.groups) {
+    for (const group of this.groupsManager.groups) {
       const index = group.games.findIndex(game => game.id == id);
       if (index !== -1) return { group, index };
     }
@@ -1124,7 +861,7 @@ class LatestGamesManager {
   }
 
   findGameById(id) {
-    for (const group of this.groups) {
+    for (const group of this.groupsManager.groups) {
       const game = group.games.find(g => g.id === id);
       if (game) return game;
     }
@@ -1165,7 +902,7 @@ class LatestGamesManager {
     if (/соревнование/.test(descText) || !this.maxGameCount || this.shouldAutoSave === false) return false;
     const gameParams = parseGameParams(span, descText);
     const gameParamsString = JSON.stringify(gameParams);
-    const currentGroup = getCurrentGroup(this.groups, this.currentGroupId);
+    const currentGroup = this.groupsManager.getCurrentGroup(this.groupsManager.groups, this.groupsManager.currentGroupId);
     if (!currentGroup) return;
 
     // Check if a game with the same parameters already exists (pinned or unpinned)
@@ -1252,8 +989,8 @@ class LatestGamesManager {
 
     // Highlight vocabularies and attach vocabulary creation popup on vocs page
     if (/klavogonki\.ru\/vocs\//.test(href)) {
-      highlightExistingVocabularies(this.groups);
-      attachVocabularyCreation(this.groups, this);
+      highlightExistingVocabularies(this.groupsManager.groups);
+      attachVocabularyCreation(this.groupsManager.groups, this);
       attachVocabularyParser();
     }
   }
