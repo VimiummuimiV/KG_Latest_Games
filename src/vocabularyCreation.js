@@ -1,6 +1,6 @@
 import { generateRandomId } from './utils.js';
 import { highlightExistingVocabularies } from './vocabularyChecker.js';
-import { createPopup } from './popup.js';
+import { createPopup } from './groupsPopup.js';
 import { hideTooltip } from './vocabularyParser.js';
 
 /**
