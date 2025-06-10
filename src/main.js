@@ -11,7 +11,10 @@ import { createGamePopup } from './gamePopup.js';
 import { addDragFunctionality } from './drag.js';
 import { attachVocabularyParser } from './vocabularyParser.js';
 import { setupFonts } from './font.js';
+
+// Managers
 import { ThemeManager } from './managers/ThemeManager.js';
+import { SettingsManager } from './managers/SettingsManager.js';
 
 class LatestGamesManager {
   constructor() {
@@ -47,11 +50,11 @@ class LatestGamesManager {
 
   initializeManagers() {
     this.themeManager = new ThemeManager(this);
-    // Add other managers here as you modularize further
+    this.settingsManager = new SettingsManager(this);
   }
 
   init() {
-    this.loadSettings();
+    this.settingsManager.loadSettings();
     this.loadGameData();
     if (this.groups.length === 0) {
       const defaultGroup = createGroup('Группа-1');
@@ -104,7 +107,7 @@ class LatestGamesManager {
 
   setDisplayMode(mode) {
     this.displayMode = mode;
-    this.saveSettings();
+    this.settingsManager.saveSettings();
   }
 
   updateDisplayModeClass() {
@@ -186,7 +189,7 @@ class LatestGamesManager {
 
     toggleButton.addEventListener('click', () => {
       this.groupViewMode = this.groupViewMode === 'tabs' ? 'unified' : 'tabs';
-      this.saveSettings();
+      this.settingsManager.saveSettings();
       this.updateGroupViewToggle(toggleButton);
       this.refreshContainer();
     });
@@ -370,7 +373,7 @@ class LatestGamesManager {
     countDisplay.addEventListener('click', () => {
       this.shouldAutoSave = !this.shouldAutoSave;
       this.updateGameCountDisplay();
-      this.saveSettings();
+      this.settingsManager.saveSettings();
       this.refreshContainer();
     });
 
@@ -411,7 +414,7 @@ class LatestGamesManager {
             const delayValue = parseInt(newDelay, 10);
             if (!isNaN(delayValue) && delayValue >= 0) {
               context[delayProperty] = delayValue;
-              context.saveSettings();
+              this.settingsManager.saveSettings();
               updateTooltip(button, context[property], enabledText, disabledText, delayValue, delayText);
             } else {
               alert(delayErrorText);
@@ -419,7 +422,7 @@ class LatestGamesManager {
           }
         } else {
           context[property] = !context[property];
-          context.saveSettings();
+          this.settingsManager.saveSettings();
           button.classList.toggle('latest-games-disabled', !context[property]);
           updateTooltip(button, context[property], enabledText, disabledText, context[delayProperty], delayText);
         }
@@ -614,7 +617,7 @@ class LatestGamesManager {
 
     dragToggleBtn.onclick = () => {
       this.enableDragging = !this.enableDragging;
-      this.saveSettings();
+      this.settingsManager.saveSettings();
       this.refreshContainer();
       createCustomTooltip(dragToggleBtn, this.enableDragging ? 'Перетаскивание включено' : 'Перетаскивание отключено');
       dragToggleBtn.classList.toggle('latest-games-disabled', !this.enableDragging);
@@ -738,7 +741,7 @@ class LatestGamesManager {
           document.removeEventListener('mousemove', onMouseMove);
           document.removeEventListener('mouseup', onMouseUp);
           this.panelWidth = container.style.width;
-          this.saveSettings();
+          this.settingsManager.saveSettings();
         };
         handle.onmousedown = (e) => {
           if (e.button !== 0) return; // Only allow left mouse button
@@ -787,7 +790,7 @@ class LatestGamesManager {
           // Get the actual final position, and round so it has only one digit after the decimal point
           const finalRect = container.getBoundingClientRect();
           this.panelYPosition = Math.round(((finalRect.top / window.innerHeight) * 100) * 10) / 10;
-          this.saveSettings();
+          this.settingsManager.saveSettings();
         };
 
         const enableYDrag = (e) => {
@@ -844,67 +847,6 @@ class LatestGamesManager {
       countDisplay.textContent = this.maxGameCount.toString();
       countDisplay.classList.toggle('latest-games-disabled', this.shouldAutoSave === false);
       createCustomTooltip(countDisplay, this.shouldAutoSave ? 'Автосохранение включено' : 'Автосохранение отключено');
-    }
-  }
-
-  loadSettings() {
-    try {
-      const settings = JSON.parse(localStorage.getItem('latestGamesSettings')) || {};
-      this.maxGameCount = settings.gamesLimit || 5;
-      this.currentTheme = settings.theme || 'light';
-      this.displayMode = settings.displayMode || 'scroll';
-      this.groupViewMode = settings.groupViewMode || 'tabs';
-      this.previousScrollPosition = settings.previousScrollPosition || 0;
-      this.panelYPosition = settings.panelYPosition || 0;
-      this.panelWidth = settings.panelWidth || '95vw';
-      this.shouldAutoSave = settings.shouldAutoSave !== false;
-      this.enableDragging = settings.enableDragging !== undefined ? settings.enableDragging : true;
-      this.alwaysVisiblePanel = settings.alwaysVisiblePanel !== undefined ? settings.alwaysVisiblePanel : false;
-      this.shouldStart = settings.shouldStart !== undefined ? settings.shouldStart : false;
-      this.startDelay = settings.startDelay !== undefined ? settings.startDelay : this.startDelay;
-      this.shouldReplay = settings.shouldReplay !== undefined ? settings.shouldReplay : false;
-      this.replayDelay = settings.replayDelay !== undefined ? settings.replayDelay : this.replayDelay;
-    } catch (error) {
-      console.warn('Could not load settings from localStorage:', error);
-      // Set defaults
-      this.maxGameCount = 5;
-      this.currentTheme = 'light';
-      this.displayMode = 'scroll';
-      this.groupViewMode = 'tabs';
-      this.previousScrollPosition = 0;
-      this.panelYPosition = 0;
-      this.panelWidth = '95vw';
-      this.shouldAutoSave = true;
-      this.enableDragging = true;
-      this.alwaysVisiblePanel = false;
-      this.shouldStart = false;
-      this.startDelay = 1000;
-      this.shouldReplay = false;
-      this.replayDelay = 1000;
-    }
-  }
-
-  saveSettings() {
-    try {
-      const settings = {
-        gamesLimit: this.maxGameCount,
-        theme: this.currentTheme,
-        displayMode: this.displayMode,
-        groupViewMode: this.groupViewMode,
-        previousScrollPosition: this.previousScrollPosition,
-        panelYPosition: this.panelYPosition,
-        panelWidth: this.panelWidth,
-        shouldAutoSave: this.shouldAutoSave,
-        enableDragging: this.enableDragging,
-        alwaysVisiblePanel: this.alwaysVisiblePanel,
-        shouldStart: this.shouldStart,
-        startDelay: this.startDelay,
-        shouldReplay: this.shouldReplay,
-        replayDelay: this.replayDelay
-      };
-      localStorage.setItem('latestGamesSettings', JSON.stringify(settings));
-    } catch (error) {
-      console.warn('Could not save settings to localStorage:', error);
     }
   }
 
@@ -1281,7 +1223,7 @@ class LatestGamesManager {
     if (delta < 0 && this.maxGameCount > 0) this.maxGameCount--;
     else if (delta > 0) this.maxGameCount++;
     this.updateGameCountDisplay();
-    this.saveSettings();
+    this.settingsManager.saveSettings();
     this.refreshContainer();
   }
 
@@ -1346,7 +1288,7 @@ class LatestGamesManager {
         btn.innerHTML = this.alwaysVisiblePanel ? icons.panelToggleOpened : icons.panelToggleClosed;
         container.classList.toggle('visible', this.alwaysVisiblePanel);
         if (!this.alwaysVisiblePanel) this.updateContainerLeftOffset();
-        this.saveSettings();
+        this.settingsManager.saveSettings();
       } else {
         const isVisible = container.classList.contains('visible');
         if (isVisible) {
@@ -1366,12 +1308,6 @@ class LatestGamesManager {
   }
 
 }
-
-// Remove theme-related methods from this class, now handled by ThemeManager
-// applyTheme() {}
-// updateThemeIcon() {}
-// toggleTheme(button) {}
-// createThemeToggle() {}
 
 setupFonts();
 
