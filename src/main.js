@@ -474,7 +474,7 @@ class LatestGamesManager {
 
     container.addEventListener('scroll', () => {
       this.previousScrollPosition = container.scrollTop;
-      this.saveSettings();
+      this.settingsManager.saveSettings();
     });
 
     container.addEventListener('mouseenter', () => this.showContainer());
@@ -775,7 +775,7 @@ class LatestGamesManager {
       this.groupsManager.groups.forEach(group => {
         if (group.games.length > 0) {
           // Add group header to separate groups
-          const groupHeader = this.createGroupHeader(group);
+          const groupHeader = this.groupsManager.createGroupHeader(group);
           gamesList.appendChild(groupHeader);
           const pinnedCount = group.games.filter(game => game.pin).length;
           const maxGamesToShow = Math.min(group.games.length, this.maxGameCount + pinnedCount);

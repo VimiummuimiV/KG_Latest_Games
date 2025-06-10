@@ -25,7 +25,7 @@ export class ThemeManager {
   toggleTheme(button) {
     this.main.currentTheme = this.main.currentTheme === 'light' ? 'dark' : 'light';
     createCustomTooltip(button, `Изменить тему на ${this.main.currentTheme === 'light' ? 'тёмную' : 'светлую'}`);
-    this.main.saveSettings();
+    this.main.settingsManager.saveSettings();
     this.applyTheme();
   }
 

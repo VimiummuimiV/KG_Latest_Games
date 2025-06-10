@@ -19,18 +19,16 @@ export class GroupsManager {
     return id;
   }
 
-  // Create a new group and ensure unique title and id
   createGroup(title) {
-    // If no title, generate a unique default title like 'Группа-N'
-    let baseTitle = title && title.trim() ? title.trim() : 'Группа-1';
-    let uniqueTitle = baseTitle;
-    let i = 2;
-    while (this.groups.some(g => g.title === uniqueTitle)) {
-      uniqueTitle = `Группа-${i++}`;
+    const base = (title && title.trim()) || "Группа";
+    let candidate = base;
+    let counter = 1;
+    while (this.groups.some(g => g.title === candidate)) {
+      candidate = `${base}-${++counter}`;
     }
     return {
       id: this.generateUniqueGroupId(),
-      title: uniqueTitle,
+      title: candidate,
       games: []
     };
   }
