@@ -28,8 +28,6 @@ export class SettingsManager {
     }
   }
 
-  // In SettingsManager.js - Add this to the saveSettings method:
-
   saveSettings() {
     try {
       const settings = {
@@ -54,5 +52,62 @@ export class SettingsManager {
     } catch (error) {
       console.warn('Could not save settings to localStorage:', error);
     }
+  }
+
+  async importSettings(main) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.style.display = 'none';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if (typeof data === 'object' && data !== null) {
+          if (data.latestGamesSettings) localStorage.setItem('latestGamesSettings', JSON.stringify(data.latestGamesSettings));
+          if (data.latestGamesData) localStorage.setItem('latestGamesData', JSON.stringify(data.latestGamesData));
+          main.settingsManager.loadSettings();
+          main.loadGameData();
+          main.refreshContainer();
+          main.themeManager.applyTheme();
+        } else {
+          alert('Файл не содержит валидный JSON настроек.');
+        }
+      } catch (err) {
+        alert('Ошибка при импорте: ' + err);
+      }
+    };
+    document.body.appendChild(input);
+    input.click();
+    setTimeout(() => input.remove(), 1000);
+  }
+
+  exportSettings(main) {
+    const all = {
+      latestGamesSettings: JSON.parse(localStorage.getItem('latestGamesSettings') || '{}'),
+      latestGamesData: { groups: main.groupsManager.groups, currentGroupId: main.groupsManager.currentGroupId }
+    };
+    const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'kg-latest-games-settings.json';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+      a.remove();
+    }, 1000);
+  }
+
+  removeAllSettings(main) {
+    localStorage.removeItem('latestGamesSettings');
+    localStorage.removeItem('latestGamesData');
+    main.groupsManager.groups = [main.groupsManager.createGroup('Группа-1')];
+    main.groupsManager.currentGroupId = main.groupsManager.groups[0].id;
+    main.saveGameData();
+    main.refreshContainer();
   }
 }

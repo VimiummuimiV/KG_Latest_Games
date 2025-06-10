@@ -1,14 +1,11 @@
 import { icons } from './icons.js';
 import './styles.scss';
-import { generateRandomId, sleep, createElement } from './utils.js';
-import { parseGameParams, generateGameName, generateGameLink } from './gameUtils.js';
-import { highlightExistingVocabularies } from './vocabularyChecker.js';
+import { generateRandomId, createElement } from './utils.js';
+import { generateGameName, generateGameLink } from './gameUtils.js';
 import { showMigrationPopup } from './vocabularyMigration.js';
-import { attachVocabularyCreation } from './vocabularyCreation.js';
 import { createCustomTooltip } from './tooltip.js';
 import { createGamePopup } from './gamePopup.js';
 import { addDragFunctionality } from './drag.js';
-import { attachVocabularyParser } from './vocabularyParser.js';
 import { setupFonts } from './font.js';
 import { DEFAULTS } from './definitions.js';
 
@@ -17,6 +14,7 @@ import { ThemeManager } from './managers/ThemeManager.js';
 import { SettingsManager } from './managers/SettingsManager.js';
 import { GroupsManager } from './managers/GroupsManager.js';
 import { ViewManager } from './managers/ViewManager.js';
+import { PageHandler } from './managers/PageHandler.js';
 
 class LatestGamesManager {
   constructor() {
@@ -34,6 +32,7 @@ class LatestGamesManager {
     this.settingsManager = new SettingsManager(this);
     this.groupsManager = new GroupsManager(this);
     this.viewManager = new ViewManager(this);
+    this.pageHandler = new PageHandler(this);
   }
 
   init() {
@@ -44,7 +43,7 @@ class LatestGamesManager {
     this.createContainer();
     this.alwaysVisiblePanel && this.showContainer();
     this.createPanelToggleButton();
-    this.handlePageSpecificLogic();
+    this.pageHandler.handlePageSpecificLogic();
     this.exposeGlobalFunctions();
     this.themeManager.applyTheme();
   }
@@ -262,72 +261,21 @@ class LatestGamesManager {
       innerHTML: icons.import
     });
     createCustomTooltip(importBtn, 'Импортировать настройки из JSON файла');
-    importBtn.onclick = async () => {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.json,application/json';
-      input.style.display = 'none';
-      input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        try {
-          const text = await file.text();
-          const data = JSON.parse(text);
-          if (typeof data === 'object' && data !== null) {
-            if (data.latestGamesSettings) localStorage.setItem('latestGamesSettings', JSON.stringify(data.latestGamesSettings));
-            if (data.latestGamesData) localStorage.setItem('latestGamesData', JSON.stringify(data.latestGamesData));
-            this.settingsManager.loadSettings();
-            this.loadGameData();
-            this.refreshContainer();
-            this.themeManager.applyTheme();
-          } else {
-            alert('Файл не содержит валидный JSON настроек.');
-          }
-        } catch (err) {
-          alert('Ошибка при импорте: ' + err);
-        }
-      };
-      document.body.appendChild(input);
-      input.click();
-      setTimeout(() => input.remove(), 1000);
-    };
+    importBtn.onclick = () => this.settingsManager.importSettings(this);
 
     const exportBtn = createElement('span', {
       className: 'latest-games-export control-button',
       innerHTML: icons.export
     });
     createCustomTooltip(exportBtn, 'Экспортировать все настройки в JSON файл');
-    exportBtn.onclick = () => {
-      const all = {
-        latestGamesSettings: JSON.parse(localStorage.getItem('latestGamesSettings') || '{}'),
-        latestGamesData: { groups: this.groupsManager.groups, currentGroupId: this.groupsManager.currentGroupId }
-      };
-      const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'kg-latest-games-settings.json';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-        a.remove();
-      }, 1000);
-    };
+    exportBtn.onclick = () => this.settingsManager.exportSettings(this);
 
     const removeAllBtn = createElement('span', {
       className: 'latest-games-removeall control-button',
       innerHTML: icons.trashNothing
     });
     createCustomTooltip(removeAllBtn, 'Удалить все настройки');
-    removeAllBtn.onclick = () => {
-      localStorage.removeItem('latestGamesSettings');
-      localStorage.removeItem('latestGamesData');
-      this.groupsManager.groups = [this.groupsManager.createGroup('Группа-1')];
-      this.groupsManager.currentGroupId = this.groupsManager.groups[0].id;
-      this.saveGameData();
-      this.refreshContainer();
-    };
+    removeAllBtn.onclick = () => this.settingsManager.removeAllSettings(this);
 
     const removeUnpinnedBtn = createElement('span', {
       className: 'latest-games-remove-unpinned control-button',
@@ -818,106 +766,12 @@ class LatestGamesManager {
     this.refreshContainer();
   }
 
-  saveCurrentGameParams() {
-    const gameDesc = document.getElementById('gamedesc');
-    if (!gameDesc) throw new Error('#gamedesc element not found.');
-    const span = gameDesc.querySelector('span');
-    if (!span) throw new Error('#gamedesc span element not found.');
-    const descText = gameDesc.textContent;
-    if (/соревнование/.test(descText) || !this.maxGameCount || this.shouldAutoSave === false) return false;
-    const gameParams = parseGameParams(span, descText);
-    const gameParamsString = JSON.stringify(gameParams);
-    const currentGroup = this.groupsManager.getCurrentGroup(this.groupsManager.groups, this.groupsManager.currentGroupId);
-    if (!currentGroup) return;
-
-    // Check if a game with the same parameters already exists (pinned or unpinned)
-    const gameExists = currentGroup.games.some(game => JSON.stringify(game.params) === gameParamsString);
-    if (gameExists) {
-      return;
-    }
-
-    // Create new game object (unpinned)
-    const newGame = { params: gameParams, id: generateRandomId(), pin: 0 };
-
-    // Insert after pinned games
-    const pinnedCount = currentGroup.games.filter(g => g.pin).length;
-    currentGroup.games.splice(pinnedCount, 0, newGame);
-
-    // Enforce the limit: remove excess unpinned games from the end
-    const maxGamesToKeep = pinnedCount + this.maxGameCount;
-    if (currentGroup.games.length > maxGamesToKeep) {
-      currentGroup.games.splice(maxGamesToKeep, currentGroup.games.length - maxGamesToKeep);
-    }
-
-    this.assignGameIds();
-    this.saveGameData();
-  }
-
-  handleGameActions() {
-    // Handle auto-start
-    if (this.shouldStart) {
-      const pausedElement = document.querySelector('#status-inner #paused');
-      if (pausedElement && pausedElement.style.display !== 'none') {
-        if (typeof game !== 'undefined' && game.hostStart) {
-          sleep(this.startDelay).then(() => {
-            game.hostStart();
-          });
-        }
-      }
-    }
-
-    // Handle auto-replay
-    if (this.shouldReplay) {
-      const finishedElement = document.querySelector('#status-inner #finished');
-      if (finishedElement && finishedElement.style.display !== 'none') {
-        const gameIdMatch = location.href.match(/gmid=(\d+)/);
-        if (gameIdMatch) {
-          const gameId = gameIdMatch[1];
-          sleep(this.replayDelay).then(() => {
-            window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
-          });
-        }
-      }
-    }
-  }
-
   changeGameCount(delta) {
     if (delta < 0 && this.maxGameCount > 0) this.maxGameCount--;
     else if (delta > 0) this.maxGameCount++;
     this.updateGameCountDisplay();
     this.settingsManager.saveSettings();
     this.refreshContainer();
-  }
-
-  handlePageSpecificLogic() {
-    const { href } = location;
-    if (/https?:\/\/klavogonki\.ru\/g\/\?gmid=/.test(href)) {
-      const observer = new MutationObserver(() => {
-        const gameDescription = document.querySelector('#gamedesc');
-        if (gameDescription && gameDescription.textContent) {
-          observer.disconnect(); // Stop observing once the game description is found
-          this.saveCurrentGameParams();
-          this.handleGameActions();
-        }
-      });
-      observer.observe(document.body, { childList: true, subtree: true });
-
-      const finished = document.getElementById('finished');
-      if (finished) {
-        const observer = new MutationObserver(() => {
-          observer.disconnect();
-          this.handleGameActions();
-        });
-        observer.observe(finished, { attributes: true });
-      }
-    }
-
-    // Highlight vocabularies and attach vocabulary creation popup on vocs page
-    if (/klavogonki\.ru\/vocs\//.test(href)) {
-      highlightExistingVocabularies(this.groupsManager.groups);
-      attachVocabularyCreation(this.groupsManager.groups, this);
-      attachVocabularyParser();
-    }
   }
 
   exposeGlobalFunctions() {
@@ -949,7 +803,7 @@ class LatestGamesManager {
         btn.classList.toggle('always-visible', this.alwaysVisiblePanel);
         btn.innerHTML = this.alwaysVisiblePanel ? icons.panelToggleOpened : icons.panelToggleClosed;
         container.classList.toggle('visible', this.alwaysVisiblePanel);
-        if (!this.alwaysVisiblePanel) this.updateContainerLeftOffset();
+        if (!this.alwaysVisiblePanel) this.viewManager.updateContainerLeftOffset();
         this.settingsManager.saveSettings();
       } else {
         const isVisible = container.classList.contains('visible');
@@ -959,7 +813,7 @@ class LatestGamesManager {
             this.hoverTimeout = null;
           }
           container.classList.remove('visible');
-          this.updateContainerLeftOffset();
+          this.viewManager.updateContainerLeftOffset();
         } else {
           this.showContainer();
         }
