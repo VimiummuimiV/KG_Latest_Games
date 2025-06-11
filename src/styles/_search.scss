@@ -13,30 +13,71 @@
   align-items: center;
 }
 
-// Search input styling
-#latest-games-search-input {
-  width: inherit;
-  box-sizing: border-box;
-  padding: 8px 12px;
-  margin: 0 10px 10px 10px;
-  font-size: 15px;
-  font-family: "Montserrat", sans-serif;
-  border: 1.5px solid var(--rg-border-primary);
-  border-radius: 6px !important;
-  background: var(--rg-bg-card);
-  color: var(--rg-text-primary);
-  outline: none;
-  transition: border-color 0.2s, background 0.2s, color 0.2s;
+// Search container styling
+.latest-games-search-container {
+  position: relative;
+  width: 100%;
+  margin: 0 10px 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   
-  &:focus {
-    border-color: var(--rg-border-hover);
-    background: var(--rg-bg-hover);
-    color: var(--rg-text-primary);
+  &.latest-games-hidden {
+    display: none;
   }
   
-  &::placeholder {
+  // Search input styling
+  #latest-games-search-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 12px;
+    font-size: 15px;
+    font-family: "Montserrat", sans-serif;
+    border: 1.5px solid var(--rg-border-primary);
+    border-radius: 6px !important;
+    background: var(--rg-bg-card);
+    color: var(--rg-text-primary);
+    outline: none;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    
+    &:focus {
+      border-color: var(--rg-border-hover);
+      background: var(--rg-bg-hover);
+      color: var(--rg-text-primary);
+    }
+  }
+  
+  // Clear button styling
+  .latest-games-clear-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background: var(--rg-bg-hover);
     color: var(--rg-text-secondary);
-    opacity: 0.7;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: var(--rg-border-primary);
+      color: var(--rg-text-primary);
+    }
+    
+    &.visible {
+      opacity: 1;
+      visibility: visible;
+    }
   }
 }
 

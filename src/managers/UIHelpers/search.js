@@ -17,15 +17,48 @@ function fuzzyScore(text, query) {
 }
 
 export function createSearchBox(main) {
+  const searchContainer = createElement('div', {
+    className: `latest-games-search-container ${main.showSearchBox ? '' : 'latest-games-hidden'}`
+  });
+  
   const searchBox = createElement('input', {
     type: 'search',
     id: 'latest-games-search-input',
-    className: main.showSearchBox ? '' : 'latest-games-hidden'
   });
+  
+  const clearButton = createElement('button', {
+    type: 'button',
+    id: 'latest-games-clear-button',
+    className: 'latest-games-clear-btn',
+    innerHTML: '×'
+  });
+  
+  // Handle input events
   searchBox.addEventListener('input', (e) => {
-    handleSearch(main, e.target.value.trim());
+    const value = e.target.value.trim();
+    handleSearch(main, value);
+    updateClearButtonVisibility(clearButton, value);
   });
-  return searchBox;
+  
+  // Handle clear button click
+  clearButton.addEventListener('click', () => {
+    searchBox.value = '';
+    searchBox.focus();
+    handleSearch(main, '');
+    updateClearButtonVisibility(clearButton, '');
+  });
+  
+  // Initial clear button state
+  updateClearButtonVisibility(clearButton, '');
+  
+  searchContainer.appendChild(searchBox);
+  searchContainer.appendChild(clearButton);
+  
+  return searchContainer;
+}
+
+function updateClearButtonVisibility(clearButton, value) {
+  clearButton.classList.toggle('visible', !!value);
 }
 
 export function handleSearch(main, query) {
@@ -89,10 +122,10 @@ export function handleSearch(main, query) {
 }
 
 export function toggleSearchBox(main) {
-  const searchBox = document.getElementById('latest-games-search-input');
-  if (!searchBox) return;
+  const searchContainer = document.querySelector('.latest-games-search-container');
+  if (!searchContainer) return;
   
-  const isHidden = searchBox.classList.toggle('latest-games-hidden');
+  const isHidden = searchContainer.classList.toggle('latest-games-hidden');
   main.showSearchBox = !isHidden;
   
   if (main.settingsManager && typeof main.settingsManager.saveSettings === 'function') {
@@ -100,7 +133,10 @@ export function toggleSearchBox(main) {
   }
   
   if (!isHidden) {
-    searchBox.focus();
-    searchBox.select();
+    const searchBox = document.getElementById('latest-games-search-input');
+    if (searchBox) {
+      searchBox.focus();
+      searchBox.select();
+    }
   }
 }
