@@ -2,6 +2,7 @@ import { createCustomTooltip, hideTooltipElement } from './tooltip.js';
 import { createElement } from './utils.js';
 import { visibilities, timeouts, ranks } from './definitions.js';
 import { icons } from './icons.js';
+import { setupPopupDrag } from './popupDrag.js';
 
 const visibilityTypes = Object.keys(visibilities);
 const SETTINGS_KEY = 'latestGamesSettings';
@@ -14,8 +15,22 @@ const RANK_CONSTRAINTS = {
   maxTo: 8
 };
 
-// Add margin to avoid edge clipping
-const margin = 10;
+// Draggable and interactive selectors for this popup
+const DRAGGABLE_SELECTORS = [
+  '.popup-header',
+  '.popup-header-title',
+  '.popup-subheader',
+  '.rank-slider-display',
+  '.timeouts-container'
+];
+
+const INTERACTIVE_SELECTORS = [
+  '.game-popup-button',
+  '.rank-slider-handle',
+  '.rank-slider-track',
+  '.rank-slider-range',
+  '.popup-header-qualification'
+];
 
 /**
  * Settings helper functions
@@ -323,20 +338,16 @@ export function createGamePopup(game, event, gameManager, className = 'game-popu
     popup.appendChild(typeButtonsContainer);
   });
 
-  // Position popup and add tooltips
+  // Setup popup positioning, drag functionality, and event handlers
   setupPopupPositioning(popup, event);
 
   return popup;
 }
 
 /**
- * Handle popup positioning, tooltip setup, and drag functionality
+ * Handle popup positioning and tooltip setup, then delegate drag functionality
  */
 function setupPopupPositioning(popup, event) {
-  // Add popup to body temporarily to measure dimensions
-  popup.style.visibility = 'hidden';
-  document.body.appendChild(popup);
-
   // Add tooltips for truncated links
   popup.querySelectorAll('a').forEach(a => {
     if (a.scrollWidth > a.clientWidth) {
@@ -344,146 +355,9 @@ function setupPopupPositioning(popup, event) {
     }
   });
 
-  // Helper function to set popup position within viewport bounds
-  const setPosition = (left, top) => {
-    // Get viewport dimensions in real-time
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-
-    const popupRect = popup.getBoundingClientRect();
-    const maxLeft = viewportWidth - popupRect.width - margin;
-    const maxTop = viewportHeight - popupRect.height - margin;
-
-    const constrainedLeft = Math.max(margin, Math.min(left, maxLeft));
-    const constrainedTop = Math.max(margin, Math.min(top, maxTop));
-
-    popup.style.left = `${constrainedLeft}px`;
-    popup.style.top = `${constrainedTop}px`;
-  };
-
-  // Set initial position
-  setPosition(event.clientX, event.clientY);
-  popup.style.visibility = 'visible';
-
-  // Store event handlers for cleanup in a single object
-  const eventHandlers = {
-    clickOutside: null,
-    keydown: null,
-    popupMouseDown: null,
-    currentDrag: null
-  };
-
-  // Setup drag functionality on popup itself, but ignore interactive elements
-  eventHandlers.popupMouseDown = (e) => {
-    // Only allow dragging on specific elements that should support it
-    const isDraggable = (target) => {
-      // Check if target is the popup itself or a draggable child
-      if (target === popup) return true;
-
-      // Allow dragging on headers and non-interactive containers
-      const draggableSelectors = [
-        '.popup-header',
-        '.popup-header-title',
-        '.popup-subheader',
-        '.rank-slider-display',
-        '.timeouts-container'
-      ];
-
-      return draggableSelectors.some(selector =>
-        target.matches && target.matches(selector)
-      );
-    };
-
-    // Prevent dragging on interactive elements
-    const isInteractive = (target) => {
-      const interactiveSelectors = [
-        '.game-popup-button',
-        '.rank-slider-handle',
-        '.rank-slider-track',
-        '.rank-slider-range',
-        '.popup-header-qualification'
-      ];
-
-      return interactiveSelectors.some(selector =>
-        target.matches && (target.matches(selector) || target.closest(selector))
-      );
-    };
-
-    // Ignore if not draggable or is interactive
-    if (!isDraggable(e.target) || isInteractive(e.target)) return;
-    // Only left mouse button
-    if (e.button !== 0) return;
-
-    e.preventDefault();
-
-    // Store initial position and popup position
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const startLeft = parseInt(popup.style.left, margin);
-    const startTop = parseInt(popup.style.top, margin);
-
-    const onMouseMove = (e) => {
-      const deltaX = e.clientX - startX;
-      const deltaY = e.clientY - startY;
-
-      const newLeft = startLeft + deltaX;
-      const newTop = startTop + deltaY;
-
-      setPosition(newLeft, newTop);
-    };
-
-    const onMouseUp = () => {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-      eventHandlers.currentDrag = null;
-    };
-
-    eventHandlers.currentDrag = { onMouseMove, onMouseUp };
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-  };
-
-  popup.addEventListener('mousedown', eventHandlers.popupMouseDown);
-
-  // Set cursor style for draggable areas
-  popup.style.cursor = 'move';
-
-  // Setup event handlers for closing popup
-  const hidePopup = (e) => {
-    if (e && e.type === 'keydown' && e.key !== 'Escape') return;
-
-    // Remove all event listeners
-    if (eventHandlers.clickOutside) {
-      document.removeEventListener('click', eventHandlers.clickOutside);
-    }
-    if (eventHandlers.keydown) {
-      document.removeEventListener('keydown', eventHandlers.keydown);
-    }
-    if (eventHandlers.popupMouseDown) {
-      popup.removeEventListener('mousedown', eventHandlers.popupMouseDown);
-    }
-    if (eventHandlers.currentDrag) {
-      document.removeEventListener('mousemove', eventHandlers.currentDrag.onMouseMove);
-      document.removeEventListener('mouseup', eventHandlers.currentDrag.onMouseUp);
-    }
-
-    popup.remove();
-  };
-
-  eventHandlers.clickOutside = (e) => {
-    if (!popup.contains(e.target)) {
-      hidePopup(e);
-    }
-  };
-
-  eventHandlers.keydown = (e) => {
-    if (e.key === 'Escape') {
-      hidePopup(e);
-    }
-  };
-
-  requestAnimationFrame(() => {
-    document.addEventListener('click', eventHandlers.clickOutside);
-    document.addEventListener('keydown', eventHandlers.keydown);
+  // Setup drag functionality with specific selectors for this popup
+  setupPopupDrag(popup, event, {
+    draggableSelectors: DRAGGABLE_SELECTORS,
+    interactiveSelectors: INTERACTIVE_SELECTORS
   });
 }
