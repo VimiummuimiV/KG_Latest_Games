@@ -1,0 +1,56 @@
+@mixin tab() {
+  display: inline-flex;
+  padding: 5px 15px;
+  max-width: 300px;
+  font: 500 14px "Montserrat", sans-serif;
+  border-radius: 4px !important;
+  user-select: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  height: auto;
+  justify-content: center;
+  align-items: center;
+}
+
+// Search input styling
+#latest-games-search-input {
+  width: inherit;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  margin: 0 10px 10px 10px;
+  font-size: 15px;
+  font-family: "Montserrat", sans-serif;
+  border: 1.5px solid var(--rg-border-primary);
+  border-radius: 6px !important;
+  background: var(--rg-bg-card);
+  color: var(--rg-text-primary);
+  outline: none;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+  
+  &:focus {
+    border-color: var(--rg-border-hover);
+    background: var(--rg-bg-hover);
+    color: var(--rg-text-primary);
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+  }
+  
+  &::placeholder {
+    color: var(--rg-text-secondary);
+    opacity: 0.7;
+  }
+}
+
+.latest-games-search-noresults {
+  @include tab();
+  color: var(--rg-gametype-marathon);
+  border: 2px solid var(--rg-border-pinned-marathon);
+  background-color: var(--rg-bg-card-pinned-marathon);
+}
+
+.latest-games-search-more {
+  @include tab();
+  color: var(--rg-gametype-chars);
+  border: 2px solid var(--rg-border-pinned-chars);
+  background-color: var(--rg-bg-card-pinned-chars);
+}

@@ -1,4 +1,4 @@
-import './styles.scss';
+import './styles/styles.scss';
 import { setupFonts } from './font.js';
 import { DEFAULTS } from './definitions.js';
 
