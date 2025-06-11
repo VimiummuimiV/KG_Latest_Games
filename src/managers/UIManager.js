@@ -4,6 +4,8 @@ import { showMigrationPopup } from '../vocabularyMigration.js';
 import { createCustomTooltip } from '../tooltip.js';
 import { createGamePopup } from '../gamePopup.js';
 import { addDragFunctionality } from '../drag.js';
+import { setupResizeHandle } from '../panel/panelResize.js';
+import { setupYPositioning } from '../panel/panelPosition.js';
 
 export class UIManager {
   constructor(main) {
@@ -462,109 +464,11 @@ export class UIManager {
       container.appendChild(handle);
     }
 
-    // Resize logic: only active in wrap mode
-    const setupResizeHandle = () => {
-      const mode = this.main.viewManager.getDisplayMode();
-      if (mode === 'wrap') {
-        // Apply stored width
-        container.style.width = this.main.panelWidth;
-        handle.style.display = '';
-        let isDragging = false, startX, startWidth;
-        const onMouseMove = (e) => {
-          if (!isDragging) return;
-          const dx = e.clientX - startX;
-          let newWidthPx = startWidth + dx;
-          // Prevent going beyond viewport and 95vw
-          const maxPx = window.innerWidth * 0.95;
-          newWidthPx = Math.max(350, Math.min(newWidthPx, maxPx));
-          const newWidthVw = Math.round((newWidthPx / window.innerWidth) * 100 * 10) / 10;
-          container.style.width = `${newWidthVw}vw`;
-        };
-        const onMouseUp = () => {
-          if (!isDragging) return;
-          isDragging = false;
-          document.removeEventListener('mousemove', onMouseMove);
-          document.removeEventListener('mouseup', onMouseUp);
-          this.main.panelWidth = container.style.width;
-          this.main.settingsManager.saveSettings();
-        };
-        handle.onmousedown = (e) => {
-          if (e.button !== 0) return; // Only allow left mouse button
-          isDragging = true;
-          startX = e.clientX;
-          startWidth = container.offsetWidth;
-          document.addEventListener('mousemove', onMouseMove);
-          document.addEventListener('mouseup', onMouseUp);
-          e.preventDefault();
-        };
-      } else {
-        handle.style.display = 'none';
-        container.style.width = '';
-        handle.onmousedown = null;
-      }
-    };
+    // Move resize logic to panelResize.js
+    setupResizeHandle(this, container, handle);
 
-    setupResizeHandle();
-
-    const setupYPositioning = () => {
-      const mode = this.main.viewManager.getDisplayMode();
-      if (mode === 'wrap') {
-        this.updateContainerYPosition();
-        let isDraggingY = false, startY, startTop;
-
-        const onMouseMoveY = (e) => {
-          if (!isDraggingY) return;
-          const dy = e.clientY - startY;
-          const newTopVh = startTop + (dy / window.innerHeight) * 100;
-
-          // Calculate proper bounds: 0 at top, and bottom should leave container fully visible
-          const containerHeight = container.offsetHeight;
-          const maxTopVh = Math.max(0, ((window.innerHeight - containerHeight) / window.innerHeight) * 100);
-
-          const clampedTopVh = Math.max(0, Math.min(newTopVh, maxTopVh));
-          // Limit to one digit after the dot
-          const roundedTopVh = Math.round(clampedTopVh * 10) / 10;
-          container.style.top = `${roundedTopVh}vh`;
-        };
-
-        const onMouseUpY = () => {
-          if (!isDraggingY) return;
-          isDraggingY = false;
-          document.removeEventListener('mousemove', onMouseMoveY);
-          document.removeEventListener('mouseup', onMouseUpY);
-          // Get the actual final position, and round so it has only one digit after the decimal point
-          const finalRect = container.getBoundingClientRect();
-          this.main.panelYPosition = Math.round(((finalRect.top / window.innerHeight) * 100) * 10) / 10;
-          this.main.settingsManager.saveSettings();
-        };
-
-        const enableYDrag = (e) => {
-          if (e.button !== 0) return; // Only allow left mouse button
-          const ignoreSelectors = [
-            '.latest-game',
-            '.group-tab',
-            '.control-button',
-            '.resize-handle',
-            '#latest-games-search-input'
-          ];
-          if (ignoreSelectors.some(selector => e.target.closest(selector))) return;
-          isDraggingY = true;
-          startY = e.clientY;
-          // FIX: Get the actual current position from the computed style or getBoundingClientRect
-          const rect = container.getBoundingClientRect();
-          startTop = (rect.top / window.innerHeight) * 100;
-          document.addEventListener('mousemove', onMouseMoveY);
-          document.addEventListener('mouseup', onMouseUpY);
-          e.preventDefault();
-        };
-
-        container.addEventListener('mousedown', enableYDrag);
-      } else {
-        container.style.top = '';
-      }
-    };
-
-    setupYPositioning();
+    // Move Y positioning logic to panelPosition.js
+    setupYPositioning(this, container);
 
     document.body.appendChild(container);
 
@@ -582,8 +486,8 @@ export class UIManager {
     const origUpdateDisplayModeClass = this.main.viewManager.updateDisplayModeClass.bind(this.main.viewManager);
     this.main.viewManager.updateDisplayModeClass = (...args) => {
       origUpdateDisplayModeClass(...args);
-      setupResizeHandle();
-      setupYPositioning();
+      setupResizeHandle(this, container, handle);
+      setupYPositioning(this, container);
     };
 
     this.updateRemoveIcons();
