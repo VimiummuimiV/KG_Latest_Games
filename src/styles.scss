@@ -339,7 +339,8 @@
     }
 
     .controls-buttons {
-      display: inline-flex;
+      display: flex;
+      flex-wrap: wrap;
     }
   }
 
@@ -456,6 +457,28 @@
       align-items: center;
       margin: 0 0 10px 10px;
     }
+  }
+}
+
+// --- Search Box Styles ---
+#latest-games-search-input {
+  width: inherit;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  margin: 0 10px 10px 10px;
+  font-size: 15px;
+  font-family: "Montserrat", sans-serif;
+  border: 1.5px solid var(--rg-border-primary);
+  border-radius: 6px !important;
+  background: var(--rg-bg-card);
+  color: var(--rg-text-primary);
+  outline: none;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+
+  &:focus {
+    border-color: var(--rg-border-hover);
+    background: var(--rg-bg-hover);
+    color: var(--rg-text-primary);
   }
 }
 
@@ -690,7 +713,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
-  scrollbar-color: rgb(140,140,140) rgb(22,22,22);
+  scrollbar-color: rgb(140, 140, 140) rgb(22, 22, 22);
   word-wrap: break-word;
   overflow-wrap: break-word;
 

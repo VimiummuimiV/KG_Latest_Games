@@ -287,6 +287,25 @@ export class UIManager {
       playBtn, replayBtn, pinAllBtn, unpinAllBtn, sortBtn, importBtn, exportBtn, removeAllBtn, removeUnpinnedBtn, dragToggleBtn
     );
 
+    // Add search icon button to the end of controlsButtons
+    const searchBtn = createElement('span', {
+      className: 'latest-games-search-btn control-button' + (this.main.showSearchBox ? '' : ' latest-games-disabled'),
+      innerHTML: icons.search
+    });
+    const updateSearchTooltip = () => {
+      createCustomTooltip(
+        searchBtn,
+        this.main.showSearchBox ? 'Скрыть строку поиска' : 'Показать строку поиска'
+      );
+      searchBtn.classList.toggle('latest-games-disabled', !this.main.showSearchBox);
+    };
+    updateSearchTooltip();
+    searchBtn.addEventListener('click', () => {
+      this.toggleSearchBox();
+      updateSearchTooltip();
+    });
+    controlsButtons.appendChild(searchBtn);
+
     return controlsContainer;
   }
 
@@ -296,8 +315,77 @@ export class UIManager {
     container.style.top = this.main.viewManager.getDisplayMode() === 'wrap' ? `${this.main.panelYPosition}vh` : '';
   }
 
+  createSearchBox() {
+    const searchBox = createElement('input', {
+      type: 'search',
+      id: 'latest-games-search-input',
+      className: this.main.showSearchBox ? '' : 'latest-games-hidden'
+    });
+    searchBox.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase().trim();
+      this.handleSearch(query);
+    });
+    return searchBox;
+  }
+
+  handleSearch(query) {
+    const gamesList = document.getElementById('latest-games');
+    if (!gamesList) return;
+    gamesList.innerHTML = '';
+    if (!query) {
+      this.populateGamesList(gamesList);
+      return;
+    }
+    // Search all groups
+    const results = [];
+    this.main.groupsManager.groups.forEach(group => {
+      group.games.forEach(game => {
+        const name = this.main.gamesManager.generateGameName(game).toLowerCase();
+        if (name.includes(query)) {
+          results.push({ group, game });
+        }
+      });
+    });
+    if (results.length === 0) {
+      const noResults = createElement('li', { className: 'latest-games-search-noresults', textContent: 'Ничего не найдено' });
+      gamesList.appendChild(noResults);
+      return;
+    }
+    results.forEach(({ group, game }) => {
+      const li = this.createGameElement(game, game.id);
+      li.classList.add('latest-games-search-result');
+      li.addEventListener('click', () => {
+        this.main.groupsManager.currentGroupId = group.id;
+        this.refreshContainer();
+        setTimeout(() => {
+          const el = document.getElementById(`latest-game-${game.id}`);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      });
+      gamesList.appendChild(li);
+    });
+  }
+
+  toggleSearchBox() {
+    const searchBox = document.getElementById('latest-games-search-input');
+    if (!searchBox) return;
+    const isHidden = searchBox.classList.toggle('latest-games-hidden');
+    this.main.showSearchBox = !isHidden;
+    if (this.main.settingsManager && typeof this.main.settingsManager.saveSettings === 'function') {
+      this.main.settingsManager.saveSettings();
+    }
+    if (!isHidden) {
+      searchBox.focus();
+      searchBox.select();
+    }
+  }
+
   createContainer() {
     const container = createElement('div', { id: 'latest-games-container' });
+
+    const searchBox = this.createSearchBox();
+    container.appendChild(searchBox);
+
     const groupsContainer = this.main.groupsManager.createGroupsContainer();
 
     container.appendChild(groupsContainer);
@@ -452,7 +540,14 @@ export class UIManager {
 
         const enableYDrag = (e) => {
           if (e.button !== 0) return; // Only allow left mouse button
-          if (e.target.closest('.latest-game, .group-tab, .control-button, .resize-handle')) return;
+          const ignoreSelectors = [
+            '.latest-game',
+            '.group-tab',
+            '.control-button',
+            '.resize-handle',
+            '#latest-games-search-input'
+          ];
+          if (ignoreSelectors.some(selector => e.target.closest(selector))) return;
           isDraggingY = true;
           startY = e.clientY;
           // FIX: Get the actual current position from the computed style or getBoundingClientRect
