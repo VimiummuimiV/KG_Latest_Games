@@ -1,3 +1,4 @@
+import { icons } from '../../icons.js';
 import { createElement } from '../../utils.js';
 
 function fuzzyScore(text, query) {
@@ -16,6 +17,40 @@ function fuzzyScore(text, query) {
   return queryIndex === queryLower.length ? gaps : Infinity;
 }
 
+// Function to calculate text width
+function getTextWidth(text, font) {
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  context.font = font;
+  return context.measureText(text).width;
+}
+
+// Function to get computed font style from element
+function getFontStyle(element) {
+  const style = window.getComputedStyle(element);
+  return `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+}
+
+// Function to update clear button position
+function updateClearButtonPosition(searchBox, clearButton, margin = 8) {
+  const text = searchBox.value;
+  if (!text) {
+    clearButton.style.left = '';
+    return;
+  }
+  
+  const font = getFontStyle(searchBox);
+  const textWidth = getTextWidth(text, font);
+  
+  // Get the left padding of the search box
+  const computedStyle = window.getComputedStyle(searchBox);
+  const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
+  
+  // Position the clear button at the end of the text with margin
+  const leftPosition = paddingLeft + textWidth + margin;
+  clearButton.style.left = `${leftPosition}px`;
+}
+
 export function createSearchBox(main) {
   const searchContainer = createElement('div', {
     className: `latest-games-search-container ${main.showSearchBox ? '' : 'latest-games-hidden'}`
@@ -26,18 +61,21 @@ export function createSearchBox(main) {
     id: 'latest-games-search-input',
   });
   
-  const clearButton = createElement('button', {
-    type: 'button',
+  const clearButton = createElement('div', {
     id: 'latest-games-clear-button',
     className: 'latest-games-clear-btn',
-    innerHTML: '×'
+    innerHTML: icons.delete
   });
+  
+  // Make sure the search container has relative positioning for absolute positioning of clear button
+  searchContainer.style.position = 'relative';
   
   // Handle input events
   searchBox.addEventListener('input', (e) => {
     const value = e.target.value.trim();
     handleSearch(main, value);
     updateClearButtonVisibility(clearButton, value);
+    updateClearButtonPosition(searchBox, clearButton);
   });
   
   // Handle clear button click
@@ -46,10 +84,23 @@ export function createSearchBox(main) {
     searchBox.focus();
     handleSearch(main, '');
     updateClearButtonVisibility(clearButton, '');
+    updateClearButtonPosition(searchBox, clearButton);
   });
   
-  // Initial clear button state
+  // Handle font loading and resize events
+  const updatePosition = () => updateClearButtonPosition(searchBox, clearButton);
+  
+  // Update position when fonts are loaded
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(updatePosition);
+  }
+  
+  // Update position on window resize (in case of zoom changes)
+  window.addEventListener('resize', updatePosition);
+  
+  // Initial setup
   updateClearButtonVisibility(clearButton, '');
+  updateClearButtonPosition(searchBox, clearButton);
   
   searchContainer.appendChild(searchBox);
   searchContainer.appendChild(clearButton);
@@ -61,6 +112,7 @@ function updateClearButtonVisibility(clearButton, value) {
   clearButton.classList.toggle('visible', !!value);
 }
 
+// Rest of your existing functions remain the same...
 export function handleSearch(main, query) {
   const gamesList = document.getElementById('latest-games');
   if (!gamesList) return;

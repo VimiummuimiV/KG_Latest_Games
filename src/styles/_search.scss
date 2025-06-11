@@ -50,24 +50,25 @@
   // Clear button styling
   .latest-games-clear-btn {
     position: absolute;
-    right: 8px;
     top: 50%;
     transform: translateY(-50%);
     width: 24px;
     height: 24px;
     border: none;
-    border-radius: 50%;
-    background: var(--rg-bg-hover);
-    color: var(--rg-text-secondary);
-    font-size: 16px;
-    font-weight: bold;
+    outline: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0;
     visibility: hidden;
-    transition: all 0.2s ease;
+    transition: opacity 0.15s ease;
+    z-index: 1;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
     
     &:hover {
       background: var(--rg-border-primary);
