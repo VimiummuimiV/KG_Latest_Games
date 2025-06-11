@@ -2,7 +2,10 @@
 export function setupYPositioning(uiManager, container) {
   const mode = uiManager.main.viewManager.getDisplayMode();
   if (mode === 'wrap') {
-    uiManager.updateContainerYPosition();
+    // Restore last saved Y position immediately
+    if (typeof uiManager.main.panelYPosition === 'number') {
+      container.style.top = `${uiManager.main.panelYPosition}vh`;
+    }
     let isDraggingY = false, startY, startTop;
 
     const onMouseMoveY = (e) => {

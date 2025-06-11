@@ -311,12 +311,6 @@ export class UIManager {
     return controlsContainer;
   }
 
-  updateContainerYPosition() {
-    const container = document.getElementById('latest-games-container');
-    if (!container) return;
-    container.style.top = this.main.viewManager.getDisplayMode() === 'wrap' ? `${this.main.panelYPosition}vh` : '';
-  }
-
   createSearchBox() {
     const searchBox = createElement('input', {
       type: 'search',
