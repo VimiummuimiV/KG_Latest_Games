@@ -65,8 +65,8 @@ export class PageHandler {
     if (currentGroup.games.length > maxGamesToKeep) {
       currentGroup.games.splice(maxGamesToKeep, currentGroup.games.length - maxGamesToKeep);
     }
-    this.main.assignGameIds();
-    this.main.saveGameData();
+    this.main.gamesManager.assignGameIds();
+    this.main.gamesManager.saveGameData();
   }
 
   handleGameActions() {
