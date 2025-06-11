@@ -70,11 +70,6 @@
       height: 14px;
     }
     
-    &:hover {
-      background: var(--rg-border-primary);
-      color: var(--rg-text-primary);
-    }
-    
     &.visible {
       opacity: 1;
       visibility: visible;
