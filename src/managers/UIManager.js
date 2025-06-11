@@ -61,6 +61,11 @@ export class UIManager {
 
     gamesList.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
+      // Prevent popup if Shift+Click on a button inside .latest-game-buttons
+      if (e.shiftKey && e.target.closest('.latest-game-buttons')) {
+        suppressClick = false;
+        return;
+      }
       if (e.shiftKey) {
         suppressClick = true;
         e.preventDefault();

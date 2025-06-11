@@ -24,7 +24,11 @@ export function createControls(main) {
     className: main.shouldAutoSave === false ? 'latest-games-disabled' : '',
     textContent: main.maxGameCount.toString()
   });
-  createCustomTooltip(countDisplay, main.shouldAutoSave ? 'Автосохранение включено' : 'Автосохранение отключено');
+  createCustomTooltip(countDisplay,
+    main.shouldAutoSave
+      ? 'Автосохранение включено'
+      : 'Автосохранение отключено'
+  );
 
   countDisplay.addEventListener('click', () => {
     main.shouldAutoSave = !main.shouldAutoSave;
@@ -202,21 +206,63 @@ export function createControls(main) {
     className: 'latest-games-drag-toggle control-button',
     innerHTML: icons.dragToggle
   });
-  createCustomTooltip(dragToggleBtn, main.enableDragging ? 'Перетаскивание включено' : 'Перетаскивание отключено');
+  createCustomTooltip(
+    dragToggleBtn,
+    main.enableDragging
+      ? 'Перетаскивание включено'
+      : 'Перетаскивание отключено'
+  );
   dragToggleBtn.classList.toggle('latest-games-disabled', !main.enableDragging);
   dragToggleBtn.onclick = () => {
     main.enableDragging = !main.enableDragging;
     main.settingsManager.saveSettings();
     main.uiManager.refreshContainer();
-    createCustomTooltip(dragToggleBtn, main.enableDragging ? 'Перетаскивание включено' : 'Перетаскивание отключено');
+    createCustomTooltip(
+      dragToggleBtn,
+      main.enableDragging
+        ? 'Перетаскивание включено'
+        : 'Перетаскивание отключено'
+    );
     dragToggleBtn.classList.toggle('latest-games-disabled', !main.enableDragging);
+  };
+
+  // Toggle for button descriptions
+  const descToggleBtn = createElement('span', {
+    className: 'latest-games-desc-toggle control-button',
+    innerHTML: icons.info
+  });
+  createCustomTooltip(
+    descToggleBtn,
+    main.showButtonDescriptions
+      ? 'Скрыть описания кнопок'
+      : 'Показать описания кнопок'
+  );
+  descToggleBtn.classList.toggle('latest-games-disabled', !main.showButtonDescriptions);
+
+  descToggleBtn.onclick = () => {
+    main.showButtonDescriptions = !main.showButtonDescriptions;
+    main.settingsManager.saveSettings();
+    descToggleBtn.classList.toggle('latest-games-disabled', !main.showButtonDescriptions);
+    createCustomTooltip(
+      descToggleBtn,
+      main.showButtonDescriptions
+        ? 'Скрыть описания кнопок'
+        : 'Показать описания кнопок'
+    );
+    // Refresh the container so that game descriptions are re-rendered according to the setting
+    main.uiManager.refreshContainer();
+    // Scroll controls to bottom after refresh to ensure all buttons are accessible
+    setTimeout(() => {
+      const controlsArea = document.querySelector('.latest-games-controls');
+      if (controlsArea) controlsArea.scrollTop = controlsArea.scrollHeight;
+    }, 0);
   };
 
   controlsLimiter.appendChild(options);
   controlsButtons.append(
     main.themeManager.createThemeToggle(),
     main.viewManager.createDisplayModeToggle(),
-    playBtn, replayBtn, pinAllBtn, unpinAllBtn, sortBtn, importBtn, exportBtn, removeAllBtn, removeUnpinnedBtn, dragToggleBtn
+    playBtn, replayBtn, pinAllBtn, unpinAllBtn, sortBtn, importBtn, exportBtn, removeAllBtn, removeUnpinnedBtn, dragToggleBtn, descToggleBtn
   );
 
   const searchBtn = createElement('span', {
@@ -226,7 +272,9 @@ export function createControls(main) {
   const updateSearchTooltip = () => {
     createCustomTooltip(
       searchBtn,
-      main.showSearchBox ? 'Скрыть строку поиска' : 'Показать строку поиска'
+      main.showSearchBox
+        ? 'Скрыть строку поиска'
+        : 'Показать строку поиска'
     );
     searchBtn.classList.toggle('latest-games-disabled', !main.showSearchBox);
   };

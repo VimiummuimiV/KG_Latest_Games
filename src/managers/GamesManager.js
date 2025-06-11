@@ -66,9 +66,13 @@ export class GamesManager {
       textContent: vocName === '' ? gameType : `«${vocName}»`
     });
 
-    const descSpan = createElement('span', {
-      className: 'latest-game-description'
-    });
+    // Only create the description span if the setting is enabled
+    let descSpan = null;
+    if (this.mainManager.showButtonDescriptions) {
+      descSpan = createElement('span', {
+        className: 'latest-game-description'
+      });
+    }
 
     const qualSpan = createElement('span', {
       className: 'latest-game-qual',
@@ -87,15 +91,17 @@ export class GamesManager {
       textContent: levelText
     });
 
-    descSpan.textContent = `${visibilities[visibility]}, ${timeout} секунд`;
-    descSpan.appendChild(qualSpan);
-    if (levelText) {
-      descSpan.appendChild(levelsSpan);
+    if (descSpan) {
+      descSpan.textContent = `${visibilities[visibility]}, ${timeout} секунд`;
+      descSpan.appendChild(qualSpan);
+      if (levelText) {
+        descSpan.appendChild(levelsSpan);
+      }
     }
 
     const container = createElement('div');
     container.appendChild(nameSpan);
-    container.appendChild(descSpan);
+    if (descSpan) container.appendChild(descSpan);
 
     return container.innerHTML;
   }

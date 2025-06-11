@@ -9,20 +9,35 @@ export function createGameElement(main, game, id) {
     className: `latest-game${game.pin ? ' pin-game' : ''}${gametypeClass}`,
     id: `latest-game-${id}`
   });
-  const buttons = createElement('div', { className: 'latest-game-buttons' });
+  // Add orientation class depending on description display
+  const orientationClass = main.showButtonDescriptions ? 'vertical-orientation' : 'horizontal-orientation';
+  const buttons = createElement('div', { className: `latest-game-buttons ${orientationClass}` });
   const pinButton = createElement('div', {
     className: 'latest-game-pin',
     innerHTML: icons.pin
   });
-  createCustomTooltip(pinButton, game.pin ? 'Открепить' : 'Закрепить');
-  pinButton.addEventListener('click', () => main.gamesManager.pinGame(id));
+  createCustomTooltip(pinButton, game.pin
+    ? '[Клик] Открепить с подтверждением. [Shift + Клик] Открепить без подтверждения.'
+    : '[Клик] Закрепить с подтверждением. [Shift + Клик] Закрепить без подтверждения.'
+  );
+  pinButton.addEventListener('click', (e) => {
+    if (e.shiftKey || confirm(game.pin ? 'Открепить игру?' : 'Закрепить игру?')) {
+      main.gamesManager.pinGame(id);
+    }
+  });
 
   const deleteButton = createElement('div', {
     className: 'latest-game-delete',
     innerHTML: icons.delete
   });
-  createCustomTooltip(deleteButton, 'Удалить');
-  deleteButton.addEventListener('click', () => main.gamesManager.deleteGame(id));
+  createCustomTooltip(deleteButton,
+    '[Клик] Удалить (с подтверждением). [Shift + Клик] Удалить без подтверждения.'
+  );
+  deleteButton.addEventListener('click', (e) => {
+    if (e.shiftKey || confirm('Удалить игру?')) {
+      main.gamesManager.deleteGame(id);
+    }
+  });
 
   buttons.appendChild(pinButton);
   buttons.appendChild(deleteButton);

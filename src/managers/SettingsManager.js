@@ -23,6 +23,7 @@ export class SettingsManager {
       this.main.shouldReplay = settings.shouldReplay ?? this.main.shouldReplay;
       this.main.replayDelay = settings.replayDelay ?? this.main.replayDelay;
       this.main.showSearchBox = settings.showSearchBox ?? false;
+      this.main.showButtonDescriptions = settings.showButtonDescriptions ?? true;
 
     } catch (error) {
       console.warn('Could not load settings from localStorage:', error);
@@ -47,7 +48,8 @@ export class SettingsManager {
         startDelay: this.main.startDelay,
         shouldReplay: this.main.shouldReplay,
         replayDelay: this.main.replayDelay,
-        showSearchBox: this.main.showSearchBox
+        showSearchBox: this.main.showSearchBox,
+        showButtonDescriptions: this.main.showButtonDescriptions
       };
 
       localStorage.setItem('latestGamesSettings', JSON.stringify(settings));

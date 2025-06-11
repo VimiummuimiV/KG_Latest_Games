@@ -202,4 +202,13 @@ export const icons = {
       <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
     </svg>
   `,
+
+  info: `
+    <svg xmlns="${SVG_NS}" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="16" x2="12" y2="12"></line>
+      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+    </svg>
+  `,
 };
