@@ -5,15 +5,18 @@
     "displayMode": "wrap",
     "groupViewMode": "tabs",
     "previousScrollPosition": 0,
-    "panelYPosition": 0.1,
-    "panelWidth": "93.7vw",
+    "panelWidth": "90vw",
+    "enableDragging": false,
     "shouldAutoSave": false,
-    "enableDragging": true,
     "alwaysVisiblePanel": true,
+    "panelYPosition": 0.1,
+    "hidePanelDelay": 1000,
     "shouldStart": true,
     "startDelay": 1000,
     "shouldReplay": true,
-    "replayDelay": 2000
+    "replayDelay": 2000,
+    "showSearchBox": false,
+    "showButtonDescriptions": false
   },
   "latestGamesData": {
     "groups": [
@@ -33,7 +36,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "0mn2s5t7w",
+            "id": "cmmni7s2f",
             "pin": 1
           },
           {
@@ -48,7 +51,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "lj13e9xsi",
+            "id": "cmt86odtj",
             "pin": 1
           },
           {
@@ -63,7 +66,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "y2eybgm8b",
+            "id": "8v8w7ls3v",
             "pin": 1
           },
           {
@@ -78,7 +81,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "r4jymt1ei",
+            "id": "d9kef74tw",
             "pin": 1
           },
           {
@@ -93,7 +96,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "4d23t2us2",
+            "id": "e26pzf9oo",
             "pin": 1
           },
           {
@@ -108,7 +111,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "xox97m0tm",
+            "id": "3q58f6vlt",
             "pin": 1
           },
           {
@@ -123,7 +126,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "e2wbefk4v",
+            "id": "ro40curnk",
             "pin": 1
           },
           {
@@ -138,7 +141,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "oo17v7t5s",
+            "id": "eu1icjd4b",
             "pin": 1
           }
         ]
@@ -148,7 +151,7 @@
         "title": "Русский",
         "games": [
           {
-            "id": "9stz1nl4w",
+            "id": "gwegld4oc",
             "params": {
               "gametype": "voc",
               "vocName": "10000 частых словоформ",
@@ -163,7 +166,7 @@
             "pin": 1
           },
           {
-            "id": "soap9m919",
+            "id": "gf728015j",
             "params": {
               "gametype": "voc",
               "vocName": "5-ти буквенные слова",
@@ -189,11 +192,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "cc522h9nf",
+            "id": "ivqw83svh",
             "pin": 1
           },
           {
-            "id": "w10k92upp",
+            "id": "k94uefvg7",
             "params": {
               "gametype": "voc",
               "vocName": "5000 частых словоформ",
@@ -208,7 +211,7 @@
             "pin": 1
           },
           {
-            "id": "tnlra525t",
+            "id": "kdx8pggh2",
             "params": {
               "gametype": "voc",
               "vocName": "Безымянные",
@@ -234,11 +237,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "0ba872z7e",
+            "id": "b2e9taky9",
             "pin": 1
           },
           {
-            "id": "ko630fqzt",
+            "id": "bzex1f8v1",
             "params": {
               "gametype": "voc",
               "vocName": "Быстрая левая рука",
@@ -253,7 +256,7 @@
             "pin": 1
           },
           {
-            "id": "aevtyttp1",
+            "id": "6z8nr9p44",
             "params": {
               "gametype": "voc",
               "vocName": "Быстрая правая рука",
@@ -268,7 +271,7 @@
             "pin": 1
           },
           {
-            "id": "gzcta1xyz",
+            "id": "bwp62ayk0",
             "params": {
               "gametype": "voc",
               "vocName": "Быстрота",
@@ -283,7 +286,7 @@
             "pin": 1
           },
           {
-            "id": "nw32linpm",
+            "id": "t1nhbwkk9",
             "params": {
               "gametype": "voc",
               "vocName": "Длинные слова от 22 до 11",
@@ -309,7 +312,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "e0ltqy1wq",
+            "id": "tggavb63j",
             "pin": 1
           },
           {
@@ -324,11 +327,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "lygyzj21l",
+            "id": "m092r12xa",
             "pin": 1
           },
           {
-            "id": "hmrc38y88",
+            "id": "ps8x46u2i",
             "params": {
               "gametype": "voc",
               "vocName": "Крохотушки",
@@ -354,7 +357,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "r1e0pu9gd",
+            "id": "282dclx1q",
             "pin": 1
           },
           {
@@ -369,7 +372,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "gu4xbg76e",
+            "id": "0tjhlob2t",
             "pin": 1
           },
           {
@@ -384,7 +387,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "3kv4jmbiq",
+            "id": "0ngfy8t0h",
             "pin": 1
           },
           {
@@ -399,11 +402,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "tda5m16eg",
+            "id": "7fqouabki",
             "pin": 1
           },
           {
-            "id": "fj36tfo2g",
+            "id": "z2u7q6o2s",
             "params": {
               "gametype": "voc",
               "vocName": "Моя сильная правая рука",
@@ -418,7 +421,7 @@
             "pin": 1
           },
           {
-            "id": "a78661pi3",
+            "id": "py1jpqqk0",
             "params": {
               "gametype": "voc",
               "vocName": "не ошибись на \"т ь б ю\"",
@@ -433,7 +436,7 @@
             "pin": 1
           },
           {
-            "id": "st1p69wql",
+            "id": "w2jgx8ac4",
             "params": {
               "gametype": "voc",
               "vocName": "Ну очень быстрые слова",
@@ -448,7 +451,7 @@
             "pin": 1
           },
           {
-            "id": "t0st0hyie",
+            "id": "b3vi1vle5",
             "params": {
               "gametype": "voc",
               "vocName": "Периферия",
@@ -463,7 +466,7 @@
             "pin": 1
           },
           {
-            "id": "cp8veacm1",
+            "id": "wq5w2wopd",
             "params": {
               "gametype": "voc",
               "vocName": "Поговорки и иже с ними",
@@ -478,7 +481,7 @@
             "pin": 1
           },
           {
-            "id": "a5e2j1r7r",
+            "id": "rn88xen7a",
             "params": {
               "gametype": "voc",
               "vocName": "Русский Все при деле",
@@ -493,7 +496,7 @@
             "pin": 1
           },
           {
-            "id": "07srq6nk9",
+            "id": "dwrs0q0jl",
             "params": {
               "gametype": "voc",
               "vocName": "Русский Периферия",
@@ -519,11 +522,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "wqgmowmuw",
+            "id": "ghy6fj46a",
             "pin": 1
           },
           {
-            "id": "au946oqlh",
+            "id": "jzj451gql",
             "params": {
               "gametype": "voc",
               "vocName": "Слова на правую руку",
@@ -538,7 +541,7 @@
             "pin": 1
           },
           {
-            "id": "pvwur2m3f",
+            "id": "rhl3nbxtz",
             "params": {
               "gametype": "voc",
               "vocName": "Солевой Спринт",
@@ -553,7 +556,7 @@
             "pin": 1
           },
           {
-            "id": "36hif0n3f",
+            "id": "pnh4oucr2",
             "params": {
               "gametype": "voc",
               "vocName": "сочетание \"ый\"",
@@ -568,7 +571,7 @@
             "pin": 1
           },
           {
-            "id": "p82hfpuue",
+            "id": "nb28xvwxf",
             "params": {
               "gametype": "voc",
               "vocName": "Сочетания \"Тормозиллы\"",
@@ -583,7 +586,7 @@
             "pin": 1
           },
           {
-            "id": "bqey6pqud",
+            "id": "ogh7cm8lm",
             "params": {
               "gametype": "voc",
               "vocName": "Сочетания разные",
@@ -609,11 +612,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "nde9kpvku",
+            "id": "uq7p6pz8v",
             "pin": 1
           },
           {
-            "id": "e26w3r8r0",
+            "id": "j3cle5otr",
             "params": {
               "gametype": "voc",
               "vocName": "Тексты с высоким брутто*",
@@ -628,7 +631,7 @@
             "pin": 1
           },
           {
-            "id": "bj8snfe3j",
+            "id": "t21es2u2v",
             "params": {
               "gametype": "voc",
               "vocName": "Технология шишкосушения",
@@ -654,7 +657,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "vap6dekb8",
+            "id": "l8sbfryea",
             "pin": 1
           },
           {
@@ -669,11 +672,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "zxxjiv5ug",
+            "id": "hbdfg2m8f",
             "pin": 1
           },
           {
-            "id": "vokaqnw58",
+            "id": "ofx370q4l",
             "params": {
               "gametype": "voc",
               "vocName": "Упор на левую",
@@ -688,7 +691,7 @@
             "pin": 1
           },
           {
-            "id": "aqkgm56vo",
+            "id": "q3kb0oat2",
             "params": {
               "gametype": "voc",
               "vocName": "Частотка чата 2013",
@@ -703,7 +706,7 @@
             "pin": 1
           },
           {
-            "id": "zna655l7t",
+            "id": "1dnuiq9x8",
             "params": {
               "gametype": "voc",
               "vocName": "Частотный словарь",
@@ -724,7 +727,7 @@
         "title": "Соточка",
         "games": [
           {
-            "id": "3rx5jbnnv",
+            "id": "ksz0osrzn",
             "params": {
               "gametype": "voc",
               "vocName": "\"ПИ\", \"ИП\": соточка",
@@ -739,7 +742,7 @@
             "pin": 1
           },
           {
-            "id": "uhcrk8rcg",
+            "id": "2rkpd46gx",
             "params": {
               "gametype": "voc",
               "vocName": "\"ЭХ\" - соточка",
@@ -754,7 +757,7 @@
             "pin": 1
           },
           {
-            "id": "fktbc39sq",
+            "id": "16bajvs3x",
             "params": {
               "gametype": "voc",
               "vocName": "(Да ну?) \"Ну да!\": соточка",
@@ -769,7 +772,7 @@
             "pin": 1
           },
           {
-            "id": "tvhp9xny9",
+            "id": "u3f9o7r5c",
             "params": {
               "gametype": "voc",
               "vocName": "5000 частых слов: соточка",
@@ -784,7 +787,7 @@
             "pin": 1
           },
           {
-            "id": "moq7yr9cv",
+            "id": "bh9151h47",
             "params": {
               "gametype": "voc",
               "vocName": "Атомная соточка",
@@ -799,7 +802,7 @@
             "pin": 1
           },
           {
-            "id": "r0i5wad7v",
+            "id": "22hhovmgm",
             "params": {
               "gametype": "voc",
               "vocName": "Дефисы: соточка",
@@ -814,7 +817,7 @@
             "pin": 1
           },
           {
-            "id": "7kh6vcjvm",
+            "id": "20ikfsa5s",
             "params": {
               "gametype": "voc",
               "vocName": "Дрифт: соточка",
@@ -829,7 +832,7 @@
             "pin": 1
           },
           {
-            "id": "upc9ud09z",
+            "id": "z8h0l0i8r",
             "params": {
               "gametype": "voc",
               "vocName": "Марафон соточка",
@@ -844,7 +847,7 @@
             "pin": 1
           },
           {
-            "id": "9gck4ibk2",
+            "id": "6suajrsyf",
             "params": {
               "gametype": "voc",
               "vocName": "Мизинцы+: соточка",
@@ -859,7 +862,7 @@
             "pin": 1
           },
           {
-            "id": "nykv622i7",
+            "id": "i3af3rwga",
             "params": {
               "gametype": "voc",
               "vocName": "Периферия: восьмисоточка",
@@ -874,7 +877,7 @@
             "pin": 1
           },
           {
-            "id": "sechb8ath",
+            "id": "04pxpbn5f",
             "params": {
               "gametype": "voc",
               "vocName": "Периферия: соточка",
@@ -889,7 +892,7 @@
             "pin": 1
           },
           {
-            "id": "m672tfgt3",
+            "id": "wu6couwx1",
             "params": {
               "gametype": "voc",
               "vocName": "Периферия+: восьмисоточка",
@@ -904,7 +907,7 @@
             "pin": 1
           },
           {
-            "id": "qlgb06fy3",
+            "id": "peqhcqaqa",
             "params": {
               "gametype": "voc",
               "vocName": "Русский центр: соточка",
@@ -919,7 +922,7 @@
             "pin": 1
           },
           {
-            "id": "c88rxwyry",
+            "id": "v5qfk350v",
             "params": {
               "gametype": "voc",
               "vocName": "Самые сложные слова: соточка",
@@ -934,7 +937,7 @@
             "pin": 1
           },
           {
-            "id": "o335cya2l",
+            "id": "ls26w09pe",
             "params": {
               "gametype": "voc",
               "vocName": "Сверхдлинные: восьмисоточка",
@@ -949,7 +952,7 @@
             "pin": 1
           },
           {
-            "id": "ewwnyoj39",
+            "id": "l34mcoluk",
             "params": {
               "gametype": "voc",
               "vocName": "Скольжение: соточка",
@@ -964,7 +967,7 @@
             "pin": 1
           },
           {
-            "id": "u2iizoz85",
+            "id": "5aju4acjp",
             "params": {
               "gametype": "voc",
               "vocName": "Сложные слова: соточка",
@@ -990,11 +993,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "mqg6s2jfj",
+            "id": "q231d1q4q",
             "pin": 1
           },
           {
-            "id": "1e42gn8qb",
+            "id": "lirn8n4rc",
             "params": {
               "gametype": "voc",
               "vocName": "Список Сводеша: соточка",
@@ -1020,11 +1023,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "swijga224",
+            "id": "t2x1r2hf7",
             "pin": 1
           },
           {
-            "id": "1j50h6kzp",
+            "id": "jubechtvd",
             "params": {
               "gametype": "voc",
               "vocName": "Трэш 2.0: восьмисоточка",
@@ -1039,7 +1042,7 @@
             "pin": 1
           },
           {
-            "id": "buzq0ttme",
+            "id": "8mrd9yr1p",
             "params": {
               "gametype": "voc",
               "vocName": "Указательные: соточка",
@@ -1060,7 +1063,7 @@
         "title": "Хардкор",
         "games": [
           {
-            "id": "3mutixu0e",
+            "id": "vz1zedc9c",
             "params": {
               "gametype": "voc",
               "vocName": "\"ЭХ - сложный\"",
@@ -1075,7 +1078,7 @@
             "pin": 1
           },
           {
-            "id": "d829c3f7b",
+            "id": "1lrsbe6f2",
             "params": {
               "gametype": "voc",
               "vocName": "\"ЭХ\" - мини-марафон",
@@ -1101,7 +1104,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "z2wgea273",
+            "id": "i8hgbsmpa",
             "pin": 1
           },
           {
@@ -1116,11 +1119,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "zoa60jh6c",
+            "id": "bmo5krexv",
             "pin": 1
           },
           {
-            "id": "7tqbixej2",
+            "id": "lzfysmhcu",
             "params": {
               "gametype": "voc",
               "vocName": "Буквы \"я эхъ\"",
@@ -1135,7 +1138,7 @@
             "pin": 1
           },
           {
-            "id": "rtcrv25fb",
+            "id": "hqr7io3b3",
             "params": {
               "gametype": "voc",
               "vocName": "Буквы гласные",
@@ -1150,7 +1153,7 @@
             "pin": 1
           },
           {
-            "id": "nve2ho9xu",
+            "id": "n7cehf97i",
             "params": {
               "gametype": "voc",
               "vocName": "Буквы, мини-марафон (800 знаков)",
@@ -1176,11 +1179,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "yzseelh8z",
+            "id": "wnsdzpkgu",
             "pin": 1
           },
           {
-            "id": "hjpw8m5rx",
+            "id": "qwy06lflv",
             "params": {
               "gametype": "voc",
               "vocName": "Знаки Пунктуации 3.0",
@@ -1206,11 +1209,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "6ry6cn3sr",
+            "id": "9dt35e9o3",
             "pin": 1
           },
           {
-            "id": "324k4hc8k",
+            "id": "3yo6vtmk9",
             "params": {
               "gametype": "voc",
               "vocName": "КлавоДрагРейсинг: длинные",
@@ -1225,7 +1228,7 @@
             "pin": 1
           },
           {
-            "id": "ehbtdxj5q",
+            "id": "upj7k2dqh",
             "params": {
               "gametype": "voc",
               "vocName": "Ловкость пальцев",
@@ -1251,7 +1254,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "jxdtb33fi",
+            "id": "llukyezz8",
             "pin": 1
           },
           {
@@ -1266,11 +1269,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "l8ket05ui",
+            "id": "qj1p3xdka",
             "pin": 1
           },
           {
-            "id": "4w3k2quej",
+            "id": "48i57iahz",
             "params": {
               "gametype": "voc",
               "vocName": "Мизинчики и безымянные",
@@ -1285,7 +1288,7 @@
             "pin": 1
           },
           {
-            "id": "b14gi5ozz",
+            "id": "hi3b2bh92",
             "params": {
               "gametype": "voc",
               "vocName": "ОтвеТСТВенность",
@@ -1311,11 +1314,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "umtdek62u",
+            "id": "wqm6olced",
             "pin": 1
           },
           {
-            "id": "b0mr5ar08",
+            "id": "jmusq299b",
             "params": {
               "gametype": "voc",
               "vocName": "Растяжка",
@@ -1330,7 +1333,7 @@
             "pin": 1
           },
           {
-            "id": "bylubgwuw",
+            "id": "in2sb3sd6",
             "params": {
               "gametype": "voc",
               "vocName": "Русско-английский частотный",
@@ -1356,11 +1359,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "7s7lc8k9d",
+            "id": "xmvpcxf30",
             "pin": 1
           },
           {
-            "id": "ga2b6bvx1",
+            "id": "o8uwya1g1",
             "params": {
               "gametype": "voc",
               "vocName": "Точки и запятые",
@@ -1375,7 +1378,7 @@
             "pin": 1
           },
           {
-            "id": "mf0ksvgow",
+            "id": "gxisvmwfc",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка моторики",
@@ -1390,7 +1393,7 @@
             "pin": 1
           },
           {
-            "id": "cdy3h2b12",
+            "id": "jggaxgd48",
             "params": {
               "gametype": "voc",
               "vocName": "Трэш 2.0",
@@ -1405,7 +1408,7 @@
             "pin": 1
           },
           {
-            "id": "aznsdy48m",
+            "id": "83ab60grk",
             "params": {
               "gametype": "voc",
               "vocName": "Фразы с цифрами",
@@ -1420,7 +1423,7 @@
             "pin": 1
           },
           {
-            "id": "qy5p4wpnr",
+            "id": "4npb8dpl4",
             "params": {
               "gametype": "voc",
               "vocName": "ЭХ - Light",
@@ -1441,7 +1444,7 @@
         "title": "Кибертекст",
         "games": [
           {
-            "id": "05o20y7uq",
+            "id": "cwe8ulqu9",
             "params": {
               "gametype": "voc",
               "vocName": "Кибертекст 2.0",
@@ -1456,7 +1459,7 @@
             "pin": 1
           },
           {
-            "id": "ffa666agh",
+            "id": "ixui1vqim",
             "params": {
               "gametype": "voc",
               "vocName": "Кибертекст НА ДОМ!",
@@ -1471,7 +1474,7 @@
             "pin": 1
           },
           {
-            "id": "j8v8vq5u0",
+            "id": "ke3qbx04f",
             "params": {
               "gametype": "voc",
               "vocName": "Кибертекст: Очень просто",
@@ -1486,7 +1489,7 @@
             "pin": 1
           },
           {
-            "id": "b5s429w2y",
+            "id": "t6m1xq4xd",
             "params": {
               "gametype": "voc",
               "vocName": "Солянка кибертекстов, мини-марафон 1000 зна",
@@ -1501,7 +1504,7 @@
             "pin": 1
           },
           {
-            "id": "nsx9hbjp6",
+            "id": "tdicli73a",
             "params": {
               "gametype": "voc",
               "vocName": "Солянка кибертекстов, соточка",
@@ -1516,7 +1519,7 @@
             "pin": 1
           },
           {
-            "id": "5l4kz3g7g",
+            "id": "yzdz6o6xd",
             "params": {
               "gametype": "voc",
               "vocName": "RUSH без вопросов!",
@@ -1537,7 +1540,7 @@
         "title": "Английский",
         "games": [
           {
-            "id": "cp5j8020v",
+            "id": "rxmlz221l",
             "params": {
               "gametype": "voc",
               "vocName": "10 000 популярных английских слов",
@@ -1552,7 +1555,7 @@
             "pin": 1
           },
           {
-            "id": "7gui9dlfc",
+            "id": "gtdgm2pbd",
             "params": {
               "gametype": "voc",
               "vocName": "850 базовых англ. слов.",
@@ -1567,7 +1570,7 @@
             "pin": 1
           },
           {
-            "id": "2k13a15qf",
+            "id": "xz3deiypk",
             "params": {
               "gametype": "voc",
               "vocName": "Английский Синхронизация",
@@ -1593,11 +1596,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "n2fj1nm7z",
+            "id": "xn2v8tkzt",
             "pin": 1
           },
           {
-            "id": "qvfzifidz",
+            "id": "09dmhyyba",
             "params": {
               "gametype": "voc",
               "vocName": "Марафон in English (300 зн/мин)",
@@ -1623,7 +1626,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "jfov0exkb",
+            "id": "1fs08ymrb",
             "pin": 1
           },
           {
@@ -1638,11 +1641,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "747j89ac2",
+            "id": "bxjkizggd",
             "pin": 1
           },
           {
-            "id": "2tywayrn4",
+            "id": "g32nobjv8",
             "params": {
               "gametype": "voc",
               "vocName": "Периферия in English (800)",
@@ -1657,7 +1660,7 @@
             "pin": 1
           },
           {
-            "id": "gxd4p3s84",
+            "id": "lumccbooc",
             "params": {
               "gametype": "voc",
               "vocName": "Периферия in English",
@@ -1683,11 +1686,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "70go8o9pg",
+            "id": "uaidwk2w5",
             "pin": 1
           },
           {
-            "id": "emg8v36n8",
+            "id": "enb1aihcr",
             "params": {
               "gametype": "voc",
               "vocName": "Точки и запятые in English",
@@ -1713,11 +1716,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "ueiofsx56",
+            "id": "2h3kzo5im",
             "pin": 1
           },
           {
-            "id": "g4iz0ttmt",
+            "id": "mrhca4gor",
             "params": {
               "gametype": "voc",
               "vocName": "Common long words",
@@ -1732,7 +1735,7 @@
             "pin": 1
           },
           {
-            "id": "kwcicq4ls",
+            "id": "5uj42gggb",
             "params": {
               "gametype": "voc",
               "vocName": "English Common",
@@ -1747,7 +1750,7 @@
             "pin": 1
           },
           {
-            "id": "5gk5m0fa7",
+            "id": "5p1olmbhg",
             "params": {
               "gametype": "voc",
               "vocName": "English Top 10000",
@@ -1762,7 +1765,7 @@
             "pin": 1
           },
           {
-            "id": "y74bd26my",
+            "id": "1jqrcaw2e",
             "params": {
               "gametype": "voc",
               "vocName": "Long words",
@@ -1788,7 +1791,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "0i2ezda2l",
+            "id": "sa8zws9sy",
             "pin": 1
           },
           {
@@ -1803,11 +1806,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "6kkrtunnq",
+            "id": "1hn7fm2xf",
             "pin": 1
           },
           {
-            "id": "29uhvcf04",
+            "id": "fqp631n7e",
             "params": {
               "gametype": "voc",
               "vocName": "Top 1000 English words",
@@ -1833,11 +1836,11 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "2hxuuibni",
+            "id": "l7a7co67q",
             "pin": 1
           },
           {
-            "id": "qnx801xkj",
+            "id": "24xvy8i5q",
             "params": {
               "gametype": "voc",
               "vocName": "Words with digits",
@@ -1858,7 +1861,7 @@
         "title": "Exercises",
         "games": [
           {
-            "id": "58h5sbvy2",
+            "id": "eqy5rewbp",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 1",
@@ -1873,7 +1876,7 @@
             "pin": 1
           },
           {
-            "id": "y22jydh2z",
+            "id": "0kuv9a0vk",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 2",
@@ -1888,7 +1891,7 @@
             "pin": 1
           },
           {
-            "id": "frcwstang",
+            "id": "f6rdeo0jt",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 3",
@@ -1903,7 +1906,7 @@
             "pin": 1
           },
           {
-            "id": "msibl8mwo",
+            "id": "08hk4653s",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 4",
@@ -1918,7 +1921,7 @@
             "pin": 1
           },
           {
-            "id": "9ywdmejv8",
+            "id": "xun4yp9st",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 5",
@@ -1933,7 +1936,7 @@
             "pin": 1
           },
           {
-            "id": "76tyfldgm",
+            "id": "2a2modqfj",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 6",
@@ -1948,7 +1951,7 @@
             "pin": 1
           },
           {
-            "id": "xw3b78y9m",
+            "id": "9d29y9aly",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 7",
@@ -1963,7 +1966,7 @@
             "pin": 1
           },
           {
-            "id": "s3cierguz",
+            "id": "3z8sv1fgt",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 8",
@@ -1978,7 +1981,7 @@
             "pin": 1
           },
           {
-            "id": "2xe6lo02f",
+            "id": "n2saym4cp",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 9",
@@ -1993,7 +1996,7 @@
             "pin": 1
           },
           {
-            "id": "acuzwmfro",
+            "id": "p0bvhnlsb",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 10",
@@ -2008,7 +2011,7 @@
             "pin": 1
           },
           {
-            "id": "sqx4iz88k",
+            "id": "9kc5xt84b",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 11",
@@ -2023,7 +2026,7 @@
             "pin": 1
           },
           {
-            "id": "havt9y2ah",
+            "id": "g46rz3rzy",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 12",
@@ -2038,7 +2041,7 @@
             "pin": 1
           },
           {
-            "id": "w40ysr2dd",
+            "id": "bae4u07j2",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 13",
@@ -2053,7 +2056,7 @@
             "pin": 1
           },
           {
-            "id": "4uooqsogo",
+            "id": "g3r3pn3l4",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 14",
@@ -2068,7 +2071,7 @@
             "pin": 1
           },
           {
-            "id": "4j2yc5h2x",
+            "id": "7m0ethkap",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 15",
@@ -2083,7 +2086,7 @@
             "pin": 1
           },
           {
-            "id": "a2d0i1o3u",
+            "id": "enjx15lk2",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 16",
@@ -2098,7 +2101,7 @@
             "pin": 1
           },
           {
-            "id": "evw37dqsm",
+            "id": "e3hvhvfvs",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 17",
@@ -2113,7 +2116,7 @@
             "pin": 1
           },
           {
-            "id": "yv8wsv77j",
+            "id": "oilwou3mr",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 18",
@@ -2128,7 +2131,7 @@
             "pin": 1
           },
           {
-            "id": "nfczlf7pp",
+            "id": "jxwt57czg",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 19",
@@ -2143,7 +2146,7 @@
             "pin": 1
           },
           {
-            "id": "6peztucjx",
+            "id": "3orsk0t61",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 20",
@@ -2158,7 +2161,7 @@
             "pin": 1
           },
           {
-            "id": "dd8avxxic",
+            "id": "grvhw0l25",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 21",
@@ -2173,7 +2176,7 @@
             "pin": 1
           },
           {
-            "id": "ubiykke7v",
+            "id": "43ka70z5j",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 22",
@@ -2188,7 +2191,7 @@
             "pin": 1
           },
           {
-            "id": "il9z4el1h",
+            "id": "g8ijv9m8g",
             "params": {
               "gametype": "voc",
               "vocName": "Exercise No. 23",
@@ -2203,7 +2206,7 @@
             "pin": 1
           },
           {
-            "id": "4muc2l41m",
+            "id": "o2mbk94ll",
             "params": {
               "gametype": "voc",
               "vocName": "Final exercise",
@@ -2224,7 +2227,7 @@
         "title": "Цифры",
         "games": [
           {
-            "id": "p30reyjo9",
+            "id": "fyimzbvn2",
             "params": {
               "gametype": "voc",
               "vocName": "Цифры, мини-марафон (800 знаков)",
@@ -2239,7 +2242,7 @@
             "pin": 1
           },
           {
-            "id": "vc5anvdgf",
+            "id": "58vpy4whi",
             "params": {
               "gametype": "voc",
               "vocName": "3 цифры: соточка",
@@ -2254,7 +2257,7 @@
             "pin": 1
           },
           {
-            "id": "u7yp78sk1",
+            "id": "k1lj1o33g",
             "params": {
               "gametype": "voc",
               "vocName": "SAMP captcha (цифры)",
@@ -2269,7 +2272,7 @@
             "pin": 1
           },
           {
-            "id": "1p6ohcloh",
+            "id": "3fkw104hj",
             "params": {
               "gametype": "voc",
               "vocName": "Цифры СИГНАЛЫ",
@@ -2295,7 +2298,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "9p84j0mn9",
+            "id": "z1pvtisj6",
             "pin": 1
           },
           {
@@ -2310,7 +2313,7 @@
               "qual": 0,
               "premium_abra": 0
             },
-            "id": "ccvn22jhm",
+            "id": "87eh4qsxd",
             "pin": 1
           }
         ]
@@ -2320,7 +2323,7 @@
         "title": "Тренировка",
         "games": [
           {
-            "id": "vra0u77uz",
+            "id": "okcrrarhl",
             "params": {
               "gametype": "voc",
               "vocName": "Буквы \"ва ол\"",
@@ -2335,7 +2338,7 @@
             "pin": 1
           },
           {
-            "id": "7c5qqu06d",
+            "id": "mtfge1la7",
             "params": {
               "gametype": "voc",
               "vocName": "Буквы \"еп нр\"",
@@ -2350,7 +2353,7 @@
             "pin": 1
           },
           {
-            "id": "memxr49lm",
+            "id": "5jf32761e",
             "params": {
               "gametype": "voc",
               "vocName": "Буквы \"йц щз\"",
@@ -2365,7 +2368,7 @@
             "pin": 1
           },
           {
-            "id": "mbelj3dc5",
+            "id": "pyag52dru",
             "params": {
               "gametype": "voc",
               "vocName": "Буквы \"ми ть\"",
@@ -2380,7 +2383,7 @@
             "pin": 1
           },
           {
-            "id": "1dbjxf31k",
+            "id": "itm3vfs1j",
             "params": {
               "gametype": "voc",
               "vocName": "Буквы \"ук гш\"",
@@ -2395,7 +2398,7 @@
             "pin": 1
           },
           {
-            "id": "zk2r6t5zk",
+            "id": "kheqat6kf",
             "params": {
               "gametype": "voc",
               "vocName": "Буквы \"фы дж\"",
@@ -2410,7 +2413,7 @@
             "pin": 1
           },
           {
-            "id": "nl305kh1q",
+            "id": "6p4owf8rv",
             "params": {
               "gametype": "voc",
               "vocName": "Буквы \"чс бю\"",
@@ -2431,7 +2434,7 @@
         "title": "Упражнения",
         "games": [
           {
-            "id": "nb3c4r7en",
+            "id": "49fm67rmb",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №1",
@@ -2446,7 +2449,7 @@
             "pin": 1
           },
           {
-            "id": "18rryet1r",
+            "id": "ufavum0j6",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №2",
@@ -2461,7 +2464,7 @@
             "pin": 1
           },
           {
-            "id": "l3u7m14jr",
+            "id": "3yaoa43dl",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №3",
@@ -2476,7 +2479,7 @@
             "pin": 1
           },
           {
-            "id": "g3owihsg5",
+            "id": "gpef711dp",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №4",
@@ -2491,7 +2494,7 @@
             "pin": 1
           },
           {
-            "id": "h4y3o23hh",
+            "id": "o110n9mx2",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №5",
@@ -2506,7 +2509,7 @@
             "pin": 1
           },
           {
-            "id": "j13km0c0q",
+            "id": "wyc6zgqp5",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №6",
@@ -2521,7 +2524,7 @@
             "pin": 1
           },
           {
-            "id": "ou721d8et",
+            "id": "lp5c5gzip",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №7",
@@ -2536,7 +2539,7 @@
             "pin": 1
           },
           {
-            "id": "4lfiyh602",
+            "id": "jxqwoao95",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №8",
@@ -2551,7 +2554,7 @@
             "pin": 1
           },
           {
-            "id": "5vxc3l561",
+            "id": "bs6d5idln",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №9",
@@ -2566,7 +2569,7 @@
             "pin": 1
           },
           {
-            "id": "wahuiz6lz",
+            "id": "75a6akohl",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №10",
@@ -2581,7 +2584,7 @@
             "pin": 1
           },
           {
-            "id": "ey0mfqq2c",
+            "id": "safu4uprq",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №11",
@@ -2596,7 +2599,7 @@
             "pin": 1
           },
           {
-            "id": "rr2r3u99n",
+            "id": "6w1kn4kj6",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №12",
@@ -2611,7 +2614,7 @@
             "pin": 1
           },
           {
-            "id": "rxazracie",
+            "id": "si35vqvf5",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №13",
@@ -2626,7 +2629,7 @@
             "pin": 1
           },
           {
-            "id": "njxs2v9ib",
+            "id": "jzm6b5huv",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №14",
@@ -2641,7 +2644,7 @@
             "pin": 1
           },
           {
-            "id": "q89bgtumi",
+            "id": "jg3o0dbwf",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №15",
@@ -2656,7 +2659,7 @@
             "pin": 1
           },
           {
-            "id": "uwxpwfpot",
+            "id": "d7sjpfmah",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №16",
@@ -2671,7 +2674,7 @@
             "pin": 1
           },
           {
-            "id": "exukk7xkc",
+            "id": "9zb7tm233",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №17",
@@ -2686,7 +2689,7 @@
             "pin": 1
           },
           {
-            "id": "y5j0a9vj2",
+            "id": "kal738wsj",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №18",
@@ -2701,7 +2704,7 @@
             "pin": 1
           },
           {
-            "id": "g9dkv2a9v",
+            "id": "qffat6r3g",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №19",
@@ -2716,7 +2719,7 @@
             "pin": 1
           },
           {
-            "id": "zencp45w2",
+            "id": "smdalj4t3",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №20",
@@ -2731,7 +2734,7 @@
             "pin": 1
           },
           {
-            "id": "v33dauho1",
+            "id": "zaufsahz3",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №21",
@@ -2746,7 +2749,7 @@
             "pin": 1
           },
           {
-            "id": "olozvbr3s",
+            "id": "vy3z91njc",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №22",
@@ -2761,7 +2764,7 @@
             "pin": 1
           },
           {
-            "id": "57nufzyd2",
+            "id": "1tpmy4uxi",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение №23",
@@ -2776,7 +2779,7 @@
             "pin": 1
           },
           {
-            "id": "bafjc7lli",
+            "id": "bqdztq4dn",
             "params": {
               "gametype": "voc",
               "vocName": "Упражнение заключительное",
@@ -2797,7 +2800,7 @@
         "title": "Периферия",
         "games": [
           {
-            "id": "o638p2s0z",
+            "id": "1iycphqo5",
             "params": {
               "gametype": "voc",
               "vocName": "АЖД - нагрАЖДён грАЖДанский (периферия)",
@@ -2812,7 +2815,7 @@
             "pin": 1
           },
           {
-            "id": "jl1v84s70",
+            "id": "0lu0wy1fq",
             "params": {
               "gametype": "voc",
               "vocName": "АЙЦ - зАЙЦы в рАЙЦентре (периферия)",
@@ -2827,7 +2830,7 @@
             "pin": 1
           },
           {
-            "id": "e6kgvnmud",
+            "id": "qaa3sa2lb",
             "params": {
               "gametype": "voc",
               "vocName": "АЙЧ - зАЙЧик в сарАЙЧике (периферия)",
@@ -2842,7 +2845,7 @@
             "pin": 1
           },
           {
-            "id": "juzsflpp9",
+            "id": "8ar4411af",
             "params": {
               "gametype": "voc",
               "vocName": "БЛО - яБЛОчный микроБЛОг (периферия)",
@@ -2857,7 +2860,7 @@
             "pin": 1
           },
           {
-            "id": "gy1jqey0p",
+            "id": "r5bj5pmro",
             "params": {
               "gametype": "voc",
               "vocName": "БШИ - ослаБШИх-иззяБШИх (периферия)",
@@ -2872,7 +2875,7 @@
             "pin": 1
           },
           {
-            "id": "r4yj5vbrr",
+            "id": "x4bjgck09",
             "params": {
               "gametype": "voc",
               "vocName": "БЩЕ - в оБЩЕм, оБЩЕизвестно! (периферия)",
@@ -2887,7 +2890,7 @@
             "pin": 1
           },
           {
-            "id": "9s12is59b",
+            "id": "iput6696c",
             "params": {
               "gametype": "voc",
               "vocName": "ВУС - дВУСпальная дВУСмысленность (периферия)",
@@ -2902,7 +2905,7 @@
             "pin": 1
           },
           {
-            "id": "ljdb1bau0",
+            "id": "b1ta16g0n",
             "params": {
               "gametype": "voc",
               "vocName": "ДЖА - поДЖАв пиДЖАк (периферия)",
@@ -2917,7 +2920,7 @@
             "pin": 1
           },
           {
-            "id": "6rdvnr054",
+            "id": "2dbe4jv9e",
             "params": {
               "gametype": "voc",
               "vocName": "ДЖЕ - менеДЖЕр-диДЖЕй (периферия)",
@@ -2932,7 +2935,7 @@
             "pin": 1
           },
           {
-            "id": "vembwkp0z",
+            "id": "w0fszjny4",
             "params": {
               "gametype": "voc",
               "vocName": "ДЖИ - камбоДЖИйский ламборДЖИни (периферия)",
@@ -2947,7 +2950,7 @@
             "pin": 1
           },
           {
-            "id": "fhlesmamm",
+            "id": "3l149amgl",
             "params": {
               "gametype": "voc",
               "vocName": "ДОТ - чуДОТворный анекДОТ (периферия)",
@@ -2962,7 +2965,7 @@
             "pin": 1
           },
           {
-            "id": "4ag8n7x1v",
+            "id": "pxbmzlr55",
             "params": {
               "gametype": "voc",
               "vocName": "ЕЖД - мЕЖДисциплинарные надЕЖДы (перфиерия)",
@@ -2977,7 +2980,7 @@
             "pin": 1
           },
           {
-            "id": "jx4m6y6hb",
+            "id": "j2xfblh80",
             "params": {
               "gametype": "voc",
               "vocName": "ЕЙЦ - швЕЙЦары-европЕЙЦы (перфиерия)",
@@ -2992,7 +2995,7 @@
             "pin": 1
           },
           {
-            "id": "0twe9clxw",
+            "id": "84fqkb1g0",
             "params": {
               "gametype": "voc",
               "vocName": "ЖДА - жаЖДА блуЖДАния (периферия)",
@@ -3007,7 +3010,7 @@
             "pin": 1
           },
           {
-            "id": "e8qt5m15b",
+            "id": "tro5wq8dz",
             "params": {
               "gametype": "voc",
               "vocName": "ЖДЕ - нуЖДЕ доЖДЕй (периферия)",
@@ -3022,7 +3025,7 @@
             "pin": 1
           },
           {
-            "id": "x6o8oih18",
+            "id": "k2aev61bq",
             "params": {
               "gametype": "voc",
               "vocName": "ЖДИ - подоЖДИте иЖДИвения (периферия)",
@@ -3037,7 +3040,7 @@
             "pin": 1
           },
           {
-            "id": "egfnw25pu",
+            "id": "6lqw9iswi",
             "params": {
               "gametype": "voc",
               "vocName": "ЖДУ - меЖДУнародных ЖДУщий (периферия)",
@@ -3052,7 +3055,7 @@
             "pin": 1
           },
           {
-            "id": "f6nannsbv",
+            "id": "s67zdw0qc",
             "params": {
               "gametype": "voc",
               "vocName": "ЖИЙ - приезЖИЙ рыЖИЙ (периферия)",
@@ -3067,7 +3070,7 @@
             "pin": 1
           },
           {
-            "id": "nkkcn63qf",
+            "id": "2ug4ai28j",
             "params": {
               "gametype": "voc",
               "vocName": "ЖИЦ - муЖИЦкой луЖИЦы (периферия)",
@@ -3082,7 +3085,7 @@
             "pin": 1
           },
           {
-            "id": "1hio4oabn",
+            "id": "6noj237vr",
             "params": {
               "gametype": "voc",
               "vocName": "ЖНЫ - ваЖНЫ княЖНЫ (периферия)",
@@ -3097,7 +3100,7 @@
             "pin": 1
           },
           {
-            "id": "2z3pk5mg4",
+            "id": "46uvr1r32",
             "params": {
               "gametype": "voc",
               "vocName": "ЖНЮ - увлаЖНЮ лыЖНЮ (периферия)",
@@ -3112,7 +3115,7 @@
             "pin": 1
           },
           {
-            "id": "ksrnexctb",
+            "id": "nyiqby3re",
             "params": {
               "gametype": "voc",
               "vocName": "ЖНЯ - тамоЖНЯ, услоЖНЯйте! (периферия)",
@@ -3127,7 +3130,7 @@
             "pin": 1
           },
           {
-            "id": "db45ijwp8",
+            "id": "52gsn6s6w",
             "params": {
               "gametype": "voc",
               "vocName": "ЗБО - раЗБОгател раЗБОйник (периферия)",
@@ -3142,7 +3145,7 @@
             "pin": 1
           },
           {
-            "id": "amqg02x39",
+            "id": "8gluxrj9u",
             "params": {
               "gametype": "voc",
               "vocName": "ЗИЙ - иллюЗИЙ полинеЗИЙцев (периферия)",
@@ -3157,7 +3160,7 @@
             "pin": 1
           },
           {
-            "id": "yanmv417b",
+            "id": "3ti2ex1q9",
             "params": {
               "gametype": "voc",
               "vocName": "ЗИЯ - амнеЗИЯ-контуЗИЯ (периферия)",
@@ -3172,7 +3175,7 @@
             "pin": 1
           },
           {
-            "id": "9g7r8tam8",
+            "id": "xd1rzm4g7",
             "params": {
               "gametype": "voc",
               "vocName": "ЗЛО - ЗЛОнамеренного ЗЛОупотребления (периферия)",
@@ -3187,7 +3190,7 @@
             "pin": 1
           },
           {
-            "id": "fd4xgiuxn",
+            "id": "hej05jv8k",
             "params": {
               "gametype": "voc",
               "vocName": "ЗНЫ - полеЗНЫ целесообраЗНЫе (периферия)",
@@ -3202,7 +3205,7 @@
             "pin": 1
           },
           {
-            "id": "kgotyyg53",
+            "id": "qg99vd5vc",
             "params": {
               "gametype": "voc",
               "vocName": "ЗНЮ - раЗНЮхать грыЗНЮ (периферия)",
@@ -3217,7 +3220,7 @@
             "pin": 1
           },
           {
-            "id": "rzbui5tzd",
+            "id": "cl8e0b1jy",
             "params": {
               "gametype": "voc",
               "vocName": "ЗНЯ - соблаЗНЯет блиЗНЯшек (периферия)",
@@ -3232,7 +3235,7 @@
             "pin": 1
           },
           {
-            "id": "8lz7act4x",
+            "id": "w4vuc2i6u",
             "params": {
               "gametype": "voc",
               "vocName": "ЗОТ - экЗОТический аЗОТ (периферия)",
@@ -3247,7 +3250,7 @@
             "pin": 1
           },
           {
-            "id": "w8hqaqx3h",
+            "id": "zek8l9d0z",
             "params": {
               "gametype": "voc",
               "vocName": "ЗЫК - яЗЫК муЗЫКи (периферия)",
@@ -3262,7 +3265,7 @@
             "pin": 1
           },
           {
-            "id": "kugzp3747",
+            "id": "y9lz4gkx9",
             "params": {
               "gametype": "voc",
               "vocName": "ИДЖ - фИДЖийский хИДЖаб (периферия)",
@@ -3277,7 +3280,7 @@
             "pin": 1
           },
           {
-            "id": "7g92jz2ty",
+            "id": "jfsxjtxod",
             "params": {
               "gametype": "voc",
               "vocName": "ИЙЦ - кровопИЙЦа бельгИЙЦев (периферия)",
@@ -3292,7 +3295,7 @@
             "pin": 1
           },
           {
-            "id": "uxrpg285q",
+            "id": "edlaze3kt",
             "params": {
               "gametype": "voc",
               "vocName": "ЙСЯ - оставшиЙСЯ, боЙСЯ! (периферия)",
@@ -3307,7 +3310,7 @@
             "pin": 1
           },
           {
-            "id": "skmrlpcoe",
+            "id": "57c8oo2hp",
             "params": {
               "gametype": "voc",
               "vocName": "КСК - эКСКлюзивный эКСКаватор (периферия)",
@@ -3322,7 +3325,7 @@
             "pin": 1
           },
           {
-            "id": "24k3d8jlo",
+            "id": "dptz5pjgo",
             "params": {
               "gametype": "voc",
               "vocName": "КСЯ - прониКСЯ и отвлёКСЯ (периферия)",
@@ -3337,7 +3340,7 @@
             "pin": 1
           },
           {
-            "id": "h6s5rzhdf",
+            "id": "e8xedtoyi",
             "params": {
               "gametype": "voc",
               "vocName": "ЛЮЗ - илЛЮЗорный шЛЮЗ (периферия)",
@@ -3352,7 +3355,7 @@
             "pin": 1
           },
           {
-            "id": "btvh43wmj",
+            "id": "s1efz0yff",
             "params": {
               "gametype": "voc",
               "vocName": "ЛЮТ - ЛЮТая ЛЮТня (периферия)",
@@ -3367,7 +3370,7 @@
             "pin": 1
           },
           {
-            "id": "ylj1euwvt",
+            "id": "yihj8693k",
             "params": {
               "gametype": "voc",
               "vocName": "ЛЮЩ - стеЛЮЩегося пЛЮЩом (периферия)",
@@ -3382,7 +3385,7 @@
             "pin": 1
           },
           {
-            "id": "6wrh0638q",
+            "id": "g1woif2s2",
             "params": {
               "gametype": "voc",
               "vocName": "МЯЧ - захоМЯЧить МЯЧ (периферия)",
@@ -3397,7 +3400,7 @@
             "pin": 1
           },
           {
-            "id": "91bpjevqs",
+            "id": "lywvgjodx",
             "params": {
               "gametype": "voc",
               "vocName": "ОЖД - рОЖДение вОЖДя (периферия)",
@@ -3412,7 +3415,7 @@
             "pin": 1
           },
           {
-            "id": "7r2ifa36p",
+            "id": "due988urt",
             "params": {
               "gametype": "voc",
               "vocName": "ОЮЗ - сОЮЗного бессОЮЗия (периферия)",
@@ -3427,7 +3430,7 @@
             "pin": 1
           },
           {
-            "id": "kqp0xufhw",
+            "id": "tppb47xan",
             "params": {
               "gametype": "voc",
               "vocName": "ССЯ - спаССЯ, да затряССЯ (периферия)",
@@ -3442,7 +3445,7 @@
             "pin": 1
           },
           {
-            "id": "v0yso1qvy",
+            "id": "ivxee7f38",
             "params": {
               "gametype": "voc",
               "vocName": "СУЙ - краСУЙся, голоСУЙ! (периферия)",
@@ -3457,7 +3460,7 @@
             "pin": 1
           },
           {
-            "id": "2glelv8xv",
+            "id": "nr8zb2z4y",
             "params": {
               "gametype": "voc",
               "vocName": "СУЧ - вСУЧил заСУЧив (периферия)",
@@ -3472,7 +3475,7 @@
             "pin": 1
           },
           {
-            "id": "d788t8ukx",
+            "id": "uuj0s618s",
             "params": {
               "gametype": "voc",
               "vocName": "СЯЧ - вСЯЧески коСЯЧить (периферия)",
@@ -3487,7 +3490,7 @@
             "pin": 1
           },
           {
-            "id": "e2udbrpa6",
+            "id": "kiklg4rmr",
             "params": {
               "gametype": "voc",
               "vocName": "УЖД - чУЖДо отчУЖДение (периферия)",
@@ -3502,7 +3505,7 @@
             "pin": 1
           },
           {
-            "id": "ji1aprhb0",
+            "id": "ckjjz1ukh",
             "params": {
               "gametype": "voc",
               "vocName": "УСУ - тУСУются мУСУльмане (периферия)",
@@ -3517,7 +3520,7 @@
             "pin": 1
           },
           {
-            "id": "pv2qep243",
+            "id": "v2mqg03n1",
             "params": {
               "gametype": "voc",
               "vocName": "ФИЗ - психоФИЗический соФИЗм (периферия)",
@@ -3532,7 +3535,7 @@
             "pin": 1
           },
           {
-            "id": "2ftsz4obm",
+            "id": "dux98821r",
             "params": {
               "gametype": "voc",
               "vocName": "ФИЦ - оФИЦиальный оФИЦер (периферия)",
@@ -3547,7 +3550,7 @@
             "pin": 1
           },
           {
-            "id": "dcs42emfw",
+            "id": "q92r93sri",
             "params": {
               "gametype": "voc",
               "vocName": "ФОЙ - катастроФОЙ в ФОЙе (периферия)",
@@ -3562,7 +3565,7 @@
             "pin": 1
           },
           {
-            "id": "gq2es4ejo",
+            "id": "vqhszrh69",
             "params": {
               "gametype": "voc",
               "vocName": "ХОТ - оХОТа пеХОТы (периферия)",
@@ -3577,7 +3580,7 @@
             "pin": 1
           },
           {
-            "id": "7atp2mecd",
+            "id": "jmovufdi6",
             "params": {
               "gametype": "voc",
               "vocName": "ЧУВ - предЧУВствие сверхЧУВствительно (периферия)",
@@ -3592,7 +3595,7 @@
             "pin": 1
           },
           {
-            "id": "kfxg65muo",
+            "id": "862j9x1i5",
             "params": {
               "gametype": "voc",
               "vocName": "ЧУС - верЧУСь - изловЧУСь! (периферия)",
@@ -3607,7 +3610,7 @@
             "pin": 1
           },
           {
-            "id": "29ur2h6ua",
+            "id": "xj5pggw14",
             "params": {
               "gametype": "voc",
               "vocName": "ЧУЮ - потЧУЮ горяЧУЮ (периферия)",
@@ -3622,7 +3625,7 @@
             "pin": 1
           },
           {
-            "id": "5bymfz5tb",
+            "id": "pv2ncm0sh",
             "params": {
               "gametype": "voc",
               "vocName": "ШЛО - проШЛОе обоШЛОсь (периферия)",
@@ -3637,7 +3640,7 @@
             "pin": 1
           },
           {
-            "id": "2bxisb3dh",
+            "id": "egygkhsyk",
             "params": {
               "gametype": "voc",
               "vocName": "ШЛЮ - ШЛЮп поШЛЮ (периферия)",
@@ -3652,7 +3655,7 @@
             "pin": 1
           },
           {
-            "id": "ayfs8199t",
+            "id": "94j3cye5e",
             "params": {
               "gametype": "voc",
               "vocName": "ЩЕМ - ЩЕМяще уЩЕМлён (периферия)",
@@ -3667,7 +3670,7 @@
             "pin": 1
           },
           {
-            "id": "7wulafme2",
+            "id": "n7qws8msx",
             "params": {
               "gametype": "voc",
               "vocName": "ЩИЦ - веЩИЦы танцовЩИЦ (периферия)",
@@ -3682,7 +3685,7 @@
             "pin": 1
           },
           {
-            "id": "mnvlfy23e",
+            "id": "9of79cvwy",
             "params": {
               "gametype": "voc",
               "vocName": "ЩУЮ - содержаЩУЮся зловеЩУЮ (периферия)",
@@ -3697,7 +3700,7 @@
             "pin": 1
           },
           {
-            "id": "4a32sr8f3",
+            "id": "asocp9qpz",
             "params": {
               "gametype": "voc",
               "vocName": "ЪЕВ - взЪЕВшись сЪЕВший (периферия)",
@@ -3712,7 +3715,7 @@
             "pin": 1
           },
           {
-            "id": "88y6c99g5",
+            "id": "h34r9fyrt",
             "params": {
               "gametype": "voc",
               "vocName": "ЪЕД - обЪЕДинение подЪЕДете (перифефрия)",
@@ -3727,7 +3730,7 @@
             "pin": 1
           },
           {
-            "id": "w5j1nrbi5",
+            "id": "fe6gko2us",
             "params": {
               "gametype": "voc",
               "vocName": "ЪЕЛ - отЪЕЛ и обЪЕЛся (периферия)",
@@ -3742,7 +3745,7 @@
             "pin": 1
           },
           {
-            "id": "kcamlqqr8",
+            "id": "w58kt9bji",
             "params": {
               "gametype": "voc",
               "vocName": "ЪЕМ - неотЪЕМлемой грудоподЪЕМностью (периферия)",
@@ -3757,7 +3760,7 @@
             "pin": 1
           },
           {
-            "id": "0fprw273c",
+            "id": "imh0zumw9",
             "params": {
               "gametype": "voc",
               "vocName": "ЫСЯ - крЫСЯт тЫСЯчи (периферия)",
@@ -3772,7 +3775,7 @@
             "pin": 1
           },
           {
-            "id": "i9cvv7g75",
+            "id": "ifnyypzuv",
             "params": {
               "gametype": "voc",
               "vocName": "ЬЮЩ - бЬЮЩая пЬЮЩих (периферия)",
@@ -3787,7 +3790,7 @@
             "pin": 1
           },
           {
-            "id": "k09lm0unh",
+            "id": "tngjn7v89",
             "params": {
               "gametype": "voc",
               "vocName": "ЮДО - блЮДО верблЮДОв (периферия)",
@@ -3802,7 +3805,7 @@
             "pin": 1
           },
           {
-            "id": "kgkm6utyp",
+            "id": "s1arguvg0",
             "params": {
               "gametype": "voc",
               "vocName": "ЮЖН - ЮЖНый фьЮЖН (периферия)",
@@ -3817,7 +3820,7 @@
             "pin": 1
           },
           {
-            "id": "4172xtee5",
+            "id": "38l8gsauc",
             "params": {
               "gametype": "voc",
               "vocName": "ЮЗО - шлЮЗОвой дЮЗОй (периферия)",
@@ -3832,7 +3835,7 @@
             "pin": 1
           },
           {
-            "id": "y9196titn",
+            "id": "5yb4tawps",
             "params": {
               "gametype": "voc",
               "vocName": "ЮЩУ - поЮЩУю плЮЩУ (периферия)",
@@ -3847,7 +3850,7 @@
             "pin": 1
           },
           {
-            "id": "mzub4vsn1",
+            "id": "7sk0zm38h",
             "params": {
               "gametype": "voc",
               "vocName": "ЯЗВ - к ЯЗВе уЯЗВим (периферия)",
@@ -3862,7 +3865,7 @@
             "pin": 1
           },
           {
-            "id": "gdvgvqobb",
+            "id": "gm5j0gztj",
             "params": {
               "gametype": "voc",
               "vocName": "ЯЗЫ - ЯЗЫк свЯЗЫвает (периферия)",
@@ -3877,7 +3880,7 @@
             "pin": 1
           },
           {
-            "id": "vguvt15fb",
+            "id": "ldx7wuyla",
             "params": {
               "gametype": "voc",
               "vocName": "ЯКА - крЯКАющего ЯКА (периферия)",
@@ -3892,7 +3895,7 @@
             "pin": 1
           },
           {
-            "id": "pzh30uiwo",
+            "id": "lnkf7rgf5",
             "params": {
               "gametype": "voc",
               "vocName": "ЯКЕ - о морЯКЕ в особнЯКЕ (периферия)",
@@ -3907,7 +3910,7 @@
             "pin": 1
           },
           {
-            "id": "mbef2rxe6",
+            "id": "fxwxfzuvq",
             "params": {
               "gametype": "voc",
               "vocName": "ЯПА - залЯПАнные стрЯПАли (периферия)",
@@ -3922,7 +3925,7 @@
             "pin": 1
           },
           {
-            "id": "b3kytnfxm",
+            "id": "0dycov00h",
             "params": {
               "gametype": "voc",
               "vocName": "ЯЦИ - инфлЯЦИонная апеллЯЦИя (периферия)",
@@ -3937,7 +3940,7 @@
             "pin": 1
           },
           {
-            "id": "yhcw7fgn9",
+            "id": "dt7o6ln0h",
             "params": {
               "gametype": "voc",
               "vocName": "ЯЧО - маЯЧОк-светлЯЧОк (периферия)",
@@ -3952,7 +3955,7 @@
             "pin": 1
           },
           {
-            "id": "1yfum9b42",
+            "id": "0ux3l303c",
             "params": {
               "gametype": "voc",
               "vocName": "ЯЧУ - горЯЧУю тысЯЧУ (периферия)",
@@ -3973,7 +3976,7 @@
         "title": "Перекаты",
         "games": [
           {
-            "id": "ttn6mnqt8",
+            "id": "19h6s5wu8",
             "params": {
               "gametype": "voc",
               "vocName": "АВЫ - величАВЫ худощАВЫе (перекаты)",
@@ -3988,7 +3991,7 @@
             "pin": 1
           },
           {
-            "id": "rq8llgnqa",
+            "id": "7ftfy8rk2",
             "params": {
               "gametype": "voc",
               "vocName": "Базовые перекаты (ЯСТВЧКА)",
@@ -4003,7 +4006,7 @@
             "pin": 1
           },
           {
-            "id": "3lnltt30k",
+            "id": "cbqx8mx31",
             "params": {
               "gametype": "voc",
               "vocName": "БОТ - раБОТа в субБОТу (перекаты)",
@@ -4018,7 +4021,7 @@
             "pin": 1
           },
           {
-            "id": "5v79sqm0w",
+            "id": "0spb07b87",
             "params": {
               "gametype": "voc",
               "vocName": "ВЫЙ - костляВЫЙ большеклюВЫЙ (перекаты)",
@@ -4033,7 +4036,7 @@
             "pin": 1
           },
           {
-            "id": "hcroy9p10",
+            "id": "gie6u6l4p",
             "params": {
               "gametype": "voc",
               "vocName": "ДЛО - преДЛОжил испоДЛОбья (перекаты)",
@@ -4048,7 +4051,7 @@
             "pin": 1
           },
           {
-            "id": "deokul3aj",
+            "id": "5zxrao9fp",
             "params": {
               "gametype": "voc",
               "vocName": "ЕКУ - кукарЕКУН-экзЕКУтор (перекаты)",
@@ -4063,7 +4066,7 @@
             "pin": 1
           },
           {
-            "id": "ezjhwgu0w",
+            "id": "1p1ijy831",
             "params": {
               "gametype": "voc",
               "vocName": "ЖДО - каЖДОдневная чуЖДОсть (перекаты)",
@@ -4078,7 +4081,7 @@
             "pin": 1
           },
           {
-            "id": "mts0sxn2l",
+            "id": "tvggza69f",
             "params": {
               "gametype": "voc",
               "vocName": "ИМС - боИМСя рИМСких (перекаты)",
@@ -4093,7 +4096,7 @@
             "pin": 1
           },
           {
-            "id": "mqlmbnacr",
+            "id": "ab00hxdx8",
             "params": {
               "gametype": "voc",
               "vocName": "ЙЦА - яЙЦА - заЙЦАм (перекаты)",
@@ -4108,7 +4111,7 @@
             "pin": 1
           },
           {
-            "id": "jah3p3kpy",
+            "id": "q6pg8wweg",
             "params": {
               "gametype": "voc",
               "vocName": "ЙЦЕ - раЙЦЕнтр индеЙЦЕв (перекаты)",
@@ -4123,7 +4126,7 @@
             "pin": 1
           },
           {
-            "id": "xvhcnq4fn",
+            "id": "oobc40jgw",
             "params": {
               "gametype": "voc",
               "vocName": "ЙЦУ - заЙЦУ-боЙЦУ (перекаты)",
@@ -4138,7 +4141,7 @@
             "pin": 1
           },
           {
-            "id": "x8qa10yjr",
+            "id": "oc2iumqj2",
             "params": {
               "gametype": "voc",
               "vocName": "КУЯ - фуКУЯмский критиКУЯ (перекаты)",
@@ -4153,7 +4156,7 @@
             "pin": 1
           },
           {
-            "id": "qifbdwgne",
+            "id": "rgyaytx31",
             "params": {
               "gametype": "voc",
               "vocName": "ЛОР - маЛОРазговорчивый миЛОРд (перекаты)",
@@ -4168,7 +4171,7 @@
             "pin": 1
           },
           {
-            "id": "kzgznm72d",
+            "id": "0252vxw9a",
             "params": {
               "gametype": "voc",
               "vocName": "ЛОТ - зоЛОТой кашаЛОТ (перекаты)",
@@ -4183,7 +4186,7 @@
             "pin": 1
           },
           {
-            "id": "zls3rffeb",
+            "id": "nzmv8zen3",
             "params": {
               "gametype": "voc",
               "vocName": "ОБЗ - лОБЗиком ОБЗавёлся (перекаты)",
@@ -4198,7 +4201,7 @@
             "pin": 1
           },
           {
-            "id": "tnfg5fdgw",
+            "id": "dsma6wp9k",
             "params": {
               "gametype": "voc",
               "vocName": "ОБЩ - приОБЩусь к ОБЩеству (перекаты)",
@@ -4213,7 +4216,7 @@
             "pin": 1
           },
           {
-            "id": "tz6vi10xp",
+            "id": "sg6na3c37",
             "params": {
               "gametype": "voc",
               "vocName": "ОДЖ - камбОДЖийский килОДЖоуль (перекаты)",
@@ -4228,7 +4231,7 @@
             "pin": 1
           },
           {
-            "id": "4bgrrnbbd",
+            "id": "1jjgcl2nv",
             "params": {
               "gametype": "voc",
               "vocName": "ОЛД - пОЛДюжины в пОЛДень (перекаты)",
@@ -4243,7 +4246,7 @@
             "pin": 1
           },
           {
-            "id": "i2xx0nx9d",
+            "id": "fhzljxvl1",
             "params": {
               "gametype": "voc",
               "vocName": "ОЛЮ - абсОЛЮтно ревОЛЮционно (перекаты)",
@@ -4258,7 +4261,7 @@
             "pin": 1
           },
           {
-            "id": "yaggh42gl",
+            "id": "lmxkrvgk1",
             "params": {
               "gametype": "voc",
               "vocName": "РОЛ - РОЛь коРОЛевы (перекаты)",
@@ -4273,7 +4276,7 @@
             "pin": 1
           },
           {
-            "id": "dfxqvz53c",
+            "id": "2qyumz1h7",
             "params": {
               "gametype": "voc",
               "vocName": "СМИ - биосейСМИческих транСМИссий (перекаты)",
@@ -4288,7 +4291,7 @@
             "pin": 1
           },
           {
-            "id": "ktzhpiq04",
+            "id": "0y4iggsie",
             "params": {
               "gametype": "voc",
               "vocName": "УКА - азбУКА и мяУКАние (перекаты)",
@@ -4303,7 +4306,7 @@
             "pin": 1
           },
           {
-            "id": "qd5su7zgk",
+            "id": "vl0vwa55o",
             "params": {
               "gametype": "voc",
               "vocName": "УКЕ - штУКЕнция в сундУКЕ (перекаты)",
@@ -4318,7 +4321,7 @@
             "pin": 1
           },
           {
-            "id": "9ear2ed33",
+            "id": "bfv8st6vk",
             "params": {
               "gametype": "voc",
               "vocName": "ХЛО - бесХЛОрная ХЛОрка (перекаты)",
@@ -4333,7 +4336,7 @@
             "pin": 1
           },
           {
-            "id": "bef2mnlvl",
+            "id": "kxx3xftu4",
             "params": {
               "gametype": "voc",
               "vocName": "ЦУК + КУЦ - экзеКУЦия ЦУКкини (перекаты)",
@@ -4348,7 +4351,7 @@
             "pin": 1
           },
           {
-            "id": "p46pdeidd",
+            "id": "d5g1tl55a",
             "params": {
               "gametype": "voc",
               "vocName": "Частотный перекатный (ЯСТВЧКА)",
@@ -4363,7 +4366,7 @@
             "pin": 1
           },
           {
-            "id": "zi07w78wu",
+            "id": "mailc8mhh",
             "params": {
               "gametype": "voc",
               "vocName": "ЭЛЬ - дуЭЛЬный ДаниЭЛЬ (перекаты)",
@@ -4378,7 +4381,7 @@
             "pin": 1
           },
           {
-            "id": "jb7b740x3",
+            "id": "zpfsdpvsg",
             "params": {
               "gametype": "voc",
               "vocName": "ЮБО - лЮБОстрастны лЮБОдеи (перекаты)",
@@ -4393,7 +4396,7 @@
             "pin": 1
           },
           {
-            "id": "unx2zybdx",
+            "id": "z72dukc3y",
             "params": {
               "gametype": "voc",
               "vocName": "ЮЛЬ - иЮЛЬский цирЮЛЬник (перекаты)",
@@ -4408,7 +4411,7 @@
             "pin": 1
           },
           {
-            "id": "tvdbc5cdb",
+            "id": "02shhm0n6",
             "params": {
               "gametype": "voc",
               "vocName": "ЯСА - потрЯСАюще плЯСАть (перекаты)",
@@ -4423,7 +4426,7 @@
             "pin": 1
           },
           {
-            "id": "t7136st78",
+            "id": "921xgwdjj",
             "params": {
               "gametype": "voc",
               "vocName": "ЯСЕ - утрЯСЕм потрЯСЕния (перекаты)",
@@ -4438,7 +4441,7 @@
             "pin": 1
           },
           {
-            "id": "2ckech5ty",
+            "id": "cfq6hrpsq",
             "params": {
               "gametype": "voc",
               "vocName": "ЯЧА - сидЯЧАя клЯЧА (перекаты)",
@@ -4453,7 +4456,7 @@
             "pin": 1
           },
           {
-            "id": "mxpvzk94m",
+            "id": "be2k0uecy",
             "params": {
               "gametype": "voc",
               "vocName": "ЯЧЕ - тысЯЧЕлетие болЯЧЕк (перекаты)",
@@ -4468,7 +4471,7 @@
             "pin": 1
           },
           {
-            "id": "l3fqvt45g",
+            "id": "gapgqkvgx",
             "params": {
               "gametype": "voc",
               "vocName": "ЯЧИ - тысЯЧИ мЯЧИков (перекаты)",
@@ -4489,7 +4492,7 @@
         "title": "Возвратные",
         "games": [
           {
-            "id": "pmw7hbl33",
+            "id": "hml1bjj4r",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"афи\"",
@@ -4504,7 +4507,7 @@
             "pin": 1
           },
           {
-            "id": "9kgdqqyp3",
+            "id": "qn61rrry3",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"бод\"",
@@ -4519,7 +4522,7 @@
             "pin": 1
           },
           {
-            "id": "rxfvw1hol",
+            "id": "by2aboeny",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"бож\"",
@@ -4534,7 +4537,7 @@
             "pin": 1
           },
           {
-            "id": "wcfg5n8q9",
+            "id": "k37jxwxru",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"боз\"",
@@ -4549,7 +4552,7 @@
             "pin": 1
           },
           {
-            "id": "rb431t2g6",
+            "id": "id0ak1i81",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"бою\"",
@@ -4564,7 +4567,7 @@
             "pin": 1
           },
           {
-            "id": "a31fa04lm",
+            "id": "3a4kkj4dy",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"выв\"",
@@ -4579,7 +4582,7 @@
             "pin": 1
           },
           {
-            "id": "oliymt4b5",
+            "id": "w9bj61fyw",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"дод\"",
@@ -4594,7 +4597,7 @@
             "pin": 1
           },
           {
-            "id": "gql3dfqf4",
+            "id": "zsqbupb64",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"доз\"",
@@ -4609,7 +4612,7 @@
             "pin": 1
           },
           {
-            "id": "tzjm0hr2y",
+            "id": "815u72dws",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"дох\"",
@@ -4624,7 +4627,7 @@
             "pin": 1
           },
           {
-            "id": "ddvtetb7r",
+            "id": "gebm6yb4c",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"дою\"",
@@ -4639,7 +4642,7 @@
             "pin": 1
           },
           {
-            "id": "lgdsg2w9l",
+            "id": "h2xk16wy3",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"дью\"",
@@ -4654,7 +4657,7 @@
             "pin": 1
           },
           {
-            "id": "9t5lrrn0y",
+            "id": "wkpk91dsp",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"ефи\"",
@@ -4669,7 +4672,7 @@
             "pin": 1
           },
           {
-            "id": "24g6104og",
+            "id": "s8d11g7h4",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"зою\"",
@@ -4684,7 +4687,7 @@
             "pin": 1
           },
           {
-            "id": "qo351g7e5",
+            "id": "16z7vwzum",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"ийс\"",
@@ -4699,7 +4702,7 @@
             "pin": 1
           },
           {
-            "id": "125f3hwaj",
+            "id": "b7qydpwkm",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"ифи\"",
@@ -4714,7 +4717,7 @@
             "pin": 1
           },
           {
-            "id": "9gl9zxugn",
+            "id": "0f0d4lkny",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"лох\"",
@@ -4729,7 +4732,7 @@
             "pin": 1
           },
           {
-            "id": "4vhaebydx",
+            "id": "0c5hfgsat",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"лою\"",
@@ -4744,7 +4747,7 @@
             "pin": 1
           },
           {
-            "id": "gs9lwaiy8",
+            "id": "11ok80p3w",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"люб\"",
@@ -4759,7 +4762,7 @@
             "pin": 1
           },
           {
-            "id": "ntasucdn5",
+            "id": "v1u6huch2",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"одр\"",
@@ -4774,7 +4777,7 @@
             "pin": 1
           },
           {
-            "id": "84dv4k1er",
+            "id": "upr83fdub",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"озо\"",
@@ -4789,7 +4792,7 @@
             "pin": 1
           },
           {
-            "id": "sy0jyku2a",
+            "id": "q1g8faxkj",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"озь\"",
@@ -4804,7 +4807,7 @@
             "pin": 1
           },
           {
-            "id": "o326c64wg",
+            "id": "zsrri5rwh",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"охо\"",
@@ -4819,7 +4822,7 @@
             "pin": 1
           },
           {
-            "id": "2fue2i032",
+            "id": "agiy0menm",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"охр\"",
@@ -4834,7 +4837,7 @@
             "pin": 1
           },
           {
-            "id": "xjamqbkqx",
+            "id": "1alwlr0iz",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"сиф\"",
@@ -4849,7 +4852,7 @@
             "pin": 1
           },
           {
-            "id": "a22yf7uhi",
+            "id": "fusda02ox",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"сиц\"",
@@ -4864,7 +4867,7 @@
             "pin": 1
           },
           {
-            "id": "v0hoasghy",
+            "id": "qhn24kkfb",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"сич\"",
@@ -4879,7 +4882,7 @@
             "pin": 1
           },
           {
-            "id": "87xaysm1b",
+            "id": "rkq5iq6g6",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"сия\"",
@@ -4894,7 +4897,7 @@
             "pin": 1
           },
           {
-            "id": "7u9vwu86s",
+            "id": "b8z4fe7sf",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"сыв\"",
@@ -4909,7 +4912,7 @@
             "pin": 1
           },
           {
-            "id": "dyodwk6oq",
+            "id": "8rdw054mc",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"уйс\"",
@@ -4924,7 +4927,7 @@
             "pin": 1
           },
           {
-            "id": "y3cp41h4q",
+            "id": "k5c61b074",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"учу\"",
@@ -4939,7 +4942,7 @@
             "pin": 1
           },
           {
-            "id": "hsvt0sd96",
+            "id": "1wl69jyha",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"фас\"",
@@ -4954,7 +4957,7 @@
             "pin": 1
           },
           {
-            "id": "onclc7y3q",
+            "id": "pdptqdnm2",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"фей\"",
@@ -4969,7 +4972,7 @@
             "pin": 1
           },
           {
-            "id": "hlw1b8id8",
+            "id": "9pl48stoj",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"фий\"",
@@ -4984,7 +4987,7 @@
             "pin": 1
           },
           {
-            "id": "v3eeyle7i",
+            "id": "had37jblg",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"фис\"",
@@ -4999,7 +5002,7 @@
             "pin": 1
           },
           {
-            "id": "mv45yt6w9",
+            "id": "q20q2uvzn",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"фия\"",
@@ -5014,7 +5017,7 @@
             "pin": 1
           },
           {
-            "id": "vga5qkpls",
+            "id": "p00ic1az9",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"хож\"",
@@ -5029,7 +5032,7 @@
             "pin": 1
           },
           {
-            "id": "qg7jhssln",
+            "id": "tpfv746qb",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"хоз\"",
@@ -5044,7 +5047,7 @@
             "pin": 1
           },
           {
-            "id": "qlou6os85",
+            "id": "wp431930q",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"хол\"",
@@ -5059,7 +5062,7 @@
             "pin": 1
           },
           {
-            "id": "0a6vri1yo",
+            "id": "xf53q43pz",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"хох\"",
@@ -5074,7 +5077,7 @@
             "pin": 1
           },
           {
-            "id": "5algjkpn8",
+            "id": "q8dm9r912",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"цев\"",
@@ -5089,7 +5092,7 @@
             "pin": 1
           },
           {
-            "id": "xmli0y0nm",
+            "id": "zaxrscprk",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"цей\"",
@@ -5104,7 +5107,7 @@
             "pin": 1
           },
           {
-            "id": "xi430or8a",
+            "id": "mtv9aj2mn",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"ций\"",
@@ -5119,7 +5122,7 @@
             "pin": 1
           },
           {
-            "id": "v22x1env1",
+            "id": "325kwnuyw",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"ция\"",
@@ -5134,7 +5137,7 @@
             "pin": 1
           },
           {
-            "id": "xjq73nd05",
+            "id": "rif65j8c1",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"чий\"",
@@ -5149,7 +5152,7 @@
             "pin": 1
           },
           {
-            "id": "bqosbjwca",
+            "id": "1ijuj002o",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"чис\"",
@@ -5164,7 +5167,7 @@
             "pin": 1
           },
           {
-            "id": "l9h7x6it6",
+            "id": "m739xupbw",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"чия\"",
@@ -5179,7 +5182,7 @@
             "pin": 1
           },
           {
-            "id": "gjekldqx3",
+            "id": "z0okp3roq",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"шью\"",
@@ -5194,7 +5197,7 @@
             "pin": 1
           },
           {
-            "id": "u3derj0k0",
+            "id": "abrz0at04",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"ьют\"",
@@ -5209,7 +5212,7 @@
             "pin": 1
           },
           {
-            "id": "da3glequb",
+            "id": "q3ra4yqrt",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"явы\"",
@@ -5224,7 +5227,7 @@
             "pin": 1
           },
           {
-            "id": "zymelfkfw",
+            "id": "hlpa0d4kj",
             "params": {
               "gametype": "voc",
               "vocName": "Тренировка возвратного переката \"яку\"",
