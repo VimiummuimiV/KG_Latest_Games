@@ -338,6 +338,14 @@
           var(--rg-icon-info)
         );
       }
+
+      .latest-game-edit {
+        @include game-action-button(
+          transparent,
+          var(--rg-bg-hover-edit),
+          var(--rg-icon-edit)
+        );
+      }
     }
   }
 
