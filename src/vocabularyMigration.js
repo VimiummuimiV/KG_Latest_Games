@@ -1,7 +1,7 @@
 import { createPopup } from './groupsPopup.js';
 import { hideTooltipElement } from './tooltip.js';
 
-export function showMigrationPopup(manager, groups, currentGroupId, event, gameId) {
+export function showMigrationPopup(main, groups, currentGroupId, event, gameId) {
   hideTooltipElement(); // Hide any existing tooltip
 
   // Create button configurations for groups (excluding current group)
@@ -12,16 +12,16 @@ export function showMigrationPopup(manager, groups, currentGroupId, event, gameI
       className: 'group-tab',
       dataset: { groupId: group.id },
       onClick: () => {
-        migrateGame(manager, gameId, group.id);
+        migrateGame(main, gameId, group.id);
       }
     }));
 
   createPopup(buttonConfigs, event, 'game-migration-popup', 'Переместить');
 }
 
-export function migrateGame(manager, gameId, targetGroupId) {
-  const sourceGroup = manager.groups.find(group => group.id === manager.currentGroupId);
-  const targetGroup = manager.groups.find(group => group.id === targetGroupId);
+export function migrateGame(main, gameId, targetGroupId) {
+  const sourceGroup = main.groupsManager.groups.find(group => group.id === main.groupsManager.currentGroupId);
+  const targetGroup = main.groupsManager.groups.find(group => group.id === targetGroupId);
 
   if (!sourceGroup || !targetGroup) return;
 
@@ -31,6 +31,6 @@ export function migrateGame(manager, gameId, targetGroupId) {
   const [game] = sourceGroup.games.splice(gameIndex, 1);
   targetGroup.games.push(game);
 
-  manager.saveGameData();
-  manager.refreshContainer();
+  main.gamesManager.saveGameData();
+  main.uiManager.refreshContainer();
 }

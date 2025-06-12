@@ -9,9 +9,9 @@ import { hideTooltip } from './vocabularyParser.js';
  * @param {MouseEvent} event - The contextmenu event.
  * @param {string} vocId - The vocabulary ID to add.
  * @param {string} vocName - The vocabulary name from the link text.
- * @param {object} manager - The LatestGamesManager instance.
+ * @param {object} main - The main manager instance.
  */
-export function showVocabularyCreationPopup(groups, event, vocId, vocName, manager) {
+export function showVocabularyCreationPopup(groups, event, vocId, vocName, main) {
   hideTooltip(); // Hide any existing tooltip
 
   // Create button configurations for each group
@@ -48,8 +48,8 @@ export function showVocabularyCreationPopup(groups, event, vocId, vocName, manag
             pin: 1 // Pinned by default
           };
           group.games.unshift(newGame);
-          manager.saveGameData();
-          manager.refreshContainer();
+          main.gamesManager.saveGameData();
+          main.uiManager.refreshContainer();
           highlightExistingVocabularies(groups);
         }
       }
@@ -62,9 +62,9 @@ export function showVocabularyCreationPopup(groups, event, vocId, vocName, manag
 /**
  * Attach contextmenu event to vocabulary links within .columns.voclist.
  * @param {Array} groups - Array of group objects.
- * @param {object} manager - The LatestGamesManager instance.
+ * @param {object} main - The main manager instance.
  */
-export function attachVocabularyCreation(groups, manager) {
+export function attachVocabularyCreation(groups, main) {
   const voclist = document.querySelector('.columns.voclist');
   if (!voclist) {
     console.warn('Element with class "columns voclist" not found.');
@@ -80,7 +80,7 @@ export function attachVocabularyCreation(groups, manager) {
       if (match) {
         const vocId = match[1];
         const vocName = anchor.textContent.trim(); // Extract name from link text
-        showVocabularyCreationPopup(groups, e, vocId, vocName, manager);
+        showVocabularyCreationPopup(groups, e, vocId, vocName, main);
       }
     }
   });
