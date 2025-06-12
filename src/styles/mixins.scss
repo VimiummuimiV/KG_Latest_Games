@@ -1,0 +1,59 @@
+@mixin theme($theme) {
+  @each $key, $value in $theme {
+    #{$key}: $value;
+  }
+}
+
+@mixin tab() {
+  display: inline-flex;
+  padding: 5px 15px;
+  max-width: 300px;
+  font: 600 14px "Montserrat", sans-serif;
+  border-radius: 4px !important;
+  background: var(--rg-bg-card);
+  color: var(--rg-text-primary);
+  border: 2px solid var(--rg-border-primary);
+  cursor: pointer;
+  user-select: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  height: fit-content;
+  transition: border 0.1s ease, background-color 0.1s ease;
+
+  &:hover,
+  &:focus {
+    border-color: var(--rg-border-hover);
+    background: var(--rg-bg-hover);
+    color: var(--rg-text-primary);
+  }
+
+  &.active {
+    border: 2px solid var(--rg-border-pinned-voc);
+    background: var(--rg-bg-card-pinned-voc);
+    color: var(--rg-gametype-voc) !important;
+  }
+}
+
+@mixin game-action-button($bg, $hover-bg, $icon-stroke) {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  border-radius: 2px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+  background-color: $bg;
+
+  &:hover {
+    background-color: $hover-bg;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+    stroke: $icon-stroke;
+    fill: none;
+  }
+}
