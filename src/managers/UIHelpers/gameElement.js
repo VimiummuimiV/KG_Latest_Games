@@ -25,7 +25,7 @@ export function createGameElement(main, game, id) {
 
   const pinButton = createElement('div', {
     className: 'latest-game-pin',
-    innerHTML: icons.pin
+    innerHTML: game.pin ? icons.unpin : icons.pin
   });
   createCustomTooltip(pinButton, game.pin
     ? '[Клик] Открепить с подтверждением. [Shift + Клик] Открепить без подтверждения.'

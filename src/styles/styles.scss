@@ -23,6 +23,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   height: fit-content;
+  transition: border 0.1s ease, background-color 0.1s ease;
 
   &:hover,
   &:focus {
@@ -163,10 +164,10 @@
     .latest-game {
       position: relative;
       margin: 0 10px;
-      border: 1px solid var(--rg-border-primary);
+      border: 2px solid var(--rg-border-primary);
       border-radius: 4px !important;
       background-color: var(--rg-bg-card);
-      transition: all 0.2s ease;
+      transition: border 0.1s ease, background-color 0.1s ease;
       display: inline-flex;
       max-width: 300px;
 
@@ -214,7 +215,6 @@
       &:hover {
         border-color: var(--rg-border-hover);
         background-color: var(--rg-bg-hover);
-        transform: translateX(2px);
       }
 
       &.dragging {
@@ -304,11 +304,11 @@
         gap: 2px;
         top: 0;
         right: 0;
-        transform: translateY(calc(-100% - 2px));
+        transform: translateY(-100%);
         background-color: var(--rg-bg-card);
         border-radius: 4px !important;
         border: 2px solid var(--rg-border-primary);
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1) !important;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2) !important;
         visibility: hidden;
       }
 
