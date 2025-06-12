@@ -111,7 +111,7 @@ export function createControls(main) {
 
   const pinAllBtn = createElement('span', {
     className: 'latest-games-pinall control-button',
-    innerHTML: icons.pinAll
+    innerHTML: icons.pin
   });
   createCustomTooltip(pinAllBtn, `
     [Клик] Закрепить все игры в текущей группе
@@ -132,7 +132,7 @@ export function createControls(main) {
 
   const unpinAllBtn = createElement('span', {
     className: 'latest-games-unpinall control-button',
-    innerHTML: icons.unpinAll
+    innerHTML: icons.unpin
   });
   createCustomTooltip(unpinAllBtn, `
     [Клик] Открепить все игры в текущей группе

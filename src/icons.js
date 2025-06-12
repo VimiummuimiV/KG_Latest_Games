@@ -21,14 +21,6 @@ export const icons = {
     </svg>
   `,
 
-  pin: `
-    <svg xmlns="${SVG_NS}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="5" r="3"></circle>
-      <line x1="12" y1="22" x2="12" y2="8"></line>
-      <path d="M5 12H2a10 10 0 0 0 20 0h-3"></path>
-    </svg>
-  `,
-
   delete: `
     <svg xmlns="${SVG_NS}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
       <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -61,14 +53,14 @@ export const icons = {
     </svg>
   `,
 
-  pinAll: `
+  pin: `
     <svg xmlns="${SVG_NS}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
       <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
     </svg>
   `,
 
-  unpinAll: `
+  unpin: `
     <svg xmlns="${SVG_NS}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
       <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
