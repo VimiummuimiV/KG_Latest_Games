@@ -281,11 +281,10 @@
         gap: 2px;
         top: 0;
         right: 0;
-        transform: translateY(-120%);
+        transform: translateY(calc(-100% - 2px));
         background-color: var(--rg-bg-card);
         border-radius: 2px !important;
-        opacity: 0;
-        transition: opacity 0.2s ease;
+        visibility: hidden;
       }
 
       &:hover .latest-game-buttons {
@@ -293,9 +292,10 @@
       }
 
       .latest-game-pin,
-      .latest-game-delete {
-        width: 16px;
-        height: 16px;
+      .latest-game-delete,
+      .latest-game-info {
+        width: 22px;
+        height: 22px;
         cursor: pointer;
         border-radius: 2px !important;
         display: flex;
@@ -308,9 +308,8 @@
         }
 
         svg {
-          width: 10px;
-          height: 10px;
-          opacity: 0.6;
+          width: 14px;
+          height: 14px;
           stroke: var(--rg-icon-pin-fill);
         }
 

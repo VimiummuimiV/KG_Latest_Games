@@ -9,7 +9,20 @@ export function createGameElement(main, game, id) {
     className: `latest-game${game.pin ? ' pin-game' : ''}${gametypeClass}`,
     id: `latest-game-${id}`
   });
+
+  let buttonTimeout;
   const gameActionButtons = createElement('div', { className: 'latest-game-buttons' });
+  li.addEventListener('mouseenter', () => {
+    buttonTimeout = setTimeout(() => {
+      gameActionButtons.style.visibility = 'visible';
+    }, 400);
+  });
+
+  li.addEventListener('mouseleave', () => {
+    clearTimeout(buttonTimeout);
+    gameActionButtons.style.visibility = 'hidden';
+  });
+
   const pinButton = createElement('div', {
     className: 'latest-game-pin',
     innerHTML: icons.pin
@@ -36,6 +49,20 @@ export function createGameElement(main, game, id) {
       main.gamesManager.deleteGame(id);
     }
   });
+
+  // Add vocabulary link button first for voc type games
+  if (game.params.gametype === 'voc' && game.params.vocId) {
+    const vocButton = createElement('div', {
+      className: 'latest-game-info',
+      innerHTML: icons.info
+    });
+    createCustomTooltip(vocButton, 'Перейти на страницу словаря');
+    vocButton.addEventListener('click', () => {
+      window.open(`https://klavogonki.ru/vocs/${game.params.vocId}/`, '_blank');
+    });
+    gameActionButtons.appendChild(vocButton);
+  }
+
   gameActionButtons.appendChild(pinButton);
   gameActionButtons.appendChild(deleteButton);
 
