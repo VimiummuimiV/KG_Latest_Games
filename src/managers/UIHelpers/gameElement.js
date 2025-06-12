@@ -9,9 +9,7 @@ export function createGameElement(main, game, id) {
     className: `latest-game${game.pin ? ' pin-game' : ''}${gametypeClass}`,
     id: `latest-game-${id}`
   });
-  // Add orientation class depending on description display
-  const orientationClass = main.showButtonDescriptions ? 'vertical-orientation' : 'horizontal-orientation';
-  const buttons = createElement('div', { className: `latest-game-buttons ${orientationClass}` });
+  const gameActionButtons = createElement('div', { className: 'latest-game-buttons' });
   const pinButton = createElement('div', {
     className: 'latest-game-pin',
     innerHTML: icons.pin
@@ -38,9 +36,8 @@ export function createGameElement(main, game, id) {
       main.gamesManager.deleteGame(id);
     }
   });
-
-  buttons.appendChild(pinButton);
-  buttons.appendChild(deleteButton);
+  gameActionButtons.appendChild(pinButton);
+  gameActionButtons.appendChild(deleteButton);
 
   const link = createElement('a', {
     href: main.gamesManager.generateGameLink(game),
@@ -59,7 +56,7 @@ export function createGameElement(main, game, id) {
     [Удерживание (ЛКМ)] аналогично (Shift + Клик)
   `);
 
-  li.appendChild(buttons);
+  li.appendChild(gameActionButtons);
   li.appendChild(link);
   if (game.pin && main.enableDragging) addDragFunctionality(main, li);
   return li;

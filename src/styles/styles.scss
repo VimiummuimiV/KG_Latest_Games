@@ -273,29 +273,19 @@
       }
 
       .latest-game-buttons {
-        position: relative;
+        position: absolute;
+        display: flex;
+        flex-direction: row;
         justify-content: center;
         align-items: center;
-        display: flex;
+        gap: 2px;
+        top: 0;
+        right: 0;
+        transform: translateY(-120%);
+        background-color: var(--rg-bg-card);
+        border-radius: 2px !important;
         opacity: 0;
         transition: opacity 0.2s ease;
-          gap: 2px;
-        order: 1;
-
-        &.vertical-orientation {
-          margin-right: 2px;
-          flex-direction: column;
-        }
-
-        &.horizontal-orientation {
-          position: absolute;
-          flex-direction: row;
-          top: 0;
-          right: 0;
-          transform: translateY(-120%);
-          background-color: var(--rg-bg-card);
-          border-radius: 2px !important;
-        }
       }
 
       &:hover .latest-game-buttons {
