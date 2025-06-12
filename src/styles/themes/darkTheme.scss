@@ -22,13 +22,19 @@ $darkTheme: (
   "--rg-gametype-digits": hsl(0, 0%, 50%),
   "--rg-gametype-sprint": hsl(5, 40%, 60%),
   "--rg-icon-primary": hsl(207, 89%, 76%),
-  "--rg-icon-pin": hsl(133, 43%, 47%),
-  "--rg-icon-pin-fill": hsl(133, 43%, 47%),
+  // Game action buttons
+  // Delete
   "--rg-icon-delete": hsl(4, 100%, 75%),
+  "--rg-bg-hover-delete": hsla(4, 100%, 75%, 0.2),
+  // Pin
+  "--rg-icon-pin": hsl(133, 43%, 47%),
+  "--rg-bg-hover-pin": hsla(133, 43%, 47%, 0.2),
+  // Info
+  "--rg-icon-info": hsl(0, 0%, 88%),
+  "--rg-bg-hover-info": hsla(0, 0%, 88%, 0.2),
+  // Theme icons
   "--rg-icon-theme-sun": hsl(48, 100%, 50%),
   "--rg-icon-theme-moon": hsl(207, 89%, 76%),
-  "--rg-hover-pin": hsla(133, 43%, 47%, 0.2),
-  "--rg-hover-delete": hsla(4, 100%, 75%, 0.2),
   "--rg-hover-control": hsl(0, 0%, 38%),
   "--rg-hover-control-btn": hsl(213, 81.6%, 29.8%),
   "--rg-bg-card-pinned-voc": hsl(215, 80%, 10%),
@@ -63,5 +69,5 @@ $darkTheme: (
   "--rg-rank-slider-border": hsl(215, 80%, 30%),
   "--rg-rank-slider-range": hsl(215, 80%, 30%),
   "--rg-rank-slider-handle-bg": hsl(215, 80%, 10%),
-  "--rg-rank-slider-border-focus": hsl(215, 80%, 50%)
+  "--rg-rank-slider-border-focus": hsl(215, 80%, 50%),
 );
