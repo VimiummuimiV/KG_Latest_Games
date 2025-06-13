@@ -50,19 +50,6 @@ export function createGameElement(main, game, id) {
     }
   });
 
-  // Add edit parameters button
-  const editButton = createElement('div', {
-    className: 'latest-game-edit',
-    innerHTML: icons.parameters
-  });
-  createCustomTooltip(editButton, 'Изменить параметры игры');
-  editButton.addEventListener('click', (e) => {
-    e.stopPropagation();
-    alert('Окно изменения параметров игры (заглушка)');
-    // TODO: Replace with real parameter editing dialog
-  });
-  gameActionButtons.appendChild(editButton);
-
   // Add vocabulary link button first for voc type games
   if (game.params.gametype === 'voc' && game.params.vocId) {
     const vocButton = createElement('div', {
