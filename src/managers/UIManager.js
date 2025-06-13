@@ -4,7 +4,7 @@ import { showMigrationPopup } from '../vocabularyMigration.js';
 import { createGamePopup } from '../gamePopup.js';
 import { setupResizeHandle } from '../panel/panelResize.js';
 import { setupYPositioning } from '../panel/panelPosition.js';
-import { createGameElement } from './UIHelpers/gameActionButtons.js';
+import { createGameElement } from './UIHelpers/gameButton.js';
 import { createControls } from './UIHelpers/controls.js';
 import { createSearchBox } from './UIHelpers/search.js';
 import { createHoverArea, showContainer, hideContainer } from './UIHelpers/visibility.js';
