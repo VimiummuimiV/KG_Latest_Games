@@ -1,6 +1,8 @@
 import { icons } from '../../icons.js';
 import { createElement } from '../../utils.js';
 
+const SEARCH_STORAGE_KEY = 'latestGamesSearchQuery';
+
 function fuzzyScore(text, query) {
   const textLower = text.toLowerCase(), queryLower = query.toLowerCase();
   if (!queryLower) return 0;
@@ -15,6 +17,38 @@ function fuzzyScore(text, query) {
     textIndex++;
   }
   return queryIndex === queryLower.length ? gaps : Infinity;
+}
+
+// Function to save search query to localStorage
+function saveSearchQuery(query) {
+  try {
+    if (query && query.trim()) {
+      localStorage.setItem(SEARCH_STORAGE_KEY, query.trim());
+    } else {
+      localStorage.removeItem(SEARCH_STORAGE_KEY);
+    }
+  } catch (e) {
+    console.warn('Failed to save search query:', e);
+  }
+}
+
+// Function to load search query from localStorage
+function loadSearchQuery() {
+  try {
+    return localStorage.getItem(SEARCH_STORAGE_KEY) || '';
+  } catch (e) {
+    console.warn('Failed to load search query:', e);
+    return '';
+  }
+}
+
+// Function to clear saved search query
+function clearSavedSearchQuery() {
+  try {
+    localStorage.removeItem(SEARCH_STORAGE_KEY);
+  } catch (e) {
+    console.warn('Failed to clear search query:', e);
+  }
 }
 
 // Function to calculate text width
@@ -82,12 +116,24 @@ export function createSearchBox(main) {
   // Make sure the search container has relative positioning for absolute positioning of clear button
   searchContainer.style.position = 'relative';
 
+  // Restore saved search query on creation
+  const savedQuery = loadSearchQuery();
+  if (savedQuery) {
+    searchBox.value = savedQuery;
+    handleSearch(main, savedQuery);
+    updateClearButtonVisibility(clearButton, savedQuery);
+    updateClearButtonPosition(searchBox, clearButton);
+  }
+
   // Handle input events
   searchBox.addEventListener('input', (e) => {
     const value = e.target.value.trim();
     handleSearch(main, value);
     updateClearButtonVisibility(clearButton, value);
     updateClearButtonPosition(searchBox, clearButton);
+
+    // Save search query (or remove if empty)
+    saveSearchQuery(value);
   });
 
   // Handle clear button click
@@ -97,10 +143,22 @@ export function createSearchBox(main) {
     handleSearch(main, '');
     updateClearButtonVisibility(clearButton, '');
     updateClearButtonPosition(searchBox, clearButton);
+
+    // Clear saved search query when explicitly cleared
+    clearSavedSearchQuery();
+  });
+
+  // Handle keyboard events to detect explicit clearing
+  searchBox.addEventListener('keydown', (e) => {
+    // If backspace or delete is pressed and the input becomes empty, clear saved query
+    if ((e.key === 'Backspace' || e.key === 'Delete') && searchBox.value.length === 1) {
+      // The input will be empty after this keypress
+      if (!searchBox.value.trim()) clearSavedSearchQuery();
+    }
   });
 
   // Initial setup
-  updateClearButtonVisibility(clearButton, '');
+  updateClearButtonVisibility(clearButton, searchBox.value);
   updateClearButtonPosition(searchBox, clearButton);
 
   searchContainer.appendChild(searchBox);
