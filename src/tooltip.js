@@ -35,7 +35,7 @@ export function hideTooltipElement() {
       }
     }, 50);
   }, 100);
-};
+}
 
 new MutationObserver(() => {
   if (tooltipCurrentTarget && !document.contains(tooltipCurrentTarget)) hideTooltipElement();
@@ -84,6 +84,30 @@ export function createCustomTooltip(element, tooltipContent) {
       document.removeEventListener('mousemove', tooltipTrackMouse);
     });
     element.addEventListener('click', hideTooltipElement);
+  }
+}
+
+/**
+ * Update tooltip content for an existing element
+ * @param {HTMLElement} element - The element with tooltip
+ * @param {string} newContent - New tooltip content
+ */
+export function updateTooltipContent(element, newContent) {
+  if (!element._tooltipInitialized) {
+    // If tooltip wasn't initialized, create it
+    createCustomTooltip(element, newContent);
+    return;
+  }
+  
+  // Update the stored content
+  element._tooltipContent = newContent;
+  
+  // If tooltip is currently visible for this element, update it immediately
+  if (tooltipCurrentTarget === element && tooltipIsShown && tooltipEl) {
+    tooltipEl.innerHTML = highlightTooltipActions(newContent);
+    // Reposition tooltip in case content size changed
+    const rect = element.getBoundingClientRect();
+    positionTooltip(rect.left + rect.width / 2, rect.bottom);
   }
 }
 
