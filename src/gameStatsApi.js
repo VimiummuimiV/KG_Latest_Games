@@ -128,15 +128,7 @@ export class GameStatsApi {
     const { gametype, info } = statsData;
     let content = '';
     
-    // Show different ID based on game type
-    if (gameParams.gametype === 'voc') {
-      content += `[Voc ID] ${gameId}\n`;
-    } else {
-      content += `[Game Type] ${gameId}\n`;
-    }
-    
     if (gametype) {
-      content += `[Название] ${gametype.name || 'Неизвестно'}\n`;
       if (gametype.type) content += `[Категория] ${gametype.type}\n`;
       if (gametype.symbols) content += `[Символов] ${gametype.symbols.toLocaleString()}\n`;
       if (gametype.rows) content += `[Строк] ${gametype.rows.toLocaleString()}\n`;
