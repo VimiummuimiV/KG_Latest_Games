@@ -102,9 +102,17 @@ export function updateTooltipContent(element, newContent) {
   // Update the stored content
   element._tooltipContent = newContent;
   
-  // If tooltip is currently visible for this element, update it immediately
-  if (tooltipCurrentTarget === element && tooltipIsShown && tooltipEl) {
+  // If this element is currently being hovered (even if tooltip isn't fully shown yet)
+  if (tooltipCurrentTarget === element && tooltipIsVisible && tooltipEl) {
     tooltipEl.innerHTML = highlightTooltipActions(newContent);
+    
+    // If tooltip is not yet shown, show it immediately
+    if (!tooltipIsShown) {
+      clearTimeout(tooltipShowTimer);
+      tooltipEl.style.opacity = '1';
+      tooltipIsShown = true;
+    }
+    
     // Reposition tooltip in case content size changed
     const rect = element.getBoundingClientRect();
     positionTooltip(rect.left + rect.width / 2, rect.bottom);

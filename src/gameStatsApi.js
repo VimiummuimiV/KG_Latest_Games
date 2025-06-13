@@ -1,4 +1,4 @@
-import { gameTypes } from './definitions.js';
+import { gameTypes, gameCategories } from './definitions.js';
 
 export class GameStatsApi {
   constructor() {
@@ -67,8 +67,6 @@ export class GameStatsApi {
     // Valid game types that the API supports (using imported gameTypes)
     const validApiGameTypes = Object.keys(gameTypes);
     
-    console.log('Parsed gameParams:', gameParams); // Debug logging
-
     if (gameParams.gametype === 'voc' && gameParams.voc) {
       params.append('gametype', `voc-${gameParams.voc}`);
     } else if (gameParams.gametype && validApiGameTypes.includes(gameParams.gametype)) {
@@ -80,7 +78,6 @@ export class GameStatsApi {
     }
 
     const finalUrl = `${baseUrl}?${params.toString()}`;
-    console.log('Final API URL:', finalUrl); // Debug logging
     return finalUrl;
   }
 
@@ -120,7 +117,7 @@ export class GameStatsApi {
    * @param {Object} gameParams 
    * @returns {string} Formatted tooltip content
    */
-  formatStatsForTooltip(statsData, gameId, gameParams) {
+  formatStats(statsData, gameId, gameParams) {
     if (!statsData || !statsData.ok) {
       return `[Game ID] ${gameId}\n[Тип] ${gameParams.gametype || 'unknown'}\n[Ошибка] Не удалось загрузить статистику`;
     }
@@ -129,7 +126,10 @@ export class GameStatsApi {
     let content = '';
     
     if (gametype) {
-      if (gametype.type) content += `[Категория] ${gametype.type}\n`;
+      if (gametype.type) {
+        const categoryName = gameCategories[gametype.type] || gametype.type;
+        content += `[Категория] ${categoryName}\n`;
+      }
       if (gametype.symbols) content += `[Символов] ${gametype.symbols.toLocaleString()}\n`;
       if (gametype.rows) content += `[Строк] ${gametype.rows.toLocaleString()}\n`;
     }
@@ -151,7 +151,7 @@ export class GameStatsApi {
    * @param {HTMLElement} element 
    * @returns {Promise<string>} Formatted tooltip content
    */
-  async getGameStatsTooltip(element) {
+  async getGameStats(element) {
     // Find the anchor element to get game parameters
     const anchor = element.closest('li').querySelector('a');
     if (!anchor) {
@@ -174,7 +174,7 @@ export class GameStatsApi {
     // Fetch data asynchronously
     try {
       const statsData = await this.fetchGameStats(apiUrl);
-      return this.formatStatsForTooltip(statsData, gameId, gameParams);
+      return this.formatStats(statsData, gameId, gameParams);
     } catch (error) {
       console.error('Error getting game stats:', error);
       return `[Game ID] ${gameId}\n[Ошибка] Ошибка загрузки статистики`;

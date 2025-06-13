@@ -1,5 +1,5 @@
 import { createElement } from '../../utils.js';
-import { createCustomTooltip } from '../../tooltip.js';
+import { createCustomTooltip, updateTooltipContent } from '../../tooltip.js';
 import { addDragFunctionality } from '../../drag.js';
 import { icons } from '../../icons.js';
 import { gameStatsApi } from '../../gameStatsApi.js';
@@ -86,24 +86,26 @@ export function createGameElement(main, game, id) {
 
   // Default tooltip content
   const defaultTooltipContent = `
-    [Клик] Перейти к игре с текущими параметрами
     [Shift + Клик] Перейти к игре с альтернативными параметрами
     [Удерживание (ЛКМ)] аналогично (Shift + Клик)
+    [Shift + Наведение] Показать статистику игры
   `;
 
-  // Ctrl + hover event for game stats
+  // Shift + hover event for game stats
   link.addEventListener('mouseover', async (e) => {
-    if (e.ctrlKey) {
+    if (e.shiftKey) {
+      // Set loading content immediately
+      updateTooltipContent(link, '[Loading] Загрузка статистики...');
       try {
-        const statsContent = await gameStatsApi.getGameStatsTooltip(link);
-        createCustomTooltip(link, statsContent);
+        const statsContent = await gameStatsApi.getGameStats(link);
+        updateTooltipContent(link, statsContent);
       } catch (error) {
         console.error('Error loading game stats:', error);
-        createCustomTooltip(link, '[Ошибка] Не удалось загрузить статистику');
+        updateTooltipContent(link, '[Ошибка] Не удалось загрузить статистику');
       }
     } else {
-      // Reset to default tooltip if not ctrl-hovered
-      createCustomTooltip(link, defaultTooltipContent);
+      // Set default content
+      updateTooltipContent(link, defaultTooltipContent);
     }
   });
 

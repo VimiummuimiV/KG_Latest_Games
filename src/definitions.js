@@ -10,6 +10,13 @@ export const gameTypes = {
   voc: 'По словарю'
 };
 
+export const gameCategories = {
+  words: 'Слова',
+  phrases: 'Фразы',
+  texts: 'Тексты',
+  book: 'Книги'
+};
+
 export const visibilities = {
   normal: 'открытый',
   practice: 'одиночный',
