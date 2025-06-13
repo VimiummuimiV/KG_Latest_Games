@@ -120,9 +120,11 @@ export function createSearchBox(main) {
   const savedQuery = loadSearchQuery();
   if (savedQuery) {
     searchBox.value = savedQuery;
-    handleSearch(main, savedQuery);
-    updateClearButtonVisibility(clearButton, savedQuery);
-    updateClearButtonPosition(searchBox, clearButton);
+    requestAnimationFrame(() => {
+      updateClearButtonVisibility(clearButton, savedQuery);
+      updateClearButtonPosition(searchBox, clearButton);
+      handleSearch(main, savedQuery);
+    });
   }
 
   // Handle input events
