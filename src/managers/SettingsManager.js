@@ -15,7 +15,6 @@ export class SettingsManager {
       this.main.panelWidth = settings.panelWidth ?? this.main.panelWidth;
       this.main.enableDragging = settings.enableDragging ?? this.main.enableDragging;
       this.main.shouldAutoSave = settings.shouldAutoSave ?? this.main.shouldAutoSave;
-      this.main.panelYPosition = settings.panelYPosition ?? this.main.panelYPosition;
       this.main.hidePanelDelay = settings.hidePanelDelay ?? this.main.hidePanelDelay;
       this.main.shouldStart = settings.shouldStart ?? this.main.shouldStart;
       this.main.startDelay = settings.startDelay ?? this.main.startDelay;
@@ -24,6 +23,16 @@ export class SettingsManager {
       this.main.showSearchBox = settings.showSearchBox ?? this.main.showSearchBox;
       this.main.showButtonDescriptions = settings.showButtonDescriptions ?? this.main.showButtonDescriptions;
       this.main.showHelpTooltips = settings.showHelpTooltips ?? this.main.showHelpTooltips;
+
+      // Handle panelYPosition and alwaysVisiblePanel as objects
+      if (settings.panelYPosition && typeof settings.panelYPosition === 'object') {
+        this.main.panelYPosition = {
+          ...this.main.panelYPosition,
+          ...settings.panelYPosition
+        };
+      }
+
+      // Ensure alwaysVisiblePanel is an object and merge settings
       if (settings.alwaysVisiblePanel && typeof settings.alwaysVisiblePanel === 'object') {
         this.main.alwaysVisiblePanel = {
           ...this.main.alwaysVisiblePanel,
@@ -47,7 +56,6 @@ export class SettingsManager {
         panelWidth: this.main.panelWidth,
         enableDragging: this.main.enableDragging,
         shouldAutoSave: this.main.shouldAutoSave,
-        panelYPosition: this.main.panelYPosition,
         hidePanelDelay: this.main.hidePanelDelay,
         shouldStart: this.main.shouldStart,
         startDelay: this.main.startDelay,
@@ -56,6 +64,7 @@ export class SettingsManager {
         showSearchBox: this.main.showSearchBox,
         showButtonDescriptions: this.main.showButtonDescriptions,
         showHelpTooltips: this.main.showHelpTooltips,
+        panelYPosition: this.main.panelYPosition,
         alwaysVisiblePanel: this.main.alwaysVisiblePanel
       };
 
