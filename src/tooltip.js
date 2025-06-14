@@ -121,7 +121,7 @@ export function updateTooltipContent(element, newContent) {
 
 function highlightTooltipActions(str) {
   let result = '';
-  const headerRegex = /(## [^[]*)/g;          // Matches headers like "## 📋"
+  const headerRegex = /(## [^[]*)/g;          // Matches headers like "## Header"
   const actionRegex = /\[([^\]]+)\]([^\[]*)/g; // Matches [Action]Message pairs
 
   // Split on headers, keep headers in the array

@@ -156,7 +156,7 @@ export class GameStatsApi {
     const { gametype, info } = statsData;
     let content = '';
 
-    content += '## 📋 Информация';
+    content += '## Информация';
 
     // Game type information
     if (gametype) {
@@ -170,7 +170,7 @@ export class GameStatsApi {
       if (gametype.rows) content += `[Строк] ${gametype.rows.toLocaleString()}`;
     }
 
-    content += '## 🚀 Статистика';
+    content += '## Статистика';
 
     // User performance information
     if (info) {
