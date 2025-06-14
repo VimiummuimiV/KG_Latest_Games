@@ -1,6 +1,6 @@
 import { createElement } from '../../utils.js';
 import { createCustomTooltip, updateTooltipContent } from '../../tooltip.js';
-import { addDragFunctionality } from '../../drag.js';
+import { addDragFunctionality } from '../../drag/gameButtonDrag.js';
 import { icons } from '../../icons.js';
 import { gameStatsApi } from '../../gameStatsApi.js';
 

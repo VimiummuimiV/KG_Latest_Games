@@ -2,7 +2,7 @@ import { createCustomTooltip, hideTooltipElement } from './tooltip.js';
 import { createElement } from './utils.js';
 import { visibilities, timeouts, ranks } from './definitions.js';
 import { icons } from './icons.js';
-import { setupPopupDrag } from './popupDrag.js';
+import { setupPopupDrag } from './drag/popupDrag.js';
 
 const visibilityTypes = Object.keys(visibilities);
 const SETTINGS_KEY = 'latestGamesSettings';
