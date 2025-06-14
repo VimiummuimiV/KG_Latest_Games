@@ -109,7 +109,7 @@ export class PageHandler {
     if (latestGamesContainer) {
       latestGamesContainer.addEventListener('mouseenter', () => {
         this.isHoveringLatestGames = true;
-        // Cancel any pending replay sleep and reset to 0
+        // ONLY cancel replay sleep when hovering - start should be unaffected
         if (this.replaySleep && typeof this.replaySleep.cancel === 'function') {
           this.replaySleep.cancel();
           this.replaySleep = null;
@@ -119,8 +119,8 @@ export class PageHandler {
 
       latestGamesContainer.addEventListener('mouseleave', () => {
         this.isHoveringLatestGames = false;
-        // Restart replay logic if the game is finished (with full delay)
-        this.handleGameActions();
+        // If not hovering, re-check and handle replay action
+        this.handleReplayAction();
       });
     }
   }
@@ -156,7 +156,13 @@ export class PageHandler {
   }
 
   handleGameActions() {
-    // Handle auto-start
+    // Handle both start and replay actions
+    this.handleStartAction();
+    this.handleReplayAction();
+  }
+
+  handleStartAction() {
+    // Handle auto-start - NEVER affected by hover state
     if (this.main.shouldStart) {
       const pausedElement = document.querySelector('#status-inner #paused');
       if (pausedElement && pausedElement.style.display !== 'none') {
@@ -176,8 +182,10 @@ export class PageHandler {
         }
       }
     }
-    
-    // Handle auto-replay
+  }
+
+  handleReplayAction() {
+    // Handle auto-replay - affected by hover state
     if (this.main.shouldReplay) {
       const finishedElement = document.querySelector('#status-inner #finished');
       if (finishedElement && finishedElement.style.display !== 'none') {
