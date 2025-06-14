@@ -3,6 +3,7 @@ import { createCustomTooltip, updateTooltipContent } from '../../tooltip.js';
 import { addDragFunctionality } from '../../drag/gameButtonDrag.js';
 import { icons } from '../../icons.js';
 import { gameStatsApi } from '../../gameStatsApi.js';
+import { createGameInfoPopup } from '../../gameInfo.js';
 
 export function createGameElement(main, game, id) {
   const gametypeClass = game.pin ? ` pin-gametype-${game.params.gametype}` : '';
@@ -13,13 +14,13 @@ export function createGameElement(main, game, id) {
 
   let buttonTimeout;
   const gameActionButtons = createElement('div', { className: 'latest-game-buttons' });
-  
+
   li.addEventListener('mouseenter', () => {
     buttonTimeout = setTimeout(() => {
       gameActionButtons.style.visibility = 'visible';
     }, 400);
   });
-  
+
   li.addEventListener('mouseleave', () => {
     clearTimeout(buttonTimeout);
     gameActionButtons.style.visibility = 'hidden';
@@ -29,12 +30,12 @@ export function createGameElement(main, game, id) {
     className: 'latest-game-pin',
     innerHTML: game.pin ? icons.unpin : icons.pin
   });
-  
+
   createCustomTooltip(pinButton, game.pin
     ? '[Клик] Открепить с подтверждением. [Shift + Клик] Открепить без подтверждения.'
     : '[Клик] Закрепить с подтверждением. [Shift + Клик] Закрепить без подтверждения.'
   );
-  
+
   pinButton.addEventListener('click', (e) => {
     if (e.shiftKey || confirm(game.pin ? 'Открепить игру?' : 'Закрепить игру?')) {
       main.gamesManager.pinGame(id);
@@ -45,11 +46,11 @@ export function createGameElement(main, game, id) {
     className: 'latest-game-delete',
     innerHTML: icons.delete
   });
-  
+
   createCustomTooltip(deleteButton,
     '[Клик] Удалить (с подтверждением). [Shift + Клик] Удалить без подтверждения.'
   );
-  
+
   deleteButton.addEventListener('click', (e) => {
     if (e.shiftKey || confirm('Удалить игру?')) {
       main.gamesManager.deleteGame(id);
@@ -62,9 +63,11 @@ export function createGameElement(main, game, id) {
       className: 'latest-game-info',
       innerHTML: icons.info
     });
-    createCustomTooltip(vocButton, 'Перейти на страницу словаря');
-    vocButton.addEventListener('click', () => {
-      window.open(`https://klavogonki.ru/vocs/${game.params.vocId}/`, '_blank');
+    createCustomTooltip(vocButton, 'Показать информацию о словаре');
+    vocButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      createGameInfoPopup(e, game);
     });
     gameActionButtons.appendChild(vocButton);
   }
@@ -111,8 +114,8 @@ export function createGameElement(main, game, id) {
 
   li.appendChild(gameActionButtons);
   li.appendChild(link);
-  
+
   if (game.pin && main.enableDragging) addDragFunctionality(main, li);
-  
+
   return li;
 }

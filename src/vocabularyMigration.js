@@ -1,4 +1,4 @@
-import { createPopup } from './groupsPopup.js';
+import { createPopup } from './menuPopup.js';
 import { hideTooltipElement } from './tooltip.js';
 
 export function showMigrationPopup(main, groups, currentGroupId, event, gameId) {

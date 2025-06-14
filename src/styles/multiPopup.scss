@@ -72,7 +72,8 @@
     }
   }
 
-  .group-tab {
+  .group-tab,
+  .popup-button {
     @include tab();
   }
 
