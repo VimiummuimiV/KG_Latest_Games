@@ -7,7 +7,7 @@ export const gameTypes = {
   chars: 'Буквы',
   digits: 'Цифры',
   sprint: 'Спринт',
-  voc: 'По словарю'
+  voc: 'Словарь'
 };
 
 export const gameCategories = {

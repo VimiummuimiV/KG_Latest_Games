@@ -27,11 +27,11 @@ export class GameStatsApi {
     const href = anchor.href;
     const url = new URL(href);
     const params = {};
-    
+
     for (const [key, value] of url.searchParams) {
       params[key] = value;
     }
-    
+
     return params;
   }
 
@@ -42,13 +42,13 @@ export class GameStatsApi {
    */
   getGameId(anchor) {
     const params = this.parseGameParams(anchor);
-    
+
     if (params.gametype === 'voc' && params.voc) {
       return params.voc; // Return voc ID for voc games
     } else if (params.gametype) {
       return params.gametype; // Return gametype for other games
     }
-    
+
     return 'normal'; // Default fallback
   }
 
@@ -66,7 +66,7 @@ export class GameStatsApi {
 
     // Valid game types that the API supports (using imported gameTypes)
     const validApiGameTypes = Object.keys(gameTypes);
-    
+
     if (gameParams.gametype === 'voc' && gameParams.voc) {
       params.append('gametype', `voc-${gameParams.voc}`);
     } else if (gameParams.gametype && validApiGameTypes.includes(gameParams.gametype)) {
@@ -97,16 +97,48 @@ export class GameStatsApi {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
+
       // Cache the response
       this.cache.set(apiUrl, data);
-      
+
       return data;
     } catch (error) {
       console.error('Failed to fetch game stats:', error);
       return null;
+    }
+  }
+
+  /**
+   * Format time from seconds to MM:SS format
+   * @param {number} seconds 
+   * @returns {string} Formatted time
+   */
+  formatTime(seconds) {
+    if (!seconds || seconds === 0) return 'N/A';
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  }
+
+  /**
+   * Format date to Russian locale
+   * @param {string} dateString 
+   * @returns {string} Formatted date
+   */
+  formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('ru-RU', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return dateString;
     }
   }
 
@@ -119,28 +151,50 @@ export class GameStatsApi {
    */
   formatStats(statsData, gameId, gameParams) {
     if (!statsData || !statsData.ok) {
-      return `[Game ID] ${gameId}\n[Тип] ${gameParams.gametype || 'unknown'}\n[Ошибка] Не удалось загрузить статистику`;
+      return `[Данные отсутствуют]`;
     }
 
     const { gametype, info } = statsData;
     let content = '';
-    
+
+    content += '## 📋 Информация'; // Vocabulary info separator
+
+    // Game type information
     if (gametype) {
+      if (gametype.name) content += `[Название] ${gametype.name}`;
+      if (gametype.id) content += `[ID словаря] ${gametype.id}`;
       if (gametype.type) {
         const categoryName = gameCategories[gametype.type] || gametype.type;
-        content += `[Категория] ${categoryName}\n`;
+        content += `[Категория] ${categoryName}`;
       }
-      if (gametype.symbols) content += `[Символов] ${gametype.symbols.toLocaleString()}\n`;
-      if (gametype.rows) content += `[Строк] ${gametype.rows.toLocaleString()}\n`;
+      if (gametype.symbols) content += `[Символов] ${gametype.symbols.toLocaleString()}`;
+      if (gametype.rows) content += `[Строк] ${gametype.rows.toLocaleString()}`;
     }
-    
+
+    content += '## 🚀 Статистика'; // Performance stats separator
+
+    // User performance information
     if (info) {
-      content += `[Заездов] ${info.num_races || 'N/A'}\n`;
-      content += `[Средняя скорость] ${info.avg_speed ? Math.round(info.avg_speed) : 'N/A'} зн/мин\n`;
-      content += `[Лучшая скорость] ${info.best_speed || 'N/A'} зн/мин\n`;
-      content += `[Средний % ошибок] ${info.avg_error ? info.avg_error.toFixed(2) : 'N/A'}%\n`;
-      if (info.level) content += `[Уровень] ${info.level}\n`;
-      if (info.qual) content += `[Квалификация] ${info.qual}\n`;
+      content += `[Заездов] ${info.num_races || 'N/A'}`;
+      content += `[Средняя скорость] ${info.avg_speed ? Math.round(info.avg_speed) : 'N/A'} зн/мин`;
+      content += `[Лучшая скорость] ${info.best_speed || 'N/A'} зн/мин`;
+      content += `[Средний % ошибок] ${info.avg_error ? info.avg_error.toFixed(2) : 'N/A'}%`;
+
+      if (info.qual !== undefined) {
+        content += `[Квалификация] ${info.qual === 0 ? 'Нет' : 'Да'}`;
+      }
+
+      // Time spent
+      if (info.haul && info.haul.total) {
+        content += `[Общее время] ${this.formatTime(info.haul.total)}`;
+      }
+
+      if (info.haul && (info.haul.hour || info.haul.min)) {
+        const totalMinutes = (info.haul.hour || 0) * 60 + (info.haul.min || 0);
+        if (totalMinutes > 0) {
+          content += `[Время в игре] ${Math.floor(totalMinutes / 60)}ч ${totalMinutes % 60}м`;
+        }
+      }
     }
 
     return content.trim();
@@ -165,19 +219,19 @@ export class GameStatsApi {
 
     const userId = this.getUserId();
     if (!userId) {
-      return `[Game ID] ${gameId}\n[Ошибка] Не удалось получить ID пользователя`;
+      return `[Game ID] ${gameId} [Ошибка] Не удалось получить ID пользователя`;
     }
 
     const gameParams = this.parseGameParams(anchor);
     const apiUrl = this.buildApiUrl(userId, gameParams);
-    
+
     // Fetch data asynchronously
     try {
       const statsData = await this.fetchGameStats(apiUrl);
       return this.formatStats(statsData, gameId, gameParams);
     } catch (error) {
       console.error('Error getting game stats:', error);
-      return `[Game ID] ${gameId}\n[Ошибка] Ошибка загрузки статистики`;
+      return `[Game ID] ${gameId} [Ошибка] Ошибка загрузки статистики`;
     }
   }
 }

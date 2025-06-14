@@ -34,7 +34,7 @@ export function hideTooltipElement() {
         document.removeEventListener('mousemove', tooltipTrackMouse);
       }
     }, 50);
-  }, 100);
+  }, 1000000);
 }
 
 new MutationObserver(() => {
@@ -65,7 +65,7 @@ export function createCustomTooltip(element, tooltipContent) {
       clearTimeout(tooltipHideTimer);
       clearTimeout(tooltipShowTimer);
 
-      // Highlight [Action]Message pairs in the tooltip content
+      // Highlight [Action]Message pairs and headers in the tooltip content
       tooltipEl.innerHTML = highlightTooltipActions(element._tooltipContent);
       tooltipEl.style.display = 'flex';
       tooltipEl.style.opacity = '0';
@@ -120,19 +120,33 @@ export function updateTooltipContent(element, newContent) {
 }
 
 function highlightTooltipActions(str) {
-  const regex = /\[([^\]]+)\]([^\[]*)/g;
   let result = '';
-  let lastEnd = 0;
-  let match;
-  while ((match = regex.exec(str)) !== null) {
-    if (match.index > lastEnd) result += str.slice(lastEnd, match.index);
-    result += `
-    <div class="tooltip-item">
-      <span class="tooltip-action">${match[1]}</span>&nbsp;
-      <span class="tooltip-message">${match[2].trim()}</span>
-    </div>`;
-    lastEnd = regex.lastIndex;
-  }
-  if (lastEnd < str.length) result += str.slice(lastEnd);
+  const headerRegex = /(## [^[]*)/g; // Matches headers like "## 📋" or "## 🚀"
+  const actionRegex = /\[([^\]]+)\]([^\[]*)/g; // Matches [Action]Message pairs
+
+  // Split the string by headers, keeping the headers in the result
+  const parts = str.split(headerRegex);
+
+  parts.forEach(part => {
+    if (part.startsWith('## ')) {
+      // It's a header; extract the content after "## "
+      const header = part.slice(3).trim();
+      result += `<div class="tooltip-header">${header}</div>`;
+    } else {
+      // It's a section of [Action]Message pairs
+      let match;
+      actionRegex.lastIndex = 0; // Reset regex index for each part
+      while ((match = actionRegex.exec(part)) !== null) {
+        const action = match[1];
+        const message = match[2].trim();
+        result += `
+          <div class="tooltip-item">
+            <span class="tooltip-action">${action}&nbsp;</span>
+            <span class="tooltip-message">${message}</span>
+          </div>`;
+      }
+    }
+  });
+
   return result;
 }

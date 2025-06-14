@@ -476,6 +476,7 @@
   padding: 0.5em;
   z-index: 1200;
   font-size: 0.9em;
+  font-family: "Montserrat", "Noto Color Emoji", sans-serif !important;
   pointer-events: none;
   white-space: nowrap;
   opacity: 0;
@@ -493,9 +494,15 @@
     align-items: center !important;
   }
 
+  .tooltip-header {
+    font-weight: bold !important;
+    color: gold !important;
+    margin: 0.5em !important;
+  }
+
   .tooltip-action {
     font-weight: bold !important;
-    color: var(--rg-text-count) !important;
+    color: lightblue !important;
   }
 }
 
