@@ -56,7 +56,6 @@ export const DEFAULTS = {
   enableDragging: true,
   wasDragging: false,
   shouldAutoSave: true,
-  alwaysVisiblePanel: false,
   panelYPosition: 0,
   hidePanelDelay: 1000,
   shouldStart: false,
@@ -65,5 +64,17 @@ export const DEFAULTS = {
   replayDelay: 1000,
   showSearchBox: false,
   showButtonDescriptions: true,
-  showHelpTooltips: true
+  showHelpTooltips: true,
+  alwaysVisiblePanel: {
+    main: true,
+    gamelist: false,
+    profile: false,
+    chatlogs: false,
+    rating: false,
+    vocabularies: false,
+    about: false,
+    donation: false,
+    forum: false,
+    game: true 
+  }
 };

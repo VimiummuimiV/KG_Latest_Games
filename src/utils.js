@@ -20,6 +20,22 @@ export function sleep(ms) {
   return promise;
 }
 
+// Function to determine the current page based on URL pathname
+export function getCurrentPage() {
+  const pathname = window.location.pathname;
+  if (pathname === '/') return 'main';
+  if (pathname === '/gamelist/') return 'gamelist';
+  if (pathname === '/u/') return 'profile';
+  if (pathname.startsWith('/chatlogs/')) return 'chatlogs';
+  if (pathname.startsWith('/top/')) return 'rating';
+  if (pathname.startsWith('/vocs/')) return 'vocabularies';
+  if (pathname === '/about/') return 'about';
+  if (pathname === '/fuel/') return 'donation';
+  if (pathname.startsWith('/forum/')) return 'forum';
+  if (pathname === '/g/') return 'game';
+  return 'unknown';
+}
+
 export function createElement(tag, options = {}) {
   const element = document.createElement(tag);
   if (options.className) {

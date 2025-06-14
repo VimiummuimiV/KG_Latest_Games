@@ -15,7 +15,6 @@ export class SettingsManager {
       this.main.panelWidth = settings.panelWidth ?? this.main.panelWidth;
       this.main.enableDragging = settings.enableDragging ?? this.main.enableDragging;
       this.main.shouldAutoSave = settings.shouldAutoSave ?? this.main.shouldAutoSave;
-      this.main.alwaysVisiblePanel = settings.alwaysVisiblePanel ?? this.main.alwaysVisiblePanel;
       this.main.panelYPosition = settings.panelYPosition ?? this.main.panelYPosition;
       this.main.hidePanelDelay = settings.hidePanelDelay ?? this.main.hidePanelDelay;
       this.main.shouldStart = settings.shouldStart ?? this.main.shouldStart;
@@ -25,6 +24,12 @@ export class SettingsManager {
       this.main.showSearchBox = settings.showSearchBox ?? this.main.showSearchBox;
       this.main.showButtonDescriptions = settings.showButtonDescriptions ?? this.main.showButtonDescriptions;
       this.main.showHelpTooltips = settings.showHelpTooltips ?? this.main.showHelpTooltips;
+      if (settings.alwaysVisiblePanel && typeof settings.alwaysVisiblePanel === 'object') {
+        this.main.alwaysVisiblePanel = {
+          ...this.main.alwaysVisiblePanel,
+          ...settings.alwaysVisiblePanel
+        };
+      }
 
     } catch (error) {
       console.warn('Could not load settings from localStorage:', error);
@@ -42,7 +47,6 @@ export class SettingsManager {
         panelWidth: this.main.panelWidth,
         enableDragging: this.main.enableDragging,
         shouldAutoSave: this.main.shouldAutoSave,
-        alwaysVisiblePanel: this.main.alwaysVisiblePanel,
         panelYPosition: this.main.panelYPosition,
         hidePanelDelay: this.main.hidePanelDelay,
         shouldStart: this.main.shouldStart,
@@ -51,7 +55,8 @@ export class SettingsManager {
         replayDelay: this.main.replayDelay,
         showSearchBox: this.main.showSearchBox,
         showButtonDescriptions: this.main.showButtonDescriptions,
-        showHelpTooltips: this.main.showHelpTooltips
+        showHelpTooltips: this.main.showHelpTooltips,
+        alwaysVisiblePanel: this.main.alwaysVisiblePanel
       };
 
       localStorage.setItem('latestGamesSettings', JSON.stringify(settings));

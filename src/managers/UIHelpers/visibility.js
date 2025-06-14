@@ -1,4 +1,4 @@
-import { createElement } from '../../utils.js';
+import { createElement, getCurrentPage } from '../../utils.js';
 
 export function createHoverArea(main) {
   const hoverArea = createElement('div', { id: 'latest-games-hover-area' });
@@ -23,7 +23,11 @@ export function showContainer(main) {
 }
 
 export function hideContainer(main) {
-  if (main.alwaysVisiblePanel) return;
+  const currentPage = getCurrentPage();
+  const isAlwaysVisible = main.alwaysVisiblePanel[currentPage] ?? false;
+  
+  if (isAlwaysVisible) return;
+  
   main.isHovered = false;
   if (main.hoverTimeout) clearTimeout(main.hoverTimeout);
   main.hoverTimeout = setTimeout(() => {
