@@ -1,0 +1,36 @@
+%sleep-indicator-base {
+  position: absolute;
+  top: 50px;
+  right: 5px;
+  z-index: 3000;
+  transition: 0.2s ease-in-out;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.5em;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  padding: 8px 12px;
+  min-width: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: default;
+  user-select: none;
+  pointer-events: none;
+  border-radius: 0.2em !important;
+}
+
+// Start sleep indicator
+.sleep-start-indicator {
+  @extend %sleep-indicator-base;
+  color: hsl(88, 50%, 55%);
+  background-color: hsl(88, 40%, 20%);
+  border: 1px solid hsl(88, 45%, 35%);
+}
+
+// Replay sleep indicator  
+.sleep-replay-indicator {
+  @extend %sleep-indicator-base;
+  color: hsl(208, 50%, 70%);
+  background-color: hsl(208, 40%, 25%);
+  border: 1px solid hsl(208, 45%, 50%);
+}

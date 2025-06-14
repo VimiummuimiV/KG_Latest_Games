@@ -2,6 +2,7 @@
 @use "themes/lightTheme" as light;
 @use "themes/darkTheme" as dark;
 @use "search";
+@use "timer";
 @use "mixins" as *;
 
 :root {

@@ -6,8 +6,69 @@ import { sleep, generateRandomId } from '../utils.js';
 export class PageHandler {
   constructor(main) {
     this.main = main;
+    // Initialize sleep indicators and timers
     this.replaySleep = null;
+    this.startSleep = null;
+    // Create indicators for start and replay actions
+    this.startIndicator = null;
+    this.replayIndicator = null;
+    // Initialize timers for start and replay actions
+    this.startTimer = null;
+    this.replayTimer = null;
+    // Flag to track if hovering over latest games container
     this.isHoveringLatestGames = false;
+  }
+
+  createSleepIndicator(type, totalMs) {
+    const indicator = document.createElement('div');
+    indicator.className = type === 'start' ? 'sleep-start-indicator' : 'sleep-replay-indicator';
+    document.body.appendChild(indicator);
+    
+    let remainingMs = totalMs;
+    const startTime = Date.now();
+    
+    const updateTimer = () => {
+      const elapsed = Date.now() - startTime;
+      remainingMs = Math.max(0, totalMs - elapsed);
+      
+      const seconds = Math.floor(remainingMs / 1000);
+      const milliseconds = Math.floor((remainingMs % 1000) / 10); // Show 2 decimal places
+      indicator.textContent = `${seconds.toString().padStart(2, '0')}:${milliseconds.toString().padStart(2, '0')}`;
+      
+      if (remainingMs > 0) {
+        const timerId = requestAnimationFrame(updateTimer);
+        if (type === 'start') {
+          this.startTimer = timerId;
+        } else {
+          this.replayTimer = timerId;
+        }
+      }
+    };
+    
+    updateTimer();
+    return indicator;
+  }
+
+  removeSleepIndicator(type) {
+    if (type === 'start') {
+      if (this.startTimer) {
+        cancelAnimationFrame(this.startTimer);
+        this.startTimer = null;
+      }
+      if (this.startIndicator) {
+        this.startIndicator.remove();
+        this.startIndicator = null;
+      }
+    } else if (type === 'replay') {
+      if (this.replayTimer) {
+        cancelAnimationFrame(this.replayTimer);
+        this.replayTimer = null;
+      }
+      if (this.replayIndicator) {
+        this.replayIndicator.remove();
+        this.replayIndicator = null;
+      }
+    }
   }
 
   handlePageSpecificLogic() {
@@ -48,16 +109,17 @@ export class PageHandler {
     if (latestGamesContainer) {
       latestGamesContainer.addEventListener('mouseenter', () => {
         this.isHoveringLatestGames = true;
-        // Cancel any pending replay sleep
-        if (this.replaySleep) {
+        // Cancel any pending replay sleep and reset to 0
+        if (this.replaySleep && typeof this.replaySleep.cancel === 'function') {
           this.replaySleep.cancel();
           this.replaySleep = null;
+          this.removeSleepIndicator('replay');
         }
       });
 
       latestGamesContainer.addEventListener('mouseleave', () => {
         this.isHoveringLatestGames = false;
-        // Restart replay logic if the game is finished
+        // Restart replay logic if the game is finished (with full delay)
         this.handleGameActions();
       });
     }
@@ -99,12 +161,22 @@ export class PageHandler {
       const pausedElement = document.querySelector('#status-inner #paused');
       if (pausedElement && pausedElement.style.display !== 'none') {
         if (typeof game !== 'undefined' && game.hostStart) {
-          sleep(this.main.startDelay).then(() => {
+          // Remove existing start indicator if any
+          this.removeSleepIndicator('start');
+          
+          this.startIndicator = this.createSleepIndicator('start', this.main.startDelay);
+          this.startSleep = sleep(this.main.startDelay);
+          this.startSleep.then(() => {
+            this.removeSleepIndicator('start');
             game.hostStart();
+          }).catch(() => {
+            this.removeSleepIndicator('start');
+            this.startSleep = null;
           });
         }
       }
     }
+    
     // Handle auto-replay
     if (this.main.shouldReplay) {
       const finishedElement = document.querySelector('#status-inner #finished');
@@ -115,10 +187,17 @@ export class PageHandler {
 
           // Only start replay timer if not hovering over latest games container
           if (!this.isHoveringLatestGames) {
-            this.replaySleep = sleep(this.main.replayDelay).then(() => {
+            // Remove existing replay indicator if any
+            this.removeSleepIndicator('replay');
+            
+            this.replayIndicator = this.createSleepIndicator('replay', this.main.replayDelay);
+            this.replaySleep = sleep(this.main.replayDelay);
+            this.replaySleep.then(() => {
+              this.removeSleepIndicator('replay');
               window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
             }).catch(() => {
               // Promise was cancelled, just clean up
+              this.removeSleepIndicator('replay');
               this.replaySleep = null;
             });
           }
