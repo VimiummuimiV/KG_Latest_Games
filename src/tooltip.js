@@ -34,7 +34,7 @@ export function hideTooltipElement() {
         document.removeEventListener('mousemove', tooltipTrackMouse);
       }
     }, 50);
-  }, 1000000);
+  }, 100);
 }
 
 new MutationObserver(() => {
@@ -121,28 +121,38 @@ export function updateTooltipContent(element, newContent) {
 
 function highlightTooltipActions(str) {
   let result = '';
-  const headerRegex = /(## [^[]*)/g; // Matches headers like "## 📋" or "## 🚀"
+  const headerRegex = /(## [^[]*)/g;          // Matches headers like "## 📋"
   const actionRegex = /\[([^\]]+)\]([^\[]*)/g; // Matches [Action]Message pairs
 
-  // Split the string by headers, keeping the headers in the result
+  // Split on headers, keep headers in the array
   const parts = str.split(headerRegex);
 
   parts.forEach(part => {
     if (part.startsWith('## ')) {
-      // It's a header; extract the content after "## "
+      // Header
       const header = part.slice(3).trim();
       result += `<div class="tooltip-header">${header}</div>`;
     } else {
-      // It's a section of [Action]Message pairs
-      let match;
-      actionRegex.lastIndex = 0; // Reset regex index for each part
-      while ((match = actionRegex.exec(part)) !== null) {
-        const action = match[1];
-        const message = match[2].trim();
+      // Try to pull out any [Action]Message pairs
+      actionRegex.lastIndex = 0;
+      const matches = [...part.matchAll(actionRegex)];
+
+      if (matches.length) {
+        // Emit each pair
+        matches.forEach(match => {
+          const action = match[1];
+          const message = match[2].trim();
+          result += `
+            <div class="tooltip-item">
+              <span class="tooltip-action">${action}&nbsp;</span>
+              <span class="tooltip-message">${message}</span>
+            </div>`;
+        });
+      } else if (part.trim()) {
+        // No pairs: emit the raw text as a single message
         result += `
           <div class="tooltip-item">
-            <span class="tooltip-action">${action}&nbsp;</span>
-            <span class="tooltip-message">${message}</span>
+            <span class="tooltip-message">${part.trim()}</span>
           </div>`;
       }
     }
@@ -150,3 +160,5 @@ function highlightTooltipActions(str) {
 
   return result;
 }
+
+

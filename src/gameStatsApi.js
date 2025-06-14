@@ -151,7 +151,7 @@ export class GameStatsApi {
    */
   formatStats(statsData, gameId, gameParams) {
     if (!statsData || !statsData.ok) {
-      return `[Данные отсутствуют]`;
+      return `Данные отсутствуют`;
     }
 
     const { gametype, info } = statsData;
