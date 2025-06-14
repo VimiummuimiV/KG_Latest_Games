@@ -1,5 +1,5 @@
 import { createElement } from '../../utils.js';
-import { createCustomTooltip } from '../../tooltip.js';
+import { createCustomTooltip, refreshTooltipSettings } from '../../tooltip.js';
 import { icons } from '../../icons.js';
 import { toggleSearchBox } from './search.js';
 
@@ -12,6 +12,8 @@ export function createControls(main) {
 
   // Create the options section with buttons to adjust game count
   const options = createElement('span', { id: 'latest-games-options' });
+  controlsLimiter.appendChild(options);
+
   const decreaseBtn = createElement('span', {
     id: 'latest-games-count-dec',
     className: 'control-button',
@@ -258,12 +260,30 @@ export function createControls(main) {
     }, 0);
   };
 
-  controlsLimiter.appendChild(options);
-  controlsButtons.append(
-    main.themeManager.createThemeToggle(),
-    main.viewManager.createDisplayModeToggle(),
-    playBtn, replayBtn, pinAllBtn, unpinAllBtn, sortBtn, importBtn, exportBtn, removeAllBtn, removeUnpinnedBtn, dragToggleBtn, descToggleBtn
-  );
+  // Toggle for help tooltips
+  const helpToggleBtn = createElement('span', {
+    className: 'latest-games-help-toggle control-button' + (main.showHelpTooltips ? '' : ' latest-games-disabled'),
+    innerHTML: icons.help
+  });
+  const updateHelpTooltip = () => {
+    createCustomTooltip(
+      helpToggleBtn,
+      main.showHelpTooltips
+        ? 'Скрыть подсказки'
+        : 'Показать подсказки',
+      'help'
+    );
+    helpToggleBtn.classList.toggle('latest-games-disabled', !main.showHelpTooltips);
+  }
+  updateHelpTooltip();
+  helpToggleBtn.addEventListener('click', () => {
+    refreshTooltipSettings();
+    main.showHelpTooltips = !main.showHelpTooltips;
+    main.settingsManager.saveSettings();
+    updateHelpTooltip();
+    // Refresh the container to update tooltips
+    main.uiManager.refreshContainer();
+  });
 
   const searchBtn = createElement('span', {
     className: 'latest-games-search-btn control-button' + (main.showSearchBox ? '' : ' latest-games-disabled'),
@@ -283,7 +303,12 @@ export function createControls(main) {
     toggleSearchBox(main);
     updateSearchTooltip();
   });
-  controlsButtons.appendChild(searchBtn);
+
+  controlsButtons.append(
+    main.themeManager.createThemeToggle(),
+    main.viewManager.createDisplayModeToggle(),
+    playBtn, replayBtn, pinAllBtn, unpinAllBtn, sortBtn, importBtn, exportBtn, removeAllBtn, removeUnpinnedBtn, dragToggleBtn, descToggleBtn, helpToggleBtn, searchBtn
+  );
 
   return controlsContainer;
 }

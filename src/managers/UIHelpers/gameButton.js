@@ -95,17 +95,17 @@ export function createGameElement(main, game, id) {
   link.addEventListener('mouseover', async (e) => {
     if (e.shiftKey) {
       // Set loading content immediately
-      updateTooltipContent(link, '[Loading] Загрузка статистики...');
+      updateTooltipContent(link, '[Loading] Загрузка статистики...', 'stats');
       try {
         const statsContent = await gameStatsApi.getGameStats(link);
-        updateTooltipContent(link, statsContent);
+        updateTooltipContent(link, statsContent, 'stats');
       } catch (error) {
         console.error('Error loading game stats:', error);
-        updateTooltipContent(link, '[Ошибка] Не удалось загрузить статистику');
+        updateTooltipContent(link, '[Ошибка] Не удалось загрузить статистику', 'stats');
       }
     } else {
       // Set default content
-      updateTooltipContent(link, defaultTooltipContent);
+      updateTooltipContent(link, defaultTooltipContent, 'info');
     }
   });
 

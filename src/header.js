@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          KG_Latest_Games
 // @namespace     klavogonki
-// @version      1.3.3
+// @version      1.3.4
 // @description   Fast game creation buttons on all the pages
 // @match         *://klavogonki.ru/*
 // @author        Patcher
