@@ -6,11 +6,15 @@ import { sleep, generateRandomId } from '../utils.js';
 export class PageHandler {
   constructor(main) {
     this.main = main;
+    this.replaySleep = null;
+    this.isHoveringLatestGames = false;
   }
 
   handlePageSpecificLogic() {
     const { href } = location;
     if (/https?:\/\/klavogonki\.ru\/g\/\?gmid=/.test(href)) {
+      this.setupHoverListeners();
+
       const observer = new MutationObserver(() => {
         const gameDescription = document.querySelector('#gamedesc');
         if (gameDescription && gameDescription.textContent) {
@@ -36,6 +40,26 @@ export class PageHandler {
       highlightExistingVocabularies(this.main.groupsManager.groups);
       attachVocabularyCreation(this.main.groupsManager.groups, this.main);
       attachVocabularyParser();
+    }
+  }
+
+  setupHoverListeners() {
+    const latestGamesContainer = document.getElementById('latest-games-container');
+    if (latestGamesContainer) {
+      latestGamesContainer.addEventListener('mouseenter', () => {
+        this.isHoveringLatestGames = true;
+        // Cancel any pending replay sleep
+        if (this.replaySleep) {
+          this.replaySleep.cancel();
+          this.replaySleep = null;
+        }
+      });
+
+      latestGamesContainer.addEventListener('mouseleave', () => {
+        this.isHoveringLatestGames = false;
+        // Restart replay logic if the game is finished
+        this.handleGameActions();
+      });
     }
   }
 
@@ -88,9 +112,16 @@ export class PageHandler {
         const gameIdMatch = location.href.match(/gmid=(\d+)/);
         if (gameIdMatch) {
           const gameId = gameIdMatch[1];
-          sleep(this.main.replayDelay).then(() => {
-            window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
-          });
+
+          // Only start replay timer if not hovering over latest games container
+          if (!this.isHoveringLatestGames) {
+            this.replaySleep = sleep(this.main.replayDelay).then(() => {
+              window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
+            }).catch(() => {
+              // Promise was cancelled, just clean up
+              this.replaySleep = null;
+            });
+          }
         }
       }
     }
