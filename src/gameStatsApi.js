@@ -77,8 +77,7 @@ export class GameStatsApi {
       params.append('gametype', 'normal');
     }
 
-    const finalUrl = `${baseUrl}?${params.toString()}`;
-    return finalUrl;
+    return `${baseUrl}?${params.toString()}`;
   }
 
   /**
@@ -116,10 +115,10 @@ export class GameStatsApi {
    * @returns {string} Formatted time
    */
   formatTime(seconds) {
-    if (!seconds || seconds === 0) return 'N/A';
+    if (!seconds) return 'N/A';
     const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    const secs = seconds % 60;
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
   }
 
   /**
@@ -157,7 +156,7 @@ export class GameStatsApi {
     const { gametype, info } = statsData;
     let content = '';
 
-    content += '## 📋 Информация'; // Vocabulary info separator
+    content += '## 📋 Информация';
 
     // Game type information
     if (gametype) {
@@ -171,28 +170,28 @@ export class GameStatsApi {
       if (gametype.rows) content += `[Строк] ${gametype.rows.toLocaleString()}`;
     }
 
-    content += '## 🚀 Статистика'; // Performance stats separator
+    content += '## 🚀 Статистика';
 
     // User performance information
     if (info) {
-      content += `[Заездов] ${info.num_races || 'N/A'}`;
-      content += `[Средняя скорость] ${info.avg_speed ? Math.round(info.avg_speed) : 'N/A'} зн/мин`;
-      content += `[Лучшая скорость] ${info.best_speed || 'N/A'} зн/мин`;
-      content += `[Средний % ошибок] ${info.avg_error ? info.avg_error.toFixed(2) : 'N/A'}%`;
+      if (info.num_races) content += `[Заездов] ${info.num_races}`;
+      if (info.avg_speed) content += `[Средняя скорость] ${Math.round(info.avg_speed)} зн/мин`;
+      if (info.best_speed) content += `[Лучшая скорость] ${info.best_speed} зн/мин`;
+      if (info.avg_error !== undefined) content += `[Средний % ошибок] ${info.avg_error.toFixed(2)}%`;
+      if (info.qual !== undefined) content += `[Квалификация] ${info.qual === 0 ? 'Нет' : 'Да'}`;
 
-      if (info.qual !== undefined) {
-        content += `[Квалификация] ${info.qual === 0 ? 'Нет' : 'Да'}`;
-      }
-
-      // Time spent
+      // Total time (seconds)
       if (info.haul && info.haul.total) {
         content += `[Общее время] ${this.formatTime(info.haul.total)}`;
       }
 
-      if (info.haul && (info.haul.hour || info.haul.min)) {
-        const totalMinutes = (info.haul.hour || 0) * 60 + (info.haul.min || 0);
-        if (totalMinutes > 0) {
-          content += `[Время в игре] ${Math.floor(totalMinutes / 60)}ч ${totalMinutes % 60}м`;
+      // Time breakdown (hours/minutes)
+      if (info.haul) {
+        const parts = [];
+        if (info.haul.hour) parts.push(`${info.haul.hour}ч`);
+        if (info.haul.min) parts.push(`${info.haul.min}м`);
+        if (parts.length) {
+          content += `[Время в игре] ${parts.join(' ')}`;
         }
       }
     }
