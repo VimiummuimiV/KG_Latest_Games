@@ -1,3 +1,11 @@
+export const popupIcons = {
+  day: '☀️',
+  week: '📅',
+  general: '📋',
+  history: '📜',
+  comments: '💬'
+};
+
 export const gameTypes = {
   normal: 'Oбычный',
   abra: 'Абракадабра',

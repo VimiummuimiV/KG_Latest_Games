@@ -57,23 +57,25 @@ export function createGameElement(main, game, id) {
     }
   });
 
-  // Add vocabulary link button first for voc type games
-  if (game.params.gametype === 'voc' && game.params.vocId) {
-    const vocButton = createElement('div', {
-      className: 'latest-game-info',
-      innerHTML: icons.info
-    });
-    createCustomTooltip(vocButton, 'Показать информацию о словаре');
-    vocButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      createGameInfoPopup(e, game);
-    });
-    gameActionButtons.appendChild(vocButton);
-  }
-
-  gameActionButtons.appendChild(pinButton);
-  gameActionButtons.appendChild(deleteButton);
+  // Add info button for all game types
+  const infoButton = createElement('div', {
+    className: 'latest-game-info',
+    innerHTML: icons.info
+  });
+  
+  const tooltipText = game.params.gametype === 'voc' && game.params.vocId
+    ? 'Показать информацию о словаре'
+    : 'Показать информацию об игре';
+    
+  createCustomTooltip(infoButton, tooltipText);
+  
+  infoButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    createGameInfoPopup(e, game);
+  });
+  
+  gameActionButtons.append(infoButton, pinButton, deleteButton);
 
   const link = createElement('a', {
     href: main.gamesManager.generateGameLink(game),
