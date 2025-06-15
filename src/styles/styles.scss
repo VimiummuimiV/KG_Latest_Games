@@ -428,6 +428,12 @@
       align-items: center;
       margin: 0 0 10px 10px;
     }
+
+    .group-tab.previous-game-group {
+      color: var(--rg-gametype-chars) !important;
+      background-color: var(--rg-bg-card-pinned-chars) !important;
+      border: 2px solid var(--rg-border-pinned-chars) !important;
+    }
   }
 }
 
