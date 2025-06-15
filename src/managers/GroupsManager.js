@@ -142,6 +142,20 @@ export class GroupsManager {
     return header;
   }
 
+  // Helper to create a group tab element
+  createGroupTab(group) {
+    const isActive = group.id === this.currentGroupId;
+    const previousGameId = this.main.gamesManager.latestGamesData?.previousGameId;
+    const hasPreviousGame = group.games.some(game => game.id === previousGameId);
+    const tab = createElement('span', {
+      className: `group-tab${isActive ? ' active' : ''}${hasPreviousGame && !isActive ? ' previous-game-group' : ''}`,
+      textContent: group.title,
+      dataset: { groupId: group.id }
+    });
+    tab.addEventListener('click', () => this.selectGroup(group.id));
+    return tab;
+  }
+
   // Create the entire groups container with controls and tabs
   createGroupsContainer() {
     const groupsContainer = createElement('div', { id: 'latest-games-groups' });
@@ -206,17 +220,7 @@ export class GroupsManager {
     // Create tabs-container for group tabs only
     const tabsContainer = createElement('div', { className: 'tabs-container' });
     this.groups.forEach(group => {
-      const isActive = group.id === this.currentGroupId;
-      const previousGameId = this.main.gamesManager.latestGamesData?.previousGameId;
-      const hasPreviousGame = group.games.some(game => game.id === previousGameId);
-      const tab = createElement('span', {
-        className: `group-tab${isActive ? ' active' : ''}${hasPreviousGame && !isActive ? ' previous-game-group' : ''}`,
-        textContent: group.title,
-        dataset: { groupId: group.id }
-      });
-      tab.addEventListener('click', () => {
-        this.selectGroup(group.id);
-      });
+      const tab = this.createGroupTab(group);
       tabsContainer.appendChild(tab);
     });
 
@@ -312,15 +316,7 @@ export class GroupsManager {
         if (this.groupViewMode === 'tabs') {
           // Populate tabs and show tabs-container
           this.groups.forEach(group => {
-            const isActive = group.id === this.currentGroupId;
-            const previousGameId = this.main.gamesManager.latestGamesData?.previousGameId;
-            const hasPreviousGame = group.games.some(game => game.id === previousGameId);
-            const tab = createElement('span', {
-              className: `group-tab${isActive ? ' active' : ''}${hasPreviousGame && !isActive ? ' previous-game-group' : ''}`,
-              textContent: group.title,
-              dataset: { groupId: group.id }
-            });
-            tab.addEventListener('click', () => this.selectGroup(group.id));
+            const tab = this.createGroupTab(group);
             tabsContainer.appendChild(tab);
           });
           tabsContainer.classList.remove('latest-games-hidden');
