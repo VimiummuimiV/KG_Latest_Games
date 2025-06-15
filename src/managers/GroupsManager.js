@@ -206,8 +206,11 @@ export class GroupsManager {
     // Create tabs-container for group tabs only
     const tabsContainer = createElement('div', { className: 'tabs-container' });
     this.groups.forEach(group => {
+      const isActive = group.id === this.currentGroupId;
+      const previousGameId = this.main.gamesManager.latestGamesData?.previousGameId;
+      const hasPreviousGame = group.games.some(game => game.id === previousGameId);
       const tab = createElement('span', {
-        className: `group-tab ${group.id === this.currentGroupId ? 'active' : ''}`,
+        className: `group-tab${isActive ? ' active' : ''}${hasPreviousGame && !isActive ? ' previous-game-group' : ''}`,
         textContent: group.title,
         dataset: { groupId: group.id }
       });
@@ -309,8 +312,11 @@ export class GroupsManager {
         if (this.groupViewMode === 'tabs') {
           // Populate tabs and show tabs-container
           this.groups.forEach(group => {
+            const isActive = group.id === this.currentGroupId;
+            const previousGameId = this.main.gamesManager.latestGamesData?.previousGameId;
+            const hasPreviousGame = group.games.some(game => game.id === previousGameId);
             const tab = createElement('span', {
-              className: `group-tab ${group.id === this.currentGroupId ? 'active' : ''}`,
+              className: `group-tab${isActive ? ' active' : ''}${hasPreviousGame && !isActive ? ' previous-game-group' : ''}`,
               textContent: group.title,
               dataset: { groupId: group.id }
             });
