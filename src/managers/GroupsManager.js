@@ -131,32 +131,32 @@ export class GroupsManager {
 
   // Create group header (used in unified view)
   createGroupHeader(group) {
-    const isActive = group.id === this.currentGroupId;
-    const previousGameId = this.main.gamesManager.latestGamesData?.previousGameId;
-    const hasPreviousGame = group.games.some(game => game.id === previousGameId);
     const header = createElement('div', {
-      className: `group-header${isActive ? ' active' : ''}${hasPreviousGame && !isActive ? ' previous-game-group' : ''}`,
+      className: this.getGroupClass(group, 'group-header'),
       textContent: group.title,
       dataset: { groupId: group.id }
     });
-    header.addEventListener('click', () => {
-      this.selectGroup(group.id);
-    });
+    header.addEventListener('click', () => this.selectGroup(group.id));
     return header;
   }
 
   // Helper to create a group tab element
   createGroupTab(group) {
-    const isActive = group.id === this.currentGroupId;
-    const previousGameId = this.main.gamesManager.latestGamesData?.previousGameId;
-    const hasPreviousGame = group.games.some(game => game.id === previousGameId);
     const tab = createElement('span', {
-      className: `group-tab${isActive ? ' active' : ''}${hasPreviousGame && !isActive ? ' previous-game-group' : ''}`,
+      className: this.getGroupClass(group, 'group-tab'),
       textContent: group.title,
       dataset: { groupId: group.id }
     });
     tab.addEventListener('click', () => this.selectGroup(group.id));
     return tab;
+  }
+
+  // Helper to get group class string for tab/header
+  getGroupClass(group, baseClass = '') {
+    const isActive = group.id === this.currentGroupId;
+    const previousGameId = this.main.gamesManager.latestGamesData?.previousGameId;
+    const hasPreviousGame = group.games.some(game => game.id === previousGameId);
+    return `${baseClass}${isActive ? ' active' : ''}${hasPreviousGame && !isActive ? ' previous-game-group' : ''}`.trim();
   }
 
   // Create the entire groups container with controls and tabs
