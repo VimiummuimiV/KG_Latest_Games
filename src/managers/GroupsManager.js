@@ -131,8 +131,11 @@ export class GroupsManager {
 
   // Create group header (used in unified view)
   createGroupHeader(group) {
+    const isActive = group.id === this.currentGroupId;
+    const previousGameId = this.main.gamesManager.latestGamesData?.previousGameId;
+    const hasPreviousGame = group.games.some(game => game.id === previousGameId);
     const header = createElement('div', {
-      className: `group-header ${group.id === this.currentGroupId ? 'active' : ''}`,
+      className: `group-header${isActive ? ' active' : ''}${hasPreviousGame && !isActive ? ' previous-game-group' : ''}`,
       textContent: group.title,
       dataset: { groupId: group.id }
     });
