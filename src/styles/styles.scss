@@ -307,11 +307,12 @@
 
     .controls-buttons {
       gap: 2px;
-    }
-
-    .controls-buttons {
       display: flex;
       flex-wrap: wrap;
+
+      .latest-games-replay.replay-next-game svg {
+        stroke: var(--rg-enabled) !important;
+      }
     }
   }
 
@@ -330,7 +331,7 @@
     font-size: 14px;
     min-width: 18px;
     text-align: center;
-    color: var(--rg-text-count);
+    color: var(--rg-enabled);
     cursor: pointer;
   }
 
@@ -575,11 +576,20 @@
   display: none !important;
 }
 
-
 @keyframes tilt-n-move-shaking {
-  0% { transform: translate(0, 0) rotate(0deg); }
-  25% { transform: translate(4px, 0) rotate(2deg); }
-  50% { transform: translate(0, 0) rotate(0eg); }
-  75% { transform: translate(-4px, 0) rotate(-2deg); }
-  100% { transform: translate(0, 0) rotate(0deg); }
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(4px, 0) rotate(2deg);
+  }
+  50% {
+    transform: translate(0, 0) rotate(0eg);
+  }
+  75% {
+    transform: translate(-4px, 0) rotate(-2deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
 }

@@ -23,18 +23,18 @@ export class PageHandler {
     const indicator = document.createElement('div');
     indicator.className = type === 'start' ? 'sleep-start-indicator' : 'sleep-replay-indicator';
     document.body.appendChild(indicator);
-    
+
     let remainingMs = totalMs;
     const startTime = Date.now();
-    
+
     const updateTimer = () => {
       const elapsed = Date.now() - startTime;
       remainingMs = Math.max(0, totalMs - elapsed);
-      
+
       const seconds = Math.floor(remainingMs / 1000);
       const milliseconds = Math.floor((remainingMs % 1000) / 10); // Show 2 decimal places
       indicator.textContent = `${seconds.toString().padStart(2, '0')}:${milliseconds.toString().padStart(2, '0')}`;
-      
+
       if (remainingMs > 0) {
         const timerId = requestAnimationFrame(updateTimer);
         if (type === 'start') {
@@ -44,7 +44,7 @@ export class PageHandler {
         }
       }
     };
-    
+
     updateTimer();
     return indicator;
   }
@@ -169,7 +169,7 @@ export class PageHandler {
         if (typeof game !== 'undefined' && game.hostStart) {
           // Remove existing start indicator if any
           this.removeSleepIndicator('start');
-          
+
           this.startIndicator = this.createSleepIndicator('start', this.main.startDelay);
           this.startSleep = sleep(this.main.startDelay);
           this.startSleep.then(() => {
@@ -182,6 +182,32 @@ export class PageHandler {
         }
       }
     }
+  }
+
+  // Create and start the next game from the current group
+  replayNextGame() {
+    const groupsManager = this.main.groupsManager; // Access the groups manager from main
+    const gamesManager = this.main.gamesManager; // Access the games manager from main
+    const currentGroup = groupsManager.getCurrentGroup(groupsManager.groups, groupsManager.currentGroupId);
+    // Ensure currentGroup is valid and has games
+    if (!currentGroup || !Array.isArray(currentGroup.games) || currentGroup.games.length === 0) return;
+    // Find the next game based on the previousGameId
+    const prevGameId = gamesManager.latestGamesData?.previousGameId;
+    // If no previousGameId, start from the first game
+    let idx = currentGroup.games.findIndex(g => g.id === prevGameId);
+    // If latest game already played set idx to first game
+    if (idx === -1) idx = 0;
+    // If idx is the last game, loop to the first game
+    else idx = (idx + 1) % currentGroup.games.length;
+    // Ensure the next game exists
+    const nextGame = currentGroup.games[idx];
+    if (!nextGame) return;
+    // Update latestGamesData with the next game ID
+    gamesManager.latestGamesData.previousGameId = nextGame.id;
+    gamesManager.saveGameData();
+    // Create new race (not replay)
+    const url = gamesManager.generateGameLink(nextGame);
+    window.location.href = url;
   }
 
   handleReplayAction() {
@@ -197,12 +223,16 @@ export class PageHandler {
           if (!this.isHoveringLatestGames) {
             // Remove existing replay indicator if any
             this.removeSleepIndicator('replay');
-            
+
             this.replayIndicator = this.createSleepIndicator('replay', this.main.replayDelay);
             this.replaySleep = sleep(this.main.replayDelay);
             this.replaySleep.then(() => {
               this.removeSleepIndicator('replay');
-              window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
+              if (this.main.replayNextGame) {
+                this.replayNextGame();
+              } else {
+                window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
+              }
             }).catch(() => {
               // Promise was cancelled, just clean up
               this.removeSleepIndicator('replay');

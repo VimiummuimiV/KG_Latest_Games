@@ -20,6 +20,7 @@ export class SettingsManager {
       this.main.startDelay = settings.startDelay ?? this.main.startDelay;
       this.main.shouldReplay = settings.shouldReplay ?? this.main.shouldReplay;
       this.main.replayDelay = settings.replayDelay ?? this.main.replayDelay;
+      this.main.replayNextGame = settings.replayNextGame ?? this.main.replayNextGame;
       this.main.showSearchBox = settings.showSearchBox ?? this.main.showSearchBox;
       this.main.showButtonDescriptions = settings.showButtonDescriptions ?? this.main.showButtonDescriptions;
       this.main.showHelpTooltips = settings.showHelpTooltips ?? this.main.showHelpTooltips;
@@ -61,6 +62,7 @@ export class SettingsManager {
         startDelay: this.main.startDelay,
         shouldReplay: this.main.shouldReplay,
         replayDelay: this.main.replayDelay,
+        replayNextGame: this.main.replayNextGame,
         showSearchBox: this.main.showSearchBox,
         showButtonDescriptions: this.main.showButtonDescriptions,
         showHelpTooltips: this.main.showHelpTooltips,

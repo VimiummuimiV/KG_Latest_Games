@@ -66,6 +66,12 @@ export function createControls(main) {
     updateTooltip(button, isInitiallyEnabled, enabledText, disabledText, context[delayProperty], delayText);
 
     button.onclick = (e) => {
+      if (e.ctrlKey && button === replayBtn) {
+        main.replayNextGame = !main.replayNextGame;
+        main.settingsManager.saveSettings();
+        button.classList.toggle('replay-next-game', main.replayNextGame);
+        return;
+      }
       if (e.shiftKey) {
         const newDelay = prompt(delayPromptText, "");
         if (newDelay !== null) {
@@ -156,7 +162,7 @@ export function createControls(main) {
 
   // Add button to toggle replay in game
   const replayBtn = createElement('span', {
-    className: 'latest-games-replay control-button',
+    className: 'latest-games-replay control-button' + (main.replayNextGame ? ' replay-next-game' : ''),
     innerHTML: icons.replay
   });
   setupControlButton(replayBtn, main, 'shouldReplay', 'replayDelay', {
