@@ -1,4 +1,4 @@
-import { generateRandomId } from './utils.js';
+import { generateUniqueId } from './utils.js';
 import { highlightExistingVocabularies } from './vocabularyChecker.js';
 import { createPopup } from './menuPopup.js';
 import { hideTooltip } from './vocabularyParser.js';
@@ -33,7 +33,7 @@ export function showVocabularyCreationPopup(groups, event, vocId, vocName, main)
         if (!alreadyExists) {
           // Create a new game object with default parameters
           const newGame = {
-            id: generateRandomId(),
+            id: generateUniqueId(groups),
             params: {
               gametype: 'voc',
               vocName: vocName,

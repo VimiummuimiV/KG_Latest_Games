@@ -1,4 +1,4 @@
-import { createElement, generateRandomId } from '../utils.js';
+import { createElement, generateUniqueId } from '../utils.js';
 import { gameTypes, visibilities, ranks, ranksMap } from '../definitions.js';
 import { icons } from '../icons.js';
 export class GamesManager {
@@ -140,7 +140,8 @@ export class GamesManager {
       if (data) {
         data = JSON.parse(data);
         if (Array.isArray(data)) {
-          const groups = [{ id: generateRandomId(), title: 'Группа-1', games: data }];
+          const groupId = generateUniqueId(data);
+          const groups = [{ id: groupId, title: 'Группа-1', games: data }];
           const currentGroupId = groups[0].id;
           this.mainManager.groupsManager.setGroups(groups, currentGroupId);
           this.latestGamesData = {};
@@ -200,10 +201,7 @@ export class GamesManager {
       group.games = group.games.map(game => {
         // Only assign a new id if missing or invalid
         if (!game.id || game.id === -1) {
-          let newId;
-          do {
-            newId = generateRandomId();
-          } while (allGameIds.has(newId));
+          const newId = generateUniqueId(this.mainManager.groupsManager.groups);
           allGameIds.add(newId);
           return { ...game, id: newId };
         } else {

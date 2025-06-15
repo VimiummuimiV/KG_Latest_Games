@@ -1,5 +1,5 @@
 import { icons } from '../icons.js';
-import { createElement, generateRandomId } from '../utils.js';
+import { createElement, generateUniqueId } from '../utils.js';
 import { createCustomTooltip } from '../tooltip.js';
 
 export class GroupsManager {
@@ -8,15 +8,6 @@ export class GroupsManager {
     this.groups = [];
     this.currentGroupId = null;
     this.groupViewMode = 'tabs';
-  }
-
-  // Generate unique group ID
-  generateUniqueGroupId() {
-    let id;
-    do {
-      id = generateRandomId();
-    } while (this.groups.some(group => group.id === id));
-    return id;
   }
 
   createGroup(title) {
@@ -32,7 +23,7 @@ export class GroupsManager {
       groupTitle = candidate;
     }
     return {
-      id: this.generateUniqueGroupId(),
+      id: generateUniqueId(this.groups),
       title: groupTitle,
       games: []
     };

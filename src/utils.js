@@ -1,7 +1,19 @@
-export function generateRandomId() {
-  return Array.from(crypto.getRandomValues(new Uint8Array(9)))
+function generateRandomString() {
+  return Array.from(crypto.getRandomValues(new Uint8Array(32)))
     .map(b => (b % 36).toString(36))
     .join('');
+}
+
+export function generateUniqueId(groups) {
+  const allIds = new Set([
+    ...groups.map(g => g.id),
+    ...groups.flatMap(g => g.games.map(game => game.id))
+  ]);
+  let id;
+  do {
+    id = generateRandomString();
+  } while (allIds.has(id));
+  return id;
 }
 
 export function sleep(ms) {

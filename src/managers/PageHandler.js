@@ -1,7 +1,7 @@
 import { highlightExistingVocabularies } from '../vocabularyChecker.js';
 import { attachVocabularyCreation } from '../vocabularyCreation.js';
 import { attachVocabularyParser } from '../vocabularyParser.js';
-import { sleep, generateRandomId } from '../utils.js';
+import { sleep, generateUniqueId } from '../utils.js';
 
 export class PageHandler {
   constructor(main) {
@@ -142,7 +142,7 @@ export class PageHandler {
       return;
     }
     // Create new game object (unpinned)
-    const newGame = { params: gameParams, id: generateRandomId(), pin: 0 };
+    const newGame = { params: gameParams, id: generateUniqueId(this.main.groupsManager.groups), pin: 0 };
     // Insert after pinned games
     const pinnedCount = currentGroup.games.filter(g => g.pin).length;
     currentGroup.games.splice(pinnedCount, 0, newGame);
