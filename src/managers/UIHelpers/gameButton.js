@@ -6,9 +6,12 @@ import { gameStatsApi } from '../../gameStatsApi.js';
 import { createGameInfoPopup } from '../../gameInfo.js';
 
 export function createGameElement(main, game, id) {
-  const gametypeClass = game.pin ? ` pin-gametype-${game.params.gametype}` : '';
+  const previousGameId = main.gamesManager.getPreviousGameId();
+  const pinGame = game.pin ? 'pin-game' : '';
+  const gametypeClass = game.params && game.params.gametype ? `pin-gametype-${game.params.gametype}` : '';
+  const previousClass = id === previousGameId ? 'previous-game' : '';
   const li = createElement('li', {
-    className: `latest-game${game.pin ? ' pin-game' : ''}${gametypeClass}`,
+    className: `latest-game ${pinGame} ${gametypeClass} ${previousClass}`.trim(),
     id: `latest-game-${id}`
   });
 
@@ -62,19 +65,19 @@ export function createGameElement(main, game, id) {
     className: 'latest-game-info',
     innerHTML: icons.info
   });
-  
+
   const tooltipText = game.params.gametype === 'voc' && game.params.vocId
     ? 'Показать информацию о словаре'
     : 'Показать информацию об игре';
-    
+
   createCustomTooltip(infoButton, tooltipText);
-  
+
   infoButton.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     createGameInfoPopup(e, game);
   });
-  
+
   gameActionButtons.append(infoButton, pinButton, deleteButton);
 
   const link = createElement('a', {
@@ -87,6 +90,16 @@ export function createGameElement(main, game, id) {
       e.preventDefault();
       main.wasDragging = false;
     }
+    // Save previousGameId on link click, preserving all other data
+    try {
+      const li = link.closest('li');
+      if (li && li.id && li.id.startsWith('latest-game-')) {
+        const id = li.id.replace('latest-game-', '');
+        const data = JSON.parse(localStorage.getItem('latestGamesData')) || {};
+        data.previousGameId = id;
+        localStorage.setItem('latestGamesData', JSON.stringify(data));
+      }
+    } catch (err) { }
   });
 
   // Default tooltip content

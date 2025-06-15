@@ -143,19 +143,24 @@ export class GamesManager {
           const groups = [{ id: generateRandomId(), title: 'Группа-1', games: data }];
           const currentGroupId = groups[0].id;
           this.mainManager.groupsManager.setGroups(groups, currentGroupId);
+          this.latestGamesData = {};
         } else if (data && Array.isArray(data.groups)) {
           this.mainManager.groupsManager.setGroups(data.groups, data.currentGroupId);
+          this.latestGamesData = { previousGameId: data.previousGameId };
         } else {
           this.mainManager.groupsManager.setGroups([], null);
+          this.latestGamesData = {};
         }
       } else {
         this.mainManager.groupsManager.setGroups([], null);
+        this.latestGamesData = {};
       }
       this.migrateOldGameData();
       this.assignGameIds();
     } catch (error) {
       console.warn('Could not load game data from localStorage:', error);
       this.mainManager.groupsManager.setGroups([], null);
+      this.latestGamesData = {};
     }
   }
 
@@ -163,7 +168,8 @@ export class GamesManager {
     try {
       const data = {
         groups: this.mainManager.groupsManager.groups,
-        currentGroupId: this.mainManager.groupsManager.currentGroupId
+        currentGroupId: this.mainManager.groupsManager.currentGroupId,
+        previousGameId: this.latestGamesData?.previousGameId
       };
       localStorage.setItem('latestGamesData', JSON.stringify(data));
     } catch (error) {
@@ -183,10 +189,17 @@ export class GamesManager {
   }
 
   assignGameIds() {
-    const allGameIds = new Set(this.mainManager.groupsManager.groups.flatMap(group => group.games.map(game => game.id)));
+    // Collect all existing ids to avoid duplicates
+    const allGameIds = new Set();
+    this.mainManager.groupsManager.groups.forEach(group => {
+      group.games.forEach(game => {
+        if (game.id) allGameIds.add(game.id);
+      });
+    });
     this.mainManager.groupsManager.groups.forEach(group => {
       group.games = group.games.map(game => {
-        if (!game.id || game.id === -1 || allGameIds.has(game.id)) {
+        // Only assign a new id if missing or invalid
+        if (!game.id || game.id === -1) {
           let newId;
           do {
             newId = generateRandomId();
@@ -194,6 +207,7 @@ export class GamesManager {
           allGameIds.add(newId);
           return { ...game, id: newId };
         } else {
+          // Keep existing id if valid
           allGameIds.add(game.id);
           return game;
         }
@@ -273,5 +287,11 @@ export class GamesManager {
     this.mainManager.uiManager.updateGameCountDisplay();
     this.mainManager.settingsManager.saveSettings();
     this.mainManager.uiManager.refreshContainer();
+  }
+
+  getPreviousGameId() {
+    return this.latestGamesData && this.latestGamesData.previousGameId
+      ? this.latestGamesData.previousGameId
+      : null;
   }
 }
