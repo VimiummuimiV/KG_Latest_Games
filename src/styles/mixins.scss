@@ -29,9 +29,9 @@
   }
 
   &.active {
-    border: 2px solid var(--rg-border-pinned-voc);
-    background: var(--rg-bg-card-pinned-voc);
-    color: var(--rg-gametype-voc) !important;
+    color: var(--rg-gametype-normal) !important;
+    background-color: var(--rg-bg-card-pinned-normal) !important;
+    border: 2px solid var(--rg-border-pinned-normal) !important;
   }
 }
 
