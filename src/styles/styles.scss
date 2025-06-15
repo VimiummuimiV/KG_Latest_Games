@@ -311,10 +311,10 @@
       flex-wrap: wrap;
 
       .latest-games-replay.replay-next-game {
-        background-color: var(--rg-bg-enabled);
+        background-color: var(--rg-bg-enabled-yellow);
 
         svg {
-          stroke: var(--rg-enabled);
+          stroke: var(--rg-enabled-yellow);
         }
       }
     }
@@ -335,7 +335,7 @@
     font-size: 14px;
     min-width: 18px;
     text-align: center;
-    color: var(--rg-enabled);
+    color: var(--rg-enabled-yellow);
     cursor: pointer;
   }
 

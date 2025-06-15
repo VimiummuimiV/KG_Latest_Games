@@ -53,11 +53,16 @@ export function createControls(main) {
 
   // Function to update the tooltip text based on button state
   const updateTooltip = (button, isEnabled, texts, delay) => {
-    // texts: { click, shift, ctrl }
+    // texts: { click, shift, ctrl, alt }
+    const clickText = typeof texts.click === 'function' ? texts.click(isEnabled) : texts.click;
+    const shiftText = typeof texts.shift === 'function' ? texts.shift(isEnabled) : texts.shift;
+    const ctrlText = texts.ctrl ? (typeof texts.ctrl === 'function' ? texts.ctrl(isEnabled) : texts.ctrl) : '';
+    const altText = texts.alt ? (typeof texts.alt === 'function' ? texts.alt(isEnabled) : texts.alt) : '';
     createCustomTooltip(button, `
-      [Клик] ${typeof texts.click === 'function' ? texts.click(isEnabled) : texts.click}
-      [Shift + Клик] ${typeof texts.shift === 'function' ? texts.shift(isEnabled) : texts.shift}${delay ? ` (${delay} мс)` : ''}
-      [Ctrl + Клик] ${typeof texts.ctrl === 'function' ? texts.ctrl(isEnabled) : texts.ctrl}
+      [Клик] ${clickText}
+      [Shift + Клик] ${shiftText}${delay ? ` (${delay} мс)` : ''}
+      ${ctrlText ? `[Ctrl + Клик] ${ctrlText}` : ''}
+      ${altText ? `[Alt + Клик] ${altText}` : ''}
     `);
   };
 
@@ -71,6 +76,15 @@ export function createControls(main) {
         main.replayNextGame = !main.replayNextGame;
         main.settingsManager.saveSettings();
         button.classList.toggle('replay-next-game', main.replayNextGame);
+        button.innerHTML = getReplayIcon();
+        updateTooltip(button, context[property], texts, context[delayProperty]);
+        return;
+      }
+      if (e.altKey && button === replayBtn) {
+        main.replayWithoutWaiting = !main.replayWithoutWaiting;
+        main.settingsManager.saveSettings();
+        button.classList.toggle('replay-without-waiting', main.replayWithoutWaiting);
+        button.innerHTML = getReplayIcon();
         updateTooltip(button, context[property], texts, context[delayProperty]);
         return;
       }
@@ -160,14 +174,16 @@ export function createControls(main) {
       ? 'Отключить автозапуск игры'
       : 'Включить автозапуск игры',
     shift: () => 'Изменить задержку запуска в миллисекундах',
-    ctrl: () => 'Режим автоматического запуска игры',
     delayErrorText: 'Пожалуйста, введите корректное значение задержки запуска.'
   });
 
   // Add button to toggle replay in game
+  const getReplayIcon = () => main.replayWithoutWaiting ? icons.replayImmediately : icons.replay;
   const replayBtn = createElement('span', {
-    className: 'latest-games-replay control-button' + (main.replayNextGame ? ' replay-next-game' : ''),
-    innerHTML: icons.replay
+    className: 'latest-games-replay control-button'
+      + (main.replayNextGame ? ' replay-next-game' : '')
+      + (main.replayWithoutWaiting ? ' replay-without-waiting' : ''),
+    innerHTML: getReplayIcon()
   });
   setupControlButton(replayBtn, main, 'shouldReplay', 'replayDelay', {
     click: (isEnabled) => isEnabled
@@ -175,6 +191,7 @@ export function createControls(main) {
       : 'Включить автоповтор игры',
     shift: () => 'Изменить задержку автосоздания в миллисекундах:',
     ctrl: () => main.replayNextGame ? 'Режим создания следующей игры' : 'Режим повтора текущей игры',
+    alt: () => main.replayWithoutWaiting ? 'Режим создания без ожидания игроков' : 'Режим создания с ожиданием игроков',
     delayErrorText: 'Пожалуйста, введите корректное значение задержки автоповтора.'
   });
 

@@ -86,13 +86,17 @@ export class PageHandler {
       });
       observer.observe(document.body, { childList: true, subtree: true });
 
-      const finished = document.getElementById('finished');
-      if (finished) {
+      // Choose which element to observe based on replayWithoutWaiting setting
+      const elementToObserve = this.main.replayWithoutWaiting
+        ? document.getElementById('rating_loading')
+        : document.getElementById('finished');
+
+      if (elementToObserve) {
         const observer = new MutationObserver(() => {
           observer.disconnect();
           this.handleGameActions();
         });
-        observer.observe(finished, { attributes: true });
+        observer.observe(elementToObserve, { attributes: true });
       }
     }
 
@@ -213,8 +217,12 @@ export class PageHandler {
   handleReplayAction() {
     // Handle auto-replay - affected by hover state
     if (this.main.shouldReplay) {
-      const finishedElement = document.querySelector('#status-inner #finished');
-      if (finishedElement && finishedElement.style.display !== 'none') {
+      // Check the appropriate element based on replayWithoutWaiting setting
+      const elementToCheck = this.main.replayWithoutWaiting
+        ? document.querySelector('#rating_loading')
+        : document.querySelector('#status-inner #finished');
+
+      if (elementToCheck && elementToCheck.style.display !== 'none') {
         const gameIdMatch = location.href.match(/gmid=(\d+)/);
         if (gameIdMatch) {
           const gameId = gameIdMatch[1];

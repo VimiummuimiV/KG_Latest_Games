@@ -21,6 +21,7 @@ export class SettingsManager {
       this.main.shouldReplay = settings.shouldReplay ?? this.main.shouldReplay;
       this.main.replayDelay = settings.replayDelay ?? this.main.replayDelay;
       this.main.replayNextGame = settings.replayNextGame ?? this.main.replayNextGame;
+      this.main.replayWithoutWaiting = settings.replayWithoutWaiting ?? this.main.replayWithoutWaiting;
       this.main.showSearchBox = settings.showSearchBox ?? this.main.showSearchBox;
       this.main.showButtonDescriptions = settings.showButtonDescriptions ?? this.main.showButtonDescriptions;
       this.main.showHelpTooltips = settings.showHelpTooltips ?? this.main.showHelpTooltips;
@@ -63,6 +64,7 @@ export class SettingsManager {
         shouldReplay: this.main.shouldReplay,
         replayDelay: this.main.replayDelay,
         replayNextGame: this.main.replayNextGame,
+        replayWithoutWaiting: this.main.replayWithoutWaiting,
         showSearchBox: this.main.showSearchBox,
         showButtonDescriptions: this.main.showButtonDescriptions,
         showHelpTooltips: this.main.showHelpTooltips,
