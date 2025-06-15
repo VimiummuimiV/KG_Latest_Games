@@ -52,43 +52,46 @@ export function createControls(main) {
   options.append(decreaseBtn, countDisplay, increaseBtn);
 
   // Function to update the tooltip text based on button state
-  const updateTooltip = (button, isEnabled, enabledText, disabledText, delay, delayText) => {
+  const updateTooltip = (button, isEnabled, texts, delay) => {
+    // texts: { click, shift, ctrl }
     createCustomTooltip(button, `
-      [Клик] ${isEnabled ? enabledText : disabledText}
-      [Shift + Клик] ${delayText + (delay ? ` (${delay} мс)` : '')}
+      [Клик] ${typeof texts.click === 'function' ? texts.click(isEnabled) : texts.click}
+      [Shift + Клик] ${typeof texts.shift === 'function' ? texts.shift(isEnabled) : texts.shift}${delay ? ` (${delay} мс)` : ''}
+      [Ctrl + Клик] ${typeof texts.ctrl === 'function' ? texts.ctrl(isEnabled) : texts.ctrl}
     `);
   };
 
   const setupControlButton = (button, context, property, delayProperty, texts) => {
-    const { enabledText, disabledText, delayText, delayPromptText, delayErrorText } = texts;
     const isInitiallyEnabled = context[property];
     button.classList.toggle('latest-games-disabled', !isInitiallyEnabled);
-    updateTooltip(button, isInitiallyEnabled, enabledText, disabledText, context[delayProperty], delayText);
+    updateTooltip(button, isInitiallyEnabled, texts, context[delayProperty]);
 
     button.onclick = (e) => {
       if (e.ctrlKey && button === replayBtn) {
         main.replayNextGame = !main.replayNextGame;
         main.settingsManager.saveSettings();
         button.classList.toggle('replay-next-game', main.replayNextGame);
+        updateTooltip(button, context[property], texts, context[delayProperty]);
         return;
       }
+      const shiftText = typeof texts.shift === 'function' ? texts.shift(context[property]) : texts.shift;
       if (e.shiftKey) {
-        const newDelay = prompt(delayPromptText, "");
+        const newDelay = prompt(shiftText, "");
         if (newDelay !== null) {
           const delayValue = parseInt(newDelay, 10);
           if (!isNaN(delayValue) && delayValue >= 0) {
             context[delayProperty] = delayValue;
             main.settingsManager.saveSettings();
-            updateTooltip(button, context[property], enabledText, disabledText, delayValue, delayText);
+            updateTooltip(button, context[property], texts, delayValue);
           } else {
-            alert(delayErrorText);
+            alert(texts.delayErrorText);
           }
         }
       } else {
         context[property] = !context[property];
         main.settingsManager.saveSettings();
         button.classList.toggle('latest-games-disabled', !context[property]);
-        updateTooltip(button, context[property], enabledText, disabledText, context[delayProperty], delayText);
+        updateTooltip(button, context[property], texts, context[delayProperty]);
       }
     };
   };
@@ -153,10 +156,11 @@ export function createControls(main) {
     innerHTML: icons.play
   });
   setupControlButton(playBtn, main, 'shouldStart', 'startDelay', {
-    enabledText: 'Отключить автозапуск игры',
-    disabledText: 'Включить автозапуск игры',
-    delayText: 'Изменить задержку запуска в миллисекундах',
-    delayPromptText: 'Введите задержку запуска в миллисекундах:',
+    click: (isEnabled) => isEnabled
+      ? 'Отключить автозапуск игры'
+      : 'Включить автозапуск игры',
+    shift: () => 'Изменить задержку запуска в миллисекундах',
+    ctrl: () => 'Режим автоматического запуска игры',
     delayErrorText: 'Пожалуйста, введите корректное значение задержки запуска.'
   });
 
@@ -166,10 +170,11 @@ export function createControls(main) {
     innerHTML: icons.replay
   });
   setupControlButton(replayBtn, main, 'shouldReplay', 'replayDelay', {
-    enabledText: 'Отключить автоповтор игры',
-    disabledText: 'Включить автоповтор игры',
-    delayText: 'Изменить задержку автоповтора в миллисекундах',
-    delayPromptText: 'Введите задержку автоповтора в миллисекундах:',
+    click: (isEnabled) => isEnabled
+      ? 'Отключить автоповтор игры'
+      : 'Включить автоповтор игры',
+    shift: () => 'Изменить задержку автосоздания в миллисекундах:',
+    ctrl: () => main.replayNextGame ? 'Режим создания следующей игры' : 'Режим повтора текущей игры',
     delayErrorText: 'Пожалуйста, введите корректное значение задержки автоповтора.'
   });
 

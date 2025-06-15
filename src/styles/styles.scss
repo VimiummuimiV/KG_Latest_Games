@@ -310,8 +310,12 @@
       display: flex;
       flex-wrap: wrap;
 
-      .latest-games-replay.replay-next-game svg {
-        stroke: var(--rg-enabled) !important;
+      .latest-games-replay.replay-next-game {
+        background-color: var(--rg-bg-enabled) !important;
+
+        svg {
+          stroke: var(--rg-enabled) !important;
+        }
       }
     }
   }
@@ -366,6 +370,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 3px !important;
     width: 24px;
     height: 24px;
     border-radius: 4px;
