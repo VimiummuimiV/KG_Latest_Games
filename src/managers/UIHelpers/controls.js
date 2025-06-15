@@ -1,4 +1,4 @@
-import { createElement } from '../../utils.js';
+import { createElement, generateUniqueId } from '../../utils.js';
 import { createCustomTooltip, refreshTooltipSettings } from '../../tooltip.js';
 import { icons } from '../../icons.js';
 import { toggleSearchBox } from './search.js';
@@ -87,6 +87,59 @@ export function createControls(main) {
     };
   };
 
+  // Add refresh IDs button
+  const refreshIdsBtn = createElement('span', {
+    className: 'latest-games-refresh-ids control-button',
+    innerHTML: icons.refresh
+  });
+  createCustomTooltip(refreshIdsBtn, 'Сгенерировать новые уникальные ID для всех групп и игр');
+  refreshIdsBtn.addEventListener('click', () => {
+    // Save previous group and game IDs
+    const previousGroupId = main.groupsManager.currentGroupId;
+    const previousGameId = main.gamesManager.latestGamesData?.previousGameId;
+
+    // Store old IDs before regeneration
+    main.groupsManager.groups.forEach(group => {
+      group._oldId = group.id;
+      group.games.forEach(game => {
+        game._oldId = game.id;
+      });
+    });
+
+    // Regenerate all IDs
+    main.groupsManager.groups.forEach(group => {
+      group.id = generateUniqueId(main.groupsManager.groups);
+      group.games.forEach(game => {
+        game.id = generateUniqueId(main.groupsManager.groups);
+      });
+    });
+
+    // Restore currentGroupId if possible
+    if (previousGroupId) {
+      const foundGroup = main.groupsManager.groups.find(g => g._oldId === previousGroupId);
+      if (foundGroup) main.groupsManager.currentGroupId = foundGroup.id;
+    }
+    // Restore previousGameId if possible
+    if (previousGameId) {
+      for (const group of main.groupsManager.groups) {
+        const found = group.games.find(g => g._oldId === previousGameId);
+        if (found) {
+          main.gamesManager.latestGamesData.previousGameId = found.id;
+          break;
+        }
+      }
+    }
+    // Remove temporary _oldId properties
+    main.groupsManager.groups.forEach(group => {
+      delete group._oldId;
+      group.games.forEach(game => delete game._oldId);
+    });
+    main.gamesManager.saveGameData();
+    main.uiManager.refreshContainer();
+    alert('Все ID для групп и игр были обновлены!');
+  });
+
+  // Add button to toggle auto-start of games
   const playBtn = createElement('span', {
     className: 'latest-games-play control-button',
     innerHTML: icons.play
@@ -99,6 +152,7 @@ export function createControls(main) {
     delayErrorText: 'Пожалуйста, введите корректное значение задержки запуска.'
   });
 
+  // Add button to toggle replay in game
   const replayBtn = createElement('span', {
     className: 'latest-games-replay control-button',
     innerHTML: icons.replay
@@ -111,6 +165,7 @@ export function createControls(main) {
     delayErrorText: 'Пожалуйста, введите корректное значение задержки автоповтора.'
   });
 
+  // Add button to pin all games in the current group or all groups
   const pinAllBtn = createElement('span', {
     className: 'latest-games-pinall control-button',
     innerHTML: icons.pin
@@ -132,6 +187,7 @@ export function createControls(main) {
     main.uiManager.refreshContainer();
   };
 
+  // Add button to unpin all games in the current group or all groups
   const unpinAllBtn = createElement('span', {
     className: 'latest-games-unpinall control-button',
     innerHTML: icons.unpin
@@ -153,6 +209,7 @@ export function createControls(main) {
     main.uiManager.refreshContainer();
   };
 
+  // Add button to sort games in the current group alphabetically
   const sortBtn = createElement('span', {
     className: 'latest-games-sort control-button',
     innerHTML: icons.sort
@@ -160,6 +217,7 @@ export function createControls(main) {
   createCustomTooltip(sortBtn, 'Сортировать игры в текущей группе по алфавиту');
   sortBtn.addEventListener('click', () => main.groupsManager.sortActiveGroupGames());
 
+  // Add button to import settings from a JSON file
   const importBtn = createElement('span', {
     className: 'latest-games-import control-button',
     innerHTML: icons.import
@@ -167,6 +225,7 @@ export function createControls(main) {
   createCustomTooltip(importBtn, 'Импортировать настройки из JSON файла');
   importBtn.onclick = () => main.settingsManager.importSettings(main);
 
+  // Add button to export all settings to a JSON file
   const exportBtn = createElement('span', {
     className: 'latest-games-export control-button',
     innerHTML: icons.export
@@ -174,6 +233,7 @@ export function createControls(main) {
   createCustomTooltip(exportBtn, 'Экспортировать все настройки в JSON файл');
   exportBtn.onclick = () => main.settingsManager.exportSettings(main);
 
+  // Add button to remove all settings
   const removeAllBtn = createElement('span', {
     className: 'latest-games-removeall control-button',
     innerHTML: icons.trashNothing
@@ -181,6 +241,7 @@ export function createControls(main) {
   createCustomTooltip(removeAllBtn, 'Удалить все настройки');
   removeAllBtn.onclick = () => main.settingsManager.removeAllSettings(main);
 
+  // Add button to remove all unpinned games in the current group or all groups
   const removeUnpinnedBtn = createElement('span', {
     className: 'latest-games-remove-unpinned control-button',
     innerHTML: icons.broom
@@ -204,6 +265,7 @@ export function createControls(main) {
     main.uiManager.refreshContainer();
   };
 
+  // Add drag toggle button
   const dragToggleBtn = createElement('span', {
     className: 'latest-games-drag-toggle control-button',
     innerHTML: icons.dragToggle
@@ -228,7 +290,7 @@ export function createControls(main) {
     dragToggleBtn.classList.toggle('latest-games-disabled', !main.enableDragging);
   };
 
-  // Toggle for button descriptions
+  // Add description toggle button
   const descToggleBtn = createElement('span', {
     className: 'latest-games-desc-toggle control-button',
     innerHTML: icons.info
@@ -260,7 +322,7 @@ export function createControls(main) {
     }, 0);
   };
 
-  // Toggle for help tooltips
+  // Add help toggle button
   const helpToggleBtn = createElement('span', {
     className: 'latest-games-help-toggle control-button' + (main.showHelpTooltips ? '' : ' latest-games-disabled'),
     innerHTML: icons.help
@@ -285,6 +347,7 @@ export function createControls(main) {
     main.uiManager.refreshContainer();
   });
 
+  // Add search button
   const searchBtn = createElement('span', {
     className: 'latest-games-search-btn control-button' + (main.showSearchBox ? '' : ' latest-games-disabled'),
     innerHTML: icons.search
@@ -307,7 +370,10 @@ export function createControls(main) {
   controlsButtons.append(
     main.themeManager.createThemeToggle(),
     main.viewManager.createDisplayModeToggle(),
-    playBtn, replayBtn, pinAllBtn, unpinAllBtn, sortBtn, importBtn, exportBtn, removeAllBtn, removeUnpinnedBtn, dragToggleBtn, descToggleBtn, helpToggleBtn, searchBtn
+    refreshIdsBtn, playBtn, replayBtn, pinAllBtn,
+    unpinAllBtn, sortBtn, importBtn, exportBtn,
+    removeAllBtn, removeUnpinnedBtn, dragToggleBtn,
+    descToggleBtn, helpToggleBtn, searchBtn
   );
 
   return controlsContainer;
