@@ -88,8 +88,8 @@ export class PageHandler {
 
       // Choose which element to observe based on replayWithoutWaiting setting
       const elementToObserve = this.main.replayWithoutWaiting
-        ? document.getElementById('rating_loading')
-        : document.getElementById('finished');
+        ? document.querySelector('.you .rating')
+        : document.querySelector('#status-inner #finished');
 
       if (elementToObserve) {
         const observer = new MutationObserver(() => {
@@ -109,7 +109,7 @@ export class PageHandler {
   }
 
   setupHoverListeners() {
-    const latestGamesContainer = document.getElementById('latest-games-container');
+    const latestGamesContainer = document.querySelector('#latest-games-container');
     if (latestGamesContainer) {
       latestGamesContainer.addEventListener('mouseenter', () => {
         this.isHoveringLatestGames = true;
@@ -130,7 +130,7 @@ export class PageHandler {
   }
 
   saveCurrentGameParams() {
-    const gameDesc = document.getElementById('gamedesc');
+    const gameDesc = document.querySelector('#gamedesc');
     if (!gameDesc) throw new Error('#gamedesc element not found.');
     const span = gameDesc.querySelector('span');
     if (!span) throw new Error('#gamedesc span element not found.');
@@ -219,7 +219,7 @@ export class PageHandler {
     if (this.main.shouldReplay) {
       // Check the appropriate element based on replayWithoutWaiting setting
       const elementToCheck = this.main.replayWithoutWaiting
-        ? document.querySelector('#rating_loading')
+        ? document.querySelector('.you .rating')
         : document.querySelector('#status-inner #finished');
 
       if (elementToCheck && elementToCheck.style.display !== 'none') {
