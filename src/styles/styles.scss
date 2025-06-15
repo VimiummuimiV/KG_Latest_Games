@@ -289,6 +289,11 @@
           var(--rg-icon-edit)
         );
       }
+
+      &.previous-game {
+        animation: tilt-n-move-shaking 0.4s ease 5;
+        z-index: 2;
+      }
     }
   }
 
@@ -421,7 +426,7 @@
       gap: 2px;
       display: inline-flex;
       align-items: center;
-      margin: 0 0 10px 10px
+      margin: 0 0 10px 10px;
     }
   }
 }
@@ -561,4 +566,13 @@
 
 .latest-games-hidden {
   display: none !important;
+}
+
+
+@keyframes tilt-n-move-shaking {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(4px, 0) rotate(2deg); }
+  50% { transform: translate(0, 0) rotate(0eg); }
+  75% { transform: translate(-4px, 0) rotate(-2deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
 }
