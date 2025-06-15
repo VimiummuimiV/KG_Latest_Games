@@ -94,6 +94,8 @@ export function createControls(main) {
   });
   createCustomTooltip(refreshIdsBtn, 'Сгенерировать новые уникальные ID для всех групп и игр');
   refreshIdsBtn.addEventListener('click', () => {
+    if (!confirm('Вы уверены, что хотите сгенерировать новые уникальные ID для всех групп и игр? Это действие нельзя отменить.')) return;
+
     // Save previous group and game IDs
     const previousGroupId = main.groupsManager.currentGroupId;
     const previousGameId = main.gamesManager.latestGamesData?.previousGameId;
