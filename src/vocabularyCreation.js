@@ -4,6 +4,64 @@ import { createPopup } from './menuPopup.js';
 import { hideTooltip } from './vocabularyParser.js';
 import { getCurrentPage } from './utils.js';
 
+// Function to fetch basic vocabulary data (name, rating, fans) from the server
+export async function fetchVocabularyBasicData(vocId) {
+  const controller = new AbortController();
+  const signal = controller.signal;
+
+  try {
+    const response = await fetch(`https://klavogonki.ru/vocs/${vocId}/`, { signal });
+    if (!response.ok) {
+      console.error('Failed to fetch vocabulary content for vocId:', vocId);
+      return null;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let htmlChunk = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      htmlChunk += decoder.decode(value, { stream: true });
+
+      // Quick sanity check: if the chunk doesn't even contain "</td>", skip full DOM parse
+      if (!htmlChunk.includes('</td>')) continue;
+
+      const doc = new DOMParser().parseFromString(htmlChunk, 'text/html');
+      const userTitle = doc.querySelector('.user-title');
+      if (!userTitle) continue;
+
+      const titleCell = userTitle.querySelector('td.title');
+      if (!titleCell) continue;
+
+      const ratingSpan = titleCell.querySelector('#rating_cnt');
+      const fansSpan = titleCell.querySelector('#fav_cnt');
+      if (ratingSpan && fansSpan) {
+        // abort the fetch (stops downloading the rest of the page)
+        controller.abort();
+
+        // extract data
+        const vocabularyName = titleCell.childNodes[0].textContent.trim();
+        const ratingCount = parseInt(ratingSpan.textContent.trim(), 10);
+        const fansCount = parseInt(fansSpan.textContent.trim(), 10);
+
+        return { vocId, vocabularyName, ratingCount, fansCount };
+      }
+    }
+
+    return null; // didn’t find the data
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      // Fetch was aborted because we already got our data — not really an error
+      return null;
+    }
+    console.error('Error fetching/parsing vocabulary basic data:', err);
+    return null;
+  }
+}
+
 /**
  * Show a popup to add a vocabulary to a group.
  * @param {Array} groups - Array of group objects.
@@ -131,7 +189,7 @@ const attachedContainers = new WeakSet();
  */
 function extractVocabularyId(anchor) {
   const href = anchor.getAttribute('href');
-  
+
   if (/\/create\//.test(href)) {
     // Extract the voc parameter from query string
     const createMatch = href.match(/[?&]voc=(\d+)/);
@@ -140,7 +198,7 @@ function extractVocabularyId(anchor) {
     try {
       const url = new URL(href, window.location.origin);
       const pathname = url.pathname; // e.g. "/vocs/176053/" or "/vocs/176053/top/week/"
-      
+
       // Only accept if pathname strictly matches "/vocs/{id}/" (or without trailing slash)
       const strictMatch = pathname.match(/^\/vocs\/(\d+)\/?$/);
       return strictMatch ? strictMatch[1] : null;
@@ -161,18 +219,36 @@ function attachEventToContainer(container, groups, main) {
   if (attachedContainers.has(container)) return;
   attachedContainers.add(container);
 
-  container.addEventListener('contextmenu', (e) => {
-    // Search for an anchor with "/vocs/" or "/create/" in its href
-    const anchor = e.target.closest('a[href*="/vocs/"], a[href*="/create/"]');
-    if (anchor) {
-      e.preventDefault();
-      e.stopPropagation();
-      const vocId = extractVocabularyId(anchor);
-      if (!vocId) return; // Exit if no valid vocId is found
+  container.addEventListener('contextmenu', async (e) => {
+    const anchor = e.target.closest('a');
+    if (!anchor) return;
 
-      const vocName = extractVocabularyName(anchor); // Your function for extracting vocabulary name
-      showVocabularyCreationPopup(groups, e, vocId, vocName, main);
+    const href = anchor.getAttribute('href');
+    if (!href || (!href.includes('/vocs/') && !href.includes('/create/'))) return;
+
+    const vocId = extractVocabularyId(anchor);
+    if (!vocId) {
+      console.warn('Invalid vocabulary link (extra path segments present), ignoring:', href);
+      return;
     }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    let vocName = '';
+    if (href.includes('/create/')) {
+      const basicData = await fetchVocabularyBasicData(vocId);
+      if (basicData && basicData.vocabularyName) {
+        vocName = basicData.vocabularyName;
+      } else {
+        // If fetching basic data fails, prompt the user to set a name manually.
+        vocName = prompt('Не удалось получить название словаря. Введите название для словаря:') || '';
+      }
+    } else {
+      vocName = extractVocabularyName(anchor);
+    }
+
+    showVocabularyCreationPopup(groups, e, vocId, vocName, main);
   });
 }
 

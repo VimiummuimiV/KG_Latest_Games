@@ -205,6 +205,7 @@ export function attachVocabularyParser() {
   }
   
   voclist.addEventListener('mouseenter', async (e) => {
+    if (!e.shiftKey) return; // Only trigger on Shift + mouseenter
     const anchor = e.target.closest('a.name[href*="/vocs/"]');
     if (anchor) {
       // Extract vocId from href (e.g., /vocs/1885/)
