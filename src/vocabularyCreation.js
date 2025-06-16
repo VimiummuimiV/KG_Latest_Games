@@ -2,6 +2,7 @@ import { generateUniqueId } from './utils.js';
 import { highlightExistingVocabularies } from './vocabularyChecker.js';
 import { createPopup } from './menuPopup.js';
 import { hideTooltip } from './vocabularyParser.js';
+import { getCurrentPage } from './utils.js';
 
 /**
  * Show a popup to add a vocabulary to a group.
@@ -60,28 +61,106 @@ export function showVocabularyCreationPopup(groups, event, vocId, vocName, main)
 }
 
 /**
- * Attach contextmenu event to vocabulary links within .columns.voclist.
- * @param {Array} groups - Array of group objects.
- * @param {object} main - The main manager instance.
+ * Get the appropriate container selector based on current page
+ * @returns {string|null} CSS selector for the container
  */
-export function attachVocabularyCreation(groups, main) {
-  const voclist = document.querySelector('.columns.voclist');
-  if (!voclist) {
-    console.warn('Element with class "columns voclist" not found.');
-    return;
+function getContainerSelector() {
+  const currentPage = getCurrentPage();
+  
+  switch (currentPage) {
+    case 'vocabularies':
+      return '.columns.voclist';
+    case 'profile':
+      return '.profile-root, .dlg-profile-vocs .vocs';
+    default:
+      return null; // No vocabulary creation on other pages
   }
+}
 
-  voclist.addEventListener('contextmenu', (e) => {
-    const anchor = e.target.closest('a.name[href*="/vocs/"]');
+/**
+ * Check if current page supports vocabulary creation
+ * @returns {boolean} True if vocabulary creation is supported on current page
+ */
+export function isVocabularyCreationSupported() {
+  return getContainerSelector() !== null;
+}
+
+/**
+ * Extract vocabulary name from anchor element
+ * @param {HTMLElement} anchor - The anchor element
+ * @returns {string} The vocabulary name
+ */
+function extractVocabularyName(anchor) {
+  return anchor.textContent.trim();
+}
+
+/**
+ * Wait for elements matching the selector to be added to the DOM and execute callback for each.
+ * @param {string} selector - CSS selector to wait for
+ * @param {Function} callback - Function to execute when a matching element is added
+ */
+function waitFor(selector, callback) {
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'childList') {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            if (node.matches(selector)) {
+              callback(node);
+            }
+            const matchingDescendants = node.querySelectorAll(selector);
+            matchingDescendants.forEach((el) => callback(el));
+          }
+        });
+      }
+    });
+  });
+  
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+/**
+ * Attach event listener to a container
+ * @param {HTMLElement} container - The container element
+ * @param {Array} groups - Array of group objects
+ * @param {object} main - The main manager instance
+ */
+function attachEventToContainer(container, groups, main) {
+  container.addEventListener('contextmenu', (e) => {
+    // Use more flexible selector - any anchor with href containing "/vocs/"
+    const anchor = e.target.closest('a[href*="/vocs/"]');
     if (anchor) {
       e.preventDefault();
       const href = anchor.getAttribute('href');
       const match = href.match(/\/vocs\/(\d+)(?:\/|$)/);
       if (match) {
         const vocId = match[1];
-        const vocName = anchor.textContent.trim(); // Extract name from link text
+        const vocName = extractVocabularyName(anchor);
         showVocabularyCreationPopup(groups, e, vocId, vocName, main);
       }
     }
+  });
+}
+
+/**
+ * Attach contextmenu event to vocabulary links within appropriate containers.
+ * @param {Array} groups - Array of group objects.
+ * @param {object} main - The main manager instance.
+ */
+export function attachVocabularyCreation(groups, main) {
+  const containerSelector = getContainerSelector();
+  
+  if (!containerSelector) {
+    console.warn('Vocabulary creation is not supported on this page.');
+    return;
+  }
+  
+  // Handle multiple selectors (comma-separated)
+  const selectors = containerSelector.split(',').map(s => s.trim());
+  
+  selectors.forEach(selector => {
+    waitFor(selector, (container) => {
+      attachEventToContainer(container, groups, main);
+    });
   });
 }

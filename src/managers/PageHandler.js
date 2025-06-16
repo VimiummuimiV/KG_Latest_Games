@@ -2,6 +2,7 @@ import { highlightExistingVocabularies } from '../vocabularyChecker.js';
 import { attachVocabularyCreation } from '../vocabularyCreation.js';
 import { attachVocabularyParser } from '../vocabularyParser.js';
 import { sleep, generateUniqueId } from '../utils.js';
+import { isVocabularyCreationSupported } from '../vocabularyCreation.js';
 
 export class PageHandler {
   constructor(main) {
@@ -100,8 +101,8 @@ export class PageHandler {
       }
     }
 
-    // Highlight vocabularies and attach vocabulary creation popup on vocs page
-    if (/klavogonki\.ru\/vocs\//.test(href)) {
+    // Highlight vocabularies and attach vocabulary creation popup on supported pages
+    if (isVocabularyCreationSupported()) {
       highlightExistingVocabularies(this.main.groupsManager.groups);
       attachVocabularyCreation(this.main.groupsManager.groups, this.main);
       attachVocabularyParser();
