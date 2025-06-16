@@ -1101,6 +1101,21 @@
               "premium_abra": 0
             },
             "pin": 1
+          },
+          {
+            "id": "7zlq8qnip1nxwsdho6qbrrz37509b4iz",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Солянка кибертекстов, мини-марафон 1000 зна",
+              "vocId": "191580",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
           }
         ]
       },
@@ -1720,21 +1735,6 @@
               "gametype": "voc",
               "vocName": "Не у того",
               "vocId": "81493",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "7zlq8qnip1nxwsdho6qbrrz37509b4iz",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Солянка кибертекстов, мини-марафон 1000 зна",
-              "vocId": "191580",
               "type": "normal",
               "level_from": 1,
               "level_to": 9,
