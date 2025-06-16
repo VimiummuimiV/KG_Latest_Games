@@ -88,18 +88,13 @@ export class PageHandler {
 
       // Choose which element to observe based on replayWithoutWaiting setting
       const elementToObserve = this.main.replayWithoutWaiting
-        ? document.querySelector('.you .rating')
+        ? document.querySelector('#typeblock #bookinfo')
         : document.querySelector('#status-inner #finished');
 
       if (elementToObserve) {
         const finishObserver = new MutationObserver(() => {
-          // Check #bookinfo visibility before disconnecting
-          const bookinfoElement = document.getElementById('bookinfo');
-          const isBookinfoVisible = bookinfoElement && bookinfoElement.style.display !== 'none';
-          if (isBookinfoVisible) {
-            finishObserver.disconnect();
-            this.handleReplayAction();
-          }
+          finishObserver.disconnect();
+          this.handleReplayAction();
         });
         finishObserver.observe(elementToObserve, { attributes: true });
       }
@@ -218,7 +213,7 @@ export class PageHandler {
     if (this.main.shouldReplay) {
       // Check the appropriate element based on replayWithoutWaiting setting
       const elementToCheck = this.main.replayWithoutWaiting
-        ? document.querySelector('.you .rating')
+        ? document.querySelector('#typeblock #bookinfo')
         : document.querySelector('#status-inner #finished');
 
       if (elementToCheck && elementToCheck.style.display !== 'none') {
