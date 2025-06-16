@@ -54,6 +54,18 @@ export function createPanelToggleButton(main) {
     if (!container) return;
     
     const currentPage = getCurrentPage();
+    if (e.ctrlKey) {
+      const currentDelay = main.hidePanelDelay ?? DEFAULTS.hidePanelDelay;
+      const input = prompt('Изменить задержку автоскрытия панели в миллисекундах:', currentDelay);
+      const delay = parseInt(input, 10);
+      if (!isNaN(delay) && delay >= 0) {
+        main.hidePanelDelay = delay;
+        main.settingsManager.saveSettings();
+      } else if (input !== null) {
+        alert('Пожалуйста, введите корректное значение задержки.');
+      }
+      return;
+    }
     
     if (e.shiftKey) {
       // Toggle visibility setting for the current page
