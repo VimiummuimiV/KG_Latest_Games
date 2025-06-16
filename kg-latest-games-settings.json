@@ -5,32 +5,34 @@
     "displayMode": "wrap",
     "groupViewMode": "tabs",
     "previousScrollPosition": 0,
-    "panelWidth": "90vw",
+    "panelWidth": "70vw",
     "enableDragging": false,
     "shouldAutoSave": false,
-    "hidePanelDelay": 1000,
+    "hidePanelDelay": 400,
     "shouldStart": true,
-    "startDelay": 1000,
+    "startDelay": 300,
     "shouldReplay": true,
-    "replayDelay": 2000,
+    "replayDelay": 1200,
+    "replayNextGame": false,
+    "replayWithoutWaiting": true,
     "showSearchBox": false,
     "showButtonDescriptions": false,
-    "showHelpTooltips": true,
+    "showHelpTooltips": false,
     "panelYPosition": {
-      "main": 8.6,
-      "gamelist": 0,
+      "main": 12.1,
+      "gamelist": 22,
       "profile": 0,
       "chatlogs": 0,
       "rating": 0,
       "vocabularies": 0,
       "about": 0,
       "donation": 0,
-      "forum": 0,
-      "game": 65.7
+      "forum": 8.7,
+      "game": 63.3
     },
     "alwaysVisiblePanel": {
       "main": false,
-      "gamelist": false,
+      "gamelist": true,
       "profile": false,
       "chatlogs": false,
       "rating": false,
@@ -780,6 +782,21 @@
             "pin": 1
           },
           {
+            "id": "dbj6qqm2wd30y13bsa8k07swv7gptvof",
+            "params": {
+              "gametype": "voc",
+              "vocName": "ЭХ - Light",
+              "vocId": "166047",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
             "id": "kpqie45kh4xqiz5pmjy6c4giivf08qqq",
             "params": {
               "gametype": "voc",
@@ -855,21 +872,6 @@
             "pin": 1
           },
           {
-            "id": "c50qws6lbdbqr1132iqf1kuwl754ryhc",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Марафон соточка",
-              "vocId": "172607",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
             "id": "21tdq54o5ifg53w1afb20390q86medjw",
             "params": {
               "gametype": "voc",
@@ -885,41 +887,11 @@
             "pin": 1
           },
           {
-            "id": "2s8vajwq7im8k72xah1tg79isb3muhnl",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Периферия: восьмисоточка",
-              "vocId": "95548",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
             "id": "li2do6qsxwa997cjc4gxdh3gpr2o8qa3",
             "params": {
               "gametype": "voc",
               "vocName": "Периферия: соточка",
               "vocId": "73222",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "qdqc155us9qgibg1ry59uck84598fxz4",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Периферия+: восьмисоточка",
-              "vocId": "95479",
               "type": "normal",
               "level_from": 1,
               "level_to": 9,
@@ -950,21 +922,6 @@
               "gametype": "voc",
               "vocName": "Самые сложные слова: соточка",
               "vocId": "95661",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "nc2b5g4bpz7tfr5s2q0b06239jf4z2ia",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Сверхдлинные: восьмисоточка",
-              "vocId": "88410",
               "type": "normal",
               "level_from": 1,
               "level_to": 9,
@@ -1035,6 +992,87 @@
             "pin": 1
           },
           {
+            "id": "0802oyvh1oxuukzmwevrqu2iewilwwex",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Указательные: соточка",
+              "vocId": "67852",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          }
+        ]
+      },
+      {
+        "id": "00fo6jkdzd09oknmhb2ev9088klzk9j1",
+        "title": "Восьмисоточка",
+        "games": [
+          {
+            "id": "c50qws6lbdbqr1132iqf1kuwl754ryhc",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Марафон соточка",
+              "vocId": "172607",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "2s8vajwq7im8k72xah1tg79isb3muhnl",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Периферия: восьмисоточка",
+              "vocId": "95548",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "qdqc155us9qgibg1ry59uck84598fxz4",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Периферия+: восьмисоточка",
+              "vocId": "95479",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "nc2b5g4bpz7tfr5s2q0b06239jf4z2ia",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Сверхдлинные: восьмисоточка",
+              "vocId": "88410",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
             "params": {
               "gametype": "voc",
               "vocName": "Средний-мизинец: восьмисоточка",
@@ -1055,21 +1093,6 @@
               "gametype": "voc",
               "vocName": "Трэш 2.0: восьмисоточка",
               "vocId": "166046",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
-          },
-          {
-            "id": "0802oyvh1oxuukzmwevrqu2iewilwwex",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Указательные: соточка",
-              "vocId": "67852",
               "type": "normal",
               "level_from": 1,
               "level_to": 9,
@@ -1444,21 +1467,6 @@
               "premium_abra": 0
             },
             "pin": 1
-          },
-          {
-            "id": "dbj6qqm2wd30y13bsa8k07swv7gptvof",
-            "params": {
-              "gametype": "voc",
-              "vocName": "ЭХ - Light",
-              "vocId": "166047",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0
-            },
-            "pin": 1
           }
         ]
       },
@@ -1575,7 +1583,7 @@
       },
       {
         "id": "uz2ewl5xax8z0dsnsnnegqac8820pj6p",
-        "title": "Английский",
+        "title": "English",
         "games": [
           {
             "id": "feqvvl3r2p3eu3d75gjy1yvm1b9adgul",
@@ -5282,6 +5290,6 @@
         ]
       }
     ],
-    "currentGroupId": "qucw2v2e173vlm6cxb2th01j0qro1jf9"
+    "currentGroupId": "04xgrhobua7dtzpco59lbis7kmlsu66x"
   }
 }
