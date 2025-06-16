@@ -1475,11 +1475,11 @@
         "title": "Кибертекст",
         "games": [
           {
-            "id": "w52q7sbq74wz926xiwfn7gdoey7lp74v",
+            "id": "qpa1ngi9rzmqzvrc2580fub1a2cd131v",
             "params": {
               "gametype": "voc",
-              "vocName": "Кибертекст 666",
-              "vocId": "191914",
+              "vocName": "Ароматный кибертекст",
+              "vocId": "43756",
               "type": "normal",
               "level_from": 1,
               "level_to": 9,
@@ -1505,6 +1505,66 @@
             "pin": 1
           },
           {
+            "id": "z51qpssyuy6c2vuu11ynjqofas4k4ib1",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Кибертекст 6.0",
+              "vocId": "162533",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "w52q7sbq74wz926xiwfn7gdoey7lp74v",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Кибертекст 666",
+              "vocId": "191914",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "gx1a3ed0iuf76q9h5mmbpx9ujd5xmupd",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Кибертекст 766",
+              "vocId": "191920",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "yspuk9gk3jpndjjuzdjofg99ri6aszd5",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Кибертекст для HRUST",
+              "vocId": "43193",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
             "id": "gfaqgfgog09hpkw4qw5fbks7djhml43c",
             "params": {
               "gametype": "voc",
@@ -1520,11 +1580,146 @@
             "pin": 1
           },
           {
+            "id": "jqa630czjk9ym3212zakwcy6zmi9t04r",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Кибертекст от TRESK",
+              "vocId": "109281",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "2bdlr890ttcttxw05f8haj9l49t0hdli",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Кибертекст: да, нет",
+              "vocId": "63887",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
             "id": "84fhchvvhh7c4cp2jgkmtavtkkxycwpi",
             "params": {
               "gametype": "voc",
               "vocName": "Кибертекст: Очень просто",
               "vocId": "10305",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "e7wty4ofbosousa2scpidc067br83wsl",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Кибертекст: так что",
+              "vocId": "181536",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "iwnmqzl0wg39ujnma7c0f0tvz51q2gq3",
+            "params": {
+              "gametype": "voc",
+              "vocName": "кибертекст: туда или обратно",
+              "vocId": "61048",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "8ykb6fmiklz8v1jxhm3w8l2ydzlkg5dl",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Кибертекст",
+              "vocId": "6562",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "5z88fjxf72xm33nrk27klxkms8vsevd8",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Киберчастотный",
+              "vocId": "21447",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "kuaka0nawpac516ykfog28hms7gq0z1v",
+            "params": {
+              "gametype": "voc",
+              "vocName": "может было",
+              "vocId": "35139",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "epkaos5h8cv0steu34hi008xl7cz4m93",
+            "params": {
+              "gametype": "voc",
+              "vocName": "не тому",
+              "vocId": "27969",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "m8ugasa1vpjlaiischcmasy1j12wmfto",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Не у того",
+              "vocId": "81493",
               "type": "normal",
               "level_from": 1,
               "level_to": 9,
@@ -1555,6 +1750,51 @@
               "gametype": "voc",
               "vocName": "Солянка кибертекстов, соточка",
               "vocId": "191579",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "l3rkcr0la4hfh3otyn05vsjh4eolegeb",
+            "params": {
+              "gametype": "voc",
+              "vocName": "сонный кибертекст",
+              "vocId": "25836",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "1jmhmoim1kejtkemkorvcy0g038lquqf",
+            "params": {
+              "gametype": "voc",
+              "vocName": "Тахитекст",
+              "vocId": "150708",
+              "type": "normal",
+              "level_from": 1,
+              "level_to": 9,
+              "timeout": 10,
+              "qual": 0,
+              "premium_abra": 0
+            },
+            "pin": 1
+          },
+          {
+            "id": "fpdy8kcetcdo48sccj4pdx5lcm0fi9o5",
+            "params": {
+              "gametype": "voc",
+              "vocName": "хорошо молодой человек",
+              "vocId": "14795",
               "type": "normal",
               "level_from": 1,
               "level_to": 9,
@@ -5290,6 +5530,6 @@
         ]
       }
     ],
-    "currentGroupId": "04xgrhobua7dtzpco59lbis7kmlsu66x"
+    "currentGroupId": "nflg1klni5qszwbyiew9lhjb8461ep7v"
   }
 }
