@@ -57,14 +57,27 @@ export class GamesManager {
     return result;
   }
 
-  generateGameName(game) {
+  generateGameName(game, opts = {}) {
     const gameType = gameTypes[game.params.gametype];
     const { vocName, timeout, type: visibility, level_from, level_to, qual } = game.params;
 
+    // Determine if we need to show a state icon (paused/playing)
+    let stateIcon = '';
+    if (opts && opts.stateIcon) {
+      stateIcon = opts.stateIcon;
+    }
+
     const nameSpan = createElement('span', {
-      className: `latest-game-name gametype-${game.params.gametype}`,
-      textContent: vocName === '' ? gameType : `«${vocName}»`
+      className: `latest-game-name gametype-${game.params.gametype}`
     });
+    nameSpan.appendChild(document.createTextNode(vocName === '' ? gameType : `«${vocName}»`));
+    if (stateIcon) {
+      const iconSpan = createElement('span', {
+        className: 'latest-game-state-icon',
+        innerHTML: stateIcon
+      });
+      nameSpan.appendChild(iconSpan);
+    }
 
     // Only create the description span if the setting is enabled
     let descSpan = null;

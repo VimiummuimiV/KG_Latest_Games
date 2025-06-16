@@ -1,4 +1,4 @@
-import { createElement } from '../../utils.js';
+import { createElement, getCurrentPage } from '../../utils.js';
 import { createCustomTooltip, updateTooltipContent } from '../../tooltip.js';
 import { addDragFunctionality } from '../../drag/gameButtonDrag.js';
 import { icons } from '../../icons.js';
@@ -10,6 +10,18 @@ export function createGameElement(main, game, id) {
   const pinGame = game.pin ? 'pin-game' : '';
   const gametypeClass = game.params && game.params.gametype ? `pin-gametype-${game.params.gametype}` : '';
   const previousClass = id === previousGameId ? 'previous-game' : '';
+
+  // Determine state icon for previous game
+  let stateIcon = '';
+
+  if (id === previousGameId) {
+    if (getCurrentPage() === 'game') {
+      stateIcon = icons.playing;
+    } else {
+      stateIcon = icons.paused;
+    }
+  }
+
   const li = createElement('li', {
     className: `latest-game ${pinGame} ${gametypeClass} ${previousClass}`.trim(),
     id: `latest-game-${id}`
@@ -82,7 +94,7 @@ export function createGameElement(main, game, id) {
 
   const link = createElement('a', {
     href: main.gamesManager.generateGameLink(game),
-    innerHTML: main.gamesManager.generateGameName(game)
+    innerHTML: main.gamesManager.generateGameName(game, { stateIcon })
   });
 
   link.addEventListener('click', (e) => {

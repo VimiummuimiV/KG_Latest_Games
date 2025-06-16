@@ -178,7 +178,7 @@
       }
 
       .latest-game-name {
-        display: block;
+        display: flex;
         font-weight: bold;
         font-size: 12px;
         margin-bottom: 2px;
@@ -218,7 +218,8 @@
         color: var(--rg-text-secondary);
       }
 
-      .latest-game-qual {
+      .latest-game-qual,
+      .latest-game-state-icon {
         display: inline-flex;
         align-items: center;
         justify-content: center;
