@@ -76,15 +76,15 @@ export class PageHandler {
     if (/https?:\/\/klavogonki\.ru\/g\/\?gmid=/.test(href)) {
       this.setupHoverListeners();
 
-      const observer = new MutationObserver(() => {
+      const startObserver = new MutationObserver(() => {
         const gameDescription = document.querySelector('#gamedesc');
         if (gameDescription && gameDescription.textContent) {
-          observer.disconnect(); // Stop observing once the game description is found
+          startObserver.disconnect();
           this.saveCurrentGameParams();
-          this.handleGameActions();
+          this.handleStartAction();
         }
       });
-      observer.observe(document.body, { childList: true, subtree: true });
+      startObserver.observe(document.body, { childList: true, subtree: true });
 
       // Choose which element to observe based on replayWithoutWaiting setting
       const elementToObserve = this.main.replayWithoutWaiting
@@ -92,11 +92,16 @@ export class PageHandler {
         : document.querySelector('#status-inner #finished');
 
       if (elementToObserve) {
-        const observer = new MutationObserver(() => {
-          observer.disconnect();
-          this.handleGameActions();
+        const finishObserver = new MutationObserver(() => {
+          // Check #bookinfo visibility before disconnecting
+          const bookinfoElement = document.getElementById('bookinfo');
+          const isBookinfoVisible = bookinfoElement && bookinfoElement.style.display !== 'none';
+          if (isBookinfoVisible) {
+            finishObserver.disconnect();
+            this.handleReplayAction();
+          }
         });
-        observer.observe(elementToObserve, { attributes: true });
+        finishObserver.observe(elementToObserve, { attributes: true });
       }
     }
 
@@ -157,12 +162,6 @@ export class PageHandler {
     }
     this.main.gamesManager.assignGameIds();
     this.main.gamesManager.saveGameData();
-  }
-
-  handleGameActions() {
-    // Handle both start and replay actions
-    this.handleStartAction();
-    this.handleReplayAction();
   }
 
   handleStartAction() {
