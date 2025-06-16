@@ -65,16 +65,11 @@ export function showVocabularyCreationPopup(groups, event, vocId, vocName, main)
  * @returns {string|null} CSS selector for the container
  */
 function getContainerSelector() {
-  const currentPage = getCurrentPage();
-
-  switch (currentPage) {
-    case 'vocabularies':
-      return '.columns.voclist';
-    case 'profile':
-      return '.profile-root, .dlg-profile-vocs .vocs';
-    default:
-      return null; // No vocabulary creation on other pages
-  }
+  const page = getCurrentPage();
+  if (page === 'vocabularies') return '.columns.voclist';
+  if (page === 'profile') return '.profile-root, .dlg-profile-vocs .vocs';
+  if (page === 'forum') return '#posts-list .list';
+  return null; // No vocabulary creation on other pages
 }
 
 /**
@@ -125,6 +120,38 @@ function waitFor(selector, callback) {
 const attachedContainers = new WeakSet();
 
 /**
+ * Extract vocabulary ID from an anchor’s href only if there’s nothing after the id.
+ * 
+ * For links containing "/create/", we check for a query parameter "voc".
+ * For other links, we only accept a URL whose pathname exactly matches "/vocs/{id}/"
+ * with no additional segments.
+ *
+ * @param {HTMLElement} anchor - The anchor element.
+ * @returns {string|null} The extracted vocabulary ID, or null if invalid.
+ */
+function extractVocabularyId(anchor) {
+  const href = anchor.getAttribute('href');
+  
+  if (/\/create\//.test(href)) {
+    // Extract the voc parameter from query string
+    const createMatch = href.match(/[?&]voc=(\d+)/);
+    return createMatch ? createMatch[1] : null;
+  } else {
+    try {
+      const url = new URL(href, window.location.origin);
+      const pathname = url.pathname; // e.g. "/vocs/176053/" or "/vocs/176053/top/week/"
+      
+      // Only accept if pathname strictly matches "/vocs/{id}/" (or without trailing slash)
+      const strictMatch = pathname.match(/^\/vocs\/(\d+)\/?$/);
+      return strictMatch ? strictMatch[1] : null;
+    } catch (error) {
+      console.error('Error parsing URL:', href, error);
+      return null;
+    }
+  }
+}
+
+/**
  * Attach event listener to a container if not already attached
  * @param {HTMLElement} container - The container element
  * @param {Array} groups - Array of group objects
@@ -135,17 +162,16 @@ function attachEventToContainer(container, groups, main) {
   attachedContainers.add(container);
 
   container.addEventListener('contextmenu', (e) => {
-    const anchor = e.target.closest('a[href*="/vocs/"]');
+    // Search for an anchor with "/vocs/" or "/create/" in its href
+    const anchor = e.target.closest('a[href*="/vocs/"], a[href*="/create/"]');
     if (anchor) {
       e.preventDefault();
       e.stopPropagation();
-      const href = anchor.getAttribute('href');
-      const match = href.match(/\/vocs\/(\d+)(?:\/|$)/);
-      if (match) {
-        const vocId = match[1];
-        const vocName = extractVocabularyName(anchor);
-        showVocabularyCreationPopup(groups, e, vocId, vocName, main);
-      }
+      const vocId = extractVocabularyId(anchor);
+      if (!vocId) return; // Exit if no valid vocId is found
+
+      const vocName = extractVocabularyName(anchor); // Your function for extracting vocabulary name
+      showVocabularyCreationPopup(groups, e, vocId, vocName, main);
     }
   });
 }
