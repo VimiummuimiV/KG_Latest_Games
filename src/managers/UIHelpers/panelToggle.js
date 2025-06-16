@@ -3,57 +3,58 @@ import { createCustomTooltip, updateTooltipContent } from '../../tooltip.js';
 import { icons } from '../../icons.js';
 import { DEFAULTS } from '../../definitions.js';
 
-export function createPanelToggleButton(main) {
-  if (document.getElementById('latest-games-panel-toggle')) return;
-
+function generatePanelToggleTooltipText(main) {
+  const container = document.getElementById('latest-games-container');
   const currentPage = getCurrentPage();
   const isAlwaysVisible = main.alwaysVisiblePanel[currentPage] ?? false;
+  const showHideText = container && container.classList.contains('visible') ? 'Скрыть' : 'Показать';
+  const pinUnpinText = isAlwaysVisible ? 'Открепить' : 'Закрепить';
+  
+  return `
+    [Клик] ${showHideText} панель
+    [Shift + Клик] ${pinUnpinText} панель
+    [Ctrl + Клик] Изменить задержку скрытия панели
+    (${main.hidePanelDelay ?? DEFAULTS.hidePanelDelay} мс)
+  `;
+}
 
+export function createPanelToggleButton(main) {
+  if (document.getElementById('latest-games-panel-toggle')) return;
+  
+  const currentPage = getCurrentPage();
+  const isAlwaysVisible = main.alwaysVisiblePanel[currentPage] ?? false;
+  
   const btn = createElement('button', {
     id: 'latest-games-panel-toggle',
     className: 'latest-games-panel-toggle',
     type: 'button',
     innerHTML: isAlwaysVisible ? icons.panelToggleOpened : icons.panelToggleClosed,
   });
+  
   const container = document.getElementById('latest-games-container');
-  const showHideText = container && container.classList.contains('visible') ? 'Скрыть' : 'Показать';
-  const pinUnpinText = isAlwaysVisible ? 'Открепить' : 'Закрепить';
+  
   const updatePanelToggleTooltip = () => {
-    const container = document.getElementById('latest-games-container');
-    const currentPage = getCurrentPage();
-    const isAlwaysVisibleNow = main.alwaysVisiblePanel[currentPage] ?? false;
-    const showHideText = container && container.classList.contains('visible') ? 'Скрыть' : 'Показать';
-    const pinUnpinText = isAlwaysVisibleNow ? 'Открепить' : 'Закрепить';
-    updateTooltipContent(btn, `
-      [Клик] ${showHideText} панель
-      [Shift + Клик] ${pinUnpinText} панель
-      [Ctrl + Клик] Изменить задержку скрытия панели
-      (${main.hidePanelDelay ?? DEFAULTS.hidePanelDelay} мс)
-    `);
+    updateTooltipContent(btn, generatePanelToggleTooltipText(main));
   };
-
+  
   btn.addEventListener('mouseenter', updatePanelToggleTooltip);
-
-  createCustomTooltip(btn, `
-    [Клик] ${showHideText} панель
-    [Shift + Клик] ${pinUnpinText} панель
-    [Ctrl + Клик] Изменить задержку скрытия панели
-    (${main.hidePanelDelay ?? DEFAULTS.hidePanelDelay} мс)
-  `);
-
+  
+  createCustomTooltip(btn, generatePanelToggleTooltipText(main));
+  
   if (isAlwaysVisible) btn.classList.add('always-visible');
-
+  
   // Set initial panel visibility
   if (container) {
     container.classList.toggle('visible', isAlwaysVisible);
     if (!isAlwaysVisible) main.viewManager.updateContainerLeftOffset();
   }
-
+  
   btn.addEventListener('click', (e) => {
     const container = document.getElementById('latest-games-container');
     if (!container) return;
-
+    
     const currentPage = getCurrentPage();
+    
     if (e.shiftKey) {
       // Toggle visibility setting for the current page
       main.alwaysVisiblePanel[currentPage] = !main.alwaysVisiblePanel[currentPage];
@@ -80,6 +81,6 @@ export function createPanelToggleButton(main) {
       updatePanelToggleTooltip();
     }
   });
-
+  
   document.body.appendChild(btn);
 }
