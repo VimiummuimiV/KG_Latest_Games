@@ -66,7 +66,7 @@ export function showVocabularyCreationPopup(groups, event, vocId, vocName, main)
  */
 function getContainerSelector() {
   const currentPage = getCurrentPage();
-  
+
   switch (currentPage) {
     case 'vocabularies':
       return '.columns.voclist';
@@ -115,22 +115,26 @@ function waitFor(selector, callback) {
       }
     });
   });
-  
+
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
 /**
- * Attach event listener to a container
+ * Attach event listener to a container if not already attached
  * @param {HTMLElement} container - The container element
  * @param {Array} groups - Array of group objects
  * @param {object} main - The main manager instance
  */
 function attachEventToContainer(container, groups, main) {
+  // Prevent double attachment
+  if (container.dataset.vocabularyCreationAttached) return;
+  container.dataset.vocabularyCreationAttached = 'true';
+
   container.addEventListener('contextmenu', (e) => {
-    // Use more flexible selector - any anchor with href containing "/vocs/"
     const anchor = e.target.closest('a[href*="/vocs/"]');
     if (anchor) {
       e.preventDefault();
+      e.stopPropagation();
       const href = anchor.getAttribute('href');
       const match = href.match(/\/vocs\/(\d+)(?:\/|$)/);
       if (match) {
@@ -149,18 +153,22 @@ function attachEventToContainer(container, groups, main) {
  */
 export function attachVocabularyCreation(groups, main) {
   const containerSelector = getContainerSelector();
-  
+
   if (!containerSelector) {
     console.warn('Vocabulary creation is not supported on this page.');
     return;
   }
-  
+
   // Handle multiple selectors (comma-separated)
   const selectors = containerSelector.split(',').map(s => s.trim());
-  
+
   selectors.forEach(selector => {
-    waitFor(selector, (container) => {
+    // Always try to attach immediately
+    const container = document.querySelector(selector);
+    if (container) {
       attachEventToContainer(container, groups, main);
-    });
+    }
+    // Also set up waitFor in case the container appears later (will attach again if needed)
+    waitFor(selector, (el) => attachEventToContainer(el, groups, main));
   });
 }
