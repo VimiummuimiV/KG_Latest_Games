@@ -120,15 +120,19 @@ function waitFor(selector, callback) {
 }
 
 /**
+ * Tracks which containers have had our listener attached
+ */
+const attachedContainers = new WeakSet();
+
+/**
  * Attach event listener to a container if not already attached
  * @param {HTMLElement} container - The container element
  * @param {Array} groups - Array of group objects
  * @param {object} main - The main manager instance
  */
 function attachEventToContainer(container, groups, main) {
-  // Prevent double attachment
-  if (container.dataset.vocabularyCreationAttached) return;
-  container.dataset.vocabularyCreationAttached = 'true';
+  if (attachedContainers.has(container)) return;
+  attachedContainers.add(container);
 
   container.addEventListener('contextmenu', (e) => {
     const anchor = e.target.closest('a[href*="/vocs/"]');
@@ -163,12 +167,12 @@ export function attachVocabularyCreation(groups, main) {
   const selectors = containerSelector.split(',').map(s => s.trim());
 
   selectors.forEach(selector => {
-    // Always try to attach immediately
+    // Immediately attach if container exists now
     const container = document.querySelector(selector);
     if (container) {
       attachEventToContainer(container, groups, main);
     }
-    // Also set up waitFor in case the container appears later (will attach again if needed)
+    // Also observe for future containers
     waitFor(selector, (el) => attachEventToContainer(el, groups, main));
   });
 }
