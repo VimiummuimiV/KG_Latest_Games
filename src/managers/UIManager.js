@@ -41,10 +41,8 @@ export class UIManager {
     contentContainer.appendChild(gamesList);
 
     const controls = this.createControls();
-    contentContainer.appendChild(controls);
 
-    // Add the content container to the main container
-    container.appendChild(contentContainer);
+    container.append(controls, contentContainer);
 
     // Move scroll event listener to the content container
     contentContainer.addEventListener('scroll', () => {
