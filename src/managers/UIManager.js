@@ -28,17 +28,10 @@ export class UIManager {
     const content = document.getElementById('latest-games-content');
     const el = document.querySelector('.previous-game');
     if (!content || !el) return;
-
-    // Measure inside-container distance
     const cRect = content.getBoundingClientRect();
     const eRect = el.getBoundingClientRect();
     const offsetInside = eRect.top - cRect.top;
-
-    // Calculate centered scrollTop
-    const scrollTo = offsetInside
-      - (cRect.height / 2)
-      + (eRect.height / 2);
-
+    const scrollTo = offsetInside - (cRect.height / 2) + (eRect.height / 2);
     content.scrollTop += scrollTo;
   }
 
@@ -50,9 +43,7 @@ export class UIManager {
       requestAnimationFrame(() => this.scrollToPreviousGame());
     });
 
-    // Create the content container that will hold all the content
     const contentContainer = createElement('div', { id: 'latest-games-content' });
-
     const searchBox = this.createSearchBox();
     contentContainer.appendChild(searchBox);
 
@@ -64,7 +55,6 @@ export class UIManager {
     contentContainer.appendChild(gamesList);
 
     const controls = this.createControls();
-
     container.append(controls, contentContainer);
 
     // Move scroll event listener to the content container
@@ -128,20 +118,26 @@ export class UIManager {
       }
     });
 
-    // Horizontal resize handle - stays in main container
+    // Append resize handles
     let hHandle = container.querySelector('.resize-handle-horizontal');
     if (!hHandle) {
       hHandle = createElement('div', { className: 'resize-handle-horizontal' });
       container.appendChild(hHandle);
     }
-    // Vertical resize handle - stays in main container
-    let vHandle = container.querySelector('.resize-handle-vertical');
-    if (!vHandle) {
-      vHandle = createElement('div', { className: 'resize-handle-vertical' });
-      container.appendChild(vHandle);
+
+    let vHandleBot = container.querySelector('.resize-handle-vertical-bottom');
+    if (!vHandleBot) {
+      vHandleBot = createElement('div', { className: 'resize-handle-vertical resize-handle-vertical-bottom' });
+      container.appendChild(vHandleBot);
     }
 
-    setupResizeHandle(this, container, hHandle, vHandle);
+    let vHandleTop = container.querySelector('.resize-handle-vertical-top');
+    if (!vHandleTop) {
+      vHandleTop = createElement('div', { className: 'resize-handle-vertical resize-handle-vertical-top' });
+      container.appendChild(vHandleTop);
+    }
+
+    setupResizeHandle(this, container, hHandle, vHandleBot, vHandleTop);
     setupYPositioning(this, container);
 
     document.body.appendChild(container);
@@ -165,7 +161,7 @@ export class UIManager {
 
     this.updateRemoveIcons();
     // Scroll to the previous game if it exists or restore the last scroll position
-    setTimeout(() => { requestAnimationFrame(() => { this.scrollToPreviousGame(); }); }, 100);
+    setTimeout(() => requestAnimationFrame(() => this.scrollToPreviousGame()), 100);
   }
 
   updateGameCountDisplay() {

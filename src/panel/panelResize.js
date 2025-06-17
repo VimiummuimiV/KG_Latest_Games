@@ -8,6 +8,7 @@ function setupDragResize(handle, getStart, onMove, onEnd) {
     const delta = getStart(e, startCoord);
     onMove(delta, startSize);
   };
+
   const onMouseUp = () => {
     if (!isDragging) return;
     isDragging = false;
@@ -15,6 +16,7 @@ function setupDragResize(handle, getStart, onMove, onEnd) {
     document.removeEventListener('mouseup', onMouseUp);
     onEnd();
   };
+
   handle.onmousedown = (e) => {
     if (e.button !== 0) return;
     isDragging = true;
@@ -25,14 +27,21 @@ function setupDragResize(handle, getStart, onMove, onEnd) {
   };
 }
 
-// Handles panel resizing logic for LatestGamesManager
-export function setupResizeHandle(uiManager, container, horizontalHandle, verticalHandle) {
+/**
+ * Handles panel resizing logic for LatestGamesManager
+ * @param {object} uiManager - instance of UIManager
+ * @param {HTMLElement} container - the panel container
+ * @param {HTMLElement} horizontalHandle - handle for width resizing
+ * @param {HTMLElement} bottomHandle - handle for bottom-edge height resizing
+ * @param {HTMLElement} topHandle - handle for top-edge height resizing
+ */
+export function setupResizeHandle(uiManager, container, horizontalHandle, bottomHandle, topHandle) {
   const mode = uiManager.main.viewManager.getDisplayMode();
   const currentPage = getCurrentPage();
+
   // Horizontal (width) resize
   if (mode === 'wrap') {
-    // Use per-page width if available
-    const width = (uiManager.main.panelWidths && uiManager.main.panelWidths[currentPage]) || uiManager.main.panelWidth;
+    const width = (uiManager.main.panelWidths?.[currentPage]) || uiManager.main.panelWidth;
     container.style.width = width;
     horizontalHandle.style.display = '';
     setupDragResize(
@@ -46,7 +55,7 @@ export function setupResizeHandle(uiManager, container, horizontalHandle, vertic
         container.style.width = `${newWidthVw}vw`;
       },
       () => {
-        if (!uiManager.main.panelWidths) uiManager.main.panelWidths = {};
+        uiManager.main.panelWidths = uiManager.main.panelWidths || {};
         uiManager.main.panelWidths[currentPage] = container.style.width;
         uiManager.main.settingsManager.saveSettings();
       }
@@ -57,14 +66,13 @@ export function setupResizeHandle(uiManager, container, horizontalHandle, vertic
     horizontalHandle.onmousedown = null;
   }
 
-  // Vertical (height) resize
-  if (verticalHandle) {
-    // Use per-page height if available
-    const height = (uiManager.main.panelHeights && uiManager.main.panelHeights[currentPage]) || DEFAULTS.panelHeight;
-    container.style.height = height;
-    verticalHandle.style.display = '';
+  // Bottom vertical (height) resize
+  const initialHeight = (uiManager.main.panelHeights?.[currentPage]) || DEFAULTS.panelHeight;
+  container.style.height = initialHeight;
+  if (bottomHandle) {
+    bottomHandle.style.display = '';
     setupDragResize(
-      verticalHandle,
+      bottomHandle,
       (e, prevY) => prevY === undefined ? [e.clientY, container.offsetHeight] : e.clientY - prevY,
       (dy, startHeight) => {
         let newHeightPx = startHeight + dy;
@@ -74,7 +82,32 @@ export function setupResizeHandle(uiManager, container, horizontalHandle, vertic
         container.style.height = `${newHeightVh}vh`;
       },
       () => {
-        if (!uiManager.main.panelHeights) uiManager.main.panelHeights = {};
+        uiManager.main.panelHeights = uiManager.main.panelHeights || {};
+        uiManager.main.panelHeights[currentPage] = container.style.height;
+        uiManager.main.settingsManager.saveSettings();
+      }
+    );
+  }
+
+  // Top vertical (height) resize
+  if (topHandle) {
+    topHandle.style.display = '';
+    setupDragResize(
+      topHandle,
+      (e, prevY) => prevY === undefined ? [e.clientY, container.offsetHeight] : prevY - e.clientY,
+      (dy, startHeight) => {
+        let newHeightPx = startHeight + dy;
+        const maxPx = window.innerHeight * 0.95;
+        newHeightPx = Math.max(200, Math.min(newHeightPx, maxPx));
+        const newHeightVh = Math.round((newHeightPx / window.innerHeight) * 100 * 10) / 10;
+        // Move container down by the height delta so bottom stays fixed
+        const deltaPx = newHeightPx - startHeight;
+        const currentTop = parseFloat(container.style.top) || container.getBoundingClientRect().top;
+        container.style.top = `${currentTop - deltaPx}px`;
+        container.style.height = `${newHeightVh}vh`;
+      },
+      () => {
+        uiManager.main.panelHeights = uiManager.main.panelHeights || {};
         uiManager.main.panelHeights[currentPage] = container.style.height;
         uiManager.main.settingsManager.saveSettings();
       }
