@@ -2,6 +2,7 @@ import { createElement, generateUniqueId } from '../../utils.js';
 import { createCustomTooltip, refreshTooltipSettings } from '../../tooltip.js';
 import { icons } from '../../icons.js';
 import { toggleSearchBox } from './search.js';
+import { DEFAULTS } from '../../definitions.js';
 
 export function createControls(main) {
   const controlsContainer = createElement('div', { className: 'latest-games-controls' });
@@ -163,6 +164,35 @@ export function createControls(main) {
     main.uiManager.refreshContainer();
     alert('Все ID для групп и игр были обновлены!');
   });
+
+  // Add button to reset panel individual page settings to defaults
+  const resetButton = createElement('span', {
+    className: 'latest-games-reset-panels control-button',
+    innerHTML: icons.reset
+  });
+
+  createCustomTooltip(resetButton, 'Сбросить настройки панели на значения по умолчанию');
+
+  resetButton.addEventListener('click', () => {
+    if (!confirm('Вы уверены, что хотите сбросить настройки панели на значения по умолчанию? Это действие нельзя отменить.')) return;
+    resetPanelSettings(main);
+  });
+
+  function resetPanelSettings(main) {
+    // Reset panel-specific settings to defaults
+    main.panelWidths = { ...DEFAULTS.panelWidths };
+    main.panelHeights = { ...DEFAULTS.panelHeights };
+    main.panelYPosition = { ...DEFAULTS.panelYPosition };
+    main.alwaysVisiblePanel = { ...DEFAULTS.alwaysVisiblePanel };
+
+    // Save the updated settings
+    main.settingsManager.saveSettings();
+
+    // If there's a UI refresh method, call it to apply changes immediately
+    if (main.uiManager && main.uiManager.refreshContainer) {
+      main.uiManager.refreshContainer();
+    }
+  }
 
   // Add button to toggle auto-start of games
   const playBtn = createElement('span', {
@@ -400,10 +430,10 @@ export function createControls(main) {
   controlsButtons.append(
     main.themeManager.createThemeToggle(),
     main.viewManager.createDisplayModeToggle(),
-    refreshIdsBtn, playBtn, replayBtn, pinAllBtn,
-    unpinAllBtn, sortBtn, importBtn, exportBtn,
-    removeAllBtn, removeUnpinnedBtn, dragToggleBtn,
-    descToggleBtn, helpToggleBtn, searchBtn
+    refreshIdsBtn, resetButton, playBtn, replayBtn,
+    pinAllBtn, unpinAllBtn, sortBtn, importBtn,
+    exportBtn, removeAllBtn, removeUnpinnedBtn,
+    dragToggleBtn, descToggleBtn, helpToggleBtn, searchBtn
   );
 
   return controlsContainer;
