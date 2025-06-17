@@ -1,6 +1,7 @@
 import { icons } from '../icons.js';
 import { createElement } from '../utils.js';
 import { createCustomTooltip } from '../tooltip.js';
+import { DEFAULTS } from '../definitions.js';
 
 export class ViewManager {
   constructor(main) {
@@ -56,7 +57,9 @@ export class ViewManager {
     if (!container) return;
     const mode = this.getDisplayMode();
     if (mode === 'wrap') {
-      container.style.left = 'calc(-1 * (100vw - 100px))';
+      // Use the current panelWidth (in vw or px), fallback to DEFAULTS if needed
+      const width = this.main.panelWidth || DEFAULTS.panelWidth;
+      container.style.left = `calc(-1 * (${width} - 100px))`;
     } else {
       container.style.left = '-330px';
     }

@@ -69,7 +69,5 @@ export function setupYPositioning(uiManager, container) {
     };
 
     container.addEventListener('mousedown', enableYDrag);
-  } else {
-    container.style.top = '';
   }
 }
