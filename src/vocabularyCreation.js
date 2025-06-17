@@ -81,7 +81,7 @@ function addGameToGroup(group, vocId, vocName, groups, main) {
     },
     pin: 1
   };
-  group.games.unshift(newGame);
+  group.games.push(newGame);
   let latestGamesData = main.gamesManager.latestGamesData || {};
   latestGamesData = { ...latestGamesData, latestGroupAddedGameId: group.id };
   main.gamesManager.latestGamesData = latestGamesData;
