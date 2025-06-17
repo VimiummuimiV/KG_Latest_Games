@@ -100,12 +100,13 @@ export class UIManager {
       }
     });
 
-    let hHandle = container.querySelector('.resize-handle');
+    // Horizontal resize handle
+    let hHandle = container.querySelector('.resize-handle-horizontal');
     if (!hHandle) {
-      hHandle = createElement('div', { className: 'resize-handle' });
+      hHandle = createElement('div', { className: 'resize-handle-horizontal' });
       container.appendChild(hHandle);
     }
-    // Add vertical resize handle
+    // Vertical resize handle
     let vHandle = container.querySelector('.resize-handle-vertical');
     if (!vHandle) {
       vHandle = createElement('div', { className: 'resize-handle-vertical' });
