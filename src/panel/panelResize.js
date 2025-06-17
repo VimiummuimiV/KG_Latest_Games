@@ -66,9 +66,10 @@ export function setupResizeHandle(uiManager, container, horizontalHandle, bottom
     horizontalHandle.onmousedown = null;
   }
 
-  // Bottom vertical (height) resize
   const initialHeight = (uiManager.main.panelHeights?.[currentPage]) || DEFAULTS.panelHeight;
   container.style.height = initialHeight;
+
+  // Bottom vertical (height) resize
   if (bottomHandle) {
     bottomHandle.style.display = '';
     setupDragResize(
@@ -100,10 +101,6 @@ export function setupResizeHandle(uiManager, container, horizontalHandle, bottom
         const maxPx = window.innerHeight * 0.95;
         newHeightPx = Math.max(200, Math.min(newHeightPx, maxPx));
         const newHeightVh = Math.round((newHeightPx / window.innerHeight) * 100 * 10) / 10;
-        // Move container down by the height delta so bottom stays fixed
-        const deltaPx = newHeightPx - startHeight;
-        const currentTop = parseFloat(container.style.top) || container.getBoundingClientRect().top;
-        container.style.top = `${currentTop - deltaPx}px`;
         container.style.height = `${newHeightVh}vh`;
       },
       () => {
