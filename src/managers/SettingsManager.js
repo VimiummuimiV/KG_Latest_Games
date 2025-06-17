@@ -13,6 +13,7 @@ export class SettingsManager {
       this.main.groupsManager.groupViewMode = settings.groupViewMode ?? this.main.groupsManager.groupViewMode;
       this.main.previousScrollPosition = settings.previousScrollPosition ?? this.main.previousScrollPosition;
       this.main.panelWidth = settings.panelWidth ?? this.main.panelWidth;
+      this.main.panelHeight = settings.panelHeight ?? this.main.panelHeight;
       this.main.enableDragging = settings.enableDragging ?? this.main.enableDragging;
       this.main.shouldAutoSave = settings.shouldAutoSave ?? this.main.shouldAutoSave;
       this.main.hidePanelDelay = settings.hidePanelDelay ?? this.main.hidePanelDelay;
@@ -56,6 +57,7 @@ export class SettingsManager {
         groupViewMode: this.main.groupsManager.groupViewMode,
         previousScrollPosition: this.main.previousScrollPosition,
         panelWidth: this.main.panelWidth,
+        panelHeight: this.main.panelHeight,
         enableDragging: this.main.enableDragging,
         shouldAutoSave: this.main.shouldAutoSave,
         hidePanelDelay: this.main.hidePanelDelay,

@@ -51,6 +51,7 @@ export const DEFAULTS = {
   displayMode: 'scroll',
   previousScrollPosition: 0,
   panelWidth: '95vw',
+  panelHeight: '95vh',
   hoverTimeout: null,
   isHovered: false,
   enableDragging: true,

@@ -100,13 +100,19 @@ export class UIManager {
       }
     });
 
-    let handle = container.querySelector('.resize-handle');
-    if (!handle) {
-      handle = createElement('div', { className: 'resize-handle' });
-      container.appendChild(handle);
+    let hHandle = container.querySelector('.resize-handle');
+    if (!hHandle) {
+      hHandle = createElement('div', { className: 'resize-handle' });
+      container.appendChild(hHandle);
+    }
+    // Add vertical resize handle
+    let vHandle = container.querySelector('.resize-handle-vertical');
+    if (!vHandle) {
+      vHandle = createElement('div', { className: 'resize-handle-vertical' });
+      container.appendChild(vHandle);
     }
 
-    setupResizeHandle(this, container, handle);
+    setupResizeHandle(this, container, hHandle, vHandle);
     setupYPositioning(this, container);
 
     document.body.appendChild(container);
@@ -124,7 +130,7 @@ export class UIManager {
     const origUpdateDisplayModeClass = this.main.viewManager.updateDisplayModeClass.bind(this.main.viewManager);
     this.main.viewManager.updateDisplayModeClass = (...args) => {
       origUpdateDisplayModeClass(...args);
-      setupResizeHandle(this, container, handle);
+      setupResizeHandle(this, container, hHandle, vHandle);
       setupYPositioning(this, container);
     };
 
