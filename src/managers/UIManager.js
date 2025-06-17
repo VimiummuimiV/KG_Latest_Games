@@ -27,21 +27,28 @@ export class UIManager {
   createContainer() {
     const container = createElement('div', { id: 'latest-games-container' });
 
+    // Create the content container that will hold all the content
+    const contentContainer = createElement('div', { id: 'latest-games-content' });
+
     const searchBox = this.createSearchBox();
-    container.appendChild(searchBox);
+    contentContainer.appendChild(searchBox);
 
     const groupsContainer = this.main.groupsManager.createGroupsContainer();
-    container.appendChild(groupsContainer);
+    contentContainer.appendChild(groupsContainer);
 
     const gamesList = createElement('ul', { id: 'latest-games' });
     this.populateGamesList(gamesList);
-    container.appendChild(gamesList);
+    contentContainer.appendChild(gamesList);
 
     const controls = this.createControls();
-    container.appendChild(controls);
+    contentContainer.appendChild(controls);
 
-    container.addEventListener('scroll', () => {
-      this.main.previousScrollPosition = container.scrollTop;
+    // Add the content container to the main container
+    container.appendChild(contentContainer);
+
+    // Move scroll event listener to the content container
+    contentContainer.addEventListener('scroll', () => {
+      this.main.previousScrollPosition = contentContainer.scrollTop;
       this.main.settingsManager.saveSettings();
     });
 
@@ -100,13 +107,13 @@ export class UIManager {
       }
     });
 
-    // Horizontal resize handle
+    // Horizontal resize handle - stays in main container
     let hHandle = container.querySelector('.resize-handle-horizontal');
     if (!hHandle) {
       hHandle = createElement('div', { className: 'resize-handle-horizontal' });
       container.appendChild(hHandle);
     }
-    // Vertical resize handle
+    // Vertical resize handle - stays in main container
     let vHandle = container.querySelector('.resize-handle-vertical');
     if (!vHandle) {
       vHandle = createElement('div', { className: 'resize-handle-vertical' });
@@ -136,7 +143,8 @@ export class UIManager {
     };
 
     this.updateRemoveIcons();
-    container.scrollTop = this.main.previousScrollPosition;
+    // Set scroll position on content container instead of main container
+    contentContainer.scrollTop = this.main.previousScrollPosition;
   }
 
   updateGameCountDisplay() {

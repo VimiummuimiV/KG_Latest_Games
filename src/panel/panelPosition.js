@@ -51,7 +51,8 @@ export function setupYPositioning(uiManager, container) {
         '.latest-game',
         '.group-tab',
         '.control-button',
-        '.resize-handle',
+        '.resize-handle-horizontal',
+        '.resize-handle-vertical',
         '#latest-games-search-input'
       ];
       
