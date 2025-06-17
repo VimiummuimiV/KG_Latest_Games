@@ -25,13 +25,14 @@ export class SettingsManager {
       this.main.showButtonDescriptions = settings.showButtonDescriptions ?? this.main.showButtonDescriptions;
       this.main.showHelpTooltips = settings.showHelpTooltips ?? this.main.showHelpTooltips;
 
-      // Handle panelYPosition and alwaysVisiblePanel as objects
+      // Handle panelYPosition and alwaysVisiblePanel as objects (per-page)
       if (settings.panelYPosition && typeof settings.panelYPosition === 'object') {
         this.main.panelYPosition = {
           ...this.main.panelYPosition,
           ...settings.panelYPosition
         };
       }
+      
       // Handle panelWidth and panelHeight as objects (per-page)
       if (settings.panelWidths && typeof settings.panelWidths === 'object') {
         this.main.panelWidths = {
@@ -39,12 +40,14 @@ export class SettingsManager {
           ...settings.panelWidths
         };
       }
+
       if (settings.panelHeights && typeof settings.panelHeights === 'object') {
         this.main.panelHeights = {
           ...this.main.panelHeights,
           ...settings.panelHeights
         };
       }
+
       // Ensure alwaysVisiblePanel is an object and merge settings
       if (settings.alwaysVisiblePanel && typeof settings.alwaysVisiblePanel === 'object') {
         this.main.alwaysVisiblePanel = {
@@ -68,6 +71,7 @@ export class SettingsManager {
         previousScrollPosition: this.main.previousScrollPosition,
         panelWidths: this.main.panelWidths,
         panelHeights: this.main.panelHeights,
+        panelYPosition: this.main.panelYPosition,
         enableDragging: this.main.enableDragging,
         shouldAutoSave: this.main.shouldAutoSave,
         hidePanelDelay: this.main.hidePanelDelay,
@@ -80,7 +84,6 @@ export class SettingsManager {
         showSearchBox: this.main.showSearchBox,
         showButtonDescriptions: this.main.showButtonDescriptions,
         showHelpTooltips: this.main.showHelpTooltips,
-        panelYPosition: this.main.panelYPosition,
         alwaysVisiblePanel: this.main.alwaysVisiblePanel
       };
 
