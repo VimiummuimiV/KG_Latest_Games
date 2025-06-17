@@ -1,4 +1,4 @@
-import { generateUniqueId, waitFor, getContainerSelector, extractVocabularyId } from './utils.js';
+import { generateUniqueId, getContainerSelector, extractVocabularyId } from './utils.js';
 import { highlightExistingVocabularies } from './vocabularyChecker.js';
 import { createPopup } from './menuPopup.js';
 import { hideTooltip } from './vocabularyParser.js';
@@ -180,6 +180,30 @@ function attachEventToContainer(container, groups, main) {
 
     showVocabularyCreationPopup(groups, e, vocId, vocName, main);
   });
+}
+
+/**
+ * Wait for elements matching the selector to be added to the DOM and execute callback for each.
+ * @param {string} selector - CSS selector to wait for
+ * @param {Function} callback - Function to execute when a matching element is added
+ */
+function waitFor(selector, callback) {
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'childList') {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            if (node.matches(selector)) {
+              callback(node);
+            }
+            const matchingDescendants = node.querySelectorAll(selector);
+            matchingDescendants.forEach((el) => callback(el));
+          }
+        });
+      }
+    });
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 }
 
 /**

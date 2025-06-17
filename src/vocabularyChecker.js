@@ -1,46 +1,126 @@
 import { icons } from './icons.js';
 import { createCustomTooltip } from './tooltip.js';
-import { waitFor, getContainerSelector, extractVocabularyId } from './utils.js';
+import { getCurrentPage, extractVocabularyId } from './utils.js';
 
-function highlightInContainer(container, vocIdToGroups) {
-  const anchors = container.querySelectorAll('a.name[href*="/vocs/"], a[href*="/create/"]');
+let vocIdToGroups = new Map();
+let vocabularyHighlightObserver = null;
+
+const VOCABULARY_ANCHOR_SELECTOR = 'a.name[href*="/vocs/"], a[href*="/create/"]';
+
+// List of selectors to exclude from processing
+const EXCLUSION_SELECTORS = [
+  '#latest-games-container',
+  '.userpanel',
+  '#head',
+  '#footer'
+];
+
+function shouldProcessElement(element) {
+  // Check if element is within excluded containers
+  for (const selector of EXCLUSION_SELECTORS) {
+    if (element.closest(selector)) {
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+function processAnchor(anchor) {
+  const vocId = extractVocabularyId(anchor);
+  if (!vocId) return;
+  
+  const parent = anchor.parentNode;
+  const oldIcon = parent.querySelector('.kg-voc-checkmark');
+  if (oldIcon) oldIcon.remove();
+  
+  if (vocIdToGroups.has(vocId)) {
+    const icon = document.createElement('span');
+    icon.className = 'kg-voc-checkmark';
+    icon.innerHTML = icons.checkmark;
+    createCustomTooltip(icon, 'Словарь уже существует в группе: ' + vocIdToGroups.get(vocId).join(', '));
+    
+    const isVocPage = window.location.pathname.startsWith('/vocs/');
+    const desc = parent.querySelector('.desc');
+    
+    if (isVocPage && desc) {
+      parent.insertBefore(icon, desc);
+    } else {
+      parent.appendChild(icon);
+    }
+  }
+}
+
+function processExistingAnchors() {
+  const anchors = document.querySelectorAll(VOCABULARY_ANCHOR_SELECTOR);
   anchors.forEach(anchor => {
-    const vocId = extractVocabularyId(anchor);
-    if (!vocId) return;
-    const parent = anchor.parentNode;
-    const oldIcon = parent.querySelector('.kg-voc-checkmark');
-    if (oldIcon) oldIcon.remove();
-    if (vocIdToGroups.has(vocId)) {
-      const icon = document.createElement('span');
-      icon.className = 'kg-voc-checkmark';
-      icon.innerHTML = icons.checkmark;
-      createCustomTooltip(icon, 'Словарь уже существует в группе: ' + vocIdToGroups.get(vocId).join(', '));
-      const isVocPage = window.location.pathname.startsWith('/vocs/');
-      const desc = parent.querySelector('.desc');
-      if (isVocPage && desc) parent.insertBefore(icon, desc); // insert before description on vocabulary page
-      else parent.appendChild(icon); // append to the end otherwise
+    if (shouldProcessElement(anchor)) {
+      processAnchor(anchor);
     }
   });
 }
 
+function handleMutations(mutations) {
+  mutations.forEach(mutation => {
+    mutation.addedNodes.forEach(node => {
+      if (node.nodeType === Node.ELEMENT_NODE && shouldProcessElement(node)) {
+        if (node.matches && node.matches(VOCABULARY_ANCHOR_SELECTOR)) {
+          processAnchor(node);
+        }
+        
+        const anchors = node.querySelectorAll && node.querySelectorAll(VOCABULARY_ANCHOR_SELECTOR);
+        if (anchors) {
+          anchors.forEach(anchor => {
+            if (shouldProcessElement(anchor)) {
+              processAnchor(anchor);
+            }
+          });
+        }
+      }
+    });
+    
+    if (mutation.type === 'attributes' && mutation.attributeName === 'href') {
+      const target = mutation.target;
+      if (shouldProcessElement(target) && target.matches && target.matches('a')) {
+        processAnchor(target);
+      }
+    }
+  });
+}
+
+function startVocabularyHighlightObserver() {
+  if (vocabularyHighlightObserver) {
+    vocabularyHighlightObserver.disconnect();
+  }
+  
+  vocabularyHighlightObserver = new MutationObserver(handleMutations);
+  vocabularyHighlightObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['href']
+  });
+}
+
 export function highlightExistingVocabularies(groups) {
-  const vocIdToGroups = new Map();
+  const currentPage = getCurrentPage();
+  if (!['profile', 'forum', 'vocabularies'].includes(currentPage)) {
+    return;
+  }
+  
+  vocIdToGroups.clear();
   groups.forEach(group => {
     group.games.forEach(game => {
       if (game.params && game.params.vocId) {
         const vocIdStr = String(game.params.vocId);
-        if (!vocIdToGroups.has(vocIdStr)) vocIdToGroups.set(vocIdStr, []);
+        if (!vocIdToGroups.has(vocIdStr)) {
+          vocIdToGroups.set(vocIdStr, []);
+        }
         vocIdToGroups.get(vocIdStr).push(group.name || group.title || 'Группа');
       }
     });
   });
-
-  const containerSelector = getContainerSelector();
-  if (!containerSelector) return;
-  const selectors = containerSelector.split(',').map(s => s.trim());
-  selectors.forEach(selector => {
-    const containers = document.querySelectorAll(selector);
-    containers.forEach(container => highlightInContainer(container, vocIdToGroups));
-    waitFor(selector, (container) => highlightInContainer(container, vocIdToGroups));
-  });
+  
+  processExistingAnchors();
+  startVocabularyHighlightObserver();
 }

@@ -83,30 +83,6 @@ export function createElement(tag, options = {}) {
 }
 
 /**
- * Wait for elements matching the selector to be added to the DOM and execute callback for each.
- * @param {string} selector - CSS selector to wait for
- * @param {Function} callback - Function to execute when a matching element is added
- */
-export function waitFor(selector, callback) {
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (mutation.type === 'childList') {
-        mutation.addedNodes.forEach((node) => {
-          if (node.nodeType === Node.ELEMENT_NODE) {
-            if (node.matches(selector)) {
-              callback(node);
-            }
-            const matchingDescendants = node.querySelectorAll(selector);
-            matchingDescendants.forEach((el) => callback(el));
-          }
-        });
-      }
-    });
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
-}
-
-/**
  * Get the appropriate container selector based on current page
  * @returns {string|null} CSS selector for the container
  */
