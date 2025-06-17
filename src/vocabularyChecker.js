@@ -1,8 +1,29 @@
 import { icons } from './icons.js';
 import { createCustomTooltip } from './tooltip.js';
+import { waitFor, getContainerSelector, extractVocabularyId } from './utils.js';
+
+function highlightInContainer(container, vocIdToGroups) {
+  const anchors = container.querySelectorAll('a.name[href*="/vocs/"], a[href*="/create/"]');
+  anchors.forEach(anchor => {
+    const vocId = extractVocabularyId(anchor);
+    if (!vocId) return;
+    const parent = anchor.parentNode;
+    const oldIcon = parent.querySelector('.kg-voc-checkmark');
+    if (oldIcon) oldIcon.remove();
+    if (vocIdToGroups.has(vocId)) {
+      const icon = document.createElement('span');
+      icon.className = 'kg-voc-checkmark';
+      icon.innerHTML = icons.checkmark;
+      createCustomTooltip(icon, 'Словарь уже существует в группе: ' + vocIdToGroups.get(vocId).join(', '));
+      const isVocPage = window.location.pathname.startsWith('/vocs/');
+      const desc = parent.querySelector('.desc');
+      if (isVocPage && desc) parent.insertBefore(icon, desc); // insert before description on vocabulary page
+      else parent.appendChild(icon); // append to the end otherwise
+    }
+  });
+}
 
 export function highlightExistingVocabularies(groups) {
-  // Map vocId to group name(s)
   const vocIdToGroups = new Map();
   groups.forEach(group => {
     group.games.forEach(game => {
@@ -14,32 +35,12 @@ export function highlightExistingVocabularies(groups) {
     });
   });
 
-  // Select only anchor tags with class "name" and href containing "/vocs/"
-  const vocAnchors = document.querySelectorAll('a.name[href*="/vocs/"]');
-
-  vocAnchors.forEach(anchor => {
-    const href = anchor.getAttribute('href');
-    const match = href && href.match(/\/vocs\/(\d+)(?:\/|$)/);
-    if (match) {
-      const vocId = match[1];
-      // Remove any existing checkmark in the anchor's parent before adding a new one
-      const parent = anchor.parentNode;
-      const oldIcon = parent.querySelector('.kg-voc-checkmark');
-      if (oldIcon) oldIcon.remove();
-      if (vocIdToGroups.has(vocId)) {
-        // Append icon before the .desc element
-        const icon = document.createElement('span');
-        icon.className = 'kg-voc-checkmark';
-        icon.innerHTML = icons.checkmark;
-        const groupNames = vocIdToGroups.get(vocId);
-        createCustomTooltip(icon, 'Словарь уже существует в группе: ' + groupNames.join(', '));
-        const desc = parent.querySelector('.desc');
-        if (desc) {
-          parent.insertBefore(icon, desc);
-        } else {
-          anchor.appendChild(icon);
-        }
-      }
-    }
+  const containerSelector = getContainerSelector();
+  if (!containerSelector) return;
+  const selectors = containerSelector.split(',').map(s => s.trim());
+  selectors.forEach(selector => {
+    const containers = document.querySelectorAll(selector);
+    containers.forEach(container => highlightInContainer(container, vocIdToGroups));
+    waitFor(selector, (container) => highlightInContainer(container, vocIdToGroups));
   });
 }

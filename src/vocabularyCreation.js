@@ -1,8 +1,7 @@
-import { generateUniqueId } from './utils.js';
+import { generateUniqueId, waitFor, getContainerSelector, extractVocabularyId } from './utils.js';
 import { highlightExistingVocabularies } from './vocabularyChecker.js';
 import { createPopup } from './menuPopup.js';
 import { hideTooltip } from './vocabularyParser.js';
-import { getCurrentPage } from './utils.js';
 
 // Function to fetch basic vocabulary data (name, rating, fans) from the server
 export async function fetchVocabularyBasicData(vocId) {
@@ -119,18 +118,6 @@ export function showVocabularyCreationPopup(groups, event, vocId, vocName, main)
 }
 
 /**
- * Get the appropriate container selector based on current page
- * @returns {string|null} CSS selector for the container
- */
-function getContainerSelector() {
-  const page = getCurrentPage();
-  if (page === 'vocabularies') return '.columns.voclist';
-  if (page === 'profile') return '.profile-root, .dlg-profile-vocs .vocs';
-  if (page === 'forum') return '#posts-list .list';
-  return null; // No vocabulary creation on other pages
-}
-
-/**
  * Check if current page supports vocabulary creation
  * @returns {boolean} True if vocabulary creation is supported on current page
  */
@@ -148,66 +135,9 @@ function extractVocabularyName(anchor) {
 }
 
 /**
- * Wait for elements matching the selector to be added to the DOM and execute callback for each.
- * @param {string} selector - CSS selector to wait for
- * @param {Function} callback - Function to execute when a matching element is added
- */
-function waitFor(selector, callback) {
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (mutation.type === 'childList') {
-        mutation.addedNodes.forEach((node) => {
-          if (node.nodeType === Node.ELEMENT_NODE) {
-            if (node.matches(selector)) {
-              callback(node);
-            }
-            const matchingDescendants = node.querySelectorAll(selector);
-            matchingDescendants.forEach((el) => callback(el));
-          }
-        });
-      }
-    });
-  });
-
-  observer.observe(document.body, { childList: true, subtree: true });
-}
-
-/**
  * Tracks which containers have had our listener attached
  */
 const attachedContainers = new WeakSet();
-
-/**
- * Extract vocabulary ID from an anchor’s href only if there’s nothing after the id.
- * 
- * For links containing "/create/", we check for a query parameter "voc".
- * For other links, we only accept a URL whose pathname exactly matches "/vocs/{id}/"
- * with no additional segments.
- *
- * @param {HTMLElement} anchor - The anchor element.
- * @returns {string|null} The extracted vocabulary ID, or null if invalid.
- */
-function extractVocabularyId(anchor) {
-  const href = anchor.getAttribute('href');
-
-  if (/\/create\//.test(href)) {
-    // Extract the voc parameter from query string
-    const createMatch = href.match(/[?&]voc=(\d+)/);
-    return createMatch ? createMatch[1] : null;
-  } else {
-    try {
-      const url = new URL(href, window.location.origin);
-      const pathname = url.pathname; // e.g. "/vocs/176053/" or "/vocs/176053/top/week/"
-
-      // Only accept if pathname strictly matches "/vocs/{id}/" (or without trailing slash)
-      const strictMatch = pathname.match(/^\/vocs\/(\d+)\/?$/);
-      return strictMatch ? strictMatch[1] : null;
-    } catch (error) {
-      console.error('Error parsing URL:', href, error);
-      return null;
-    }
-  }
-}
 
 /**
  * Attach event listener to a container if not already attached
