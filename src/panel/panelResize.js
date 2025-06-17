@@ -1,4 +1,5 @@
 import { DEFAULTS } from '../definitions.js';
+import { getCurrentPage } from '../utils.js';
 
 function setupDragResize(handle, getStart, onMove, onEnd) {
   let isDragging = false, startCoord, startSize;
@@ -27,9 +28,12 @@ function setupDragResize(handle, getStart, onMove, onEnd) {
 // Handles panel resizing logic for LatestGamesManager
 export function setupResizeHandle(uiManager, container, horizontalHandle, verticalHandle) {
   const mode = uiManager.main.viewManager.getDisplayMode();
+  const currentPage = getCurrentPage();
   // Horizontal (width) resize
   if (mode === 'wrap') {
-    container.style.width = uiManager.main.panelWidth;
+    // Use per-page width if available
+    const width = (uiManager.main.panelWidths && uiManager.main.panelWidths[currentPage]) || uiManager.main.panelWidth;
+    container.style.width = width;
     horizontalHandle.style.display = '';
     setupDragResize(
       horizontalHandle,
@@ -42,7 +46,8 @@ export function setupResizeHandle(uiManager, container, horizontalHandle, vertic
         container.style.width = `${newWidthVw}vw`;
       },
       () => {
-        uiManager.main.panelWidth = container.style.width;
+        if (!uiManager.main.panelWidths) uiManager.main.panelWidths = {};
+        uiManager.main.panelWidths[currentPage] = container.style.width;
         uiManager.main.settingsManager.saveSettings();
       }
     );
@@ -54,7 +59,9 @@ export function setupResizeHandle(uiManager, container, horizontalHandle, vertic
 
   // Vertical (height) resize
   if (verticalHandle) {
-    container.style.height = uiManager.main.panelHeight || DEFAULTS.panelHeight;
+    // Use per-page height if available
+    const height = (uiManager.main.panelHeights && uiManager.main.panelHeights[currentPage]) || DEFAULTS.panelHeight;
+    container.style.height = height;
     verticalHandle.style.display = '';
     setupDragResize(
       verticalHandle,
@@ -67,7 +74,8 @@ export function setupResizeHandle(uiManager, container, horizontalHandle, vertic
         container.style.height = `${newHeightVh}vh`;
       },
       () => {
-        uiManager.main.panelHeight = container.style.height;
+        if (!uiManager.main.panelHeights) uiManager.main.panelHeights = {};
+        uiManager.main.panelHeights[currentPage] = container.style.height;
         uiManager.main.settingsManager.saveSettings();
       }
     );

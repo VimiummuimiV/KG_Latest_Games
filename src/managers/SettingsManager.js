@@ -12,8 +12,6 @@ export class SettingsManager {
       this.main.displayMode = settings.displayMode ?? this.main.displayMode;
       this.main.groupsManager.groupViewMode = settings.groupViewMode ?? this.main.groupsManager.groupViewMode;
       this.main.previousScrollPosition = settings.previousScrollPosition ?? this.main.previousScrollPosition;
-      this.main.panelWidth = settings.panelWidth ?? this.main.panelWidth;
-      this.main.panelHeight = settings.panelHeight ?? this.main.panelHeight;
       this.main.enableDragging = settings.enableDragging ?? this.main.enableDragging;
       this.main.shouldAutoSave = settings.shouldAutoSave ?? this.main.shouldAutoSave;
       this.main.hidePanelDelay = settings.hidePanelDelay ?? this.main.hidePanelDelay;
@@ -34,7 +32,19 @@ export class SettingsManager {
           ...settings.panelYPosition
         };
       }
-
+      // Handle panelWidth and panelHeight as objects (per-page)
+      if (settings.panelWidths && typeof settings.panelWidths === 'object') {
+        this.main.panelWidths = {
+          ...this.main.panelWidths,
+          ...settings.panelWidths
+        };
+      }
+      if (settings.panelHeights && typeof settings.panelHeights === 'object') {
+        this.main.panelHeights = {
+          ...this.main.panelHeights,
+          ...settings.panelHeights
+        };
+      }
       // Ensure alwaysVisiblePanel is an object and merge settings
       if (settings.alwaysVisiblePanel && typeof settings.alwaysVisiblePanel === 'object') {
         this.main.alwaysVisiblePanel = {
@@ -56,8 +66,8 @@ export class SettingsManager {
         displayMode: this.main.displayMode,
         groupViewMode: this.main.groupsManager.groupViewMode,
         previousScrollPosition: this.main.previousScrollPosition,
-        panelWidth: this.main.panelWidth,
-        panelHeight: this.main.panelHeight,
+        panelWidths: this.main.panelWidths,
+        panelHeights: this.main.panelHeights,
         enableDragging: this.main.enableDragging,
         shouldAutoSave: this.main.shouldAutoSave,
         hidePanelDelay: this.main.hidePanelDelay,
