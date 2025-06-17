@@ -5,7 +5,20 @@
     "displayMode": "wrap",
     "groupViewMode": "tabs",
     "previousScrollPosition": 0,
-    "panelWidth": "70vw",
+    "panelWidths": {},
+    "panelHeights": {},
+    "panelYPosition": {
+      "main": 0,
+      "gamelist": 0,
+      "profile": 0,
+      "chatlogs": 0,
+      "rating": 0,
+      "vocabularies": 0,
+      "about": 0,
+      "donation": 0,
+      "forum": 0,
+      "game": 0
+    },
     "enableDragging": false,
     "shouldAutoSave": false,
     "hidePanelDelay": 400,
@@ -15,21 +28,9 @@
     "replayDelay": 1200,
     "replayNextGame": true,
     "replayWithoutWaiting": true,
-    "showSearchBox": true,
+    "showSearchBox": false,
     "showButtonDescriptions": false,
     "showHelpTooltips": true,
-    "panelYPosition": {
-      "main": 2.6,
-      "gamelist": 5.7,
-      "profile": 0,
-      "chatlogs": 0,
-      "rating": 0,
-      "vocabularies": 0,
-      "about": 0,
-      "donation": 0,
-      "forum": 5.5,
-      "game": 57.2
-    },
     "alwaysVisiblePanel": {
       "main": false,
       "gamelist": false,
@@ -3119,7 +3120,7 @@
             "id": "8xg2wgb7x4na3ma4dhx96dke1guqarfn",
             "params": {
               "gametype": "voc",
-              "vocName": "АЖД - нагрАЖДён грАЖДанский (периферия)",
+              "vocName": "АЖД - нагрАЖДён грАЖДанский",
               "vocId": "248668",
               "type": "normal",
               "level_from": 1,
@@ -3134,7 +3135,7 @@
             "id": "h5hm79q47aj9qfd0s9qew5exxrahv9fa",
             "params": {
               "gametype": "voc",
-              "vocName": "АЙЦ - зАЙЦы в рАЙЦентре (периферия)",
+              "vocName": "АЙЦ - зАЙЦы в рАЙЦентре",
               "vocId": "248649",
               "type": "normal",
               "level_from": 1,
@@ -3149,7 +3150,7 @@
             "id": "zmcvjch4vqb2xsqf4l4snvbnomn4i48y",
             "params": {
               "gametype": "voc",
-              "vocName": "АЙЧ - зАЙЧик в сарАЙЧике (периферия)",
+              "vocName": "АЙЧ - зАЙЧик в сарАЙЧике",
               "vocId": "248638",
               "type": "normal",
               "level_from": 1,
@@ -3164,7 +3165,7 @@
             "id": "o1ro7ithfxtd8scrdkj4qubp5axjpbza",
             "params": {
               "gametype": "voc",
-              "vocName": "БЛО - яБЛОчный микроБЛОг (периферия)",
+              "vocName": "БЛО - яБЛОчный микроБЛОг",
               "vocId": "248703",
               "type": "normal",
               "level_from": 1,
@@ -3179,7 +3180,7 @@
             "id": "6z9l9gsgq4iz1m812glp7sr4yamo8aon",
             "params": {
               "gametype": "voc",
-              "vocName": "БШИ - ослаБШИх-иззяБШИх (периферия)",
+              "vocName": "БШИ - ослаБШИх-иззяБШИх",
               "vocId": "248683",
               "type": "normal",
               "level_from": 1,
@@ -3194,7 +3195,7 @@
             "id": "dxw0y6alz6m0ha7eyrqu1q3lzhye1l49",
             "params": {
               "gametype": "voc",
-              "vocName": "БЩЕ - в оБЩЕм, оБЩЕизвестно! (периферия)",
+              "vocName": "БЩЕ - в оБЩЕм, оБЩЕизвестно!",
               "vocId": "248652",
               "type": "normal",
               "level_from": 1,
@@ -3209,7 +3210,7 @@
             "id": "rfi4o4zwd08qguyrqjb3ypkj5jxo5t01",
             "params": {
               "gametype": "voc",
-              "vocName": "ВУС - дВУСпальная дВУСмысленность (периферия)",
+              "vocName": "ВУС - дВУСпальная дВУСмысленность",
               "vocId": "248706",
               "type": "normal",
               "level_from": 1,
@@ -3224,7 +3225,7 @@
             "id": "qmfcagfc12aquzrwsc29hskjwcgeovfc",
             "params": {
               "gametype": "voc",
-              "vocName": "ДЖА - поДЖАв пиДЖАк (периферия)",
+              "vocName": "ДЖА - поДЖАв пиДЖАк",
               "vocId": "248659",
               "type": "normal",
               "level_from": 1,
@@ -3239,7 +3240,7 @@
             "id": "mlukpgd5tfacweaa99hzn4ihx2emhevv",
             "params": {
               "gametype": "voc",
-              "vocName": "ДЖЕ - менеДЖЕр-диДЖЕй (периферия)",
+              "vocName": "ДЖЕ - менеДЖЕр-диДЖЕй",
               "vocId": "248660",
               "type": "normal",
               "level_from": 1,
@@ -3254,7 +3255,7 @@
             "id": "snei1ahb8hx2sfj7rtm06h1blmmvjp0x",
             "params": {
               "gametype": "voc",
-              "vocName": "ДЖИ - камбоДЖИйский ламборДЖИни (периферия)",
+              "vocName": "ДЖИ - камбоДЖИйский ламборДЖИни",
               "vocId": "248661",
               "type": "normal",
               "level_from": 1,
@@ -3269,7 +3270,7 @@
             "id": "tgyzv4mofp3m181ijf38l9je68la9jgy",
             "params": {
               "gametype": "voc",
-              "vocName": "ДОТ - чуДОТворный анекДОТ (периферия)",
+              "vocName": "ДОТ - чуДОТворный анекДОТ",
               "vocId": "248698",
               "type": "normal",
               "level_from": 1,
@@ -3314,7 +3315,7 @@
             "id": "lv8z65f3l90qg5bubqckm70gy38wk92x",
             "params": {
               "gametype": "voc",
-              "vocName": "ЖДА - жаЖДА блуЖДАния (периферия)",
+              "vocName": "ЖДА - жаЖДА блуЖДАния",
               "vocId": "248662",
               "type": "normal",
               "level_from": 1,
@@ -3329,7 +3330,7 @@
             "id": "dlczbf2r2beonkjccmp6xl9278dwuubx",
             "params": {
               "gametype": "voc",
-              "vocName": "ЖДЕ - нуЖДЕ доЖДЕй (периферия)",
+              "vocName": "ЖДЕ - нуЖДЕ доЖДЕй",
               "vocId": "248663",
               "type": "normal",
               "level_from": 1,
@@ -3344,7 +3345,7 @@
             "id": "pnbbsn46ydvz9jhuq97gmvsrrywxi75k",
             "params": {
               "gametype": "voc",
-              "vocName": "ЖДИ - подоЖДИте иЖДИвения (периферия)",
+              "vocName": "ЖДИ - подоЖДИте иЖДИвения",
               "vocId": "248664",
               "type": "normal",
               "level_from": 1,
@@ -3359,7 +3360,7 @@
             "id": "abr49kejl2cs1b2uhl307rngm0efr0ae",
             "params": {
               "gametype": "voc",
-              "vocName": "ЖДУ - меЖДУнародных ЖДУщий (периферия)",
+              "vocName": "ЖДУ - меЖДУнародных ЖДУщий",
               "vocId": "248665",
               "type": "normal",
               "level_from": 1,
@@ -3374,7 +3375,7 @@
             "id": "iiqmd5wlhxm6k7nolgfphwzg06x4g9dd",
             "params": {
               "gametype": "voc",
-              "vocName": "ЖИЙ - приезЖИЙ рыЖИЙ (периферия)",
+              "vocName": "ЖИЙ - приезЖИЙ рыЖИЙ",
               "vocId": "248641",
               "type": "normal",
               "level_from": 1,
@@ -3389,7 +3390,7 @@
             "id": "f69xbiyvz6496rmgzmsvai69oa3o8gd6",
             "params": {
               "gametype": "voc",
-              "vocName": "ЖИЦ - муЖИЦкой луЖИЦы (периферия)",
+              "vocName": "ЖИЦ - муЖИЦкой луЖИЦы",
               "vocId": "248657",
               "type": "normal",
               "level_from": 1,
@@ -3404,7 +3405,7 @@
             "id": "ylbnukhm138w61iu1qugst80ttg8gxc4",
             "params": {
               "gametype": "voc",
-              "vocName": "ЖНЫ - ваЖНЫ княЖНЫ (периферия)",
+              "vocName": "ЖНЫ - ваЖНЫ княЖНЫ",
               "vocId": "248648",
               "type": "normal",
               "level_from": 1,
@@ -3419,7 +3420,7 @@
             "id": "6tnlotz0ja5evu7svfuu453wh4actq7a",
             "params": {
               "gametype": "voc",
-              "vocName": "ЖНЮ - увлаЖНЮ лыЖНЮ (периферия)",
+              "vocName": "ЖНЮ - увлаЖНЮ лыЖНЮ",
               "vocId": "248645",
               "type": "normal",
               "level_from": 1,
@@ -3434,7 +3435,7 @@
             "id": "xuai8m9pgbx93fqoeajzjklpn4heulrx",
             "params": {
               "gametype": "voc",
-              "vocName": "ЖНЯ - тамоЖНЯ, услоЖНЯйте! (периферия)",
+              "vocName": "ЖНЯ - тамоЖНЯ, услоЖНЯйте!",
               "vocId": "248646",
               "type": "normal",
               "level_from": 1,
@@ -3449,7 +3450,7 @@
             "id": "rrm4luq9pcuw6r0wv76rjs0i5a7qsdxq",
             "params": {
               "gametype": "voc",
-              "vocName": "ЗБО - раЗБОгател раЗБОйник (периферия)",
+              "vocName": "ЗБО - раЗБОгател раЗБОйник",
               "vocId": "248702",
               "type": "normal",
               "level_from": 1,
@@ -3464,7 +3465,7 @@
             "id": "c3xjjiixo8s8x6u2tlcvxaqcgibwqusb",
             "params": {
               "gametype": "voc",
-              "vocName": "ЗИЙ - иллюЗИЙ полинеЗИЙцев (периферия)",
+              "vocName": "ЗИЙ - иллюЗИЙ полинеЗИЙцев",
               "vocId": "248640",
               "type": "normal",
               "level_from": 1,
@@ -3479,7 +3480,7 @@
             "id": "byw3bakfygb8317zsju1t2g7n4rx6l7v",
             "params": {
               "gametype": "voc",
-              "vocName": "ЗИЯ - амнеЗИЯ-контуЗИЯ (периферия)",
+              "vocName": "ЗИЯ - амнеЗИЯ-контуЗИЯ",
               "vocId": "248642",
               "type": "normal",
               "level_from": 1,
@@ -3494,7 +3495,7 @@
             "id": "7w07x1kimyo8u2eifnntczdd3yam073p",
             "params": {
               "gametype": "voc",
-              "vocName": "ЗЛО - ЗЛОнамеренного ЗЛОупотребления (периферия)",
+              "vocName": "ЗЛО - ЗЛОнамеренного ЗЛОупотребления",
               "vocId": "248700",
               "type": "normal",
               "level_from": 1,
@@ -3509,7 +3510,7 @@
             "id": "k5yrwns12y1w5fzffkt9aqtoy7fxri2l",
             "params": {
               "gametype": "voc",
-              "vocName": "ЗНЫ - полеЗНЫ целесообраЗНЫе (периферия)",
+              "vocName": "ЗНЫ - полеЗНЫ целесообраЗНЫе",
               "vocId": "248647",
               "type": "normal",
               "level_from": 1,
@@ -3524,7 +3525,7 @@
             "id": "0f957kir72d68os15amac1dphf7xey2h",
             "params": {
               "gametype": "voc",
-              "vocName": "ЗНЮ - раЗНЮхать грыЗНЮ (периферия)",
+              "vocName": "ЗНЮ - раЗНЮхать грыЗНЮ",
               "vocId": "248643",
               "type": "normal",
               "level_from": 1,
@@ -3539,7 +3540,7 @@
             "id": "7ri50qix5sqcitw6pr00cz8ij9rrb8q8",
             "params": {
               "gametype": "voc",
-              "vocName": "ЗНЯ - соблаЗНЯет блиЗНЯшек (периферия)",
+              "vocName": "ЗНЯ - соблаЗНЯет блиЗНЯшек",
               "vocId": "248644",
               "type": "normal",
               "level_from": 1,
@@ -3554,7 +3555,7 @@
             "id": "hfstmxpi2h7hddvgqs83zfm9vcwgpte8",
             "params": {
               "gametype": "voc",
-              "vocName": "ЗОТ - экЗОТический аЗОТ (периферия)",
+              "vocName": "ЗОТ - экЗОТический аЗОТ",
               "vocId": "248699",
               "type": "normal",
               "level_from": 1,
@@ -3569,7 +3570,7 @@
             "id": "4oaoh2cj9wka7onypr1unkkk1salb4co",
             "params": {
               "gametype": "voc",
-              "vocName": "ЗЫК - яЗЫК муЗЫКи (периферия)",
+              "vocName": "ЗЫК - яЗЫК муЗЫКи",
               "vocId": "248701",
               "type": "normal",
               "level_from": 1,
@@ -3584,7 +3585,7 @@
             "id": "rdac9b8rvsqk1c35y3f7pfqwmcgjcgzw",
             "params": {
               "gametype": "voc",
-              "vocName": "ИДЖ - фИДЖийский хИДЖаб (периферия)",
+              "vocName": "ИДЖ - фИДЖийский хИДЖаб",
               "vocId": "248666",
               "type": "normal",
               "level_from": 1,
@@ -3599,7 +3600,7 @@
             "id": "op7v6ie0h0cikhy14b01f2ukqt7mdgow",
             "params": {
               "gametype": "voc",
-              "vocName": "ИЙЦ - кровопИЙЦа бельгИЙЦев (периферия)",
+              "vocName": "ИЙЦ - кровопИЙЦа бельгИЙЦев",
               "vocId": "248651",
               "type": "normal",
               "level_from": 1,
@@ -3614,7 +3615,7 @@
             "id": "npitx7co955u79u8m7o021vh0mgh6rek",
             "params": {
               "gametype": "voc",
-              "vocName": "ЙСЯ - оставшиЙСЯ, боЙСЯ! (периферия)",
+              "vocName": "ЙСЯ - оставшиЙСЯ, боЙСЯ!",
               "vocId": "248711",
               "type": "normal",
               "level_from": 1,
@@ -3629,7 +3630,7 @@
             "id": "3vjtbwym22hsfpuu3dekuztpjsydp2rt",
             "params": {
               "gametype": "voc",
-              "vocName": "КСК - эКСКлюзивный эКСКаватор (периферия)",
+              "vocName": "КСК - эКСКлюзивный эКСКаватор",
               "vocId": "248675",
               "type": "normal",
               "level_from": 1,
@@ -3644,7 +3645,7 @@
             "id": "a5l3q44kcf1a3phsr88n3c0xcf4r7v31",
             "params": {
               "gametype": "voc",
-              "vocName": "КСЯ - прониКСЯ и отвлёКСЯ (периферия)",
+              "vocName": "КСЯ - прониКСЯ и отвлёКСЯ",
               "vocId": "248691",
               "type": "normal",
               "level_from": 1,
@@ -3659,7 +3660,7 @@
             "id": "c29e7t389a749mpcctptbpzu3gcd1ppn",
             "params": {
               "gametype": "voc",
-              "vocName": "ЛЮЗ - илЛЮЗорный шЛЮЗ (периферия)",
+              "vocName": "ЛЮЗ - илЛЮЗорный шЛЮЗ",
               "vocId": "248694",
               "type": "normal",
               "level_from": 1,
@@ -3674,7 +3675,7 @@
             "id": "wqm7ipzcasimkgp2pvoy7j74pvof2wv2",
             "params": {
               "gametype": "voc",
-              "vocName": "ЛЮТ - ЛЮТая ЛЮТня (периферия)",
+              "vocName": "ЛЮТ - ЛЮТая ЛЮТня",
               "vocId": "248688",
               "type": "normal",
               "level_from": 1,
@@ -3689,7 +3690,7 @@
             "id": "ytime10o18wg9c6jthq64ccvjmrffen1",
             "params": {
               "gametype": "voc",
-              "vocName": "ЛЮЩ - стеЛЮЩегося пЛЮЩом (периферия)",
+              "vocName": "ЛЮЩ - стеЛЮЩегося пЛЮЩом",
               "vocId": "248693",
               "type": "normal",
               "level_from": 1,
@@ -3704,7 +3705,7 @@
             "id": "b36715uecl3hy3u4pw3uhkjhpz9if1jm",
             "params": {
               "gametype": "voc",
-              "vocName": "МЯЧ - захоМЯЧить МЯЧ (периферия)",
+              "vocName": "МЯЧ - захоМЯЧить МЯЧ",
               "vocId": "248689",
               "type": "normal",
               "level_from": 1,
@@ -3719,7 +3720,7 @@
             "id": "338nxfpx28p59uzf8mq9jvk1tajd6te0",
             "params": {
               "gametype": "voc",
-              "vocName": "ОЖД - рОЖДение вОЖДя (периферия)",
+              "vocName": "ОЖД - рОЖДение вОЖДя",
               "vocId": "248670",
               "type": "normal",
               "level_from": 1,
@@ -3734,7 +3735,7 @@
             "id": "0u6srbpifod8i8297j0in304a95wizgm",
             "params": {
               "gametype": "voc",
-              "vocName": "ОЮЗ - сОЮЗного бессОЮЗия (периферия)",
+              "vocName": "ОЮЗ - сОЮЗного бессОЮЗия",
               "vocId": "248707",
               "type": "normal",
               "level_from": 1,
@@ -3749,7 +3750,7 @@
             "id": "ewauufx44oc56xhxlex0mnm0f9q78een",
             "params": {
               "gametype": "voc",
-              "vocName": "ССЯ - спаССЯ, да затряССЯ (периферия)",
+              "vocName": "ССЯ - спаССЯ, да затряССЯ",
               "vocId": "248692",
               "type": "normal",
               "level_from": 1,
@@ -3764,7 +3765,7 @@
             "id": "3282b9de7zzjae67t03lo2jhpbkv7fsm",
             "params": {
               "gametype": "voc",
-              "vocName": "СУЙ - краСУЙся, голоСУЙ! (периферия)",
+              "vocName": "СУЙ - краСУЙся, голоСУЙ!",
               "vocId": "248687",
               "type": "normal",
               "level_from": 1,
@@ -3779,7 +3780,7 @@
             "id": "upm6rysxrw27ycn3v81ih7sp5ow1h0uw",
             "params": {
               "gametype": "voc",
-              "vocName": "СУЧ - вСУЧил заСУЧив (периферия)",
+              "vocName": "СУЧ - вСУЧил заСУЧив",
               "vocId": "248684",
               "type": "normal",
               "level_from": 1,
@@ -3794,7 +3795,7 @@
             "id": "na2knigjghy4ooeg44obh2niebbddz19",
             "params": {
               "gametype": "voc",
-              "vocName": "СЯЧ - вСЯЧески коСЯЧить (периферия)",
+              "vocName": "СЯЧ - вСЯЧески коСЯЧить",
               "vocId": "248637",
               "type": "normal",
               "level_from": 1,
@@ -3809,7 +3810,7 @@
             "id": "f1fq2fqf9ald74mgtvabn1okr4z1rjot",
             "params": {
               "gametype": "voc",
-              "vocName": "УЖД - чУЖДо отчУЖДение (периферия)",
+              "vocName": "УЖД - чУЖДо отчУЖДение",
               "vocId": "248669",
               "type": "normal",
               "level_from": 1,
@@ -3824,7 +3825,7 @@
             "id": "8vs6m0e07e2bm6iz00iy6o0r3xik3r62",
             "params": {
               "gametype": "voc",
-              "vocName": "УСУ - тУСУются мУСУльмане (периферия)",
+              "vocName": "УСУ - тУСУются мУСУльмане",
               "vocId": "248674",
               "type": "normal",
               "level_from": 1,
@@ -3839,7 +3840,7 @@
             "id": "6nyzr3n6js2vl43st2bg0466m17zn39c",
             "params": {
               "gametype": "voc",
-              "vocName": "ФИЗ - психоФИЗический соФИЗм (периферия)",
+              "vocName": "ФИЗ - психоФИЗический соФИЗм",
               "vocId": "248658",
               "type": "normal",
               "level_from": 1,
@@ -3854,7 +3855,7 @@
             "id": "0p1rvys86l8ufqo0abq2a26rs3enafoq",
             "params": {
               "gametype": "voc",
-              "vocName": "ФИЦ - оФИЦиальный оФИЦер (периферия)",
+              "vocName": "ФИЦ - оФИЦиальный оФИЦер",
               "vocId": "248712",
               "type": "normal",
               "level_from": 1,
@@ -3869,7 +3870,7 @@
             "id": "xybbqaqwlmb8pkfiyvtg1blri3yjlrl0",
             "params": {
               "gametype": "voc",
-              "vocName": "ФОЙ - катастроФОЙ в ФОЙе (периферия)",
+              "vocName": "ФОЙ - катастроФОЙ в ФОЙе",
               "vocId": "248682",
               "type": "normal",
               "level_from": 1,
@@ -3884,7 +3885,7 @@
             "id": "1ldmili87xqynejx1r2q015bflcb9x9n",
             "params": {
               "gametype": "voc",
-              "vocName": "ХОТ - оХОТа пеХОТы (периферия)",
+              "vocName": "ХОТ - оХОТа пеХОТы",
               "vocId": "248655",
               "type": "normal",
               "level_from": 1,
@@ -3899,7 +3900,7 @@
             "id": "5ltii750k29g7il19sr17l16jwr9ujuf",
             "params": {
               "gametype": "voc",
-              "vocName": "ЧУВ - предЧУВствие сверхЧУВствительно (периферия)",
+              "vocName": "ЧУВ - предЧУВствие сверхЧУВствительно",
               "vocId": "248671",
               "type": "normal",
               "level_from": 1,
@@ -3914,7 +3915,7 @@
             "id": "jimfnozfsfp75i1t4ucromw81w49rwwy",
             "params": {
               "gametype": "voc",
-              "vocName": "ЧУС - верЧУСь - изловЧУСь! (периферия)",
+              "vocName": "ЧУС - верЧУСь - изловЧУСь!",
               "vocId": "248685",
               "type": "normal",
               "level_from": 1,
@@ -3929,7 +3930,7 @@
             "id": "5z4i203k12l6il2c9ujmbh54dvx7x0c8",
             "params": {
               "gametype": "voc",
-              "vocName": "ЧУЮ - потЧУЮ горяЧУЮ (периферия)",
+              "vocName": "ЧУЮ - потЧУЮ горяЧУЮ",
               "vocId": "248673",
               "type": "normal",
               "level_from": 1,
@@ -3944,7 +3945,7 @@
             "id": "i8s0q0mkvajxtatcildk20jrpp1dul5l",
             "params": {
               "gametype": "voc",
-              "vocName": "ШЛО - проШЛОе обоШЛОсь (периферия)",
+              "vocName": "ШЛО - проШЛОе обоШЛОсь",
               "vocId": "248704",
               "type": "normal",
               "level_from": 1,
@@ -3959,7 +3960,7 @@
             "id": "bicid3cdrfj7pzecynzrp7p5i6751in5",
             "params": {
               "gametype": "voc",
-              "vocName": "ШЛЮ - ШЛЮп поШЛЮ (периферия)",
+              "vocName": "ШЛЮ - ШЛЮп поШЛЮ",
               "vocId": "248716",
               "type": "normal",
               "level_from": 1,
@@ -3974,7 +3975,7 @@
             "id": "kav4vy0c0r9w8j5cn23grc5cbpf2rryc",
             "params": {
               "gametype": "voc",
-              "vocName": "ЩЕМ - ЩЕМяще уЩЕМлён (периферия)",
+              "vocName": "ЩЕМ - ЩЕМяще уЩЕМлён",
               "vocId": "248653",
               "type": "normal",
               "level_from": 1,
@@ -3989,7 +3990,7 @@
             "id": "11jn1qhickfn7th27yw3n9uknj1bo1rs",
             "params": {
               "gametype": "voc",
-              "vocName": "ЩИЦ - веЩИЦы танцовЩИЦ (периферия)",
+              "vocName": "ЩИЦ - веЩИЦы танцовЩИЦ",
               "vocId": "248656",
               "type": "normal",
               "level_from": 1,
@@ -4004,7 +4005,7 @@
             "id": "lgankpjatq7eiz4s1htljl8b98wng36d",
             "params": {
               "gametype": "voc",
-              "vocName": "ЩУЮ - содержаЩУЮся зловеЩУЮ (периферия)",
+              "vocName": "ЩУЮ - содержаЩУЮся зловеЩУЮ",
               "vocId": "248672",
               "type": "normal",
               "level_from": 1,
@@ -4019,7 +4020,7 @@
             "id": "ieh0sehzez6sn2i9z7c7fbkqf79l7ntf",
             "params": {
               "gametype": "voc",
-              "vocName": "ЪЕВ - взЪЕВшись сЪЕВший (периферия)",
+              "vocName": "ЪЕВ - взЪЕВшись сЪЕВший",
               "vocId": "248677",
               "type": "normal",
               "level_from": 1,
@@ -4049,7 +4050,7 @@
             "id": "p9b0mt5sk1fib2aeryv9yij5kkp3uguj",
             "params": {
               "gametype": "voc",
-              "vocName": "ЪЕЛ - отЪЕЛ и обЪЕЛся (периферия)",
+              "vocName": "ЪЕЛ - отЪЕЛ и обЪЕЛся",
               "vocId": "248679",
               "type": "normal",
               "level_from": 1,
@@ -4064,7 +4065,7 @@
             "id": "i30yv7shh0lfpz1f2j2k0brzyx5on2en",
             "params": {
               "gametype": "voc",
-              "vocName": "ЪЕМ - неотЪЕМлемой грудоподЪЕМностью (периферия)",
+              "vocName": "ЪЕМ - неотЪЕМлемой грудоподЪЕМностью",
               "vocId": "248676",
               "type": "normal",
               "level_from": 1,
@@ -4079,7 +4080,7 @@
             "id": "wpfemq08jzwx1dt4noh8uzxr39k1a3wi",
             "params": {
               "gametype": "voc",
-              "vocName": "ЫСЯ - крЫСЯт тЫСЯчи (периферия)",
+              "vocName": "ЫСЯ - крЫСЯт тЫСЯчи",
               "vocId": "248690",
               "type": "normal",
               "level_from": 1,
@@ -4094,7 +4095,7 @@
             "id": "r1fup7cpgs7n8b1z0pjpfugmmrlsajwa",
             "params": {
               "gametype": "voc",
-              "vocName": "ЬЮЩ - бЬЮЩая пЬЮЩих (периферия)",
+              "vocName": "ЬЮЩ - бЬЮЩая пЬЮЩих",
               "vocId": "248639",
               "type": "normal",
               "level_from": 1,
@@ -4109,7 +4110,7 @@
             "id": "zp082znoz3iwz94v5og7kw3z98t7dm6f",
             "params": {
               "gametype": "voc",
-              "vocName": "ЮДО - блЮДО верблЮДОв (периферия)",
+              "vocName": "ЮДО - блЮДО верблЮДОв",
               "vocId": "248708",
               "type": "normal",
               "level_from": 1,
@@ -4124,7 +4125,7 @@
             "id": "918q5xl9jbuaptxkyqcdkzyaln8at3x9",
             "params": {
               "gametype": "voc",
-              "vocName": "ЮЖН - ЮЖНый фьЮЖН (периферия)",
+              "vocName": "ЮЖН - ЮЖНый фьЮЖН",
               "vocId": "248713",
               "type": "normal",
               "level_from": 1,
@@ -4139,7 +4140,7 @@
             "id": "mc17qkgi2sb20tevqpp82ntejgs9favr",
             "params": {
               "gametype": "voc",
-              "vocName": "ЮЗО - шлЮЗОвой дЮЗОй (периферия)",
+              "vocName": "ЮЗО - шлЮЗОвой дЮЗОй",
               "vocId": "248705",
               "type": "normal",
               "level_from": 1,
@@ -4154,7 +4155,7 @@
             "id": "zy0r4oh458y9q11bo1eushyqpja43gct",
             "params": {
               "gametype": "voc",
-              "vocName": "ЮЩУ - поЮЩУю плЮЩУ (периферия)",
+              "vocName": "ЮЩУ - поЮЩУю плЮЩУ",
               "vocId": "248654",
               "type": "normal",
               "level_from": 1,
@@ -4169,7 +4170,7 @@
             "id": "1tvptzrpwn9leuocqp134tu9vebo29ir",
             "params": {
               "gametype": "voc",
-              "vocName": "ЯЗВ - к ЯЗВе уЯЗВим (периферия)",
+              "vocName": "ЯЗВ - к ЯЗВе уЯЗВим",
               "vocId": "248709",
               "type": "normal",
               "level_from": 1,
@@ -4184,7 +4185,7 @@
             "id": "qwtjty8tzu8baov2e4t727fjxkybwlbz",
             "params": {
               "gametype": "voc",
-              "vocName": "ЯЗЫ - ЯЗЫк свЯЗЫвает (периферия)",
+              "vocName": "ЯЗЫ - ЯЗЫк свЯЗЫвает",
               "vocId": "248710",
               "type": "normal",
               "level_from": 1,
@@ -4199,7 +4200,7 @@
             "id": "993xau0bmowhibfp0bw9yajpkfnufl68",
             "params": {
               "gametype": "voc",
-              "vocName": "ЯКА - крЯКАющего ЯКА (периферия)",
+              "vocName": "ЯКА - крЯКАющего ЯКА",
               "vocId": "248695",
               "type": "normal",
               "level_from": 1,
@@ -4214,7 +4215,7 @@
             "id": "hdtk01jvvz93nmasqwtlt6ghng4bnbio",
             "params": {
               "gametype": "voc",
-              "vocName": "ЯКЕ - о морЯКЕ в особнЯКЕ (периферия)",
+              "vocName": "ЯКЕ - о морЯКЕ в особнЯКЕ",
               "vocId": "248696",
               "type": "normal",
               "level_from": 1,
@@ -4229,7 +4230,7 @@
             "id": "akwemnotl03wqhle0svvdh1j87lyga6l",
             "params": {
               "gametype": "voc",
-              "vocName": "ЯПА - залЯПАнные стрЯПАли (периферия)",
+              "vocName": "ЯПА - залЯПАнные стрЯПАли",
               "vocId": "248697",
               "type": "normal",
               "level_from": 1,
@@ -4244,7 +4245,7 @@
             "id": "0sfj2gct88qr3qqlvafh6itv9ub6kki6",
             "params": {
               "gametype": "voc",
-              "vocName": "ЯЦИ - инфлЯЦИонная апеллЯЦИя (периферия)",
+              "vocName": "ЯЦИ - инфлЯЦИонная апеллЯЦИя",
               "vocId": "248714",
               "type": "normal",
               "level_from": 1,
@@ -4259,7 +4260,7 @@
             "id": "1mqkoop3b3gatl962sl2nn0t12u3bh93",
             "params": {
               "gametype": "voc",
-              "vocName": "ЯЧО - маЯЧОк-светлЯЧОк (периферия)",
+              "vocName": "ЯЧО - маЯЧОк-светлЯЧОк",
               "vocId": "248681",
               "type": "normal",
               "level_from": 1,
@@ -4274,7 +4275,7 @@
             "id": "7q6gh4qle5qu0n37352i5q5kfhoblhwu",
             "params": {
               "gametype": "voc",
-              "vocName": "ЯЧУ - горЯЧУю тысЯЧУ (периферия)",
+              "vocName": "ЯЧУ - горЯЧУю тысЯЧУ",
               "vocId": "248680",
               "type": "normal",
               "level_from": 1,
@@ -4295,7 +4296,7 @@
             "id": "sujv4z192y4u0kjadaa294y3usovg30k",
             "params": {
               "gametype": "voc",
-              "vocName": "АВЫ - величАВЫ худощАВЫе (перекаты)",
+              "vocName": "АВЫ - величАВЫ худощАВЫе",
               "vocId": "248606",
               "type": "normal",
               "level_from": 1,
@@ -4325,7 +4326,7 @@
             "id": "n91a0nf5zsfcpoipdntefnkwz96ppexz",
             "params": {
               "gametype": "voc",
-              "vocName": "БОТ - раБОТа в субБОТу (перекаты)",
+              "vocName": "БОТ - раБОТа в субБОТу",
               "vocId": "248634",
               "type": "normal",
               "level_from": 1,
@@ -4340,7 +4341,7 @@
             "id": "ishjyttmwm35a1m9l08ekgkmcivkk8ty",
             "params": {
               "gametype": "voc",
-              "vocName": "ВЫЙ - костляВЫЙ большеклюВЫЙ (перекаты)",
+              "vocName": "ВЫЙ - костляВЫЙ большеклюВЫЙ",
               "vocId": "248605",
               "type": "normal",
               "level_from": 1,
@@ -4355,7 +4356,7 @@
             "id": "xaomvtlyg5wgagqx0oziy6aykymvlqgh",
             "params": {
               "gametype": "voc",
-              "vocName": "ДЛО - преДЛОжил испоДЛОбья (перекаты)",
+              "vocName": "ДЛО - преДЛОжил испоДЛОбья",
               "vocId": "248613",
               "type": "normal",
               "level_from": 1,
@@ -4370,7 +4371,7 @@
             "id": "l019nxf61la0b1qg0c4zm45m3yxfle57",
             "params": {
               "gametype": "voc",
-              "vocName": "ЕКУ - кукарЕКУН-экзЕКУтор (перекаты)",
+              "vocName": "ЕКУ - кукарЕКУН-экзЕКУтор",
               "vocId": "248626",
               "type": "normal",
               "level_from": 1,
@@ -4385,7 +4386,7 @@
             "id": "wxptqoz01i14pbdllhwokraylqr419pt",
             "params": {
               "gametype": "voc",
-              "vocName": "ЖДО - каЖДОдневная чуЖДОсть (перекаты)",
+              "vocName": "ЖДО - каЖДОдневная чуЖДОсть",
               "vocId": "248615",
               "type": "normal",
               "level_from": 1,
@@ -4400,7 +4401,7 @@
             "id": "gbnrcv6c5nxrmk87ix874611yh2na65e",
             "params": {
               "gametype": "voc",
-              "vocName": "ИМС - боИМСя рИМСких (перекаты)",
+              "vocName": "ИМС - боИМСя рИМСких",
               "vocId": "248630",
               "type": "normal",
               "level_from": 1,
@@ -4415,7 +4416,7 @@
             "id": "89k7o1k10khpc8056yk6ray6pppfg7n1",
             "params": {
               "gametype": "voc",
-              "vocName": "ЙЦА - яЙЦА - заЙЦАм (перекаты)",
+              "vocName": "ЙЦА - яЙЦА - заЙЦАм",
               "vocId": "248618",
               "type": "normal",
               "level_from": 1,
@@ -4430,7 +4431,7 @@
             "id": "birhf2q2nr188jkuy58l2g37sn67b839",
             "params": {
               "gametype": "voc",
-              "vocName": "ЙЦЕ - раЙЦЕнтр индеЙЦЕв (перекаты)",
+              "vocName": "ЙЦЕ - раЙЦЕнтр индеЙЦЕв",
               "vocId": "248617",
               "type": "normal",
               "level_from": 1,
@@ -4445,7 +4446,7 @@
             "id": "jcmc3vsjyymo7dioyx0ube8pud37y1kg",
             "params": {
               "gametype": "voc",
-              "vocName": "ЙЦУ - заЙЦУ-боЙЦУ (перекаты)",
+              "vocName": "ЙЦУ - заЙЦУ-боЙЦУ",
               "vocId": "248610",
               "type": "normal",
               "level_from": 1,
@@ -4460,7 +4461,7 @@
             "id": "t4kjndurtigc8z2nh0d5ev8ot7pleiz7",
             "params": {
               "gametype": "voc",
-              "vocName": "КУЯ - фуКУЯмский критиКУЯ (перекаты)",
+              "vocName": "КУЯ - фуКУЯмский критиКУЯ",
               "vocId": "248623",
               "type": "normal",
               "level_from": 1,
@@ -4475,7 +4476,7 @@
             "id": "dubvyjbtnj0jj7hk4m7aehctjzy5vo2y",
             "params": {
               "gametype": "voc",
-              "vocName": "ЛОР - маЛОРазговорчивый миЛОРд (перекаты)",
+              "vocName": "ЛОР - маЛОРазговорчивый миЛОРд",
               "vocId": "248628",
               "type": "normal",
               "level_from": 1,
@@ -4490,7 +4491,7 @@
             "id": "vq8do8htpe4v3jvgl1j1ox65m6ov943c",
             "params": {
               "gametype": "voc",
-              "vocName": "ЛОТ - зоЛОТой кашаЛОТ (перекаты)",
+              "vocName": "ЛОТ - зоЛОТой кашаЛОТ",
               "vocId": "248633",
               "type": "normal",
               "level_from": 1,
@@ -4505,7 +4506,7 @@
             "id": "29d0280dlse46otoovjjy6m3j0nnzttt",
             "params": {
               "gametype": "voc",
-              "vocName": "ОБЗ - лОБЗиком ОБЗавёлся (перекаты)",
+              "vocName": "ОБЗ - лОБЗиком ОБЗавёлся",
               "vocId": "248636",
               "type": "normal",
               "level_from": 1,
@@ -4520,7 +4521,7 @@
             "id": "590fwz4jevdr76h40b1mf503a6ekw6pd",
             "params": {
               "gametype": "voc",
-              "vocName": "ОБЩ - приОБЩусь к ОБЩеству (перекаты)",
+              "vocName": "ОБЩ - приОБЩусь к ОБЩеству",
               "vocId": "248619",
               "type": "normal",
               "level_from": 1,
@@ -4535,7 +4536,7 @@
             "id": "j3nr8692bn92tlq8pums7ipi9b7851ks",
             "params": {
               "gametype": "voc",
-              "vocName": "ОДЖ - камбОДЖийский килОДЖоуль (перекаты)",
+              "vocName": "ОДЖ - камбОДЖийский килОДЖоуль",
               "vocId": "248616",
               "type": "normal",
               "level_from": 1,
@@ -4550,7 +4551,7 @@
             "id": "n6a3qa2zgddzg1k1fwhuiyugjmde4479",
             "params": {
               "gametype": "voc",
-              "vocName": "ОЛД - пОЛДюжины в пОЛДень (перекаты)",
+              "vocName": "ОЛД - пОЛДюжины в пОЛДень",
               "vocId": "248614",
               "type": "normal",
               "level_from": 1,
@@ -4565,7 +4566,7 @@
             "id": "1qerka0x1n1bgjhnn2jc4j6rdsulep6s",
             "params": {
               "gametype": "voc",
-              "vocName": "ОЛЮ - абсОЛЮтно ревОЛЮционно (перекаты)",
+              "vocName": "ОЛЮ - абсОЛЮтно ревОЛЮционно",
               "vocId": "248611",
               "type": "normal",
               "level_from": 1,
@@ -4580,7 +4581,7 @@
             "id": "zszm9d92rsq5m20l28hwgssusg6g8iop",
             "params": {
               "gametype": "voc",
-              "vocName": "РОЛ - РОЛь коРОЛевы (перекаты)",
+              "vocName": "РОЛ - РОЛь коРОЛевы",
               "vocId": "248627",
               "type": "normal",
               "level_from": 1,
@@ -4595,7 +4596,7 @@
             "id": "81w5mmcdym0y004mkk12n9t0r0dg6koq",
             "params": {
               "gametype": "voc",
-              "vocName": "СМИ - биосейСМИческих транСМИссий (перекаты)",
+              "vocName": "СМИ - биосейСМИческих транСМИссий",
               "vocId": "248629",
               "type": "normal",
               "level_from": 1,
@@ -4610,7 +4611,7 @@
             "id": "3oeguolnalt6aqda9ftqqy7m7vqn93sg",
             "params": {
               "gametype": "voc",
-              "vocName": "УКА - азбУКА и мяУКАние (перекаты)",
+              "vocName": "УКА - азбУКА и мяУКАние",
               "vocId": "248609",
               "type": "normal",
               "level_from": 1,
@@ -4625,7 +4626,7 @@
             "id": "vze10stcarxu17dni7497qj8u44bdltf",
             "params": {
               "gametype": "voc",
-              "vocName": "УКЕ - штУКЕнция в сундУКЕ (перекаты)",
+              "vocName": "УКЕ - штУКЕнция в сундУКЕ",
               "vocId": "248625",
               "type": "normal",
               "level_from": 1,
@@ -4640,7 +4641,7 @@
             "id": "rw53661p86k3b0t0onb2y41kcqri8bao",
             "params": {
               "gametype": "voc",
-              "vocName": "ХЛО - бесХЛОрная ХЛОрка (перекаты)",
+              "vocName": "ХЛО - бесХЛОрная ХЛОрка",
               "vocId": "248635",
               "type": "normal",
               "level_from": 1,
@@ -4655,7 +4656,7 @@
             "id": "6c3sb038ts1ps2qpzdlnpgtemyokr6ph",
             "params": {
               "gametype": "voc",
-              "vocName": "ЦУК + КУЦ - экзеКУЦия ЦУКкини (перекаты)",
+              "vocName": "ЦУК + КУЦ - экзеКУЦия ЦУКкини",
               "vocId": "248607",
               "type": "normal",
               "level_from": 1,
@@ -4685,7 +4686,7 @@
             "id": "cfr3qskz9ldxim3qy2zoj460f093hc3r",
             "params": {
               "gametype": "voc",
-              "vocName": "ЭЛЬ - дуЭЛЬный ДаниЭЛЬ (перекаты)",
+              "vocName": "ЭЛЬ - дуЭЛЬный ДаниЭЛЬ",
               "vocId": "248624",
               "type": "normal",
               "level_from": 1,
@@ -4700,7 +4701,7 @@
             "id": "8j6hlcjdp8tyhy1hszilw9yiac76m415",
             "params": {
               "gametype": "voc",
-              "vocName": "ЮБО - лЮБОстрастны лЮБОдеи (перекаты)",
+              "vocName": "ЮБО - лЮБОстрастны лЮБОдеи",
               "vocId": "248608",
               "type": "normal",
               "level_from": 1,
@@ -4715,7 +4716,7 @@
             "id": "pjztunr7hw7wwq8l1qw0frlgmwg8f1k9",
             "params": {
               "gametype": "voc",
-              "vocName": "ЮЛЬ - иЮЛЬский цирЮЛЬник (перекаты)",
+              "vocName": "ЮЛЬ - иЮЛЬский цирЮЛЬник",
               "vocId": "248612",
               "type": "normal",
               "level_from": 1,
@@ -4730,7 +4731,7 @@
             "id": "pqz8uv9lsdt27sr33t9h9mdtv0ha1ll0",
             "params": {
               "gametype": "voc",
-              "vocName": "ЯСА - потрЯСАюще плЯСАть (перекаты)",
+              "vocName": "ЯСА - потрЯСАюще плЯСАть",
               "vocId": "248631",
               "type": "normal",
               "level_from": 1,
@@ -4745,7 +4746,7 @@
             "id": "bg2gpzcosw2kagzqwp6zslvuurrr1pof",
             "params": {
               "gametype": "voc",
-              "vocName": "ЯСЕ - утрЯСЕм потрЯСЕния (перекаты)",
+              "vocName": "ЯСЕ - утрЯСЕм потрЯСЕния",
               "vocId": "248632",
               "type": "normal",
               "level_from": 1,
@@ -4760,7 +4761,7 @@
             "id": "2cj9brvppal1moquqysq29ond8ye9b4j",
             "params": {
               "gametype": "voc",
-              "vocName": "ЯЧА - сидЯЧАя клЯЧА (перекаты)",
+              "vocName": "ЯЧА - сидЯЧАя клЯЧА",
               "vocId": "248622",
               "type": "normal",
               "level_from": 1,
@@ -4775,7 +4776,7 @@
             "id": "1zvr2woyosmq1svnh8gukn38h3degojf",
             "params": {
               "gametype": "voc",
-              "vocName": "ЯЧЕ - тысЯЧЕлетие болЯЧЕк (перекаты)",
+              "vocName": "ЯЧЕ - тысЯЧЕлетие болЯЧЕк",
               "vocId": "248621",
               "type": "normal",
               "level_from": 1,
@@ -4790,7 +4791,7 @@
             "id": "qyqb08z5p9exak37a36hzb4zl2im8s4u",
             "params": {
               "gametype": "voc",
-              "vocName": "ЯЧИ - тысЯЧИ мЯЧИков (перекаты)",
+              "vocName": "ЯЧИ - тысЯЧИ мЯЧИков",
               "vocId": "248620",
               "type": "normal",
               "level_from": 1,
@@ -4811,7 +4812,7 @@
             "id": "3gljy8tkl30rvd5ec3v3cqbyr2ft78k1",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"афи\"",
+              "vocName": "\"афи\"",
               "vocId": "248746",
               "type": "normal",
               "level_from": 1,
@@ -4826,7 +4827,7 @@
             "id": "bnvr0j8i6ftfabsxxo9flwxzyi44qaff",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"бод\"",
+              "vocName": "\"бод\"",
               "vocId": "248757",
               "type": "normal",
               "level_from": 1,
@@ -4841,7 +4842,7 @@
             "id": "53y1oblkez17i372kupn2q0706c7lsyp",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"бож\"",
+              "vocName": "\"бож\"",
               "vocId": "248749",
               "type": "normal",
               "level_from": 1,
@@ -4856,7 +4857,7 @@
             "id": "otrxm856cjslq9ap2f85z69w8377arjt",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"боз\"",
+              "vocName": "\"боз\"",
               "vocId": "248750",
               "type": "normal",
               "level_from": 1,
@@ -4871,7 +4872,7 @@
             "id": "x3ihlr81bddth57zy2y10n0aeomoayxj",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"бою\"",
+              "vocName": "\"бою\"",
               "vocId": "248774",
               "type": "normal",
               "level_from": 1,
@@ -4886,7 +4887,7 @@
             "id": "seusl6bdrzpa4reql4wwye1amchzc63e",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"выв\"",
+              "vocName": "\"выв\"",
               "vocId": "248776",
               "type": "normal",
               "level_from": 1,
@@ -4901,7 +4902,7 @@
             "id": "v8mk76gfco8m7kqpkfl75s91m006y3vd",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"дод\"",
+              "vocName": "\"дод\"",
               "vocId": "248775",
               "type": "normal",
               "level_from": 1,
@@ -4916,7 +4917,7 @@
             "id": "az5k5mx21chzql7t2x3lcqdfnk98h0uo",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"доз\"",
+              "vocName": "\"доз\"",
               "vocId": "248739",
               "type": "normal",
               "level_from": 1,
@@ -4931,7 +4932,7 @@
             "id": "0wv6f0m2rxlmg0ymaxg8boyfxj0tk5zc",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"дох\"",
+              "vocName": "\"дох\"",
               "vocId": "248741",
               "type": "normal",
               "level_from": 1,
@@ -4946,7 +4947,7 @@
             "id": "5x43qu9v51kh7j4qaveb3hma64ea8mdi",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"дою\"",
+              "vocName": "\"дою\"",
               "vocId": "248738",
               "type": "normal",
               "level_from": 1,
@@ -4961,7 +4962,7 @@
             "id": "d5gqhm2d0e0blysqiiulufe5a739jmhu",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"дью\"",
+              "vocName": "\"дью\"",
               "vocId": "248752",
               "type": "normal",
               "level_from": 1,
@@ -4976,7 +4977,7 @@
             "id": "hl22tbwd1hn1lw1xce3n2itindzp4nik",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"ефи\"",
+              "vocName": "\"ефи\"",
               "vocId": "248747",
               "type": "normal",
               "level_from": 1,
@@ -4991,7 +4992,7 @@
             "id": "cwl7tnovrzhisi0x002e5ycwa0sjao8w",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"зою\"",
+              "vocName": "\"зою\"",
               "vocId": "248737",
               "type": "normal",
               "level_from": 1,
@@ -5006,7 +5007,7 @@
             "id": "37w1y4eiw612te1h7exmyw6nq4a3p2pt",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"ийс\"",
+              "vocName": "\"ийс\"",
               "vocId": "248728",
               "type": "normal",
               "level_from": 1,
@@ -5021,7 +5022,7 @@
             "id": "nsp7xexq8aiyknn407ahei11bdgx9izs",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"ифи\"",
+              "vocName": "\"ифи\"",
               "vocId": "248748",
               "type": "normal",
               "level_from": 1,
@@ -5036,7 +5037,7 @@
             "id": "2x3c8x7ihsoob3i9rcsh8qua7pmpocq9",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"лох\"",
+              "vocName": "\"лох\"",
               "vocId": "248742",
               "type": "normal",
               "level_from": 1,
@@ -5051,7 +5052,7 @@
             "id": "fszs1nmi1dfhk7kifsc4wuqoohlz2pdy",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"лою\"",
+              "vocName": "\"лою\"",
               "vocId": "248740",
               "type": "normal",
               "level_from": 1,
@@ -5066,7 +5067,7 @@
             "id": "plub5lifbywjy2pnxag8ljj1wpykmbgt",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"люб\"",
+              "vocName": "\"люб\"",
               "vocId": "248727",
               "type": "normal",
               "level_from": 1,
@@ -5081,7 +5082,7 @@
             "id": "601psgz38k39ys7yb0cvj5ehb310d1sq",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"одр\"",
+              "vocName": "\"одр\"",
               "vocId": "248758",
               "type": "normal",
               "level_from": 1,
@@ -5096,7 +5097,7 @@
             "id": "osam5jgoblmufn8hd2xpzg4xylub3jlq",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"озо\"",
+              "vocName": "\"озо\"",
               "vocId": "248756",
               "type": "normal",
               "level_from": 1,
@@ -5111,7 +5112,7 @@
             "id": "ikj1b1bs6t14yyjavqor06z2z23ivjoc",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"озь\"",
+              "vocName": "\"озь\"",
               "vocId": "248773",
               "type": "normal",
               "level_from": 1,
@@ -5126,7 +5127,7 @@
             "id": "2jnqrj2a84lewqouxbvf0ehv650w231u",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"охо\"",
+              "vocName": "\"охо\"",
               "vocId": "248755",
               "type": "normal",
               "level_from": 1,
@@ -5141,7 +5142,7 @@
             "id": "ox7h6ee26prpuqe158s1laxr813w82yd",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"охр\"",
+              "vocName": "\"охр\"",
               "vocId": "248759",
               "type": "normal",
               "level_from": 1,
@@ -5156,7 +5157,7 @@
             "id": "6bf2ne8tycqdsacmdng38zaamvyv6rrm",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"сиф\"",
+              "vocName": "\"сиф\"",
               "vocId": "248770",
               "type": "normal",
               "level_from": 1,
@@ -5171,7 +5172,7 @@
             "id": "oeeuumqljtdht3849x5xvbc1tqvairgg",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"сиц\"",
+              "vocName": "\"сиц\"",
               "vocId": "248769",
               "type": "normal",
               "level_from": 1,
@@ -5186,7 +5187,7 @@
             "id": "yojyrgxbwnz5z016m1vng73anosn1oax",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"сич\"",
+              "vocName": "\"сич\"",
               "vocId": "248768",
               "type": "normal",
               "level_from": 1,
@@ -5201,7 +5202,7 @@
             "id": "hb4yboayh5u8h5wqmh5t61gdnejnra15",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"сия\"",
+              "vocName": "\"сия\"",
               "vocId": "248771",
               "type": "normal",
               "level_from": 1,
@@ -5216,7 +5217,7 @@
             "id": "ggk75eo8qck6kewg1e737m47rj3zd10x",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"сыв\"",
+              "vocName": "\"сыв\"",
               "vocId": "248766",
               "type": "normal",
               "level_from": 1,
@@ -5231,7 +5232,7 @@
             "id": "9rb7ontcy63yxa6m9704160fds4a2d40",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"уйс\"",
+              "vocName": "\"уйс\"",
               "vocId": "248729",
               "type": "normal",
               "level_from": 1,
@@ -5246,7 +5247,7 @@
             "id": "zzbul0yjqf62nb1f9r5t1198wuqv97rx",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"учу\"",
+              "vocName": "\"учу\"",
               "vocId": "248754",
               "type": "normal",
               "level_from": 1,
@@ -5261,7 +5262,7 @@
             "id": "ytztqvvo2j85cheh4j3zvtsci295d9y6",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"фас\"",
+              "vocName": "\"фас\"",
               "vocId": "248762",
               "type": "normal",
               "level_from": 1,
@@ -5276,7 +5277,7 @@
             "id": "v19up30nq54xscvurqbkszcgfgxja25r",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"фей\"",
+              "vocName": "\"фей\"",
               "vocId": "248760",
               "type": "normal",
               "level_from": 1,
@@ -5291,7 +5292,7 @@
             "id": "ajlwgn5dlzx95mg7uuzy726glszo96z6",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"фий\"",
+              "vocName": "\"фий\"",
               "vocId": "248732",
               "type": "normal",
               "level_from": 1,
@@ -5306,7 +5307,7 @@
             "id": "ljsy4283q7fyiythy4904v0pf68gzddx",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"фис\"",
+              "vocName": "\"фис\"",
               "vocId": "248761",
               "type": "normal",
               "level_from": 1,
@@ -5321,7 +5322,7 @@
             "id": "3lmjsqoyklem8nulipw434nsgozkysdq",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"фия\"",
+              "vocName": "\"фия\"",
               "vocId": "248730",
               "type": "normal",
               "level_from": 1,
@@ -5336,7 +5337,7 @@
             "id": "hqyxwen90j3q2c187077b6nr9j6h6qbm",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"хож\"",
+              "vocName": "\"хож\"",
               "vocId": "248736",
               "type": "normal",
               "level_from": 1,
@@ -5351,7 +5352,7 @@
             "id": "9t335nwg7fqs2323tqjo2eylv3npwlwv",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"хоз\"",
+              "vocName": "\"хоз\"",
               "vocId": "248735",
               "type": "normal",
               "level_from": 1,
@@ -5366,7 +5367,7 @@
             "id": "p1om3jvq7ed8obl6fpvusin1ut1nzgcs",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"хол\"",
+              "vocName": "\"хол\"",
               "vocId": "248745",
               "type": "normal",
               "level_from": 1,
@@ -5381,7 +5382,7 @@
             "id": "7pt8tcu9hfl14tr5w13vt3on5a9g5duv",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"хох\"",
+              "vocName": "\"хох\"",
               "vocId": "248744",
               "type": "normal",
               "level_from": 1,
@@ -5396,7 +5397,7 @@
             "id": "ao4tpddjj3fo040glz14ygs0jzxrmphb",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"цев\"",
+              "vocName": "\"цев\"",
               "vocId": "248763",
               "type": "normal",
               "level_from": 1,
@@ -5411,7 +5412,7 @@
             "id": "d5jl3xhyjnyii0w9itz9vt5fjhcqxkj3",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"цей\"",
+              "vocName": "\"цей\"",
               "vocId": "248743",
               "type": "normal",
               "level_from": 1,
@@ -5426,7 +5427,7 @@
             "id": "jccsqvv9z5kcgi7st8d5fsg7mjxdlkvq",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"ций\"",
+              "vocName": "\"ций\"",
               "vocId": "248733",
               "type": "normal",
               "level_from": 1,
@@ -5441,7 +5442,7 @@
             "id": "iu2ltlc1gmjwf0041zw1givkn0zqt1m7",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"ция\"",
+              "vocName": "\"ция\"",
               "vocId": "248731",
               "type": "normal",
               "level_from": 1,
@@ -5456,7 +5457,7 @@
             "id": "ubd1afwr5ke5clvbbibdnt5cmmd065bq",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"чий\"",
+              "vocName": "\"чий\"",
               "vocId": "248734",
               "type": "normal",
               "level_from": 1,
@@ -5471,7 +5472,7 @@
             "id": "x1mnchpzghr1jhmow2tl5ozrhpi4xqh7",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"чис\"",
+              "vocName": "\"чис\"",
               "vocId": "248767",
               "type": "normal",
               "level_from": 1,
@@ -5486,7 +5487,7 @@
             "id": "72xl5m735dge43a528pb0y3qh7cx4r61",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"чия\"",
+              "vocName": "\"чия\"",
               "vocId": "248772",
               "type": "normal",
               "level_from": 1,
@@ -5501,7 +5502,7 @@
             "id": "cu1l16ahpt6bakgwsy64q4l2xrxmy6uj",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"шью\"",
+              "vocName": "\"шью\"",
               "vocId": "248753",
               "type": "normal",
               "level_from": 1,
@@ -5516,7 +5517,7 @@
             "id": "pdxfocu0nfjm28ttr2h9x2htq72j6afw",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"ьют\"",
+              "vocName": "\"ьют\"",
               "vocId": "248751",
               "type": "normal",
               "level_from": 1,
@@ -5531,7 +5532,7 @@
             "id": "vvnj0z2akfar33m33dkgmncc9gznwzum",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"явы\"",
+              "vocName": "\"явы\"",
               "vocId": "248765",
               "type": "normal",
               "level_from": 1,
@@ -5546,7 +5547,7 @@
             "id": "vknmmwsjr94wokou93folorfonyia22q",
             "params": {
               "gametype": "voc",
-              "vocName": "Тренировка возвратного переката \"яку\"",
+              "vocName": "\"яку\"",
               "vocId": "248764",
               "type": "normal",
               "level_from": 1,
@@ -18349,6 +18350,6 @@
         ]
       }
     ],
-    "currentGroupId": "9z1se2d1qkxzwpsziee0axbfg0tk1wgg"
+    "currentGroupId": "l9zekzj6m4421vk80mvc2zoi4uejgjsj"
   }
 }
