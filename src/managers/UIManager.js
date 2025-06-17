@@ -24,8 +24,31 @@ export class UIManager {
     this.createPanelToggleButton = createPanelToggleButton.bind(null, this.main);
   }
 
+  scrollToPreviousGame() {
+    const content = document.getElementById('latest-games-content');
+    const el = document.querySelector('.previous-game');
+    if (!content || !el) return;
+
+    // Measure inside-container distance
+    const cRect = content.getBoundingClientRect();
+    const eRect = el.getBoundingClientRect();
+    const offsetInside = eRect.top - cRect.top;
+
+    // Calculate centered scrollTop
+    const scrollTo = offsetInside
+      - (cRect.height / 2)
+      + (eRect.height / 2);
+
+    content.scrollTop += scrollTo;
+  }
+
   createContainer() {
     const container = createElement('div', { id: 'latest-games-container' });
+
+    container.addEventListener('mouseenter', () => {
+      this.showContainer();
+      requestAnimationFrame(() => this.scrollToPreviousGame());
+    });
 
     // Create the content container that will hold all the content
     const contentContainer = createElement('div', { id: 'latest-games-content' });
@@ -141,8 +164,8 @@ export class UIManager {
     };
 
     this.updateRemoveIcons();
-    // Set scroll position on content container instead of main container
-    contentContainer.scrollTop = this.main.previousScrollPosition;
+    // Scroll to the previous game if it exists or restore the last scroll position
+    setTimeout(() => { requestAnimationFrame(() => { this.scrollToPreviousGame(); }); }, 100);
   }
 
   updateGameCountDisplay() {
@@ -209,5 +232,7 @@ export class UIManager {
     }
     this.updateRemoveIcons();
     this.updateGameCountDisplay();
+    // Scroll to the previous game after refresh
+    requestAnimationFrame(() => this.scrollToPreviousGame());
   }
 }
