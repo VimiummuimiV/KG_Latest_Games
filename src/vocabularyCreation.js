@@ -50,7 +50,7 @@ export async function fetchVocabularyBasicData(vocId) {
       }
     }
 
-    return null; // didn’t find the data
+    return null; // didn't find the data
   } catch (err) {
     if (err.name === 'AbortError') {
       // Fetch was aborted because we already got our data — not really an error
@@ -62,32 +62,32 @@ export async function fetchVocabularyBasicData(vocId) {
 }
 
 function addGameToGroup(group, vocId, vocName, groups, main) {
-    if (group.games.some(game => String(game.params?.vocId) === String(vocId))) {
-        alert(`Этот словарь уже добавлен в ${group.title}`);
-        return;
-    }
-    const newGame = {
-        id: generateUniqueId(groups),
-        params: {
-            gametype: 'voc',
-            vocName: vocName,
-            vocId: vocId,
-            type: 'normal',
-            level_from: 1,
-            level_to: 9,
-            timeout: 10,
-            qual: 0,
-            premium_abra: 0
-        },
-        pin: 1
-    };
-    group.games.unshift(newGame);
-    let latestGamesData = main.gamesManager.latestGamesData || {};
-    latestGamesData = { ...latestGamesData, latestGroupAddedGameId: group.id };
-    main.gamesManager.latestGamesData = latestGamesData;
-    main.gamesManager.saveGameData();
-    main.uiManager.refreshContainer();
-    highlightExistingVocabularies(groups);
+  if (group.games.some(game => String(game.params?.vocId) === String(vocId))) {
+    alert(`Этот словарь уже добавлен в ${group.title}`);
+    return;
+  }
+  const newGame = {
+    id: generateUniqueId(groups),
+    params: {
+      gametype: 'voc',
+      vocName: vocName,
+      vocId: vocId,
+      type: 'normal',
+      level_from: 1,
+      level_to: 9,
+      timeout: 10,
+      qual: 0,
+      premium_abra: 0
+    },
+    pin: 1
+  };
+  group.games.unshift(newGame);
+  let latestGamesData = main.gamesManager.latestGamesData || {};
+  latestGamesData = { ...latestGamesData, latestGroupAddedGameId: group.id };
+  main.gamesManager.latestGamesData = latestGamesData;
+  main.gamesManager.saveGameData();
+  main.uiManager.refreshContainer();
+  highlightExistingVocabularies(groups);
 }
 
 /**
@@ -162,6 +162,38 @@ function attachEventToContainer(container, groups, main) {
       return;
     }
 
+    let latestGamesData = main.gamesManager.latestGamesData || {};
+
+    // Handle ctrl + contextmenu case FIRST
+    if (e.ctrlKey) {
+      const previousGroupId = latestGamesData.latestGroupAddedGameId;
+      if (previousGroupId) {
+        const group = groups.find(g => g.id === previousGroupId);
+        if (group) {
+          // Only prevent default if we're actually handling the event
+          e.preventDefault();
+          e.stopPropagation();
+
+          let vocName = '';
+          if (href.includes('/create/')) {
+            const basicData = await fetchVocabularyBasicData(vocId);
+            if (basicData && basicData.vocabularyName) {
+              vocName = basicData.vocabularyName;
+            } else {
+              vocName = prompt('Не удалось получить название словаря. Введите название для словаря:') || '';
+            }
+          } else {
+            vocName = extractVocabularyName(anchor);
+          }
+
+          addGameToGroup(group, vocId, vocName, groups, main);
+          return; // Exit early
+        }
+      }
+      // If ctrl is held but no previous group found, let default context menu show
+      return;
+    }
+
     e.preventDefault();
     e.stopPropagation();
 
@@ -176,18 +208,6 @@ function attachEventToContainer(container, groups, main) {
       }
     } else {
       vocName = extractVocabularyName(anchor);
-    }
-
-    let latestGamesData = main.gamesManager.latestGamesData || {};
-    if (e.shiftKey) {
-        const previousGroupId = latestGamesData.latestGroupAddedGameId;
-        if (previousGroupId) {
-            const group = groups.find(g => g.id === previousGroupId);
-            if (group) {
-                addGameToGroup(group, vocId, vocName, groups, main);
-                return;
-            }
-        }
     }
 
     showVocabularyCreationPopup(groups, e, vocId, vocName, main);
