@@ -95,17 +95,47 @@ export function setupResizeHandle(uiManager, container, horizontalHandle, bottom
     topHandle.style.display = '';
     setupDragResize(
       topHandle,
-      (e, prevY) => prevY === undefined ? [e.clientY, container.offsetHeight] : prevY - e.clientY,
-      (dy, startHeight) => {
-        let newHeightPx = startHeight + dy;
+      (e, prevY) => {
+        if (prevY === undefined) {
+          // Return initial state: mouse Y, container height, and current top position
+          const currentTop = parseFloat(container.style.top) || 0;
+          return [e.clientY, { height: container.offsetHeight, top: currentTop }];
+        }
+        return prevY - e.clientY; // Inverted delta for top resize
+      },
+      (dy, startState) => {
+        let newHeightPx = startState.height + dy;
         const maxPx = window.innerHeight * 0.95;
         newHeightPx = Math.max(200, Math.min(newHeightPx, maxPx));
+        
+        // Calculate the height change
+        const heightChange = newHeightPx - startState.height;
+        
+        // Adjust top position inversely to height change
+        const heightChangeVh = (heightChange / window.innerHeight) * 100;
+        let newTopVh = startState.top - heightChangeVh;
+        
+        // Ensure the container doesn't go above the screen
+        newTopVh = Math.max(0, newTopVh);
+        
+        // Apply the changes
         const newHeightVh = Math.round((newHeightPx / window.innerHeight) * 100 * 10) / 10;
+        const roundedTopVh = Math.round(newTopVh * 10) / 10;
+        
         container.style.height = `${newHeightVh}vh`;
+        container.style.top = `${roundedTopVh}vh`;
       },
       () => {
+        const currentPage = getCurrentPage();
+        
+        // Save both height and position
         uiManager.main.panelHeights = uiManager.main.panelHeights || {};
         uiManager.main.panelHeights[currentPage] = container.style.height;
+        
+        uiManager.main.panelYPosition = uiManager.main.panelYPosition || {};
+        const finalTopVh = parseFloat(container.style.top) || 0;
+        uiManager.main.panelYPosition[currentPage] = finalTopVh;
+        
         uiManager.main.settingsManager.saveSettings();
       }
     );

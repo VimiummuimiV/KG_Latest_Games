@@ -155,7 +155,7 @@ export class UIManager {
     const origUpdateDisplayModeClass = this.main.viewManager.updateDisplayModeClass.bind(this.main.viewManager);
     this.main.viewManager.updateDisplayModeClass = (...args) => {
       origUpdateDisplayModeClass(...args);
-      setupResizeHandle(this, container, hHandle, vHandle);
+      setupResizeHandle(this, container, hHandle, vHandleBot, vHandleTop);
       setupYPositioning(this, container);
     };
 
