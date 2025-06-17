@@ -61,6 +61,35 @@ export async function fetchVocabularyBasicData(vocId) {
   }
 }
 
+function addGameToGroup(group, vocId, vocName, groups, main) {
+    if (group.games.some(game => String(game.params?.vocId) === String(vocId))) {
+        alert(`Этот словарь уже добавлен в ${group.title}`);
+        return;
+    }
+    const newGame = {
+        id: generateUniqueId(groups),
+        params: {
+            gametype: 'voc',
+            vocName: vocName,
+            vocId: vocId,
+            type: 'normal',
+            level_from: 1,
+            level_to: 9,
+            timeout: 10,
+            qual: 0,
+            premium_abra: 0
+        },
+        pin: 1
+    };
+    group.games.unshift(newGame);
+    let latestGamesData = main.gamesManager.latestGamesData || {};
+    latestGamesData = { ...latestGamesData, latestGroupAddedGameId: group.id };
+    main.gamesManager.latestGamesData = latestGamesData;
+    main.gamesManager.saveGameData();
+    main.uiManager.refreshContainer();
+    highlightExistingVocabularies(groups);
+}
+
 /**
  * Show a popup to add a vocabulary to a group.
  * @param {Array} groups - Array of group objects.
@@ -80,36 +109,7 @@ export function showVocabularyCreationPopup(groups, event, vocId, vocName, main)
       className: `group-tab${alreadyExists ? ' active' : ''}`,
       dataset: { groupId: group.id },
       onClick: () => {
-        // Find the group where the vocabulary already exists
-        const foundGroup = groups.find(g =>
-          g.games.some(game => String(game.params?.vocId) === String(vocId))
-        );
-        if (foundGroup) {
-          alert(`Этот словарь уже добавлен в ${foundGroup.title}`);
-          return;
-        }
-        if (!alreadyExists) {
-          // Create a new game object with default parameters
-          const newGame = {
-            id: generateUniqueId(groups),
-            params: {
-              gametype: 'voc',
-              vocName: vocName,
-              vocId: vocId,
-              type: 'normal',
-              level_from: 1,
-              level_to: 9,
-              timeout: 10,
-              qual: 0,
-              premium_abra: 0
-            },
-            pin: 1 // Pinned by default
-          };
-          group.games.unshift(newGame);
-          main.gamesManager.saveGameData();
-          main.uiManager.refreshContainer();
-          highlightExistingVocabularies(groups);
-        }
+        addGameToGroup(group, vocId, vocName, groups, main);
       }
     };
   });
@@ -176,6 +176,18 @@ function attachEventToContainer(container, groups, main) {
       }
     } else {
       vocName = extractVocabularyName(anchor);
+    }
+
+    let latestGamesData = main.gamesManager.latestGamesData || {};
+    if (e.shiftKey) {
+        const previousGroupId = latestGamesData.latestGroupAddedGameId;
+        if (previousGroupId) {
+            const group = groups.find(g => g.id === previousGroupId);
+            if (group) {
+                addGameToGroup(group, vocId, vocName, groups, main);
+                return;
+            }
+        }
     }
 
     showVocabularyCreationPopup(groups, e, vocId, vocName, main);
