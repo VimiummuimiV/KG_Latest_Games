@@ -65,6 +65,8 @@ export const DEFAULTS = {
   shouldReplay: false,
   replayDelay: 1000,
   replayNextGame: false,
+  shouldReplayMore: false,
+  replayNextGameCount: 1,
   replayWithoutWaiting: false,
   showSearchBox: false,
   showButtonDescriptions: true,

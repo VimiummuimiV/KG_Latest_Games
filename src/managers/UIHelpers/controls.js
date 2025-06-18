@@ -225,6 +225,46 @@ export function createControls(main) {
     delayErrorText: 'Пожалуйста, введите корректное значение задержки автоповтора.'
   });
 
+  // Add button to toggle replay more functionality with count setting
+  const replayMoreBtn = createElement('span', {
+    className: 'latest-games-replay-more control-button' + (main.shouldReplayMore === false ? ' latest-games-disabled' : ''),
+    innerHTML: icons.replayMore
+  });
+
+  const updateReplayMoreTooltip = () => {
+    createCustomTooltip(replayMoreBtn, `
+      [Клик] ${main.shouldReplayMore ? 'Отключить многократный повтор игры' : 'Включить многократный повтор игры'}
+      [Shift + Клик] Изменить количество повторов (${main.replayNextGameCount})
+    `);
+  };
+
+  updateReplayMoreTooltip();
+
+  replayMoreBtn.onclick = (e) => {
+    if (e.shiftKey) {
+      let countInput;
+      do {
+        countInput = prompt('Введите количество повторов игры:', main.replayNextGameCount.toString());
+        if (countInput === null) return; // User cancelled
+        
+        const countValue = parseInt(countInput, 10);
+        if (!isNaN(countValue) && countValue >= 1) {
+          main.replayNextGameCount = countValue;
+          main.settingsManager.saveSettings();
+          updateReplayMoreTooltip();
+          return;
+        } else {
+          alert('Пожалуйста, введите корректное число (больше или равно 1).');
+        }
+      } while (true);
+    } else {
+      main.shouldReplayMore = !main.shouldReplayMore;
+      main.settingsManager.saveSettings();
+      replayMoreBtn.classList.toggle('latest-games-disabled', !main.shouldReplayMore);
+      updateReplayMoreTooltip();
+    }
+  };
+
   // Add button to pin all games in the current group or all groups
   const pinAllBtn = createElement('span', {
     className: 'latest-games-pinall control-button',
@@ -430,7 +470,7 @@ export function createControls(main) {
   controlsButtons.append(
     main.themeManager.createThemeToggle(),
     main.viewManager.createDisplayModeToggle(),
-    refreshIdsBtn, resetButton, playBtn, replayBtn,
+    refreshIdsBtn, resetButton, playBtn, replayBtn, replayMoreBtn,
     pinAllBtn, unpinAllBtn, sortBtn, importBtn,
     exportBtn, removeAllBtn, removeUnpinnedBtn,
     dragToggleBtn, descToggleBtn, helpToggleBtn, searchBtn
