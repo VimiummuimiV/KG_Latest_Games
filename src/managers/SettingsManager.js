@@ -22,6 +22,13 @@ export class SettingsManager {
       this.main.replayNextGame = settings.replayNextGame ?? this.main.replayNextGame;
       this.main.shouldReplayMore = settings.shouldReplayMore ?? this.main.shouldReplayMore;
       this.main.replayNextGameCount = settings.replayNextGameCount ?? this.main.replayNextGameCount;
+
+      // Replay more counter for the next game
+      this.main.remainingReplayCount =
+        settings.remainingReplayCount != null
+          ? settings.remainingReplayCount
+          : this.main.replayNextGameCount;
+
       this.main.replayWithoutWaiting = settings.replayWithoutWaiting ?? this.main.replayWithoutWaiting;
       this.main.showSearchBox = settings.showSearchBox ?? this.main.showSearchBox;
       this.main.showButtonDescriptions = settings.showButtonDescriptions ?? this.main.showButtonDescriptions;
@@ -34,7 +41,7 @@ export class SettingsManager {
           ...settings.panelYPosition
         };
       }
-      
+
       // Handle panelWidth and panelHeight as objects (per-page)
       if (settings.panelWidths && typeof settings.panelWidths === 'object') {
         this.main.panelWidths = {
@@ -84,6 +91,7 @@ export class SettingsManager {
         replayNextGame: this.main.replayNextGame,
         shouldReplayMore: this.main.shouldReplayMore,
         replayNextGameCount: this.main.replayNextGameCount,
+        remainingReplayCount: this.main.remainingReplayCount,
         replayWithoutWaiting: this.main.replayWithoutWaiting,
         showSearchBox: this.main.showSearchBox,
         showButtonDescriptions: this.main.showButtonDescriptions,

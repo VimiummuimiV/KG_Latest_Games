@@ -18,7 +18,8 @@ export class PageHandler {
     this.replayTimer = null;
     // Flag to track if hovering over latest games container
     this.isHoveringLatestGames = false;
-  }
+    this.remainingReplayCount = this.main.replayNextGameCount;
+  } // End of constructor
 
   createSleepIndicator(type, totalMs) {
     const indicator = document.createElement('div');
@@ -48,7 +49,7 @@ export class PageHandler {
 
     updateTimer();
     return indicator;
-  }
+  } // End of createSleepIndicator
 
   removeSleepIndicator(type) {
     if (type === 'start') {
@@ -70,7 +71,7 @@ export class PageHandler {
         this.replayIndicator = null;
       }
     }
-  }
+  } // End of removeSleepIndicator
 
   handlePageSpecificLogic() {
     const { href } = location;
@@ -107,7 +108,7 @@ export class PageHandler {
       attachVocabularyCreation(this.main.groupsManager.groups, this.main);
       attachVocabularyParser();
     }
-  }
+  } // End of handlePageSpecificLogic
 
   setupHoverListeners() {
     const latestGamesContainer = document.querySelector('#latest-games-container');
@@ -128,7 +129,7 @@ export class PageHandler {
         this.handleReplayAction();
       });
     }
-  }
+  } // End of setupHoverListeners
 
   saveCurrentGameParams() {
     const gameDesc = document.querySelector('#gamedesc');
@@ -158,7 +159,7 @@ export class PageHandler {
     }
     this.main.gamesManager.assignGameIds();
     this.main.gamesManager.saveGameData();
-  }
+  } // End of saveCurrentGameParams
 
   handleStartAction() {
     // Handle auto-start - NEVER affected by hover state
@@ -181,7 +182,7 @@ export class PageHandler {
         }
       }
     }
-  }
+  } // End of handleStartAction
 
   // Create and start the next game from the current group
   replayNextGame() {
@@ -207,7 +208,7 @@ export class PageHandler {
     // Create new race (not replay)
     const url = gamesManager.generateGameLink(nextGame);
     window.location.href = url;
-  }
+  } // End of replayNextGame
 
   handleReplayAction() {
     // Handle auto-replay - affected by hover state
@@ -231,11 +232,33 @@ export class PageHandler {
             this.replaySleep = sleep(this.main.replayDelay);
             this.replaySleep.then(() => {
               this.removeSleepIndicator('replay');
-              if (this.main.replayNextGame) {
-                this.replayNextGame();
+
+              // —— NEW: “replay more” repeat-count logic ——
+              if (this.main.shouldReplayMore) {
+                // if there are still repeats left, decrement and replay the same game
+                if (this.main.remainingReplayCount > 1) {
+                  this.main.remainingReplayCount--;
+                  this.main.settingsManager.saveSettings();
+                  window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
+                } else {
+                  // counter exhausted → reset it and then advance (or replay) as usual
+                  this.main.remainingReplayCount = this.main.replayNextGameCount;
+                  this.main.settingsManager.saveSettings();
+                  if (this.main.replayNextGame) {
+                    this.replayNextGame();
+                  } else {
+                    window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
+                  }
+                }
               } else {
-                window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
+                // Default behavior: either replay next game or same
+                if (this.main.replayNextGame) {
+                  this.replayNextGame();
+                } else {
+                  window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
+                }
               }
+              // —— end “replay more” logic ——
             }).catch(() => {
               // Promise was cancelled, just clean up
               this.removeSleepIndicator('replay');
@@ -245,5 +268,6 @@ export class PageHandler {
         }
       }
     }
-  }
+  } // End of handleReplayAction
+
 }
