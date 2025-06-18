@@ -1,5 +1,6 @@
 import { icons } from '../../icons.js';
 import { createElement } from '../../utils.js';
+import { createCustomTooltip } from '../../tooltip.js';
 
 const SEARCH_STORAGE_KEY = 'latestGamesSearchQuery';
 
@@ -173,7 +174,7 @@ function updateClearButtonVisibility(clearButton, value) {
   clearButton.classList.toggle('visible', !!value);
 }
 
-export function handleSearch(main, query) {
+export function handleSearch(main, query, showAll = false) {
   const gamesList = document.getElementById('latest-games');
   if (!gamesList) return;
 
@@ -206,7 +207,8 @@ export function handleSearch(main, query) {
 
   results.sort((a, b) => a.score - b.score);
 
-  const maxResults = 50;
+  const maxResultsLimit = 50;
+  const maxResults = showAll ? results.length : maxResultsLimit;
   const displayedResults = results.slice(0, maxResults);
   const hiddenCount = results.length - maxResults;
 
@@ -227,7 +229,13 @@ export function handleSearch(main, query) {
   if (hiddenCount > 0) {
     const hiddenMessage = createElement('li', {
       className: 'latest-games-search-more',
-      textContent: `Ещё ${hiddenCount} результатов скрыто`
+      textContent: `Ещё ${hiddenCount} результатов скрыто`,
+    });
+
+    createCustomTooltip(hiddenMessage, 'Нажмите для показа всех результатов');
+    
+    hiddenMessage.addEventListener('click', () => {
+      handleSearch(main, query, true); // Show all results when clicked
     });
     gamesList.appendChild(hiddenMessage);
   }

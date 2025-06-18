@@ -16,7 +16,7 @@
 // Search container styling
 .latest-games-search-container {
   position: relative;
-  padding: 10px 10px 0;
+  margin: 10px 10px 0;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -88,4 +88,5 @@
   color: var(--rg-gametype-chars);
   border: 2px solid var(--rg-border-pinned-chars);
   background-color: var(--rg-bg-card-pinned-chars);
+  cursor: pointer;
 }
