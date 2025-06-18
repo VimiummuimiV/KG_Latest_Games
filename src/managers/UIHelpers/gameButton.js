@@ -63,7 +63,7 @@ export function createGameElement(main, game, id) {
   });
 
   createCustomTooltip(deleteButton,
-    '[Клик] Удалить (с подтверждением). [Shift + Клик] Удалить без подтверждения.'
+    '[Клик] Удалить с подтверждением. [Shift + Клик] Удалить без подтверждения.'
   );
 
   deleteButton.addEventListener('click', (e) => {
