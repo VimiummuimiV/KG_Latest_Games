@@ -7,6 +7,8 @@ import { isVocabularyCreationSupported } from '../vocabularyCreation.js';
 export class PageHandler {
   constructor(main) {
     this.main = main;
+    // Initialize the games data container
+    this.gamesDataContainer = null;
     // Initialize sleep indicators and timers
     this.replaySleep = null;
     this.startSleep = null;
@@ -21,10 +23,33 @@ export class PageHandler {
     this.remainingReplayCount = this.main.replayNextGameCount;
   } // End of constructor
 
+  createGamesDataContainer() {
+    const container = document.createElement('div');
+    container.className = 'games-data-container';
+    document.body.appendChild(container);
+    this.gamesDataContainer = container;
+    this.createRemainingCountIndicator();
+  }
+
+  createRemainingCountIndicator() {
+    // No need to create indicator if replay more is not enabled
+    if (!this.main.shouldReplayMore) return;
+    // Ensure the games data container exists
+    if (!this.gamesDataContainer) this.createGamesDataContainer();
+
+    const indicator = document.createElement('div');
+    indicator.className = 'remaining-count-indicator';
+    indicator.textContent = `${this.main.remainingReplayCount}`;
+    this.gamesDataContainer.appendChild(indicator);
+  } // End of createRemainingCountIndicator
+
   createSleepIndicator(type, totalMs) {
+    // Ensure the games data container exists
+    if (!this.gamesDataContainer) this.createGamesDataContainer();
+
     const indicator = document.createElement('div');
     indicator.className = type === 'start' ? 'sleep-start-indicator' : 'sleep-replay-indicator';
-    document.body.appendChild(indicator);
+    this.gamesDataContainer.insertBefore(indicator, this.gamesDataContainer.firstChild);
 
     let remainingMs = totalMs;
     const startTime = Date.now();
