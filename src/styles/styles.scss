@@ -483,6 +483,12 @@
   .resize-handle-vertical-bottom {
     bottom: 0;
   }
+
+  // --- Drop indicator style ---
+  // For wrap mode (horizontal), make the indicator vertical
+  #latest-games.display-mode-wrap .drop-indicator {
+    border-left: 2px solid var(--rg-gametype-voc);
+  }
 }
 
 #latest-games-hover-area {

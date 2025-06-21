@@ -67,6 +67,23 @@ function getDragBounds(element) {
   };
 }
 
+// --- Drop indicator management ---
+let dropIndicator = null;
+function addDropIndicator() {
+  if (!dropIndicator) {
+    dropIndicator = document.createElement('div');
+    dropIndicator.className = 'drop-indicator';
+    dropIndicator.style.position = 'relative';
+  }
+  return dropIndicator;
+}
+
+function removeDropIndicator() {
+  if (dropIndicator && dropIndicator.parentNode) {
+    dropIndicator.parentNode.removeChild(dropIndicator);
+  }
+}
+
 // Helper function to handle element positioning in wrap mode
 function handleWrapModePositioning(e, gamesList) {
   const bounds = getDragBounds(dragState.draggedElement);
@@ -96,13 +113,17 @@ function handleWrapModePositioning(e, gamesList) {
     }
   });
 
+  removeDropIndicator();
   if (closestElement) {
     const rect = closestElement.getBoundingClientRect();
     const isLeftHalf = e.clientX < rect.left + rect.width / 2;
+    const indicator = addDropIndicator();
     if (isLeftHalf) {
-      gamesList.insertBefore(dragState.draggedElement, closestElement);
+      gamesList.insertBefore(indicator, closestElement);
+      gamesList.insertBefore(dragState.draggedElement, indicator);
     } else {
-      gamesList.insertBefore(dragState.draggedElement, closestElement.nextSibling);
+      gamesList.insertBefore(indicator, closestElement.nextSibling);
+      gamesList.insertBefore(dragState.draggedElement, indicator.nextSibling);
     }
   }
 }
@@ -211,6 +232,7 @@ function handleDragMove(e, manager) {
 function handleDragEnd(manager) {
   // Always clean up listeners first, regardless of state
   dragState.cleanup();
+  removeDropIndicator();
 
   if (!dragState.isDragging || !dragState.draggedElement) {
     dragState.reset();
