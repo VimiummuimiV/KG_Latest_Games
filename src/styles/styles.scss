@@ -284,7 +284,8 @@
         );
       }
 
-      &.previous-game {
+      &.previous-game,
+      &.dragged-game {
         animation: tilt-n-move-shaking 0.3s ease 5;
       }
     }

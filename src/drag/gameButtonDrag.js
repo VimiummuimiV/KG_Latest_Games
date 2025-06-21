@@ -190,6 +190,9 @@ export function addDragFunctionality(manager, element) {
 function handleDragMove(e, manager) {
   if (!dragState.isDragging || !dragState.draggedElement) return;
 
+  // Remove 'dragged-game' from all possible elements
+  document.querySelectorAll('.dragged-game').forEach(el => el.classList.remove('dragged-game'));
+
   if (!manager.wasDragging && isActuallyDragging(e)) {
     manager.wasDragging = true;
     dragState.draggedElement.classList.add('dragging');
@@ -241,6 +244,7 @@ function handleDragEnd(manager) {
 
   dragState.isDragging = false;
   dragState.draggedElement.classList.remove('dragging');
+  dragState.draggedElement.classList.add('dragged-game');
 
   const displayMode = manager.viewManager.getDisplayMode();
   if (displayMode === 'wrap') {
