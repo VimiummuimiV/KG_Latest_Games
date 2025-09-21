@@ -467,13 +467,62 @@ export function createControls(main) {
     updateSearchTooltip();
   });
 
+  // Add random game button
+  const randomRaceBtn = createElement('span', {
+    className: 'latest-games-random control-button' + (main.randomGameId ? '' : ' latest-games-disabled'),
+    innerHTML: icons.random
+  });
+  const updateRandomTooltip = () => {
+    createCustomTooltip(
+      randomRaceBtn,
+      main.randomGameId
+        ? 'Отключить случайный выбор игры'
+        : 'Включить случайный выбор игры'
+    );
+    randomRaceBtn.classList.toggle('latest-games-disabled', !main.randomGameId);
+  }
+  updateRandomTooltip();
+  
+  // Toggle random game selection setting when clicking the button
+  randomRaceBtn.onclick = () => {
+    main.randomGameId = !main.randomGameId;
+    main.settingsManager.saveSettings();
+    updateRandomTooltip();
+  };
+
+  // Add start latest played or random game button
+  const startRaceBtn = createElement('span', {
+    className: 'latest-games-start control-button',
+    innerHTML: icons.start
+  });
+  createCustomTooltip(
+    startRaceBtn,
+    'Начать последнюю проигранную или случайную игру',
+  );
+
+  // Use random game id when enabled, otherwise previousGameId
+  startRaceBtn.onclick = () => {
+    const id = main.randomGameId ? main.gamesManager.getRandomGameId() : main.gamesManager.getPreviousGameId();
+    if (!id) {
+      alert('Нет подходящей игры');
+      return;
+    }
+    const game = main.gamesManager.findGameById(id);
+    if (!game) {
+      alert('Игра не найдена');
+      return;
+    }
+    location.href = main.gamesManager.generateGameLink(game);
+  };
+
   controlsButtons.append(
     main.themeManager.createThemeToggle(),
     main.viewManager.createDisplayModeToggle(),
     refreshIdsBtn, resetButton, playBtn, replayBtn, replayMoreBtn,
     pinAllBtn, unpinAllBtn, sortBtn, importBtn,
     exportBtn, removeAllBtn, removeUnpinnedBtn,
-    dragToggleBtn, descToggleBtn, helpToggleBtn, searchBtn
+    dragToggleBtn, descToggleBtn, helpToggleBtn, searchBtn,
+    randomRaceBtn, startRaceBtn
   );
 
   return controlsContainer;

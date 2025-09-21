@@ -213,6 +213,21 @@ export class PageHandler {
   replayNextGame() {
     const groupsManager = this.main.groupsManager; // Access the groups manager from main
     const gamesManager = this.main.gamesManager; // Access the games manager from main
+
+    // If random mode is enabled, pick a random game and start it immediately
+    if (this.main.randomGameId) {
+      const randId = gamesManager.getRandomGameId();
+      if (!randId) return;
+      const randGame = gamesManager.findGameById(randId);
+      if (!randGame) return;
+      gamesManager.latestGamesData = gamesManager.latestGamesData || {};
+      gamesManager.latestGamesData.previousGameId = randId;
+      gamesManager.saveGameData();
+      const randUrl = gamesManager.generateGameLink(randGame);
+      window.location.href = randUrl;
+      return;
+    }
+
     const currentGroup = groupsManager.getCurrentGroup(groupsManager.groups, groupsManager.currentGroupId);
     // Ensure currentGroup is valid and has games
     if (!currentGroup || !Array.isArray(currentGroup.games) || currentGroup.games.length === 0) return;
@@ -231,8 +246,8 @@ export class PageHandler {
     gamesManager.latestGamesData.previousGameId = nextGame.id;
     gamesManager.saveGameData();
     // Create new race (not replay)
-    const url = gamesManager.generateGameLink(nextGame);
-    window.location.href = url;
+    const nextUrl = gamesManager.generateGameLink(nextGame);
+    window.location.href = nextUrl;
   } // End of replayNextGame
 
   handleReplayAction() {

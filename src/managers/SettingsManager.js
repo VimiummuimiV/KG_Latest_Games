@@ -33,6 +33,7 @@ export class SettingsManager {
       this.main.showSearchBox = settings.showSearchBox ?? this.main.showSearchBox;
       this.main.showButtonDescriptions = settings.showButtonDescriptions ?? this.main.showButtonDescriptions;
       this.main.showHelpTooltips = settings.showHelpTooltips ?? this.main.showHelpTooltips;
+      this.main.randomGameId = settings.randomGameId ?? this.main.randomGameId;
 
       // Handle panelYPosition and alwaysVisiblePanel as objects (per-page)
       if (settings.panelYPosition && typeof settings.panelYPosition === 'object') {
@@ -96,6 +97,7 @@ export class SettingsManager {
         showSearchBox: this.main.showSearchBox,
         showButtonDescriptions: this.main.showButtonDescriptions,
         showHelpTooltips: this.main.showHelpTooltips,
+        randomGameId: this.main.randomGameId,
         alwaysVisiblePanel: this.main.alwaysVisiblePanel
       };
 

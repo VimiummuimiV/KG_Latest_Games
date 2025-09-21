@@ -306,4 +306,15 @@ export class GamesManager {
       ? this.latestGamesData.previousGameId
       : null;
   }
+
+  // Return a random game id from all groups (or null if none)
+  getRandomGameId() {
+    const allGames = [];
+    this.mainManager.groupsManager.groups.forEach(group => {
+      group.games.forEach(game => allGames.push(game));
+    });
+    if (allGames.length === 0) return null;
+    const idx = Math.floor(Math.random() * allGames.length);
+    return allGames[idx].id || null;
+  }
 }

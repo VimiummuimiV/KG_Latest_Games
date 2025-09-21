@@ -92,13 +92,13 @@ export const icons = {
   `,
 
   sort: `
-    <svg xmlns="${SVG_NS}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    <svg xmlns="${SVG_NS}" viewBox="0 0 24 24" fill="currentColor" stroke="none"
     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="16 3 21 3 21 8"></polyline>
-      <line x1="4" y1="20" x2="21" y2="3"></line>
-      <polyline points="21 16 21 21 16 21"></polyline>
-      <line x1="15" y1="15" x2="21" y2="21"></line>
-      <line x1="4" y1="4" x2="9" y2="9"></line>
+      <g transform="scale(0.85) translate(2.4, 2.4)">
+        <path d="M23.899,21.958L16.609,3.142c-1.512-4.142-7.711-4.139-9.222,.006L.101,21.958c-.299,.772,
+        .084,1.642,.857,1.941,.773,.299,1.642-.084,1.941-.857l1.953-5.042h14.296l1.953,5.042c.299,.78,1.188,
+        1.154,1.941,.857,.772-.299,1.156-1.168,.857-1.941ZM6.014,15L10.183,4.238c.697-1.668,2.933-1.672,3.632-.006l4.171,10.768H6.014Z"/>
+      </g>
     </svg>
   `,
 
@@ -294,4 +294,23 @@ export const icons = {
       <polygon points="5 3 19 12 5 21 5 3"></polygon>
     </svg>
   `,
+
+  random: `
+    <svg xmlns="${SVG_NS}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="16 3 21 3 21 8"></polyline>
+      <line x1="4" y1="20" x2="21" y2="3"></line>
+      <polyline points="21 16 21 21 16 21"></polyline>
+      <line x1="15" y1="15" x2="21" y2="21"></line>
+      <line x1="4" y1="4" x2="9" y2="9"></line>
+    </svg>
+  `,
+
+  start: `
+    <svg xmlns="${SVG_NS}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <polygon points="10 8 16 12 10 16 10 8"></polygon>
+    </svg>
+  `, 
 };
