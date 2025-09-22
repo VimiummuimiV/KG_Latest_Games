@@ -612,9 +612,9 @@ export function createControls(main) {
     startRaceAction();
   };
 
-  // Add Alt+R shortcut to start latest played or random game
+  // Add Shift+Enter shortcut to start latest played or random game
   document.addEventListener('keydown', e => {
-    if (e.altKey && e.code === 'KeyR') {
+    if (e.shiftKey && e.code === 'Enter') {
       startRaceAction();
     }
   });
