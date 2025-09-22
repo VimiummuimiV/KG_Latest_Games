@@ -69,6 +69,7 @@ export const DEFAULTS = {
   replayNextGameCount: 1,
   remainingReplayCount: null,
   replayWithoutWaiting: false,
+  // randomGameId: false | 'local' | 'global' - mode for random selection
   randomGameId: false,
   showSearchBox: false,
   showButtonDescriptions: true,

@@ -35,6 +35,9 @@ export class SettingsManager {
       this.main.showHelpTooltips = settings.showHelpTooltips ?? this.main.showHelpTooltips;
       this.main.randomGameId = settings.randomGameId ?? this.main.randomGameId;
 
+      // Load persisted validVocabularies into runtime state
+      this.loadValidVocabularies();
+
       // Handle panelYPosition and alwaysVisiblePanel as objects (per-page)
       if (settings.panelYPosition && typeof settings.panelYPosition === 'object') {
         this.main.panelYPosition = {
@@ -69,6 +72,59 @@ export class SettingsManager {
     } catch (error) {
       console.warn('Could not load settings from localStorage:', error);
     }
+  }
+
+  // Normalize, dedupe and load validVocabularies from localStorage
+  loadValidVocabularies() {
+    try {
+      const raw = localStorage.getItem('validVocabularies');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          this.main.validVocabularies = this._normalizeVocabList(parsed);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('Could not parse validVocabularies from localStorage', err);
+    }
+    this.main.validVocabularies = this.main.validVocabularies || [];
+  }
+
+  // Normalize and persist an array of vocab ids (strings or numbers)
+  saveValidVocabularies(arr) {
+    try {
+      const normalized = this._normalizeVocabList(arr || []);
+      localStorage.setItem('validVocabularies', JSON.stringify(normalized));
+      this.main.validVocabularies = normalized;
+      // Refresh UI so tooltips/counts reflect the new list immediately
+      if (this.main.uiManager && typeof this.main.uiManager.refreshContainer === 'function') {
+        this.main.uiManager.refreshContainer();
+      }
+      return normalized;
+    } catch (err) {
+      console.warn('Could not save validVocabularies to localStorage', err);
+      return [];
+    }
+  }
+
+  _normalizeVocabList(arr) {
+    const seen = new Set();
+    const out = [];
+    for (let v of arr) {
+      if (v === null || v === undefined) continue;
+      // Keep original string/number but trim strings
+      if (typeof v === 'string') v = v.trim();
+      // skip empty or values without any digit characters
+      if (v === '' || v === null || v === undefined) continue;
+      // Require the whole trimmed value to be digits only (reject mixed values like "123a" or "12-3")
+      if (!/^\d+$/.test(String(v))) continue;
+      const key = String(v);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(v);
+    }
+    return out;
   }
 
   saveSettings() {
@@ -119,6 +175,7 @@ export class SettingsManager {
         const text = await file.text();
         const data = JSON.parse(text);
         if (typeof data === 'object' && data !== null) {
+          if (data.validVocabularies) localStorage.setItem('validVocabularies', JSON.stringify(data.validVocabularies));
           if (data.latestGamesSettings) localStorage.setItem('latestGamesSettings', JSON.stringify(data.latestGamesSettings));
           if (data.latestGamesData) localStorage.setItem('latestGamesData', JSON.stringify(data.latestGamesData));
           main.settingsManager.loadSettings();
@@ -140,7 +197,8 @@ export class SettingsManager {
   exportSettings(main) {
     const all = {
       latestGamesSettings: JSON.parse(localStorage.getItem('latestGamesSettings') || '{}'),
-      latestGamesData: { groups: main.groupsManager.groups, currentGroupId: main.groupsManager.currentGroupId }
+      latestGamesData: { groups: main.groupsManager.groups, currentGroupId: main.groupsManager.currentGroupId },
+      validVocabularies: JSON.parse(localStorage.getItem('validVocabularies') || '[]')
     };
     const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);

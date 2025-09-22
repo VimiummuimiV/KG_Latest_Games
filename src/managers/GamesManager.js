@@ -307,14 +307,68 @@ export class GamesManager {
       : null;
   }
 
+  // Return a structured random game result:
+  // { mode: 'local', game, groupId } or { mode: 'global', params }
+  getRandomGame() {
+    // Global random: generate params with a random voc id
+    if (this.mainManager && this.mainManager.randomGameId === 'global') {
+      // Prefer an explicitly loaded list of valid vocabularies (from main.validVocabularies).
+      // If not present, return null so callers can handle "no suitable game" consistently.
+      if (!(this.mainManager && Array.isArray(this.mainManager.validVocabularies) && this.mainManager.validVocabularies.length > 0)) {
+        return null;
+      }
+      const arr = this.mainManager.validVocabularies;
+      const idx = Math.floor(Math.random() * arr.length);
+      // Values may be strings; preserve as-is (generateGameLink will stringify)
+      const randVocId = arr[idx];
+
+      return {
+        mode: 'global',
+        params: {
+          gametype: 'voc',
+          vocName: '',
+          vocId: randVocId,
+          type: 'normal',
+          level_from: 1,
+          level_to: 9,
+          timeout: 10,
+          qual: 0,
+          premium_abra: 0
+        }
+      };
+    }
+
+    // Local random: pick a saved game and return it with its group id
+    const all = [];
+    this.mainManager.groupsManager.groups.forEach(group => {
+      group.games.forEach(game => all.push({ game, groupId: group.id }));
+    });
+    if (all.length === 0) return null;
+    const idx = Math.floor(Math.random() * all.length);
+    return { mode: 'local', game: all[idx].game, groupId: all[idx].groupId };
+  }
+
   // Return a random game id from all groups (or null if none)
   getRandomGameId() {
-    const allGames = [];
-    this.mainManager.groupsManager.groups.forEach(group => {
-      group.games.forEach(game => allGames.push(game));
-    });
-    if (allGames.length === 0) return null;
-    const idx = Math.floor(Math.random() * allGames.length);
-    return allGames[idx].id || null;
+    const res = this.getRandomGame();
+    if (!res) return null;
+    // For global mode return a structured object with url and params
+    if (res.mode === 'global') {
+      const fakeGame = { params: res.params };
+      return {
+        mode: 'global',
+        id: res.params.vocId,
+        params: res.params,
+        url: this.generateGameLink(fakeGame)
+      };
+    }
+    // For local mode return the game info and precomputed url
+    return {
+      mode: 'local',
+      id: res.game ? res.game.id : null,
+      game: res.game,
+      groupId: res.groupId,
+      url: res.game ? this.generateGameLink(res.game) : null
+    };
   }
 }

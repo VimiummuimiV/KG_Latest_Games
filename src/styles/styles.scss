@@ -308,7 +308,8 @@
       display: flex;
       flex-wrap: wrap;
 
-      .latest-games-replay.replay-next-game {
+      .latest-games-replay.replay-next-game,
+      .latest-games-random.random-global {
         background-color: var(--rg-bg-enabled-yellow);
 
         svg {

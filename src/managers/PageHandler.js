@@ -216,19 +216,23 @@ export class PageHandler {
 
     // If random mode is enabled, pick a random game and start it immediately
     if (this.main.randomGameId) {
-      const randId = gamesManager.getRandomGameId();
-      if (!randId) return;
-      const randGame = gamesManager.findGameById(randId);
-      if (!randGame) return;
-      // Switch to the group containing the random game
-      const group = this.main.groupsManager.groups.find(g => g.games.some(game => game.id === randId));
-      if (group) this.main.groupsManager.selectGroup(group.id);
-      // Update previousGameId and navigate to the game
-      gamesManager.latestGamesData = gamesManager.latestGamesData || {};
-      gamesManager.latestGamesData.previousGameId = randId;
-      gamesManager.saveGameData();
-      const randUrl = gamesManager.generateGameLink(randGame);
-      window.location.href = randUrl;
+      const randRes = gamesManager.getRandomGameId();
+      if (!randRes) return;
+      // If global mode, we get a URL directly
+      if (randRes.mode === 'global') {
+        window.location.href = randRes.url;
+        return;
+      }
+      // Local mode: ensure the group is selected and persist previousGameId
+      if (randRes.mode === 'local') {
+        const group = this.main.groupsManager.groups.find(g => g.games.some(game => game.id === randRes.id));
+        if (group) this.main.groupsManager.selectGroup(group.id);
+        gamesManager.latestGamesData = gamesManager.latestGamesData || {};
+        gamesManager.latestGamesData.previousGameId = randRes.id;
+        gamesManager.saveGameData();
+        if (!randRes.url && randRes.game) randRes.url = gamesManager.generateGameLink(randRes.game);
+        if (randRes.url) window.location.href = randRes.url;
+      }
       return;
     }
 

@@ -473,19 +473,78 @@ export function createControls(main) {
     innerHTML: icons.random
   });
   const updateRandomTooltip = () => {
-    createCustomTooltip(
-      randomRaceBtn,
-      main.randomGameId
-        ? 'Отключить случайный выбор игры'
-        : 'Включить случайный выбор игры'
-    );
+    updateTooltip(randomRaceBtn, !!main.randomGameId, {
+      click: (isEnabled) => {
+        const modeLabel = main.randomGameId === 'global' ? 'глобальный' : main.randomGameId === 'local' ? 'локальный' : 'выключен';
+        return isEnabled
+          ? `Отключить случайный выбор игры (${modeLabel})`
+          : `Включить случайный выбор игры (${modeLabel})`;
+      },
+      shift: () => {
+        const count = Array.isArray(main.validVocabularies) ? main.validVocabularies.length : 0;
+        return `Обновить список допустимых словарей (загружено: ${count})`;
+      },
+      alt: (isEnabled) => isEnabled === 'global' || main.randomGameId === 'global' ? 'Отключить глобальный режим' : 'Включить глобальный режим'
+    });
+    // Reflect disabled state visually
     randomRaceBtn.classList.toggle('latest-games-disabled', !main.randomGameId);
-  }
+    // Add mode-specific classes for styling: random-global or random-local
+    randomRaceBtn.classList.remove('random-global', 'random-local');
+    if (main.randomGameId === 'global') {
+      randomRaceBtn.classList.add('random-global');
+    } else if (main.randomGameId === 'local') {
+      randomRaceBtn.classList.add('random-local');
+    }
+  };
   updateRandomTooltip();
-  
+
   // Toggle random game selection setting when clicking the button
-  randomRaceBtn.onclick = () => {
-    main.randomGameId = !main.randomGameId;
+  // Shift+Click: set globalLatestId
+  randomRaceBtn.onclick = (e) => {
+    if (e.shiftKey) {
+      // Fetch the CSV/CSV-like list from the raw GitHub URL and store in localStorage
+      const url = 'https://raw.githubusercontent.com/VimiummuimiV/KG_Latest_Games/e04eb10cf829c842ce9a783cd077d9408e5b71ed/src/etc/valid_vocabularies.txt';
+      fetch(url, { cache: 'no-store' })
+        .then(r => {
+          if (!r.ok) throw new Error('Network response was not ok: ' + r.status);
+          return r.text();
+        })
+        .then(text => {
+        // Parse by commas and/or newlines, trim and filter
+        const parts = text.split(/[,\n\r]+/).map(s => s.trim()).filter(s => s !== '');
+        try {
+          const saved = main.settingsManager.saveValidVocabularies(parts);
+          updateRandomTooltip();
+          alert(`Список словарей обновлён, записано ${saved.length} ID.`);
+        } catch (err) {
+          console.warn('Could not save valid vocabularies via SettingsManager', err);
+          alert('Не удалось сохранить список в localStorage.');
+        }
+      }).catch(err => {
+        console.warn('Failed to fetch valid vocabularies:', err);
+        alert('Ошибка загрузки списка допустимых словарей: ' + err.message);
+      });
+      return;
+    }
+
+    // Alt+Click: toggle global mode on/off
+    if (e.altKey) {
+      if (main.randomGameId === 'global') {
+        main.randomGameId = false;
+      } else {
+        main.randomGameId = 'global';
+      }
+      main.settingsManager.saveSettings();
+      updateRandomTooltip();
+      return;
+    }
+
+    // Regular click: toggle between false and 'local'
+    if (main.randomGameId === 'local') {
+      main.randomGameId = false;
+    } else {
+      main.randomGameId = 'local';
+    }
     main.settingsManager.saveSettings();
     updateRandomTooltip();
   };
@@ -503,22 +562,49 @@ export function createControls(main) {
   // Start race action function
   // Choose id (random or previous), switch group if needed, save and navigate
   const startRaceAction = () => {
-    const id = main.randomGameId ? main.gamesManager.getRandomGameId() : main.gamesManager.getPreviousGameId();
-    if (!id) return alert('Нет подходящей игры');
-    const game = main.gamesManager.findGameById(id);
-    if (!game) return alert('Игра не найдена');
-    if (main.randomGameId) {
-      for (const g of main.groupsManager.groups) {
-        if (g.games.some(x => x.id === id)) { 
-          main.groupsManager.selectGroup(g.id);
-          break;
+    // If random mode is ON, get structured random info; otherwise use previousGameId
+    const randomMode = main.randomGameId;
+    let res = null;
+    if (randomMode) {
+      res = main.gamesManager.getRandomGameId();
+      if (!res) return alert('Нет подходящей игры');
+    } else {
+      const prevId = main.gamesManager.getPreviousGameId();
+      if (!prevId) return alert('Нет подходящей игры');
+      const game = main.gamesManager.findGameById(prevId);
+      if (!game) return alert('Игра не найдена');
+      res = { mode: 'local', id: prevId, game, groupId: main.groupsManager.currentGroupId, url: main.gamesManager.generateGameLink(game) };
+    }
+
+    // If local mode, ensure we switch to the containing group and persist previousGameId
+    if (res.mode === 'local') {
+      if (res.groupId) {
+        main.groupsManager.selectGroup(res.groupId);
+      } else {
+        // try to find the group containing the game
+        for (const g of main.groupsManager.groups) {
+          if (g.games.some(x => x.id === res.id)) {
+            main.groupsManager.selectGroup(g.id);
+            break;
+          }
         }
       }
       main.gamesManager.latestGamesData = main.gamesManager.latestGamesData || {};
-      main.gamesManager.latestGamesData.previousGameId = id;
+      main.gamesManager.latestGamesData.previousGameId = res.id;
       main.gamesManager.saveGameData();
+      if (!res.url) {
+        if (res.game) res.url = main.gamesManager.generateGameLink(res.game);
+        else return alert('Игра не найдена');
+      }
+      location.href = res.url;
+      return;
     }
-    location.href = main.gamesManager.generateGameLink(game);
+
+    // Global mode: we already have a generated url in res.url
+    if (res.mode === 'global') {
+      location.href = res.url;
+      return;
+    }
   };
 
   // Start latest played or random game when clicking the button
