@@ -500,17 +500,19 @@ export function createControls(main) {
     'Начать последнюю проигранную или случайную игру',
   );
 
-  // Use random game id when enabled, otherwise previousGameId
+  // Choose id (random or previous), switch group if needed, save and navigate
   startRaceBtn.onclick = () => {
     const id = main.randomGameId ? main.gamesManager.getRandomGameId() : main.gamesManager.getPreviousGameId();
-    if (!id) {
-      alert('Нет подходящей игры');
-      return;
-    }
+    if (!id) return alert('Нет подходящей игры');
     const game = main.gamesManager.findGameById(id);
-    if (!game) {
-      alert('Игра не найдена');
-      return;
+    if (!game) return alert('Игра не найдена');
+    if (main.randomGameId) {
+      // Switch to the group containing the random game
+      for (const g of main.groupsManager.groups) if (g.games.some(x => x.id === id)) { main.groupsManager.selectGroup(g.id); break; }
+      // Update previousGameId and navigate to the game
+      main.gamesManager.latestGamesData = main.gamesManager.latestGamesData || {};
+      main.gamesManager.latestGamesData.previousGameId = id;
+      main.gamesManager.saveGameData();
     }
     location.href = main.gamesManager.generateGameLink(game);
   };

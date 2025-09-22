@@ -220,6 +220,10 @@ export class PageHandler {
       if (!randId) return;
       const randGame = gamesManager.findGameById(randId);
       if (!randGame) return;
+      // Switch to the group containing the random game
+      const group = this.main.groupsManager.groups.find(g => g.games.some(game => game.id === randId));
+      if (group) this.main.groupsManager.selectGroup(group.id);
+      // Update previousGameId and navigate to the game
       gamesManager.latestGamesData = gamesManager.latestGamesData || {};
       gamesManager.latestGamesData.previousGameId = randId;
       gamesManager.saveGameData();
