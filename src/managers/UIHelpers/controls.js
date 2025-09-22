@@ -497,25 +497,41 @@ export function createControls(main) {
   });
   createCustomTooltip(
     startRaceBtn,
-    'Начать последнюю проигранную или случайную игру',
+    '[Alt + R] Начать игру',
   );
 
+  // Start race action function
   // Choose id (random or previous), switch group if needed, save and navigate
-  startRaceBtn.onclick = () => {
+  const startRaceAction = () => {
     const id = main.randomGameId ? main.gamesManager.getRandomGameId() : main.gamesManager.getPreviousGameId();
     if (!id) return alert('Нет подходящей игры');
     const game = main.gamesManager.findGameById(id);
     if (!game) return alert('Игра не найдена');
     if (main.randomGameId) {
-      // Switch to the group containing the random game
-      for (const g of main.groupsManager.groups) if (g.games.some(x => x.id === id)) { main.groupsManager.selectGroup(g.id); break; }
-      // Update previousGameId and navigate to the game
+      for (const g of main.groupsManager.groups) {
+        if (g.games.some(x => x.id === id)) { 
+          main.groupsManager.selectGroup(g.id);
+          break;
+        }
+      }
       main.gamesManager.latestGamesData = main.gamesManager.latestGamesData || {};
       main.gamesManager.latestGamesData.previousGameId = id;
       main.gamesManager.saveGameData();
     }
     location.href = main.gamesManager.generateGameLink(game);
   };
+
+  // Start latest played or random game when clicking the button
+  startRaceBtn.onclick = () => {
+    startRaceAction();
+  };
+
+  // Add Alt+R shortcut to start latest played or random game
+  document.addEventListener('keydown', e => {
+    if (e.altKey && e.code === 'KeyR') {
+      startRaceAction();
+    }
+  });
 
   controlsButtons.append(
     main.themeManager.createThemeToggle(),
