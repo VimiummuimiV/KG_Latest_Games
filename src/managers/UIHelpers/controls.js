@@ -556,7 +556,7 @@ export function createControls(main) {
   });
   createCustomTooltip(
     startRaceBtn,
-    '[Alt + R] Начать игру',
+    '[Shift + Enter] Начать игру',
   );
 
   // Start race action function
