@@ -167,6 +167,11 @@ function startHideTimeout() {
   if (hideTimeout) {
     clearTimeout(hideTimeout);
   }
+  // If the tooltip is currently hovered, do not schedule hiding.
+  try {
+    if (currentTooltip && currentTooltip.matches(':hover')) return;
+  } catch (_) {}
+
   hideTimeout = setTimeout(() => {
     hideTooltip();
   }, 300); // 300ms delay before hiding
@@ -288,7 +293,8 @@ async function showSessionTooltip() {
     const content = await fetchVocabularyContent(vocId);
     try {
       showTooltip(null, content);
-      setTimeout(() => { try { hideTooltip(); } catch (_) {} }, 5000);
+      // After 5s, trigger the regular hide logic (which will respect hover).
+      setTimeout(() => { try { startHideTimeout(); } catch (_) {} }, 5000);
     } catch (_) {}
   } catch (_) {}
 } showSessionTooltip();
