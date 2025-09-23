@@ -371,4 +371,36 @@ export class GamesManager {
       url: res.game ? this.generateGameLink(res.game) : null
     };
   }
+
+  // Try to obtain a valid random game id/url. This will repeatedly request
+  // a candidate from getRandomGameId() and perform a lightweight HTTP
+  // validation. On 403 responses it will retry up to maxAttempts.
+  // Returns the same structured object as getRandomGameId() or null.
+  async getValidRandomGameId(maxAttempts = 50) {
+    const infinite = !maxAttempts || maxAttempts <= 0;
+    for (let attempts = 0; infinite ? true : attempts < maxAttempts; attempts++) {
+      const candidate = this.getRandomGameId();
+      if (!candidate) return null;
+      if (candidate.mode === 'local') return candidate;
+      try {
+        let resp = await fetch(candidate.url, { method: 'HEAD', cache: 'no-store' });
+        if (resp.status === 405) resp = await fetch(candidate.url, { method: 'GET', cache: 'no-store' });
+        if (resp.ok) return candidate;
+        if (resp.status === 403) {
+          try {
+            if (this.mainManager && this.mainManager.showBlockedVocabAlert) {
+              const u = `${location.protocol}//klavogonki.ru/vocs/${candidate.id}/`;
+              try { if (navigator?.clipboard?.writeText) await navigator.clipboard.writeText(u); } catch (__) { }
+              try { this.mainManager.lastTriedVocUrl = u; } catch (__) { }
+              alert(`Этот словарь не предназначен для открытых игр — создать игру нельзя. URL скопирован: ${u}`);
+            }
+          } catch (__) { }
+        }
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.warn('Error validating candidate URL', candidate.url, err);
+      }
+    }
+    return null;
+  }
 }

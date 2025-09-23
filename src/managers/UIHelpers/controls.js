@@ -484,6 +484,7 @@ export function createControls(main) {
         const count = Array.isArray(main.validVocabularies) ? main.validVocabularies.length : 0;
         return `Обновить список допустимых словарей (загружено: ${count})`;
       },
+      ctrl: () => main.showBlockedVocabAlert ? 'Отключить предупреждение о заблокированных словарях' : 'Включить предупреждение о заблокированных словарях',
       alt: (isEnabled) => isEnabled === 'global' || main.randomGameId === 'global' ? 'Отключить глобальный режим' : 'Включить глобальный режим'
     });
     // Reflect disabled state visually
@@ -501,6 +502,18 @@ export function createControls(main) {
   // Toggle random game selection setting when clicking the button
   // Shift+Click: set globalLatestId
   randomRaceBtn.onclick = (e) => {
+    // Ctrl+Click: toggle showing the blocked-vocab alert
+    if (e.ctrlKey) {
+      main.showBlockedVocabAlert = !main.showBlockedVocabAlert;
+      main.settingsManager.saveSettings();
+      updateRandomTooltip();
+      alert(
+        main.showBlockedVocabAlert
+          ? '✅ Предупреждение о заблокированных словарях включено.'
+          : '❌ Предупреждение о заблокированных словарях отключено.'
+      );
+      return;
+    }
     if (e.shiftKey) {
       // Fetch the CSV/CSV-like list from the raw GitHub URL and store in localStorage
       const url = 'https://raw.githubusercontent.com/VimiummuimiV/KG_Latest_Games/refs/heads/main/src/etc/valid_vocabularies.txt';
@@ -600,9 +613,13 @@ export function createControls(main) {
       return;
     }
 
-    // Global mode: we already have a generated url in res.url
+    // Global mode: validate and possibly retry using GamesManager helper
     if (res.mode === 'global') {
-      location.href = res.url;
+      (async () => {
+        const validated = await main.gamesManager.getValidRandomGameId();
+        if (!validated) return alert('Максимальное количество попыток поиска подходящей игры исчерпано. Попробуйте ещё раз.');
+        window.location.href = validated.url;
+      })();
       return;
     }
   };

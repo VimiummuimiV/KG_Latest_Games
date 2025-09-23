@@ -74,6 +74,7 @@ export const DEFAULTS = {
   showSearchBox: false,
   showButtonDescriptions: true,
   showHelpTooltips: true,
+  showBlockedVocabAlert: true,
   panelYPosition: {
     main: 0,
     gamelist: 0,

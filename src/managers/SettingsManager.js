@@ -34,6 +34,7 @@ export class SettingsManager {
       this.main.showButtonDescriptions = settings.showButtonDescriptions ?? this.main.showButtonDescriptions;
       this.main.showHelpTooltips = settings.showHelpTooltips ?? this.main.showHelpTooltips;
       this.main.randomGameId = settings.randomGameId ?? this.main.randomGameId;
+      this.main.showBlockedVocabAlert = settings.showBlockedVocabAlert ?? this.main.showBlockedVocabAlert;
 
       // Load persisted validVocabularies into runtime state
       this.loadValidVocabularies();
@@ -153,6 +154,7 @@ export class SettingsManager {
         showSearchBox: this.main.showSearchBox,
         showButtonDescriptions: this.main.showButtonDescriptions,
         showHelpTooltips: this.main.showHelpTooltips,
+        showBlockedVocabAlert: this.main.showBlockedVocabAlert,
         randomGameId: this.main.randomGameId,
         alwaysVisiblePanel: this.main.alwaysVisiblePanel
       };

@@ -220,7 +220,11 @@ export class PageHandler {
       if (!randRes) return;
       // If global mode, we get a URL directly
       if (randRes.mode === 'global') {
-        window.location.href = randRes.url;
+        (async () => {
+          const validated = await gamesManager.getValidRandomGameId();
+          if (!validated) return alert('Максимальное количество попыток поиска подходящей игры исчерпано. Попробуйте ещё раз.');
+          window.location.href = validated.url;
+        })();
         return;
       }
       // Local mode: ensure the group is selected and persist previousGameId
