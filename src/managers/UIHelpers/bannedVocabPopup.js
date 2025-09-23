@@ -56,23 +56,49 @@ export const BannedVocabPopup = {
 
     const list = document.createElement('div');
     list.className = 'vocab-list';
+
     if (v.length) {
       v.forEach(id => {
         const item = document.createElement('div');
         item.className = 'vocab-item';
-        const idSpan = Object.assign(document.createElement('span'), { className: 'vocab-id', textContent: id });
-        const removeBtn = Object.assign(document.createElement('button'), {
-          className: 'remove-btn', textContent: 'Удалить', onclick: () => this.remove(id)
+        item.dataset.id = id; // Store id for delegation
+        item.style.cursor = 'pointer';
+
+        const idSpan = Object.assign(document.createElement('span'), { 
+          className: 'vocab-id', 
+          textContent: id 
         });
+
+        const removeBtn = Object.assign(document.createElement('button'), {
+          className: 'remove-btn',
+          textContent: 'Удалить'
+        });
+
         item.append(idSpan, removeBtn);
         list.appendChild(item);
       });
+
+      // delegated handler (only one for the whole list)
+      list.addEventListener('click', (e) => {
+        const item = e.target.closest('.vocab-item');
+        if (!item) return;
+
+        const id = item.dataset.id;
+
+        if (e.target.classList.contains('remove-btn')) {
+          this.remove(id);
+        } else {
+          window.open(`https://klavogonki.ru/vocs/${id}/`, '_blank');
+        }
+      });
+
     } else {
       const empty = document.createElement('div');
       empty.className = 'empty-state';
       empty.textContent = 'Нет заблокированных словарей';
       list.appendChild(empty);
     }
+
     container.appendChild(list);
     return container;
   },
