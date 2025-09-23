@@ -1,0 +1,188 @@
+.banned-vocabularies-popup {
+  position: fixed;
+  background: rgb(22, 22, 22);
+  color: rgb(222, 222, 222);
+  padding: 1em;
+  z-index: 1200;
+  font-size: 0.9em;
+  font-family: "Montserrat", "Noto Color Emoji", sans-serif !important;
+  pointer-events: auto;
+  white-space: nowrap;
+  border: 1px solid rgb(60, 60, 60) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3) !important;
+  min-width: 300px;
+  max-width: 500px;
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(140, 140, 140) rgb(22, 22, 22);
+
+  .popup-header {
+    font-weight: 600 !important;
+    color: rgb(222, 222, 222) !important;
+    margin-bottom: 0.8em !important;
+    padding-bottom: 0.5em;
+    border-bottom: 1px solid rgb(60, 60, 60);
+    font-size: 1.1em;
+  }
+
+  .popup-actions {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: 0.8em;
+    padding-bottom: 0.5em;
+    border-bottom: 1px solid rgb(60, 60, 60);
+    gap: 0.5em;
+    flex-wrap: wrap;
+
+    .copy-all-btn,
+    .remove-all-btn {
+      background: rgb(40, 40, 40);
+      color: lightblue;
+      border: 1px solid rgb(80, 80, 80);
+      border-radius: 3px !important;
+      padding: 0.4em 0.8em;
+      font-size: 0.85em;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+
+      &:hover {
+        background: rgb(50, 50, 50);
+        border-color: rgb(100, 100, 100);
+      }
+
+      &:active {
+        background: rgb(30, 30, 30);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+
+    .remove-all-btn {
+      color: rgb(255, 120, 120);
+      border-color: rgb(120, 60, 60);
+
+      &:hover:not(:disabled) {
+        background: rgb(120, 60, 60);
+        color: white;
+        border-color: rgb(150, 80, 80);
+      }
+
+      &:active:not(:disabled) {
+        background: rgb(100, 40, 40);
+      }
+    }
+
+    .vocab-count {
+      color: rgb(140, 140, 140);
+      font-size: 0.85em;
+      font-weight: 500;
+      margin-left: auto;
+    }
+  }
+
+  .vocab-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3em;
+    max-height: 250px;
+    overflow-y: auto;
+    
+    .vocab-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.4em 0.6em;
+      background: rgb(30, 30, 30);
+      border: 1px solid rgb(50, 50, 50);
+      border-radius: 3px !important;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgb(35, 35, 35);
+        border-color: rgb(70, 70, 70);
+      }
+
+      .vocab-id {
+        color: rgb(200, 200, 200);
+        font-weight: 500;
+        font-family: "Courier New", monospace;
+        font-size: 0.9em;
+      }
+
+      .remove-btn {
+        background: transparent;
+        color: rgb(255, 120, 120);
+        border: 1px solid rgb(120, 60, 60);
+        border-radius: 3px !important;
+        padding: 0.2em 0.5em;
+        font-size: 0.8em;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: 500;
+        font-family: inherit;
+        min-width: 60px;
+
+        &:hover {
+          background: rgb(120, 60, 60);
+          color: white;
+          border-color: rgb(150, 80, 80);
+        }
+
+        &:active {
+          background: rgb(100, 40, 40);
+        }
+      }
+    }
+  }
+
+  .empty-state {
+    text-align: center;
+    color: rgb(140, 140, 140);
+    font-style: italic;
+    padding: 1em 0;
+  }
+
+  // WebKit browsers (Chrome, Safari, Edge)
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgb(22, 22, 22) !important;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgb(140, 140, 140) !important;
+
+    &:hover {
+      background-color: rgb(160, 160, 160) !important;
+    }
+  }
+
+  .vocab-list::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .vocab-list::-webkit-scrollbar-track {
+    background: rgb(30, 30, 30) !important;
+  }
+
+  .vocab-list::-webkit-scrollbar-thumb {
+    background-color: rgb(100, 100, 100) !important;
+    border-radius: 3px;
+
+    &:hover {
+      background-color: rgb(120, 120, 120) !important;
+    }
+  }
+}

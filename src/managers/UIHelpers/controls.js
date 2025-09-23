@@ -3,6 +3,7 @@ import { createCustomTooltip, refreshTooltipSettings } from '../../tooltip.js';
 import { icons } from '../../icons.js';
 import { toggleSearchBox } from './search.js';
 import { DEFAULTS } from '../../definitions.js';
+import { BannedVocabPopup } from '../UIHelpers/bannedVocabPopup.js';
 
 export function createControls(main) {
   const controlsContainer = createElement('div', { className: 'latest-games-controls' });
@@ -666,10 +667,14 @@ export function createControls(main) {
 
   // Start latest played or random game when clicking the button
   // Alt+click to add current vocabulary to ban list
+  // Ctrl+click to open banned vocabularies popup
   startRaceBtn.onclick = (e) => {
     if (e.altKey) {
       e.preventDefault();
       banCurrentVocabulary();
+    } else if (e.ctrlKey) {
+      e.preventDefault();
+      BannedVocabPopup.toggle(e.clientX, e.clientY);
     } else {
       startRaceAction();
     }
