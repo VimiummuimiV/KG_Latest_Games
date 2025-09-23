@@ -163,7 +163,7 @@ export function createControls(main) {
     });
     main.gamesManager.saveGameData();
     main.uiManager.refreshContainer();
-    alert('Все ID для групп и игр были обновлены!');
+    alert('✔️ Все ID для групп и игр были обновлены!');
   });
 
   // Add button to reset panel individual page settings to defaults
@@ -255,7 +255,7 @@ export function createControls(main) {
           updateReplayMoreTooltip();
           return;
         } else {
-          alert('Пожалуйста, введите корректное число (больше или равно 1).');
+          alert('⚠️ Пожалуйста, введите корректное число (больше или равно 1).');
         }
       } while (true);
     } else {
@@ -510,7 +510,7 @@ export function createControls(main) {
       updateRandomTooltip();
       alert(
         main.showBlockedVocabAlert
-          ? '✅ Предупреждение о заблокированных словарях включено.'
+          ? '✔️ Предупреждение о заблокированных словарях включено.'
           : '❌ Предупреждение о заблокированных словарях отключено.'
       );
       return;
@@ -529,14 +529,14 @@ export function createControls(main) {
         try {
           const saved = main.settingsManager.saveValidVocabularies(parts);
           updateRandomTooltip();
-          alert(`Список словарей обновлён, записано ${saved.length} ID.`);
+          alert(`✔️ Список словарей обновлён, записано ${saved.length} ID.`);
         } catch (err) {
           console.warn('Could not save valid vocabularies via SettingsManager', err);
-          alert('Не удалось сохранить список в localStorage.');
+          alert('⚠️ Не удалось сохранить список в localStorage.');
         }
       }).catch(err => {
         console.warn('Failed to fetch valid vocabularies:', err);
-        alert('Ошибка загрузки списка допустимых словарей: ' + err.message);
+        alert('⚠️ Ошибка загрузки списка допустимых словарей: ' + err.message);
       });
       return;
     }
@@ -571,7 +571,8 @@ export function createControls(main) {
   createCustomTooltip(
     startRaceBtn, `
     [Shift + Enter | Клик] Начать игру
-    [Alt + Enter | Alt + Клик] Заблокировать текущий словарь`
+    [Alt + Enter | Alt + Клик] Заблокировать текущий словарь
+    [Ctrl + Клик] Показать заблокированные словари`
   );
 
   // Start race action function
@@ -582,12 +583,12 @@ export function createControls(main) {
     let res = null;
     if (randomMode) {
       res = main.gamesManager.getRandomGameId();
-      if (!res) return alert('Нет подходящей игры');
+      if (!res) return alert('❌ Нет подходящей игры');
     } else {
       const prevId = main.gamesManager.getPreviousGameId();
-      if (!prevId) return alert('Нет подходящей игры');
+      if (!prevId) return alert('❌ Нет подходящей игры');
       const game = main.gamesManager.findGameById(prevId);
-      if (!game) return alert('Игра не найдена');
+      if (!game) return alert('❌ Игра не найдена');
       res = { mode: 'local', id: prevId, game, groupId: main.groupsManager.currentGroupId, url: main.gamesManager.generateGameLink(game) };
     }
 
@@ -609,7 +610,7 @@ export function createControls(main) {
       main.gamesManager.saveGameData();
       if (!res.url) {
         if (res.game) res.url = main.gamesManager.generateGameLink(res.game);
-        else return alert('Игра не найдена');
+        else return alert('❌ Игра не найдена');
       }
       location.href = res.url;
       return;
@@ -619,7 +620,7 @@ export function createControls(main) {
     if (res.mode === 'global') {
       (async () => {
         const validated = await main.gamesManager.getValidRandomGameId();
-        if (!validated) return alert('Максимальное количество попыток поиска подходящей игры исчерпано. Попробуйте ещё раз.');
+        if (!validated) return alert('🔒 Максимальное количество попыток поиска подходящей игры исчерпано. Попробуйте ещё раз.');
         try {
           if (validated.mode === 'global' && validated.id) {
             sessionStorage.setItem('latestGames_showVocTooltip', JSON.stringify({ vocId: String(validated.id) }));
@@ -634,7 +635,7 @@ export function createControls(main) {
   // Function to ban current vocabulary
   function banCurrentVocabulary() {
     if (getCurrentPage() !== 'game') {
-      alert('Блокировать словарь можно только на странице игры');
+      alert('⚠️ Блокировать словарь можно только на странице игры');
       return false;
     }
 
@@ -651,16 +652,16 @@ export function createControls(main) {
     }
     
     if (!currentVocabId) {
-      alert('Не удалось определить ID текущего словаря');
+      alert('⚠️ Не удалось определить ID текущего словаря');
       return false;
     }
     
     const wasAdded = main.settingsManager.addToBannedVocabularies(currentVocabId);
     if (wasAdded) {
-      alert(`Словарь ${currentVocabId} добавлен в чёрный список`);
+      alert(`✔️ Словарь ${currentVocabId} добавлен в чёрный список`);
       return true;
     } else {
-      alert(`Словарь ${currentVocabId} уже в чёрном списке`);
+      alert(`🛑 Словарь ${currentVocabId} уже в чёрном списке`);
       return false;
     }
   }
