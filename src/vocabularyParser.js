@@ -106,14 +106,31 @@ function showTooltip(anchor, content) {
     hideTooltip();
   }
   
-  // Set up delayed show
+  // If no anchor is provided, show immediately and center the tooltip
+  if (!anchor) {
+    currentAnchor = null;
+    currentTooltip = createVocabularyTooltip(content);
+    positionTooltip(null, currentTooltip);
+    currentTooltip.addEventListener('mouseenter', () => {
+      if (hideTimeout) {
+        clearTimeout(hideTimeout);
+        hideTimeout = null;
+      }
+    });
+    currentTooltip.addEventListener('mouseleave', () => {
+      startHideTimeout();
+    });
+    return;
+  }
+
+  // Set up delayed show for anchored tooltips
   showTimeout = setTimeout(() => {
     currentAnchor = anchor;
     currentTooltip = createVocabularyTooltip(content);
-    
+
     // Position and show tooltip
     positionTooltip(anchor, currentTooltip);
-    
+
     // Add event listeners to tooltip for hover behavior
     currentTooltip.addEventListener('mouseenter', () => {
       if (hideTimeout) {
@@ -121,11 +138,11 @@ function showTooltip(anchor, content) {
         hideTimeout = null;
       }
     });
-    
+
     currentTooltip.addEventListener('mouseleave', () => {
       startHideTimeout();
     });
-    
+
     showTimeout = null;
   }, 400); // 400ms delay before showing
 }
@@ -156,16 +173,27 @@ function startHideTimeout() {
 }
 
 function positionTooltip(anchor, tooltip) {
-  const anchorRect = anchor.getBoundingClientRect();
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
   const margin = 10;
-  
+
   // Get tooltip dimensions
   const tooltipRect = tooltip.getBoundingClientRect();
-  
-  let left = anchorRect.left;
-  let top = anchorRect.bottom + 5;
+
+  let left, top;
+
+  // If anchor is not provided, center the tooltip
+  if (!anchor) {
+    left = Math.max(margin, Math.floor((viewportWidth - tooltipRect.width) / 2));
+    top = Math.max(margin, Math.floor((viewportHeight - tooltipRect.height) / 2));
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
+    return;
+  }
+
+  const anchorRect = anchor.getBoundingClientRect();
+  left = anchorRect.left;
+  top = anchorRect.bottom + 5;
   
   // Adjust horizontal position to stay within viewport
   if (left + tooltipRect.width > viewportWidth - margin) {
@@ -246,3 +274,21 @@ export function attachVocabularyParser() {
     }
   }, { capture: true });
 }
+
+// If a transient sessionStorage flag was set before navigation, show the
+// parsed vocabulary centered and auto-hide after 5 seconds.
+async function showSessionTooltip() {
+  try {
+    const raw = sessionStorage.getItem('latestGames_showVocTooltip');
+    if (!raw) return;
+    sessionStorage.removeItem('latestGames_showVocTooltip');
+    const { vocId } = JSON.parse(raw) || {};
+    if (!vocId) return;
+
+    const content = await fetchVocabularyContent(vocId);
+    try {
+      showTooltip(null, content);
+      setTimeout(() => { try { hideTooltip(); } catch (_) {} }, 5000);
+    } catch (_) {}
+  } catch (_) {}
+} showSessionTooltip();

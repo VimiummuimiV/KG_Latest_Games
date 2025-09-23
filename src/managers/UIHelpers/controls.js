@@ -618,6 +618,11 @@ export function createControls(main) {
       (async () => {
         const validated = await main.gamesManager.getValidRandomGameId();
         if (!validated) return alert('Максимальное количество попыток поиска подходящей игры исчерпано. Попробуйте ещё раз.');
+        try {
+          if (validated.mode === 'global' && validated.id) {
+            sessionStorage.setItem('latestGames_showVocTooltip', JSON.stringify({ vocId: String(validated.id) }));
+          }
+        } catch (__) { }
         window.location.href = validated.url;
       })();
       return;
