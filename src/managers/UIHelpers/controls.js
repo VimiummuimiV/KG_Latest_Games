@@ -503,7 +503,7 @@ export function createControls(main) {
   randomRaceBtn.onclick = (e) => {
     if (e.shiftKey) {
       // Fetch the CSV/CSV-like list from the raw GitHub URL and store in localStorage
-      const url = 'https://raw.githubusercontent.com/VimiummuimiV/KG_Latest_Games/e04eb10cf829c842ce9a783cd077d9408e5b71ed/src/etc/valid_vocabularies.txt';
+      const url = 'https://raw.githubusercontent.com/VimiummuimiV/KG_Latest_Games/refs/heads/main/src/etc/valid_vocabularies.txt';
       fetch(url, { cache: 'no-store' })
         .then(r => {
           if (!r.ok) throw new Error('Network response was not ok: ' + r.status);
