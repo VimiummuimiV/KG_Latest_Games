@@ -9,17 +9,18 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
 class StatusChecker:
-    def __init__(self, base_url, num_threads=20):
+    def __init__(self, base_url, start_id=1, num_threads=20):
         self.base_url = base_url
         self.found_vocab_ids = []
         self.running = True
         self.successful_requests = 0
         self.num_threads = num_threads
-        self.current_id = 1
+        self.current_id = start_id
+        self.start_id = start_id
         self.id_lock = threading.Lock()
         self.results_lock = threading.Lock()
         self.pending_results = {}  # Store results that arrive out of order
-        self.next_to_print = 1
+        self.next_to_print = start_id
         
     def signal_handler(self, sig, frame):
         """Handle Ctrl+C gracefully and save log to file"""
@@ -54,6 +55,7 @@ class StatusChecker:
             with open(log_file_path, 'w', encoding='utf-8') as f:
                 f.write(f"Status Check Log - Created: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
                 f.write(f"Base URL: {self.base_url}\n")
+                f.write(f"Starting ID: {self.start_id}\n")
                 f.write(f"Successful requests: {self.successful_requests}\n")
                 f.write(f"Threads used: {self.num_threads}\n")
                 f.write("-" * 50 + "\n")
@@ -123,6 +125,7 @@ class StatusChecker:
         signal.signal(signal.SIGINT, self.signal_handler)
         
         print(f"Starting {self.num_threads} threads for sequential vocabulary checking")
+        print(f"Starting from ID: {self.start_id}")
         print("Press Ctrl+C to stop and save log to desktop")
         print("-" * 50)
         
@@ -138,9 +141,35 @@ class StatusChecker:
         except KeyboardInterrupt:
             self.signal_handler(signal.SIGINT, None)
 
+def get_start_id():
+    """Ask user for starting ID with validation"""
+    while True:
+        try:
+            user_input = input("Enter starting vocabulary ID (press Enter for 1): ").strip()
+            
+            if user_input == "":
+                return 1
+            
+            start_id = int(user_input)
+            
+            if start_id < 1:
+                print("Please enter a positive number (1 or greater).")
+                continue
+                
+            return start_id
+            
+        except ValueError:
+            print("Please enter a valid number.")
+        except KeyboardInterrupt:
+            print("\nExiting...")
+            sys.exit(0)
+
 if __name__ == "__main__":
     BASE_URL = "https://klavogonki.ru/vocs/"
     NUM_THREADS = 10  # Reduced threads to make ordering easier
     
-    checker = StatusChecker(BASE_URL, NUM_THREADS)
+    # Get starting ID from user
+    start_id = get_start_id()
+    
+    checker = StatusChecker(BASE_URL, start_id, NUM_THREADS)
     checker.run()
