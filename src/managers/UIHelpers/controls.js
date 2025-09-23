@@ -634,10 +634,39 @@ export function createControls(main) {
     startRaceAction();
   };
 
-  // Add Shift+Enter shortcut to start latest played or random game
+  // Start latest played or random game when pressing Shift+Enter
+  // or add current vocabulary to banned list when pressing Alt+Enter
   document.addEventListener('keydown', e => {
     if (e.shiftKey && e.code === 'Enter') {
       startRaceAction();
+    }
+    
+    if (e.altKey && e.code === 'Enter') {
+      e.preventDefault();
+      
+      // Get current vocabulary ID from sessionStorage (stored by getValidRandomGameId)
+      let currentVocabId = null;
+      try {
+        const tooltipData = sessionStorage.getItem('latestGames_showVocTooltip');
+        if (tooltipData) {
+          const parsed = JSON.parse(tooltipData);
+          currentVocabId = parsed.vocId;
+        }
+      } catch (err) {
+        console.warn('Could not parse tooltip data:', err);
+      }
+      
+      if (!currentVocabId) {
+        alert('Не удалось определить ID текущего словаря');
+        return;
+      }
+      
+      const wasAdded = main.settingsManager.addToBannedVocabularies(currentVocabId);
+      if (wasAdded) {
+        alert(`Словарь ${currentVocabId} добавлен в чёрный список`);
+      } else {
+        alert(`Словарь ${currentVocabId} уже в чёрный списке`);
+      }
     }
   });
 

@@ -1,3 +1,5 @@
+import { getCurrentPage } from "./utils";
+
 // Function to fetch and parse vocabulary content from a URL
 async function fetchVocabularyContent(vocId) {
   try {
@@ -283,10 +285,23 @@ export function attachVocabularyParser() {
 // If a transient sessionStorage flag was set before navigation, show the
 // parsed vocabulary centered and auto-hide after 5 seconds.
 async function showSessionTooltip() {
+  // Read randomGameId from localStorage
+  let randomGameId;
+  try {
+    const settings = JSON.parse(localStorage.getItem('latestGamesSettings') || '{}');
+    randomGameId = settings.randomGameId;
+  } catch (error) {
+    console.warn('Could not read randomGameId from localStorage:', error);
+    randomGameId = undefined;
+  }
+
+  // Only show vocabulary preview (tooltip) on game page and when randomGameId is 'global'
+  if (getCurrentPage() !== 'game' || randomGameId !== 'global') return;
+
   try {
     const raw = sessionStorage.getItem('latestGames_showVocTooltip');
     if (!raw) return;
-    sessionStorage.removeItem('latestGames_showVocTooltip');
+
     const { vocId } = JSON.parse(raw) || {};
     if (!vocId) return;
 

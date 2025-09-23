@@ -76,13 +76,31 @@ export class SettingsManager {
   }
 
   // Normalize, dedupe and load validVocabularies from localStorage
+  // Also filters out any vocabularies present in bannedVocabularies
   loadValidVocabularies() {
     try {
       const raw = localStorage.getItem('validVocabularies');
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
-          this.main.validVocabularies = this._normalizeVocabList(parsed);
+          const normalized = this._normalizeVocabList(parsed);
+          
+          // Filter out banned vocabularies
+          try {
+            const bannedRaw = localStorage.getItem('bannedVocabularies');
+            if (bannedRaw) {
+              const bannedParsed = JSON.parse(bannedRaw);
+              if (Array.isArray(bannedParsed)) {
+                const bannedSet = new Set(bannedParsed.map(id => String(id)));
+                this.main.validVocabularies = normalized.filter(id => !bannedSet.has(String(id)));
+                return;
+              }
+            }
+          } catch (err) {
+            console.warn('Could not parse bannedVocabularies from localStorage', err);
+          }
+          
+          this.main.validVocabularies = normalized;
           return;
         }
       }
@@ -126,6 +144,31 @@ export class SettingsManager {
       out.push(v);
     }
     return out;
+  }
+
+  // Add a vocabulary ID to the banned list and persist
+  addToBannedVocabularies(vocabId) {
+    if (!vocabId) return false;
+    
+    try {
+      const bannedRaw = localStorage.getItem('bannedVocabularies') || '[]';
+      const banned = JSON.parse(bannedRaw);
+      
+      if (banned.includes(String(vocabId))) {
+        return false; // Already banned
+      }
+      
+      banned.push(String(vocabId));
+      localStorage.setItem('bannedVocabularies', JSON.stringify(banned));
+      
+      // Reload valid vocabularies to apply filter
+      this.loadValidVocabularies();
+      
+      return true;
+    } catch (err) {
+      console.warn('Could not add to banned vocabularies:', err);
+      return false;
+    }
   }
 
   saveSettings() {
