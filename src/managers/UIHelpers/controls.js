@@ -1,4 +1,4 @@
-import { createElement, generateUniqueId } from '../../utils.js';
+import { createElement, generateUniqueId, getCurrentPage } from '../../utils.js';
 import { createCustomTooltip, refreshTooltipSettings } from '../../tooltip.js';
 import { icons } from '../../icons.js';
 import { toggleSearchBox } from './search.js';
@@ -568,8 +568,9 @@ export function createControls(main) {
     innerHTML: icons.start
   });
   createCustomTooltip(
-    startRaceBtn,
-    '[Shift + Enter] Начать игру',
+    startRaceBtn, `
+    [Shift + Enter | Клик] Начать игру
+    [Alt + Enter | Alt + Клик] Заблокировать текущий словарь`
   );
 
   // Start race action function
@@ -629,9 +630,49 @@ export function createControls(main) {
     }
   };
 
+  // Function to ban current vocabulary
+  function banCurrentVocabulary() {
+    if (getCurrentPage() !== 'game') {
+      alert('Блокировать словарь можно только на странице игры');
+      return false;
+    }
+
+    // Get current vocabulary ID from sessionStorage (stored by getValidRandomGameId)
+    let currentVocabId = null;
+    try {
+      const tooltipData = sessionStorage.getItem('latestGames_showVocTooltip');
+      if (tooltipData) {
+        const parsed = JSON.parse(tooltipData);
+        currentVocabId = parsed.vocId;
+      }
+    } catch (err) {
+      console.warn('Could not parse tooltip data:', err);
+    }
+    
+    if (!currentVocabId) {
+      alert('Не удалось определить ID текущего словаря');
+      return false;
+    }
+    
+    const wasAdded = main.settingsManager.addToBannedVocabularies(currentVocabId);
+    if (wasAdded) {
+      alert(`Словарь ${currentVocabId} добавлен в чёрный список`);
+      return true;
+    } else {
+      alert(`Словарь ${currentVocabId} уже в чёрном списке`);
+      return false;
+    }
+  }
+
   // Start latest played or random game when clicking the button
-  startRaceBtn.onclick = () => {
-    startRaceAction();
+  // Alt+click to add current vocabulary to ban list
+  startRaceBtn.onclick = (e) => {
+    if (e.altKey) {
+      e.preventDefault();
+      banCurrentVocabulary();
+    } else {
+      startRaceAction();
+    }
   };
 
   // Start latest played or random game when pressing Shift+Enter
@@ -643,30 +684,7 @@ export function createControls(main) {
     
     if (e.altKey && e.code === 'Enter') {
       e.preventDefault();
-      
-      // Get current vocabulary ID from sessionStorage (stored by getValidRandomGameId)
-      let currentVocabId = null;
-      try {
-        const tooltipData = sessionStorage.getItem('latestGames_showVocTooltip');
-        if (tooltipData) {
-          const parsed = JSON.parse(tooltipData);
-          currentVocabId = parsed.vocId;
-        }
-      } catch (err) {
-        console.warn('Could not parse tooltip data:', err);
-      }
-      
-      if (!currentVocabId) {
-        alert('Не удалось определить ID текущего словаря');
-        return;
-      }
-      
-      const wasAdded = main.settingsManager.addToBannedVocabularies(currentVocabId);
-      if (wasAdded) {
-        alert(`Словарь ${currentVocabId} добавлен в чёрный список`);
-      } else {
-        alert(`Словарь ${currentVocabId} уже в чёрный списке`);
-      }
+      banCurrentVocabulary();
     }
   });
 
