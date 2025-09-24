@@ -1,7 +1,7 @@
 import { getCurrentPage } from "./utils";
 
 // Function to fetch and parse vocabulary content from a URL
-async function fetchVocabularyContent(vocId) {
+export async function fetchVocabularyContent(vocId) {
   try {
     const response = await fetch(`https://klavogonki.ru/vocs/${vocId}/`);
     const htmlText = await response.text();
@@ -87,7 +87,7 @@ function createVocabularyTooltip(content) {
   return tooltip;
 }
 
-function showTooltip(anchor, content) {
+export function showTooltip(anchor, content) {
   // Clear any existing timeouts
   if (hideTimeout) {
     clearTimeout(hideTimeout);
@@ -165,7 +165,7 @@ export function hideTooltip() {
   }
 }
 
-function startHideTimeout() {
+export function startHideTimeout() {
   if (hideTimeout) {
     clearTimeout(hideTimeout);
   }

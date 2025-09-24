@@ -1,3 +1,5 @@
+import { fetchVocabularyContent, showTooltip, startHideTimeout } from "../../vocabularyParser";
+
 export const BannedVocabPopup = {
   popup: null,
   isDragging: false,
@@ -91,6 +93,25 @@ export const BannedVocabPopup = {
           window.open(`https://klavogonki.ru/vocs/${id}/`, '_blank');
         }
       });
+
+      // Shift + hover: show shared tooltip anchored to the .vocab-item
+      list.addEventListener('mouseover', (e) => {
+        if (!e.shiftKey) return;
+        const item = e.target.closest('.vocab-item');
+        if (!item) return;
+        const id = item.dataset.id || item.querySelector('.vocab-id')?.textContent;
+        if (!id) return;
+        // Use shared fetch + tooltip functions from vocabularyParser
+        fetchVocabularyContent(id).then(content => showTooltip(item, content)).catch(() => {});
+      }, { capture: true });
+
+      list.addEventListener('mouseout', (e) => {
+        const item = e.target.closest('.vocab-item');
+        if (!item) return;
+        // Trigger the normal tooltip hide flow (shared helper) which
+        // respects hover state handled inside vocabularyParser.
+        startHideTimeout();
+      }, { capture: true });
 
     } else {
       const empty = document.createElement('div');
