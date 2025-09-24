@@ -221,6 +221,7 @@ export class SettingsManager {
         const data = JSON.parse(text);
         if (typeof data === 'object' && data !== null) {
           if (data.validVocabularies) localStorage.setItem('validVocabularies', JSON.stringify(data.validVocabularies));
+          if (data.bannedVocabularies) localStorage.setItem('bannedVocabularies', JSON.stringify(data.bannedVocabularies));
           if (data.latestGamesSettings) localStorage.setItem('latestGamesSettings', JSON.stringify(data.latestGamesSettings));
           if (data.latestGamesData) localStorage.setItem('latestGamesData', JSON.stringify(data.latestGamesData));
           main.settingsManager.loadSettings();
@@ -243,7 +244,8 @@ export class SettingsManager {
     const all = {
       latestGamesSettings: JSON.parse(localStorage.getItem('latestGamesSettings') || '{}'),
       latestGamesData: { groups: main.groupsManager.groups, currentGroupId: main.groupsManager.currentGroupId },
-      validVocabularies: JSON.parse(localStorage.getItem('validVocabularies') || '[]')
+      validVocabularies: JSON.parse(localStorage.getItem('validVocabularies') || '[]'),
+      bannedVocabularies: JSON.parse(localStorage.getItem('bannedVocabularies') || '[]')
     };
     const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
