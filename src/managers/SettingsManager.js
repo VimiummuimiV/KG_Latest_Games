@@ -79,25 +79,40 @@ export class SettingsManager {
   // Also filters out any vocabularies present in bannedVocabularies
   loadValidVocabularies() {
     try {
-      const raw = localStorage.getItem('validVocabularies');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          const normalized = this._normalizeVocabList(parsed);
+    const validRaw = localStorage.getItem('validVocabularies');
+      if (validRaw) {
+        const validParsed = JSON.parse(validRaw);
+        if (Array.isArray(validParsed)) {
+          const normalized = this._normalizeVocabList(validParsed);
           
-          // Filter out banned vocabularies
+          // Filter out banned vocabularies and already-played vocabularies
           try {
             const bannedRaw = localStorage.getItem('bannedVocabularies');
-            if (bannedRaw) {
-              const bannedParsed = JSON.parse(bannedRaw);
-              if (Array.isArray(bannedParsed)) {
-                const bannedSet = new Set(bannedParsed.map(id => String(id)));
-                this.main.validVocabularies = normalized.filter(id => !bannedSet.has(String(id)));
+            const playedRaw = localStorage.getItem('playedVocabularies');
+            const bannedParsed = bannedRaw ? JSON.parse(bannedRaw) : [];
+            const playedParsed = playedRaw ? JSON.parse(playedRaw) : [];
+            if (Array.isArray(bannedParsed) || Array.isArray(playedParsed)) {
+              const bannedSet = new Set(Array.isArray(bannedParsed) ? bannedParsed.map(id => String(id)) : []);
+              const playedSet = new Set(Array.isArray(playedParsed) ? playedParsed.map(id => String(id)) : []);
+              const combined = new Set([...bannedSet, ...playedSet]);
+              const filtered = normalized.filter(id => !combined.has(String(id)));
+
+              if (filtered.length === 0 && normalized.length > 0) {
+                const ok = confirm('Все доступные словари уже были проиграны. Очистить данные о проигранных словарях и начать заново?');
+                if (ok) {
+                  localStorage.removeItem('playedVocabularies');
+                  this.main.validVocabularies = normalized.filter(id => !bannedSet.has(String(id)));
+                } else {
+                  this.main.validVocabularies = [];
+                }
                 return;
               }
+
+              this.main.validVocabularies = filtered;
+              return;
             }
           } catch (err) {
-            console.warn('Could not parse bannedVocabularies from localStorage', err);
+            console.warn('Could not parse banned/played vocabularies from localStorage', err);
           }
           
           this.main.validVocabularies = normalized;
@@ -222,6 +237,7 @@ export class SettingsManager {
         if (typeof data === 'object' && data !== null) {
           if (data.validVocabularies) localStorage.setItem('validVocabularies', JSON.stringify(data.validVocabularies));
           if (data.bannedVocabularies) localStorage.setItem('bannedVocabularies', JSON.stringify(data.bannedVocabularies));
+          if (data.playedVocabularies) localStorage.setItem('playedVocabularies', JSON.stringify(data.playedVocabularies));
           if (data.latestGamesSettings) localStorage.setItem('latestGamesSettings', JSON.stringify(data.latestGamesSettings));
           if (data.latestGamesData) localStorage.setItem('latestGamesData', JSON.stringify(data.latestGamesData));
           main.settingsManager.loadSettings();
@@ -245,7 +261,8 @@ export class SettingsManager {
       latestGamesSettings: JSON.parse(localStorage.getItem('latestGamesSettings') || '{}'),
       latestGamesData: { groups: main.groupsManager.groups, currentGroupId: main.groupsManager.currentGroupId },
       validVocabularies: JSON.parse(localStorage.getItem('validVocabularies') || '[]'),
-      bannedVocabularies: JSON.parse(localStorage.getItem('bannedVocabularies') || '[]')
+      bannedVocabularies: JSON.parse(localStorage.getItem('bannedVocabularies') || '[]'),
+      playedVocabularies: JSON.parse(localStorage.getItem('playedVocabularies') || '[]')
     };
     const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);

@@ -385,7 +385,19 @@ export class GamesManager {
       try {
         let resp = await fetch(candidate.url, { method: 'HEAD', cache: 'no-store' });
         if (resp.status === 405) resp = await fetch(candidate.url, { method: 'GET', cache: 'no-store' });
-        if (resp.ok) return candidate;
+        if (resp.ok) {
+          // Persist this played vocabulary id so it can be filtered out later
+          try {
+            const playedRaw = localStorage.getItem('playedVocabularies') || '[]';
+            const played = JSON.parse(playedRaw);
+            const idStr = String(candidate.id);
+            if (!played.includes(idStr)) {
+              played.push(idStr);
+              localStorage.setItem('playedVocabularies', JSON.stringify(played));
+            }
+          } catch (_) {}
+          return candidate;
+        }
         if (resp.status === 403) {
           try {
             if (this.mainManager && this.mainManager.showBlockedVocabAlert) {
