@@ -20,10 +20,14 @@ export function showMigrationPopup(main, groups, currentGroupId, event, gameId) 
 }
 
 export function migrateGame(main, gameId, targetGroupId) {
-  const sourceGroup = main.groupsManager.groups.find(group => group.id === main.groupsManager.currentGroupId);
+  // Find the actual source group that currently contains the game
+  const sourceGroup = main.groupsManager.groups.find(group => group.games.some(game => game.id === gameId));
   const targetGroup = main.groupsManager.groups.find(group => group.id === targetGroupId);
 
   if (!sourceGroup || !targetGroup) return;
+
+  // If the game is already in the target group, nothing to do
+  if (sourceGroup.id === targetGroup.id) return;
 
   const gameIndex = sourceGroup.games.findIndex(game => game.id === gameId);
   if (gameIndex === -1) return;

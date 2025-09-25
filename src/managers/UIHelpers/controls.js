@@ -5,6 +5,7 @@ import { toggleSearchBox } from './search.js';
 import { DEFAULTS } from '../../definitions.js';
 import { BannedVocabPopup } from '../UIHelpers/bannedVocabPopup.js';
 import { addGameToGroup, fetchVocabularyBasicData } from '../../vocabularyCreation.js';
+import { showMigrationPopup } from '../../vocabularyMigration.js';
 import { getSessionVocId } from '../../vocabularyParser.js';
 
 export function createControls(main) {
@@ -689,8 +690,31 @@ export function createControls(main) {
         let vocName = '';
         const basic = await fetchVocabularyBasicData(currentVocabId).catch(() => null);
         if (basic && basic.vocabularyName) vocName = basic.vocabularyName;
+
+        // Prevent adding if the vocabulary already exists in any group
+        const existingGroup = main.groupsManager.groups.find(g => g.games.some(game => String(game.params?.vocId) === String(currentVocabId)));
+        if (existingGroup) {
+          if (existingGroup.id === favGroup.id) {
+            alert(`🛑 Словарь ${currentVocabId} уже в группе "Избранные"`);
+          } else {
+            alert(`🛑 Словарь ${currentVocabId} уже в группе "${existingGroup.title}"`);
+          }
+          return;
+        }
+
         addGameToGroup(favGroup, String(currentVocabId), vocName, main.groupsManager.groups, main);
         alert(`✔️ Словарь ${currentVocabId} добавлен в группу "Избранные"`);
+
+        // Find the newly added game and show migration popup so user can move it immediately if desired
+        const newGame = favGroup.games.find(game => String(game.params?.vocId) === String(currentVocabId));
+        if (newGame) {
+          const fakeEvent = { clientX: Math.floor(window.innerWidth / 2), clientY: Math.floor(window.innerHeight / 2) };
+          try {
+            showMigrationPopup(main, main.groupsManager.groups, favGroup.id, fakeEvent, newGame.id);
+          } catch (err) {
+            console.warn('Could not open migration popup for newly added vocabulary', err);
+          }
+        }
       } catch (err) {
         console.warn('Could not add vocabulary to favorites group', err);
         alert('⚠️ Не удалось добавить словарь в Избранные');
