@@ -179,6 +179,22 @@ export function startHideTimeout() {
   }, 300); // 300ms delay before hiding
 }
 
+/**
+ * Read transient sessionStorage flag set before navigation and return vocId if present.
+ * Returns string ID or null.
+ */
+export function getSessionVocId() {
+  try {
+    const raw = sessionStorage.getItem('latestGames_showVocTooltip');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) || {};
+    return parsed.vocId || null;
+  } catch (err) {
+    console.warn('Could not parse session voc tooltip data:', err);
+    return null;
+  }
+}
+
 function positionTooltip(anchor, tooltip) {
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;

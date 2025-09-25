@@ -61,7 +61,7 @@ export async function fetchVocabularyBasicData(vocId) {
   }
 }
 
-function addGameToGroup(group, vocId, vocName, groups, main) {
+export function addGameToGroup(group, vocId, vocName, groups, main) {
   if (group.games.some(game => String(game.params?.vocId) === String(vocId))) {
     alert(`Этот словарь уже добавлен в ${group.title}`);
     return;

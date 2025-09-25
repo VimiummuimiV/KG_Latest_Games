@@ -4,6 +4,8 @@ import { icons } from '../../icons.js';
 import { toggleSearchBox } from './search.js';
 import { DEFAULTS } from '../../definitions.js';
 import { BannedVocabPopup } from '../UIHelpers/bannedVocabPopup.js';
+import { addGameToGroup, fetchVocabularyBasicData } from '../../vocabularyCreation.js';
+import { getSessionVocId } from '../../vocabularyParser.js';
 
 export function createControls(main) {
   const controlsContainer = createElement('div', { className: 'latest-games-controls' });
@@ -570,6 +572,7 @@ export function createControls(main) {
   });
   createCustomTooltip(
     startRaceBtn, `
+    [Alt + Shift + Enter | Клик] Добавить текущий словарь в Избранные
     [Shift + Enter | Клик] Начать игру
     [Alt + Enter | Alt + Клик] Заблокировать текущий словарь
     [Ctrl + Клик] Показать заблокированные словари`
@@ -638,24 +641,12 @@ export function createControls(main) {
       alert('⚠️ Блокировать словарь можно только на странице игры');
       return false;
     }
-
-    // Get current vocabulary ID from sessionStorage (stored by getValidRandomGameId)
-    let currentVocabId = null;
-    try {
-      const tooltipData = sessionStorage.getItem('latestGames_showVocTooltip');
-      if (tooltipData) {
-        const parsed = JSON.parse(tooltipData);
-        currentVocabId = parsed.vocId;
-      }
-    } catch (err) {
-      console.warn('Could not parse tooltip data:', err);
-    }
-    
+    const currentVocabId = getSessionVocId();
     if (!currentVocabId) {
       alert('⚠️ Не удалось определить ID текущего словаря');
       return false;
     }
-    
+
     const wasAdded = main.settingsManager.addToBannedVocabularies(currentVocabId);
     if (wasAdded) {
       alert(`✔️ Словарь ${currentVocabId} добавлен в чёрный список`);
@@ -672,10 +663,51 @@ export function createControls(main) {
     }
   }
 
+  // Function to add current vocabulary into group "Избранные"
+  function addCurrentVocabularyToFavorites() {
+    if (getCurrentPage() !== 'game') {
+      alert('⚠️ Добавлять в Избранные можно только на странице игры');
+      return false;
+    }
+    const currentVocabId = getSessionVocId();
+    if (!currentVocabId) {
+      alert('⚠️ Не удалось определить ID текущего словаря');
+      return false;
+    }
+
+    // Find or create the "Избранные" group
+    let favGroup = main.groupsManager.groups.find(g => g.title === 'Избранные');
+    if (!favGroup) {
+      const created = main.groupsManager.createGroup('Избранные');
+      main.groupsManager.groups.push(created);
+      favGroup = created;
+    }
+
+    // Async block: fetch name (best-effort) and delegate creation to helper
+    (async () => {
+      try {
+        let vocName = '';
+        const basic = await fetchVocabularyBasicData(currentVocabId).catch(() => null);
+        if (basic && basic.vocabularyName) vocName = basic.vocabularyName;
+        addGameToGroup(favGroup, String(currentVocabId), vocName, main.groupsManager.groups, main);
+        alert(`✔️ Словарь ${currentVocabId} добавлен в группу "Избранные"`);
+      } catch (err) {
+        console.warn('Could not add vocabulary to favorites group', err);
+        alert('⚠️ Не удалось добавить словарь в Избранные');
+      }
+    })();
+  }
+
   // Start latest played or random game when clicking the button
-  // Alt+click to add current vocabulary to ban list
-  // Ctrl+click to open banned vocabularies popup
+  // Alt+Shift+Click: add current vocabulary to Избранные
+  // Alt+Click: add current vocabulary to ban list
+  // Ctrl+Click: open banned vocabularies popup
   startRaceBtn.onclick = (e) => {
+    if (e.altKey && e.shiftKey) {
+      e.preventDefault();
+      addCurrentVocabularyToFavorites();
+      return;
+    }
     if (e.altKey) {
       e.preventDefault();
       banCurrentVocabulary();
@@ -690,13 +722,22 @@ export function createControls(main) {
   // Start latest played or random game when pressing Shift+Enter
   // or add current vocabulary to banned list when pressing Alt+Enter
   document.addEventListener('keydown', e => {
+    // Alt+Shift+Enter: add current vocabulary to Избранные (higher priority)
+    if (e.altKey && e.shiftKey && e.code === 'Enter') {
+      e.preventDefault();
+      addCurrentVocabularyToFavorites();
+      return;
+    }
+
     if (e.shiftKey && e.code === 'Enter') {
       startRaceAction();
+      return;
     }
-    
+
     if (e.altKey && e.code === 'Enter') {
       e.preventDefault();
       banCurrentVocabulary();
+      return;
     }
   });
 
