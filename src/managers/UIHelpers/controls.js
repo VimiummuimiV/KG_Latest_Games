@@ -659,6 +659,12 @@ export function createControls(main) {
     const wasAdded = main.settingsManager.addToBannedVocabularies(currentVocabId);
     if (wasAdded) {
       alert(`✔️ Словарь ${currentVocabId} добавлен в чёрный список`);
+      // After banning, immediately start/create a new game
+      try {
+        startRaceAction();
+      } catch (err) {
+        console.warn('Could not start a new game after banning vocabulary', err);
+      }
       return true;
     } else {
       alert(`🛑 Словарь ${currentVocabId} уже в чёрном списке`);
