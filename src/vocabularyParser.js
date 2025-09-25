@@ -185,12 +185,24 @@ export function startHideTimeout() {
  */
 export function getSessionVocId() {
   try {
+    // First, prefer the currently-visible vocabulary link in the page status area.
+  const anchor = document.querySelector('#status #gamedesc a, #status a[href*="/vocs/"]');
+    if (anchor) {
+      const href = anchor.getAttribute('href') || '';
+      const m = href.match(/\/vocs\/(\d+)(?:\/|$)/);
+      if (m && m[1]) {
+        // Always prefer the anchor's id when present on the page.
+        return String(m[1]);
+      }
+    }
+
+    // Fallback: read transient sessionStorage flag set before navigation
     const raw = sessionStorage.getItem('latestGames_showVocTooltip');
     if (!raw) return null;
     const parsed = JSON.parse(raw) || {};
     return parsed.vocId || null;
   } catch (err) {
-    console.warn('Could not parse session voc tooltip data:', err);
+    console.warn('Could not determine session voc id:', err);
     return null;
   }
 }
@@ -315,10 +327,7 @@ async function showSessionTooltip() {
   if (getCurrentPage() !== 'game' || randomGameId !== 'global') return;
 
   try {
-    const raw = sessionStorage.getItem('latestGames_showVocTooltip');
-    if (!raw) return;
-
-    const { vocId } = JSON.parse(raw) || {};
+    const vocId = getSessionVocId();
     if (!vocId) return;
 
     const content = await fetchVocabularyContent(vocId);

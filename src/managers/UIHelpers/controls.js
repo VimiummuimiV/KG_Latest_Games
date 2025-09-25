@@ -487,7 +487,7 @@ export function createControls(main) {
         const count = Array.isArray(main.validVocabularies) ? main.validVocabularies.length : 0;
         return `Обновить список допустимых словарей (загружено: ${count})`;
       },
-      ctrl: () => main.showBlockedVocabAlert ? 'Отключить предупреждение о заблокированных словарях' : 'Включить предупреждение о заблокированных словарях',
+      ctrl: () => main.showBlockedVocabAlert ? 'Отключить предупреждение о недоступных словарях' : 'Включить предупреждение о недоступных словарях',
       alt: (isEnabled) => isEnabled === 'global' || main.randomGameId === 'global' ? 'Отключить глобальный режим' : 'Включить глобальный режим'
     });
     // Reflect disabled state visually
