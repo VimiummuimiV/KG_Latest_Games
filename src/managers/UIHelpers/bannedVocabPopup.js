@@ -30,6 +30,13 @@ export const BannedVocabPopup = {
     this.refresh();
   },
 
+  sortAll() {
+    const sorted = this.get().sort((a, b) => parseInt(a) - parseInt(b));
+    this.save(sorted);
+    this.toggleBtnText('.sort-all-btn', 'Отсортировано!', () => 'Сортировать');
+    this.refresh();
+  },
+
   createElements() {
     const v = this.get();
     const container = document.createElement('div');
@@ -50,10 +57,10 @@ export const BannedVocabPopup = {
     const removeAllBtn = Object.assign(document.createElement('button'), {
       className: 'remove-all-btn', textContent: 'Удалить всё', disabled: !v.length, onclick: () => this.removeAll()
     });
-    const count = document.createElement('span');
-    count.className = 'vocab-count';
-    count.textContent = `${v.length} ${v.length === 1 ? 'элемент' : v.length < 5 ? 'элемента' : 'элементов'}`;
-    actions.append(copyBtn, removeAllBtn, count);
+    const sortBtn = Object.assign(document.createElement('button'), {
+      className: 'sort-all-btn', textContent: 'Сортировать', disabled: !v.length, onclick: () => this.sortAll()
+    });
+    actions.append(copyBtn, removeAllBtn, sortBtn);
     container.appendChild(actions);
 
     const list = document.createElement('div');

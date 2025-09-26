@@ -39,7 +39,8 @@
     flex-wrap: wrap;
 
     .copy-all-btn,
-    .remove-all-btn {
+    .remove-all-btn,
+    .sort-all-btn {
       background: rgb(40, 40, 40);
       color: lightblue;
       border: 1px solid rgb(80, 80, 80);
@@ -81,11 +82,19 @@
       }
     }
 
-    .vocab-count {
-      color: rgb(140, 140, 140);
-      font-size: 0.85em;
-      font-weight: 500;
-      margin-left: auto;
+    .sort-all-btn {
+      color: rgb(120, 255, 120);
+      border-color: rgb(60, 120, 60);
+
+      &:hover:not(:disabled) {
+        background: rgb(60, 120, 60);
+        color: white;
+        border-color: rgb(80, 150, 80);
+      }
+
+      &:active:not(:disabled) {
+        background: rgb(40, 100, 40);
+      }
     }
   }
 
