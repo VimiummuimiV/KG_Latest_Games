@@ -5,7 +5,7 @@ import { getCurrentPage, extractVocabularyId } from './utils.js';
 let vocIdToGroups = new Map();
 let vocabularyHighlightObserver = null;
 
-const VOCABULARY_ANCHOR_SELECTOR = 'a.name[href*="/vocs/"], a[href*="/create/"]';
+const VOCABULARY_ANCHOR_SELECTOR = 'a[href*="/vocs/"], a[href*="/create/"]';
 
 // List of selectors to exclude from processing
 const EXCLUSION_SELECTORS = [
@@ -105,7 +105,7 @@ function startVocabularyHighlightObserver() {
 
 export function highlightExistingVocabularies(groups) {
   const currentPage = getCurrentPage();
-  if (!['profile', 'forum', 'vocabularies'].includes(currentPage)) {
+  if (!['profile', 'forum', 'vocabularies', 'gamelist', 'game'].includes(currentPage)) {
     return;
   }
 

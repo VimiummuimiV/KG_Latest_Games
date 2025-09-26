@@ -91,6 +91,8 @@ export function getContainerSelector() {
   if (page === 'vocabularies') return '.columns.voclist';
   if (page === 'profile') return '.profile-root, .dlg-profile-vocs .vocs';
   if (page === 'forum') return '#posts-list .list';
+  if (page === 'gamelist') return '#gamelist';
+  if (page === 'game') return '#gamedesc';
   return null;
 }
 
