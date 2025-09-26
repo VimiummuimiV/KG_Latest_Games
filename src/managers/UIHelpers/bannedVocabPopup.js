@@ -17,6 +17,17 @@ export const BannedVocabPopup = {
     } catch { return []; } 
   },
   save(arr) { localStorage.bannedVocabularies = JSON.stringify(arr); },
+
+  filterVocabs(vocabs, searchTerm) {
+    if (!searchTerm.trim()) return vocabs;
+    
+    const term = searchTerm.toLowerCase().trim();
+    return vocabs.filter(vocab => 
+      vocab.id.toLowerCase().includes(term) ||
+      (vocab.name && vocab.name.toLowerCase().includes(term)) ||
+      (vocab.author && vocab.author.toLowerCase().includes(term))
+    );
+  },
   
   async fetchAndCacheVocabData(vocabObj) {
     // If we already have name and author is defined (not empty string), return as is
@@ -42,11 +53,12 @@ export const BannedVocabPopup = {
     setTimeout(() => btn.textContent = originalText, duration);
   },
 
-  async copy() {
-    const ids = this.get().map(v => v.id).join(',');
+  async copy(vocabsToCopy = null) {
+    const vocabs = vocabsToCopy || this.get();
+    const ids = vocabs.map(v => v.id).join(',');
     try { await navigator.clipboard.writeText(ids); }
     catch { if (document.getSelection && ids) document.getSelection().removeAllRanges(); }
-    this.toggleBtnText('.copy-all-btn', 'Скопировано!', () => `Копировать все (${this.get().length})`);
+    this.toggleBtnText('.copy-all-btn', 'Скопировано!', () => `Копировать все (${vocabs.length})`);
   },
 
   removeAll() {
@@ -88,6 +100,17 @@ export const BannedVocabPopup = {
     actions.append(copyBtn, removeAllBtn, sortBtn);
     container.appendChild(actions);
 
+    // Add search section
+    const searchSection = document.createElement('div');
+    searchSection.className = 'popup-search';
+    const searchInput = Object.assign(document.createElement('input'), {
+      type: 'text',
+      placeholder: 'Поиск по ID, названию или автору...',
+      className: 'search-input'
+    });
+    searchSection.appendChild(searchInput);
+    container.appendChild(searchSection);
+
     const list = document.createElement('div');
     list.className = 'vocab-list';
 
@@ -100,53 +123,87 @@ export const BannedVocabPopup = {
       // Save updated data back to localStorage
       this.save(updatedVocabs);
       
-      updatedVocabs.forEach((vocabObj) => {
-        const item = document.createElement('div');
-        item.className = 'vocab-item';
-        item.dataset.id = vocabObj.id;
-        item.style.cursor = 'pointer';
-
-        const leftSection = document.createElement('div');
-        leftSection.className = 'vocab-left';
+      let currentFilteredVocabs = updatedVocabs; // Track currently displayed vocabularies
+      
+      const updateCopyButton = (vocabCount) => {
+        copyBtn.textContent = `Копировать все (${vocabCount})`;
+        copyBtn.disabled = vocabCount === 0;
+      };
+      
+      const renderVocabs = (vocabsToRender) => {
+        // Clear existing items
+        list.innerHTML = '';
+        currentFilteredVocabs = vocabsToRender; // Update the current filtered list
+        updateCopyButton(vocabsToRender.length); // Update copy button text
         
-        const idSpan = Object.assign(document.createElement('span'), { 
-          className: 'vocab-id', 
-          textContent: vocabObj.id 
-        });
-        leftSection.appendChild(idSpan);
-
-        const rightSection = document.createElement('div');
-        rightSection.className = 'vocab-right';
-        
-        if (vocabObj.name) {
-          const nameSpan = Object.assign(document.createElement('div'), {
-            className: 'vocab-name',
-            textContent: vocabObj.name
-          });
-          rightSection.appendChild(nameSpan);
-          
-          if (vocabObj.author) {
-            const authorSpan = Object.assign(document.createElement('div'), {
-              className: 'vocab-author',
-              textContent: `Автор: ${vocabObj.author}`
-            });
-            rightSection.appendChild(authorSpan);
-          }
-        } else {
-          const loadingSpan = Object.assign(document.createElement('div'), {
-            className: 'vocab-loading',
-            textContent: 'Не удалось загрузить'
-          });
-          rightSection.appendChild(loadingSpan);
+        if (vocabsToRender.length === 0) {
+          const noResults = document.createElement('div');
+          noResults.className = 'empty-state';
+          noResults.textContent = 'Ничего не найдено';
+          list.appendChild(noResults);
+          return;
         }
+        
+        vocabsToRender.forEach((vocabObj) => {
+          const item = document.createElement('div');
+          item.className = 'vocab-item';
+          item.dataset.id = vocabObj.id;
+          item.style.cursor = 'pointer';
 
-        const removeBtn = Object.assign(document.createElement('button'), {
-          className: 'remove-btn',
-          textContent: 'Удалить'
+          const leftSection = document.createElement('div');
+          leftSection.className = 'vocab-left';
+          
+          const idSpan = Object.assign(document.createElement('span'), { 
+            className: 'vocab-id', 
+            textContent: vocabObj.id 
+          });
+          leftSection.appendChild(idSpan);
+
+          const rightSection = document.createElement('div');
+          rightSection.className = 'vocab-right';
+          
+          if (vocabObj.name) {
+            const nameSpan = Object.assign(document.createElement('div'), {
+              className: 'vocab-name',
+              textContent: vocabObj.name
+            });
+            rightSection.appendChild(nameSpan);
+            
+            if (vocabObj.author) {
+              const authorSpan = Object.assign(document.createElement('div'), {
+                className: 'vocab-author',
+                textContent: `Автор: ${vocabObj.author}`
+              });
+              rightSection.appendChild(authorSpan);
+            }
+          } else {
+            const loadingSpan = Object.assign(document.createElement('div'), {
+              className: 'vocab-loading',
+              textContent: 'Не удалось загрузить'
+            });
+            rightSection.appendChild(loadingSpan);
+          }
+
+          const removeBtn = Object.assign(document.createElement('button'), {
+            className: 'remove-btn',
+            textContent: 'Удалить'
+          });
+
+          item.append(leftSection, rightSection, removeBtn);
+          list.appendChild(item);
         });
+      };
 
-        item.append(leftSection, rightSection, removeBtn);
-        list.appendChild(item);
+      // Update copy button to use current filtered results
+      copyBtn.onclick = () => this.copy(currentFilteredVocabs);
+
+      // Initial render with all vocabularies
+      renderVocabs(updatedVocabs);
+
+      // Add search functionality
+      searchInput.addEventListener('input', (e) => {
+        const filteredVocabs = this.filterVocabs(updatedVocabs, e.target.value);
+        renderVocabs(filteredVocabs);
       });
 
       // delegated handler (only one for the whole list)
