@@ -133,6 +133,7 @@
     gap: 0.3em;
     max-height: 250px;
     overflow-y: auto;
+    overflow-x: hidden;
     
     .vocab-item {
       display: flex;
@@ -148,6 +149,17 @@
       &:hover {
         background: rgb(35, 35, 35);
         border-color: rgb(70, 70, 70);
+      }
+
+      // Highlighting for newly added vocabularies
+      &.vocab-item-new {
+        background: rgb(30, 45, 30) !important; // Subtle green tint
+        border: 1px solid rgb(60, 120, 60) !important; // Green border
+
+        &:hover {
+          background: rgb(35, 50, 35) !important;
+          border-color: rgb(80, 150, 80) !important;
+        }
       }
 
       .vocab-left {

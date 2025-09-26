@@ -12,11 +12,23 @@ export const BannedVocabPopup = {
       const data = JSON.parse(localStorage.bannedVocabularies) || [];
       // Handle legacy format (array of strings) by converting to objects
       return data.map(item => 
-        typeof item === 'string' ? { id: item } : item
+        typeof item === 'string' ? { id: item, isNew: false } : { ...item, isNew: item.isNew || false }
       );
     } catch { return []; } 
   },
+  
   save(arr) { localStorage.bannedVocabularies = JSON.stringify(arr); },
+
+  // Method to add a new vocabulary (should be called when adding vocabularies)
+  add(vocabularyId) {
+    const existing = this.get();
+    const alreadyExists = existing.some(v => v.id === vocabularyId);
+    
+    if (!alreadyExists) {
+      existing.push({ id: vocabularyId, isNew: true });
+      this.save(existing);
+    }
+  },
 
   filterVocabs(vocabs, searchTerm) {
     if (!searchTerm.trim()) return vocabs;
@@ -36,7 +48,7 @@ export const BannedVocabPopup = {
     const data = await fetchVocabularyBasicData(vocabObj.id);
     if (data) {
       return { 
-        id: vocabObj.id, 
+        ...vocabObj,
         name: data.vocabularyName, 
         author: data.vocabularyAuthor 
       };
@@ -68,10 +80,24 @@ export const BannedVocabPopup = {
   },
 
   sortAll() {
-    const sorted = this.get().sort((a, b) => parseInt(a.id) - parseInt(b.id));
+    const vocabs = this.get().map(vocab => ({ ...vocab, isNew: false })); // Remove new status
+    const sorted = vocabs.sort((a, b) => parseInt(a.id) - parseInt(b.id));
     this.save(sorted);
     this.toggleBtnText('.sort-all-btn', 'Отсортировано!', () => 'Сортировать');
     this.refresh();
+  },
+
+  scrollToBottom() {
+    if (this.popup) {
+      const vocabList = this.popup.querySelector('.vocab-list');
+      if (vocabList) {
+        vocabList.scrollTop = vocabList.scrollHeight;
+      }
+    }
+  },
+
+  scheduleScrollToBottom() {
+    setTimeout(() => this.scrollToBottom(), 0);
   },
 
   async createElements() {
@@ -147,6 +173,9 @@ export const BannedVocabPopup = {
         vocabsToRender.forEach((vocabObj) => {
           const item = document.createElement('div');
           item.className = 'vocab-item';
+          if (vocabObj.isNew) {
+            item.classList.add('vocab-item-new');
+          }
           item.dataset.id = vocabObj.id;
           item.style.cursor = 'pointer';
 
@@ -192,6 +221,9 @@ export const BannedVocabPopup = {
           item.append(leftSection, rightSection, removeBtn);
           list.appendChild(item);
         });
+
+        // Schedule scroll to bottom after rendering
+        this.scheduleScrollToBottom();
       };
 
       // Update copy button to use current filtered results
@@ -259,6 +291,8 @@ export const BannedVocabPopup = {
       this.popup = newPopup;
       this.popup.style.left = rect.left + 'px';
       this.popup.style.top = rect.top + 'px';
+      // Schedule scroll to bottom after refresh
+      this.scheduleScrollToBottom();
     }
   },
 
@@ -269,6 +303,10 @@ export const BannedVocabPopup = {
     this.popup.style.left = x + 'px';
     this.popup.style.top = y + 'px';
     this.constrainToScreen();
+    
+    // Schedule scroll to bottom when showing
+    this.scheduleScrollToBottom();
+    
     setTimeout(() => {
       document.addEventListener('click', this.outside);
       document.addEventListener('keydown', this.keydown);

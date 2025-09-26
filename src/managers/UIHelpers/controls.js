@@ -637,29 +637,54 @@ export function createControls(main) {
   };
 
   // Function to ban current vocabulary
-  function banCurrentVocabulary() {
+  async function banCurrentVocabulary() {
     if (getCurrentPage() !== 'game') {
       alert('⚠️ Блокировать словарь можно только на странице игры');
       return false;
     }
+    
     const currentVocabId = getSessionVocId();
     if (!currentVocabId) {
       alert('⚠️ Не удалось определить ID текущего словаря');
       return false;
     }
 
-    const wasAdded = main.settingsManager.addToBannedVocabularies(currentVocabId);
-    if (wasAdded) {
+    try {
+      // Check if already banned using BannedVocabPopup
+      const existing = BannedVocabPopup.get();
+      const alreadyBanned = existing.some(v => v.id === String(currentVocabId));
+      
+      if (alreadyBanned) {
+        alert(`🛑 Словарь ${currentVocabId} уже в чёрном списке`);
+        return false;
+      }
+
+      // Create vocabulary object - fetchAndCacheVocabData will get name/author later
+      const vocabToAdd = {
+        id: String(currentVocabId),
+        name: null,
+        author: null,
+        isNew: true
+      };
+
+      // Add to BannedVocabPopup's enhanced storage
+      const updatedList = [...existing, vocabToAdd];
+      BannedVocabPopup.save(updatedList);
+
       alert(`✔️ Словарь ${currentVocabId} добавлен в чёрный список`);
+      
       // After banning, immediately start/create a new game
       try {
         startRaceAction();
       } catch (err) {
         console.warn('Could not start a new game after banning vocabulary', err);
       }
+      
       return true;
-    } else {
-      alert(`🛑 Словарь ${currentVocabId} уже в чёрном списке`);
+      
+    } catch (error) {
+      console.error('Error banning vocabulary:', error);
+      alert('⚠️ Ошибка при блокировке словаря');
       return false;
     }
   }

@@ -79,7 +79,7 @@ export class SettingsManager {
   // Also filters out any vocabularies present in bannedVocabularies
   loadValidVocabularies() {
     try {
-    const validRaw = localStorage.getItem('validVocabularies');
+      const validRaw = localStorage.getItem('validVocabularies');
       if (validRaw) {
         const validParsed = JSON.parse(validRaw);
         if (Array.isArray(validParsed)) {
@@ -91,8 +91,14 @@ export class SettingsManager {
             const playedRaw = localStorage.getItem('playedVocabularies');
             const bannedParsed = bannedRaw ? JSON.parse(bannedRaw) : [];
             const playedParsed = playedRaw ? JSON.parse(playedRaw) : [];
+            
             if (Array.isArray(bannedParsed) || Array.isArray(playedParsed)) {
-              const bannedSet = new Set(Array.isArray(bannedParsed) ? bannedParsed.map(id => String(id)) : []);
+              // Handle both old format (array of strings) and new format (array of objects)
+              const bannedIds = Array.isArray(bannedParsed) ? bannedParsed.map(item => 
+                typeof item === 'string' ? item : (item.id || String(item))
+              ) : [];
+              
+              const bannedSet = new Set(bannedIds.map(id => String(id)));
               const playedSet = new Set(Array.isArray(playedParsed) ? playedParsed.map(id => String(id)) : []);
               const combined = new Set([...bannedSet, ...playedSet]);
               const filtered = normalized.filter(id => !combined.has(String(id)));
@@ -159,31 +165,6 @@ export class SettingsManager {
       out.push(v);
     }
     return out;
-  }
-
-  // Add a vocabulary ID to the banned list and persist
-  addToBannedVocabularies(vocabId) {
-    if (!vocabId) return false;
-    
-    try {
-      const bannedRaw = localStorage.getItem('bannedVocabularies') || '[]';
-      const banned = JSON.parse(bannedRaw);
-      
-      if (banned.includes(String(vocabId))) {
-        return false; // Already banned
-      }
-      
-      banned.push(String(vocabId));
-      localStorage.setItem('bannedVocabularies', JSON.stringify(banned));
-      
-      // Reload valid vocabularies to apply filter
-      this.loadValidVocabularies();
-      
-      return true;
-    } catch (err) {
-      console.warn('Could not add to banned vocabularies:', err);
-      return false;
-    }
   }
 
   saveSettings() {
