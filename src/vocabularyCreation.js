@@ -3,7 +3,7 @@ import { highlightExistingVocabularies } from './vocabularyChecker.js';
 import { createPopup } from './menuPopup.js';
 import { hideTooltip } from './vocabularyParser.js';
 
-// Function to fetch basic vocabulary data (name, rating, fans) from the server
+// Function to fetch basic vocabulary data (name, rating, fans, author) from the server
 export async function fetchVocabularyBasicData(vocId) {
   const controller = new AbortController();
   const signal = controller.signal;
@@ -41,12 +41,16 @@ export async function fetchVocabularyBasicData(vocId) {
         // abort the fetch (stops downloading the rest of the page)
         controller.abort();
 
-        // extract data
+        // extract basic data
         const vocabularyName = titleCell.childNodes[0].textContent.trim();
         const ratingCount = parseInt(ratingSpan.textContent.trim(), 10);
         const fansCount = parseInt(fansSpan.textContent.trim(), 10);
 
-        return { vocId, vocabularyName, ratingCount, fansCount };
+        // try to get author data
+        const authorLink = doc.querySelector('.user-content a[href^="/profile/"]');
+        const vocabularyAuthor = authorLink?.textContent.trim() || '';
+
+        return { vocId, vocabularyName, ratingCount, fansCount, vocabularyAuthor };
       }
     }
 

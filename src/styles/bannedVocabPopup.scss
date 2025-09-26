@@ -114,20 +114,56 @@
       border: 1px solid rgb(50, 50, 50);
       border-radius: 3px !important;
       transition: all 0.2s ease;
+      gap: 0.8em;
 
       &:hover {
         background: rgb(35, 35, 35);
         border-color: rgb(70, 70, 70);
       }
 
-      .vocab-id {
-        color: rgb(200, 200, 200);
-        font-weight: 500;
-        font-family: "Courier New", monospace;
-        font-size: 0.9em;
+      .vocab-left {
+        flex-shrink: 0;
+        
+        .vocab-id {
+          color: rgb(200, 200, 200);
+          font-weight: 500;
+          font-family: "Courier New", monospace;
+          font-size: 0.9em;
+        }
+      }
+
+      .vocab-right {
+        flex: 1;
+        min-width: 0;
+        text-align: right;
+        
+        .vocab-name {
+          color: rgb(180, 180, 180);
+          font-size: 0.85em;
+          font-weight: 500;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        
+        .vocab-author {
+          color: rgb(140, 140, 140);
+          font-size: 0.75em;
+          margin-top: 0.2em;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        
+        .vocab-loading {
+          color: rgb(140, 140, 140);
+          font-size: 0.8em;
+          font-style: italic;
+        }
       }
 
       .remove-btn {
+        flex-shrink: 0;
         background: transparent;
         color: rgb(255, 120, 120);
         border: 1px solid rgb(120, 60, 60);

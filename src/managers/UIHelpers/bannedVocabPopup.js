@@ -1,4 +1,5 @@
 import { fetchVocabularyContent, showTooltip, startHideTimeout } from "../../vocabularyParser";
+import { fetchVocabularyBasicData } from "../../vocabularyCreation";
 
 export const BannedVocabPopup = {
   popup: null,
@@ -6,9 +7,33 @@ export const BannedVocabPopup = {
   offsetX: 0,
   offsetY: 0,
 
-  get() { try { return JSON.parse(localStorage.bannedVocabularies) || []; } catch { return []; } },
+  get() { 
+    try { 
+      const data = JSON.parse(localStorage.bannedVocabularies) || [];
+      // Handle legacy format (array of strings) by converting to objects
+      return data.map(item => 
+        typeof item === 'string' ? { id: item } : item
+      );
+    } catch { return []; } 
+  },
   save(arr) { localStorage.bannedVocabularies = JSON.stringify(arr); },
-  remove(id) { this.save(this.get().filter(v => v !== id)); this.refresh(); },
+  
+  async fetchAndCacheVocabData(vocabObj) {
+    // If we already have name and author is defined (not empty string), return as is
+    if (vocabObj.name && vocabObj.author) return vocabObj;
+    
+    const data = await fetchVocabularyBasicData(vocabObj.id);
+    if (data) {
+      return { 
+        id: vocabObj.id, 
+        name: data.vocabularyName, 
+        author: data.vocabularyAuthor 
+      };
+    }
+    return vocabObj; // Return original if fetch failed
+  },
+
+  remove(id) { this.save(this.get().filter(v => v.id !== id)); this.refresh(); },
 
   toggleBtnText(selector, tempText, originalTextFn, duration = 1000) {
     const btn = this.popup.querySelector(selector);
@@ -18,7 +43,7 @@ export const BannedVocabPopup = {
   },
 
   async copy() {
-    const ids = this.get().join(',');
+    const ids = this.get().map(v => v.id).join(',');
     try { await navigator.clipboard.writeText(ids); }
     catch { if (document.getSelection && ids) document.getSelection().removeAllRanges(); }
     this.toggleBtnText('.copy-all-btn', 'Скопировано!', () => `Копировать все (${this.get().length})`);
@@ -31,13 +56,13 @@ export const BannedVocabPopup = {
   },
 
   sortAll() {
-    const sorted = this.get().sort((a, b) => parseInt(a) - parseInt(b));
+    const sorted = this.get().sort((a, b) => parseInt(a.id) - parseInt(b.id));
     this.save(sorted);
     this.toggleBtnText('.sort-all-btn', 'Отсортировано!', () => 'Сортировать');
     this.refresh();
   },
 
-  createElements() {
+  async createElements() {
     const v = this.get();
     const container = document.createElement('div');
     container.className = 'banned-vocabularies-popup';
@@ -67,23 +92,60 @@ export const BannedVocabPopup = {
     list.className = 'vocab-list';
 
     if (v.length) {
-      v.forEach(id => {
+      // Fetch vocabulary data for items that don't have it cached
+      const updatedVocabs = await Promise.all(
+        v.map(vocabObj => this.fetchAndCacheVocabData(vocabObj))
+      );
+      
+      // Save updated data back to localStorage
+      this.save(updatedVocabs);
+      
+      updatedVocabs.forEach((vocabObj) => {
         const item = document.createElement('div');
         item.className = 'vocab-item';
-        item.dataset.id = id; // Store id for delegation
+        item.dataset.id = vocabObj.id;
         item.style.cursor = 'pointer';
 
+        const leftSection = document.createElement('div');
+        leftSection.className = 'vocab-left';
+        
         const idSpan = Object.assign(document.createElement('span'), { 
           className: 'vocab-id', 
-          textContent: id 
+          textContent: vocabObj.id 
         });
+        leftSection.appendChild(idSpan);
+
+        const rightSection = document.createElement('div');
+        rightSection.className = 'vocab-right';
+        
+        if (vocabObj.name) {
+          const nameSpan = Object.assign(document.createElement('div'), {
+            className: 'vocab-name',
+            textContent: vocabObj.name
+          });
+          rightSection.appendChild(nameSpan);
+          
+          if (vocabObj.author) {
+            const authorSpan = Object.assign(document.createElement('div'), {
+              className: 'vocab-author',
+              textContent: `Автор: ${vocabObj.author}`
+            });
+            rightSection.appendChild(authorSpan);
+          }
+        } else {
+          const loadingSpan = Object.assign(document.createElement('div'), {
+            className: 'vocab-loading',
+            textContent: 'Не удалось загрузить'
+          });
+          rightSection.appendChild(loadingSpan);
+        }
 
         const removeBtn = Object.assign(document.createElement('button'), {
           className: 'remove-btn',
           textContent: 'Удалить'
         });
 
-        item.append(idSpan, removeBtn);
+        item.append(leftSection, rightSection, removeBtn);
         list.appendChild(item);
       });
 
@@ -131,9 +193,9 @@ export const BannedVocabPopup = {
     return container;
   },
 
-  refresh() {
+  async refresh() {
     if (this.popup) {
-      const newPopup = this.createElements();
+      const newPopup = await this.createElements();
       const parent = this.popup.parentNode;
       const rect = this.popup.getBoundingClientRect();
       parent.replaceChild(newPopup, this.popup);
@@ -143,9 +205,9 @@ export const BannedVocabPopup = {
     }
   },
 
-  show(x = 100, y = 100) {
+  async show(x = 100, y = 100) {
     this.hide();
-    this.popup = this.createElements();
+    this.popup = await this.createElements();
     document.body.appendChild(this.popup);
     this.popup.style.left = x + 'px';
     this.popup.style.top = y + 'px';
