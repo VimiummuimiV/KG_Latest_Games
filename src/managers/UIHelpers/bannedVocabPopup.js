@@ -97,7 +97,7 @@ export const BannedVocabPopup = {
   },
 
   scheduleScrollToBottom() {
-    setTimeout(() => this.scrollToBottom(), 0);
+    requestAnimationFrame(() => this.scrollToBottom());
   },
 
   async createElements() {
