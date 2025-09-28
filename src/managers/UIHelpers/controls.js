@@ -573,10 +573,9 @@ export function createControls(main) {
   });
   createCustomTooltip(
     startRaceBtn, `
-    [Alt + Shift + Enter | Клик] Добавить текущий словарь в Избранные
     [Shift + Enter | Клик] Начать игру
-    [Alt + Enter | Alt + Клик] Заблокировать текущий словарь
-    [Ctrl + Клик] Показать заблокированные словари`
+    [Alt + Shift + Enter | Клик] Добавить текущий словарь в Избранные
+    `
   );
 
   // Start race action function
@@ -747,24 +746,39 @@ export function createControls(main) {
     })();
   }
 
-  // Start latest played or random game when clicking the button
-  // Alt+Shift+Click: add current vocabulary to Избранные
-  // Alt+Click: add current vocabulary to ban list
-  // Ctrl+Click: open banned vocabularies popup
   startRaceBtn.onclick = (e) => {
+    // Alt+Shift+Click: add current vocabulary to Favorites 
     if (e.altKey && e.shiftKey) {
       e.preventDefault();
       addCurrentVocabularyToFavorites();
       return;
+    // Shift+Click: start latest played or random game
+    } else {
+      startRaceAction();
     }
+  };
+
+  const banVocabularyBtn = createElement('span', {
+    className: 'latest-games-ban-vocabulary control-button',
+    innerHTML: icons.slash
+  });
+  createCustomTooltip(
+    banVocabularyBtn, `
+    [Клик] Показать заблокированные словари
+    [Alt + Enter | Alt + Клик] Заблокировать текущий словарь
+    `
+  );
+
+  // Open banned vocabularies popup when clicking the button
+  // Alt+Click: ban current vocabulary
+  banVocabularyBtn.onclick = (e) => {
+    // Alt+Click: ban current vocabulary
     if (e.altKey) {
       e.preventDefault();
       banCurrentVocabulary();
-    } else if (e.ctrlKey) {
-      e.preventDefault();
-      BannedVocabPopup.toggle(e.clientX, e.clientY);
+    // Click: open the banned vocabularies popup
     } else {
-      startRaceAction();
+      BannedVocabPopup.toggle(e.clientX, e.clientY);
     }
   };
 
@@ -797,7 +811,7 @@ export function createControls(main) {
     pinAllBtn, unpinAllBtn, sortBtn, importBtn,
     exportBtn, removeAllBtn, removeUnpinnedBtn,
     dragToggleBtn, descToggleBtn, helpToggleBtn, searchBtn,
-    randomRaceBtn, startRaceBtn
+    randomRaceBtn, startRaceBtn, banVocabularyBtn
   );
 
   return controlsContainer;
