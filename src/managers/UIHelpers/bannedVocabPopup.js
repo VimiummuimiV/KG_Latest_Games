@@ -81,11 +81,11 @@ export const BannedVocabPopup = {
     let textToCopy;
     if (useAlternativeFormat) {
       // Create alternative format: each vocabulary on a new line with author, name, and URL
-      const lines = vocabs.map(v => {
+      const lines = vocabs.map((v, index) => {
         const author = v.author || 'Неизвестный автор';
         const name = v.name || 'Название недоступно';
         const url = `https://klavogonki.ru/vocs/${v.id}/`;
-        return `Автор: ${author}, Словарь: ${name} - ${url}`;
+        return `${index + 1}. Автор: ${author}, Словарь: ${name} - ${url}`;
       });
       textToCopy = lines.join('\n');
     } else {
