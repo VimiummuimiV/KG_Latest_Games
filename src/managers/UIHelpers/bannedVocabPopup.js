@@ -1,5 +1,6 @@
 import { fetchVocabularyContent, showTooltip, startHideTimeout } from "../../vocabularyParser";
 import { fetchVocabularyBasicData } from "../../vocabularyCreation";
+import { createCustomTooltip } from "../../tooltip";
 
 export const BannedVocabPopup = {
   popup: null,
@@ -74,11 +75,31 @@ export const BannedVocabPopup = {
     setTimeout(() => btn.textContent = originalText, duration);
   },
 
-  async copy(vocabsToCopy = null) {
+  async copy(vocabsToCopy = null, useAlternativeFormat = false) {
     const vocabs = vocabsToCopy || this.get();
-    const ids = vocabs.map(v => v.id).join(',');
-    try { await navigator.clipboard.writeText(ids); }
-    catch { if (document.getSelection && ids) document.getSelection().removeAllRanges(); }
+    
+    let textToCopy;
+    if (useAlternativeFormat) {
+      // Create alternative format: each vocabulary on a new line with author, name, and URL
+      const lines = vocabs.map(v => {
+        const author = v.author || 'Неизвестный автор';
+        const name = v.name || 'Название недоступно';
+        const url = `https://klavogonki.ru/vocs/${v.id}/`;
+        return `Автор: ${author}, Словарь: ${name} - ${url}`;
+      });
+      textToCopy = lines.join('\n');
+    } else {
+      // Original format: comma-separated IDs
+      textToCopy = vocabs.map(v => v.id).join(',');
+    }
+    
+    try { 
+      await navigator.clipboard.writeText(textToCopy); 
+    }
+    catch { 
+      // Silent fail if clipboard is not available
+    }
+    
     this.toggleBtnText('.copy-all-btn', 'Скопировано!', () => `Копировать все (${vocabs.length})`);
   },
 
@@ -163,9 +184,17 @@ export const BannedVocabPopup = {
 
     const actions = document.createElement('div');
     actions.className = 'popup-actions';
+    
     const copyBtn = Object.assign(document.createElement('button'), {
-      className: 'copy-all-btn', textContent: `Копировать все (${v.length})`, disabled: !v.length, onclick: () => this.copy()
+      className: 'copy-all-btn', 
+      textContent: `Копировать все (${v.length})`, 
+      disabled: !v.length,
     });
+    createCustomTooltip(copyBtn,
+      `[Клик] копировать ID через запятую
+      [Shift + Клик] Копировать в расширенном формате с авторами, названиями и ссылками`
+    );
+    
     const removeAllBtn = Object.assign(document.createElement('button'), {
       className: 'remove-all-btn', textContent: 'Удалить всё', disabled: !v.length, onclick: () => this.removeAll()
     });
@@ -282,8 +311,11 @@ export const BannedVocabPopup = {
         this.scheduleScrollToBottom();
       };
 
-      // Update copy button to use current filtered results
-      copyBtn.onclick = () => this.copy(currentFilteredVocabs);
+      // Update copy button to handle both normal and shift+click
+      copyBtn.addEventListener('click', (e) => {
+        const useAlternativeFormat = e.shiftKey;
+        this.copy(currentFilteredVocabs, useAlternativeFormat);
+      });
 
       const applyFilters = () => {
         const filteredVocabs = this.filterVocabs(updatedVocabs, searchInput.value, currentStatusFilter);
