@@ -30,15 +30,24 @@ export const BannedVocabPopup = {
     }
   },
 
-  filterVocabs(vocabs, searchTerm) {
-    if (!searchTerm.trim()) return vocabs;
-    
-    const term = searchTerm.toLowerCase().trim();
-    return vocabs.filter(vocab => 
-      vocab.id.toLowerCase().includes(term) ||
-      (vocab.name && vocab.name.toLowerCase().includes(term)) ||
-      (vocab.author && vocab.author.toLowerCase().includes(term))
-    );
+  filterVocabs(vocabs, searchTerm, statusFilter = 'all') {
+    let filtered = vocabs;
+
+    // Apply status filter
+    if (statusFilter === 'new') filtered = filtered.filter(vocab => vocab.isNew);
+    else if (statusFilter === 'old') filtered = filtered.filter(vocab => !vocab.isNew);
+
+    // Apply search filter
+    if (searchTerm?.trim()) {
+      const term = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(vocab => 
+        vocab.id.toLowerCase().includes(term) ||
+        (vocab.name && vocab.name.toLowerCase().includes(term)) ||
+        (vocab.author && vocab.author.toLowerCase().includes(term))
+      );
+    }
+
+    return filtered;
   },
   
   async fetchAndCacheVocabData(vocabObj) {
@@ -100,6 +109,46 @@ export const BannedVocabPopup = {
     requestAnimationFrame(() => this.scrollToBottom());
   },
 
+  createSearchAndFilterSection() {
+    const searchSection = document.createElement('div');
+    searchSection.className = 'popup-search-filters';
+
+    // Search input
+    const searchInput = Object.assign(document.createElement('input'), {
+      type: 'text',
+      placeholder: 'Поиск по ID, названию или автору...',
+      className: 'search-input'
+    });
+
+    // Filter buttons container
+    const filterContainer = document.createElement('div');
+    filterContainer.className = 'filter-buttons';
+
+    // Create filter buttons
+    const allBtn = Object.assign(document.createElement('button'), {
+      className: 'filter-btn active',
+      textContent: 'Все'
+    });
+    allBtn.setAttribute('data-filter', 'all');
+
+    const newBtn = Object.assign(document.createElement('button'), {
+      className: 'filter-btn',
+      textContent: 'Новые'
+    });
+    newBtn.setAttribute('data-filter', 'new');
+
+    const oldBtn = Object.assign(document.createElement('button'), {
+      className: 'filter-btn',
+      textContent: 'Старые'
+    });
+    oldBtn.setAttribute('data-filter', 'old');
+
+    filterContainer.append(allBtn, newBtn, oldBtn);
+    searchSection.append(searchInput, filterContainer);
+
+    return { searchSection, searchInput, filterContainer };
+  },
+
   async createElements() {
     const v = this.get();
     const container = document.createElement('div');
@@ -126,15 +175,8 @@ export const BannedVocabPopup = {
     actions.append(copyBtn, removeAllBtn, sortBtn);
     container.appendChild(actions);
 
-    // Add search section
-    const searchSection = document.createElement('div');
-    searchSection.className = 'popup-search';
-    const searchInput = Object.assign(document.createElement('input'), {
-      type: 'text',
-      placeholder: 'Поиск по ID, названию или автору...',
-      className: 'search-input'
-    });
-    searchSection.appendChild(searchInput);
+    // Search and filter section
+    const { searchSection, searchInput, filterContainer } = this.createSearchAndFilterSection();
     container.appendChild(searchSection);
 
     const list = document.createElement('div');
@@ -150,10 +192,24 @@ export const BannedVocabPopup = {
       this.save(updatedVocabs);
       
       let currentFilteredVocabs = updatedVocabs; // Track currently displayed vocabularies
+      let currentStatusFilter = 'all'; // Track current filter
       
       const updateCopyButton = (vocabCount) => {
         copyBtn.textContent = `Копировать все (${vocabCount})`;
         copyBtn.disabled = vocabCount === 0;
+      };
+      
+      const updateFilterButtonCounts = () => {
+        const allBtn = filterContainer.querySelector('[data-filter="all"]');
+        const newBtn = filterContainer.querySelector('[data-filter="new"]');
+        const oldBtn = filterContainer.querySelector('[data-filter="old"]');
+        
+        const newCount = updatedVocabs.filter(v => v.isNew).length;
+        const oldCount = updatedVocabs.filter(v => !v.isNew).length;
+        
+        allBtn.textContent = `Все (${updatedVocabs.length})`;
+        newBtn.textContent = `Новые (${newCount})`;
+        oldBtn.textContent = `Старые (${oldCount})`;
       };
       
       const renderVocabs = (vocabsToRender) => {
@@ -229,13 +285,31 @@ export const BannedVocabPopup = {
       // Update copy button to use current filtered results
       copyBtn.onclick = () => this.copy(currentFilteredVocabs);
 
-      // Initial render with all vocabularies
+      const applyFilters = () => {
+        const filteredVocabs = this.filterVocabs(updatedVocabs, searchInput.value, currentStatusFilter);
+        renderVocabs(filteredVocabs);
+      };
+
+      // Initial render with all vocabularies and update filter button counts
+      updateFilterButtonCounts();
       renderVocabs(updatedVocabs);
 
       // Add search functionality
-      searchInput.addEventListener('input', (e) => {
-        const filteredVocabs = this.filterVocabs(updatedVocabs, e.target.value);
-        renderVocabs(filteredVocabs);
+      searchInput.addEventListener('input', applyFilters);
+
+      // Add filter button functionality
+      filterContainer.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('filter-btn')) return;
+        
+        // Update active button
+        filterContainer.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+        
+        // Update current filter
+        currentStatusFilter = e.target.dataset.filter;
+        
+        // Apply filters
+        applyFilters();
       });
 
       // delegated handler (only one for the whole list)
