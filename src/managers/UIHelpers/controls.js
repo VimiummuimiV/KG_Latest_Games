@@ -668,7 +668,7 @@ export function createControls(main) {
 
       // Add to BannedVocabPopup's enhanced storage
       const updatedList = [...existing, vocabToAdd];
-      BannedVocabPopup.save(updatedList);
+      BannedVocabPopup.save(updatedList, false); // prevent save with backup key creation
 
       alert(`✔️ Словарь ${currentVocabId} добавлен в чёрный список`);
       
