@@ -73,6 +73,7 @@ export const BannedVocabPopup = {
     // Apply status filter
     if (statusFilter === 'new') filtered = filtered.filter(vocab => vocab.isNew);
     else if (statusFilter === 'old') filtered = filtered.filter(vocab => !vocab.isNew);
+    else if (statusFilter === 'unavailable') filtered = filtered.filter(vocab => !vocab.name);
 
     // Apply search filter
     if (searchTerm?.trim()) {
@@ -87,9 +88,9 @@ export const BannedVocabPopup = {
     return filtered;
   },
   
-  async fetchAndCacheVocabData(vocabObj) {
-    // If we already have name and author is defined (not empty string), return as is
-    if (vocabObj.name && vocabObj.author) return vocabObj;
+  async fetchAndCacheVocabData(vocabObj, forceRefetch = false) {
+    // If we already have name and author is defined (not empty string) and not forcing refetch, return as is
+    if (!forceRefetch && vocabObj.name && vocabObj.author) return vocabObj;
     
     const data = await fetchVocabularyBasicData(vocabObj.id);
     if (data) {
@@ -99,7 +100,8 @@ export const BannedVocabPopup = {
         author: data.vocabularyAuthor 
       };
     }
-    return vocabObj; // Return original if fetch failed
+    // Mark as unavailable if fetch failed
+    return { ...vocabObj, name: null, author: null };
   },
 
   remove(id) { this.save(this.get().filter(v => v.id !== id)); this.refresh(); },
@@ -151,6 +153,20 @@ export const BannedVocabPopup = {
     this.save(sorted);
     this.toggleBtnText('.sort-all-btn', 'Отсортировано!', () => 'Сортировать');
     this.refresh();
+  },
+  
+  async forceFetchAll() {
+    const vocabs = this.get();
+    this.toggleBtnText('.force-fetch-btn', 'Обновление...', () => 'Обновить все');
+    
+    // Force refetch all vocabularies
+    const updatedVocabs = await Promise.all(
+      vocabs.map(vocabObj => this.fetchAndCacheVocabData(vocabObj, true))
+    );
+    
+    this.save(updatedVocabs, false);
+    this.toggleBtnText('.force-fetch-btn', 'Обновлено!', () => 'Обновить все');
+    await this.refresh();
   },
   
   async handleSave() {
@@ -212,7 +228,13 @@ export const BannedVocabPopup = {
     });
     oldBtn.setAttribute('data-filter', 'old');
 
-    filterContainer.append(allBtn, newBtn, oldBtn);
+    const unavailableBtn = Object.assign(document.createElement('button'), {
+      className: 'filter-btn',
+      textContent: 'Недоступные'
+    });
+    unavailableBtn.setAttribute('data-filter', 'unavailable');
+
+    filterContainer.append(allBtn, newBtn, oldBtn, unavailableBtn);
     searchSection.append(searchInput, filterContainer);
 
     return { searchSection, searchInput, filterContainer };
@@ -246,11 +268,19 @@ export const BannedVocabPopup = {
     const removeAllBtn = Object.assign(document.createElement('button'), {
       className: 'remove-all-btn', textContent: 'Удалить всё', disabled: !v.length, onclick: () => this.removeAll()
     });
+    createCustomTooltip(removeAllBtn, 'Удалить все заблокированные словари');
+
     const sortBtn = Object.assign(document.createElement('button'), {
       className: 'sort-all-btn', textContent: 'Сортировать', disabled: !v.length, onclick: () => this.sortAll()
     });
+    createCustomTooltip(sortBtn, 'Сортировать по возрастанию ID и снять статус "новый"');
     
-    actions.append(copyBtn, removeAllBtn, sortBtn);
+    const forceFetchBtn = Object.assign(document.createElement('button'), {
+      className: 'force-fetch-btn', textContent: 'Обновить все', disabled: !v.length, onclick: () => this.forceFetchAll()
+    });
+    createCustomTooltip(forceFetchBtn, 'Принудительно обновить информацию о всех словарях');
+    
+    actions.append(copyBtn, removeAllBtn, sortBtn, forceFetchBtn);
     
     // Save/Revert buttons (only show if there are unsaved changes)
     if (this.hasUnsavedChanges) {
@@ -301,13 +331,16 @@ export const BannedVocabPopup = {
         const allBtn = filterContainer.querySelector('[data-filter="all"]');
         const newBtn = filterContainer.querySelector('[data-filter="new"]');
         const oldBtn = filterContainer.querySelector('[data-filter="old"]');
+        const unavailableBtn = filterContainer.querySelector('[data-filter="unavailable"]');
         
         const newCount = updatedVocabs.filter(v => v.isNew).length;
         const oldCount = updatedVocabs.filter(v => !v.isNew).length;
+        const unavailableCount = updatedVocabs.filter(v => !v.name).length;
         
         allBtn.textContent = `Все (${updatedVocabs.length})`;
         newBtn.textContent = `Новые (${newCount})`;
         oldBtn.textContent = `Старые (${oldCount})`;
+        unavailableBtn.textContent = `Недоступные (${unavailableCount})`;
       };
       
       const renderVocabs = (vocabsToRender) => {

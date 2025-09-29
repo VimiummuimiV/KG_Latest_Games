@@ -41,6 +41,7 @@
     .copy-all-btn,
     .remove-all-btn,
     .sort-all-btn,
+    .force-fetch-btn,
     .save-btn,
     .revert-btn {
       background: rgb(40, 40, 40);
@@ -96,6 +97,21 @@
 
       &:active:not(:disabled) {
         background: rgb(40, 100, 40);
+      }
+    }
+    
+    .force-fetch-btn {
+      color: rgb(255, 200, 100);
+      border-color: rgb(140, 120, 60);
+
+      &:hover:not(:disabled) {
+        background: rgb(140, 120, 60);
+        color: white;
+        border-color: rgb(160, 140, 80);
+      }
+
+      &:active:not(:disabled) {
+        background: rgb(120, 100, 40);
       }
     }
     
