@@ -1,14 +1,14 @@
 .banned-vocabularies-popup {
   position: fixed;
-  background: rgb(22, 22, 22);
-  color: rgb(222, 222, 222);
+  background: var(--rg-bg-primary);
+  color: var(--rg-text-primary);
   padding: 1em;
   z-index: 1200;
   font-size: 0.9em;
   font-family: "Montserrat", "Noto Color Emoji", sans-serif !important;
   pointer-events: auto;
   white-space: nowrap;
-  border: 1px solid rgb(60, 60, 60) !important;
+  border: 1px solid var(--rg-border-primary) !important;
   border-radius: 4px !important;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3) !important;
   min-width: 300px;
@@ -16,14 +16,14 @@
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
-  scrollbar-color: rgb(140, 140, 140) rgb(22, 22, 22);
+  scrollbar-color: var(--rg-border-hover) var(--rg-bg-primary);
 
   .popup-header {
     font-weight: 600 !important;
-    color: rgb(222, 222, 222) !important;
+    color: var(--rg-text-primary) !important;
     margin-bottom: 0.8em !important;
     padding-bottom: 0.5em;
-    border-bottom: 1px solid rgb(60, 60, 60);
+    border-bottom: 1px solid var(--rg-border-primary);
     font-size: 1.1em;
     position: relative;
   }
@@ -34,7 +34,7 @@
     align-items: center;
     margin-bottom: 0.8em;
     padding-bottom: 0.5em;
-    border-bottom: 1px solid rgb(60, 60, 60);
+    border-bottom: 1px solid var(--rg-border-primary);
     gap: 0.5em;
     flex-wrap: wrap;
 
@@ -44,9 +44,7 @@
     .force-fetch-btn,
     .save-btn,
     .revert-btn {
-      background: rgb(40, 40, 40);
-      color: lightblue;
-      border: 1px solid rgb(80, 80, 80);
+      background: var(--rg-bg-card);
       border-radius: 3px !important;
       padding: 0.4em 0.8em;
       font-size: 0.85em;
@@ -55,97 +53,97 @@
       transition: all 0.2s ease;
       font-family: inherit;
 
-      &:hover {
-        background: rgb(50, 50, 50);
-        border-color: rgb(100, 100, 100);
-      }
-
-      &:active {
-        background: rgb(30, 30, 30);
-      }
-
       &:disabled {
         opacity: 0.5;
         cursor: not-allowed;
       }
     }
 
+    .copy-all-btn {
+      color: hsl(var(--rg-popup-btn-copy));
+      border: 1px solid hsla(var(--rg-popup-btn-copy) / 0.5);
+
+      &:hover {
+        background: hsla(var(--rg-popup-btn-copy) / 0.15);
+        border-color: hsl(var(--rg-popup-btn-copy));
+      }
+
+      &:active {
+        background: hsla(var(--rg-popup-btn-copy) / 0.25);
+      }
+    }
+
     .remove-all-btn {
-      color: rgb(255, 120, 120);
-      border-color: rgb(120, 60, 60);
+      color: hsl(var(--rg-popup-btn-remove));
+      border: 1px solid hsla(var(--rg-popup-btn-remove) / 0.5);
 
       &:hover:not(:disabled) {
-        background: rgb(120, 60, 60);
-        color: white;
-        border-color: rgb(150, 80, 80);
+        background: hsla(var(--rg-popup-btn-remove) / 0.15);
+        border-color: hsl(var(--rg-popup-btn-remove));
       }
 
       &:active:not(:disabled) {
-        background: rgb(100, 40, 40);
+        background: hsla(var(--rg-popup-btn-remove) / 0.25);
       }
     }
 
     .sort-all-btn {
-      color: rgb(120, 255, 120);
-      border-color: rgb(60, 120, 60);
+      color: hsl(var(--rg-popup-btn-sort));
+      border: 1px solid hsla(var(--rg-popup-btn-sort) / 0.5);
 
       &:hover:not(:disabled) {
-        background: rgb(60, 120, 60);
-        color: white;
-        border-color: rgb(80, 150, 80);
+        background: hsla(var(--rg-popup-btn-sort) / 0.15);
+        border-color: hsl(var(--rg-popup-btn-sort));
       }
 
       &:active:not(:disabled) {
-        background: rgb(40, 100, 40);
+        background: hsla(var(--rg-popup-btn-sort) / 0.25);
       }
     }
     
     .force-fetch-btn {
-      color: rgb(255, 200, 100);
-      border-color: rgb(140, 120, 60);
+      color: hsl(var(--rg-popup-btn-fetch));
+      border: 1px solid hsla(var(--rg-popup-btn-fetch) / 0.5);
 
       &:hover:not(:disabled) {
-        background: rgb(140, 120, 60);
-        color: white;
-        border-color: rgb(160, 140, 80);
+        background: hsla(var(--rg-popup-btn-fetch) / 0.15);
+        border-color: hsl(var(--rg-popup-btn-fetch));
       }
 
       &:active:not(:disabled) {
-        background: rgb(120, 100, 40);
+        background: hsla(var(--rg-popup-btn-fetch) / 0.25);
       }
     }
     
     .save-btn {
-      color: rgb(100, 220, 255);
-      border-color: rgb(60, 100, 140);
+      color: hsl(var(--rg-popup-btn-save));
+      border: 1px solid hsla(var(--rg-popup-btn-save) / 0.5);
       font-weight: 600;
-      box-shadow: 0 0 8px rgba(100, 220, 255, 0.3);
+      box-shadow: 0 0 8px hsla(var(--rg-popup-btn-save) / 0.3);
 
       &:hover:not(:disabled) {
-        background: rgb(60, 100, 140);
-        color: white;
-        border-color: rgb(80, 120, 160);
-        box-shadow: 0 0 12px rgba(100, 220, 255, 0.5);
+        background: hsla(var(--rg-popup-btn-save) / 0.15);
+        border-color: hsl(var(--rg-popup-btn-save));
+        box-shadow: 0 0 12px hsla(var(--rg-popup-btn-save) / 0.5);
       }
 
       &:active:not(:disabled) {
-        background: rgb(50, 90, 130);
-        box-shadow: 0 0 6px rgba(100, 220, 255, 0.4);
+        background: hsla(var(--rg-popup-btn-save) / 0.25);
+        box-shadow: 0 0 6px hsla(var(--rg-popup-btn-save) / 0.4);
       }
     }
     
     .revert-btn {
-      color: rgb(255, 180, 100);
-      border-color: rgb(140, 100, 60);
+      color: hsl(var(--rg-popup-btn-revert));
+      border: 1px solid hsla(var(--rg-popup-btn-revert) / 0.5);
 
       &:hover:not(:disabled) {
-        background: rgb(140, 100, 60);
-        color: white;
-        border-color: rgb(160, 120, 80);
+        background: hsla(var(--rg-popup-btn-revert) / 0.15);
+        border-color: hsl(var(--rg-popup-btn-revert));
       }
 
       &:active:not(:disabled) {
-        background: rgb(120, 80, 40);
+        background: hsla(var(--rg-popup-btn-revert) / 0.25);
       }
     }
   }
@@ -154,16 +152,16 @@
   .popup-search-filters {
     padding: 0.5em 0;
     margin-bottom: 0.5em;
-    border-bottom: 1px solid rgb(60, 60, 60);
+    border-bottom: 1px solid var(--rg-border-primary);
     display: flex;
     flex-direction: column;
     gap: 0.6em;
 
     .search-input {
       width: 100%;
-      background: rgb(30, 30, 30);
-      color: rgb(200, 200, 200);
-      border: 1px solid rgb(60, 60, 60);
+      background: var(--rg-bg-card);
+      color: var(--rg-text-primary);
+      border: 1px solid var(--rg-border-primary);
       border-radius: 3px !important;
       padding: 0.5em 0.7em;
       font-size: 0.85em;
@@ -172,12 +170,12 @@
 
       &:focus {
         outline: none;
-        border-color: rgb(100, 100, 100);
-        background: rgb(35, 35, 35);
+        border-color: var(--rg-border-hover);
+        background: var(--rg-bg-hover);
       }
 
       &::placeholder {
-        color: rgb(120, 120, 120);
+        color: var(--rg-text-tertiary);
         font-style: italic;
       }
     }
@@ -189,9 +187,9 @@
       flex-wrap: wrap;
 
       .filter-btn {
-        background: rgb(35, 35, 35);
-        color: rgb(180, 180, 180);
-        border: 1px solid rgb(70, 70, 70);
+        background: var(--rg-bg-card);
+        color: var(--rg-text-secondary);
+        border: 1px solid var(--rg-border-primary);
         border-radius: 3px !important;
         padding: 0.35em 0.7em;
         font-size: 0.8em;
@@ -202,30 +200,30 @@
         white-space: nowrap;
 
         &:hover {
-          background: rgb(45, 45, 45);
-          border-color: rgb(90, 90, 90);
-          color: rgb(220, 220, 220);
+          background: var(--rg-bg-hover);
+          border-color: var(--rg-border-hover);
+          color: var(--rg-text-primary);
         }
 
         &:active {
-          background: rgb(25, 25, 25);
+          background: var(--rg-bg-secondary);
           transform: translateY(1px);
         }
 
         // Active/selected state
         &.active {
-          background: rgb(60, 100, 140) !important;
-          color: white !important;
-          border-color: rgb(80, 120, 160) !important;
-          box-shadow: 0 1px 3px rgba(60, 100, 140, 0.3);
+          background: hsl(var(--rg-popup-btn-save)) !important;
+          color: var(--rg-bg-primary) !important;
+          border-color: hsl(var(--rg-popup-btn-save)) !important;
+          box-shadow: 0 1px 3px hsla(var(--rg-popup-btn-save) / 0.3);
 
           &:hover {
-            background: rgb(70, 110, 150) !important;
-            border-color: rgb(90, 130, 170) !important;
+            background: hsla(var(--rg-popup-btn-save) / 0.9) !important;
+            border-color: hsl(var(--rg-popup-btn-save)) !important;
           }
 
           &:active {
-            background: rgb(50, 90, 130) !important;
+            background: hsla(var(--rg-popup-btn-save) / 0.8) !important;
             transform: translateY(1px);
           }
         }
@@ -246,25 +244,25 @@
       justify-content: space-between;
       align-items: center;
       padding: 0.4em 0.6em;
-      background: rgb(30, 30, 30);
-      border: 1px solid rgb(50, 50, 50);
+      background: var(--rg-bg-card);
+      border: 1px solid var(--rg-border-primary);
       border-radius: 3px !important;
       transition: all 0.2s ease;
       gap: 0.8em;
 
       &:hover {
-        background: rgb(35, 35, 35);
-        border-color: rgb(70, 70, 70);
+        background: var(--rg-bg-hover);
+        border-color: var(--rg-border-hover);
       }
 
       // Highlighting for newly added vocabularies
       &.vocab-item-new {
-        background: rgb(30, 45, 30) !important; // Subtle green tint
-        border: 1px solid rgb(60, 120, 60) !important; // Green border
+        background: hsla(var(--rg-popup-item-new) / 0.15) !important;
+        border: 1px solid hsla(var(--rg-popup-item-new) / 0.6) !important;
 
         &:hover {
-          background: rgb(35, 50, 35) !important;
-          border-color: rgb(80, 150, 80) !important;
+          background: hsla(var(--rg-popup-item-new) / 0.25) !important;
+          border-color: hsl(var(--rg-popup-item-new)) !important;
         }
       }
 
@@ -272,7 +270,7 @@
         flex-shrink: 0;
         
         .vocab-id {
-          color: rgb(200, 200, 200);
+          color: var(--rg-text-primary);
           font-weight: 500;
           font-family: "Courier New", monospace;
           font-size: 0.9em;
@@ -285,7 +283,7 @@
         text-align: right;
         
         .vocab-name {
-          color: rgb(180, 180, 180);
+          color: var(--rg-text-secondary);
           font-size: 0.85em;
           font-weight: 500;
           white-space: nowrap;
@@ -294,7 +292,7 @@
         }
         
         .vocab-author {
-          color: rgb(140, 140, 140);
+          color: var(--rg-text-tertiary);
           font-size: 0.75em;
           margin-top: 0.2em;
           white-space: nowrap;
@@ -303,7 +301,7 @@
         }
         
         .vocab-loading {
-          color: rgb(240, 200, 100);
+          color: hsl(var(--rg-popup-btn-fetch));
           font-size: 0.8em;
           font-style: italic;
         }
@@ -312,8 +310,8 @@
       .remove-btn {
         flex-shrink: 0;
         background: transparent;
-        color: rgb(255, 120, 120);
-        border: 1px solid rgb(120, 60, 60);
+        color: hsl(var(--rg-popup-btn-remove));
+        border: 1px solid hsla(var(--rg-popup-btn-remove) / 0.5);
         border-radius: 3px !important;
         padding: 0.2em 0.5em;
         font-size: 0.8em;
@@ -324,13 +322,13 @@
         min-width: 60px;
 
         &:hover {
-          background: rgb(120, 60, 60);
-          color: white;
-          border-color: rgb(150, 80, 80);
+          background: hsla(var(--rg-popup-btn-remove) / 0.15);
+          color: hsl(var(--rg-popup-btn-remove));
+          border-color: hsl(var(--rg-popup-btn-remove));
         }
 
         &:active {
-          background: rgb(100, 40, 40);
+          background: hsla(var(--rg-popup-btn-remove) / 0.25);
         }
       }
     }
@@ -338,26 +336,26 @@
 
   .empty-state {
     text-align: center;
-    color: rgb(140, 140, 140);
+    color: var(--rg-text-tertiary);
     font-style: italic;
     padding: 1em 0;
   }
 
-  // WebKit browsers (Chrome, Safari, Edge)
+// WebKit browsers (Chrome, Safari, Edge)
   &::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
   &::-webkit-scrollbar-track {
-    background: rgb(22, 22, 22) !important;
+    background: var(--rg-bg-primary) !important;
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: rgb(140, 140, 140) !important;
+    background-color: var(--rg-border-hover) !important;
 
     &:hover {
-      background-color: rgb(160, 160, 160) !important;
+      background-color: var(--rg-text-secondary) !important;
     }
   }
 
@@ -366,15 +364,15 @@
   }
 
   .vocab-list::-webkit-scrollbar-track {
-    background: rgb(30, 30, 30) !important;
+    background: var(--rg-bg-card) !important;
   }
 
   .vocab-list::-webkit-scrollbar-thumb {
-    background-color: rgb(100, 100, 100) !important;
+    background-color: var(--rg-border-hover) !important;
     border-radius: 3px;
 
     &:hover {
-      background-color: rgb(120, 120, 120) !important;
+      background-color: var(--rg-text-secondary) !important;
     }
   }
 }

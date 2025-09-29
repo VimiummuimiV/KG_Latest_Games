@@ -76,4 +76,12 @@ $lightTheme: (
   "--rg-rank-slider-range": hsl(215, 80%, 80%),
   "--rg-rank-slider-handle-bg": hsl(215, 80%, 95%),
   "--rg-rank-slider-border-focus": hsl(215, 80%, 60%),
+  // Banned Vocab Popup - button colors only
+  "--rg-popup-btn-copy": 215 75% 45%,
+  "--rg-popup-btn-remove": 4 90% 45%,
+  "--rg-popup-btn-sort": 130 50% 35%,
+  "--rg-popup-btn-fetch": 40 100% 35%,
+  "--rg-popup-btn-save": 195 75% 40%,
+  "--rg-popup-btn-revert": 30 100% 40%,
+  "--rg-popup-item-new": 120 50% 50%,
 );
