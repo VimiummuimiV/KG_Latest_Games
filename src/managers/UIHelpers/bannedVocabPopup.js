@@ -259,12 +259,14 @@ export const BannedVocabPopup = {
         textContent: 'Сохранить',
         onclick: () => this.handleSave()
       });
+      createCustomTooltip(saveBtn, '[Ctrl + S] Сохранить изменения');
       
       const revertBtn = Object.assign(document.createElement('button'), {
         className: 'revert-btn',
         textContent: 'Отменить',
         onclick: () => this.handleRevert()
       });
+      createCustomTooltip(revertBtn, '[Ctrl + Z] Отменить все изменения');
       
       actions.append(saveBtn, revertBtn);
     }
@@ -500,10 +502,6 @@ export const BannedVocabPopup = {
 
   toggle(x, y) { this.popup ? this.hide() : this.show(x, y); },
 
-  // outside: e => { 
-  //   if (!BannedVocabPopup.popup?.contains(e.target) && !e.target.classList?.contains('remove-btn')) 
-  //     BannedVocabPopup.hide(); 
-  // },
   outside: e => { 
     if (!BannedVocabPopup.popup?.contains(e.target) && e.target.tagName !== 'BUTTON') 
       BannedVocabPopup.hide(); 
