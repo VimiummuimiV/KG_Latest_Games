@@ -156,17 +156,30 @@ export const BannedVocabPopup = {
   },
   
   async forceFetchAll() {
+    const btn = this.popup.querySelector('.force-fetch-btn');
+    btn.textContent = 'Обновление...';
+    btn.disabled = true;
+
     const vocabs = this.get();
-    this.toggleBtnText('.force-fetch-btn', 'Обновление...', () => 'Обновить все');
-    
-    // Force refetch all vocabularies
     const updatedVocabs = await Promise.all(
       vocabs.map(vocabObj => this.fetchAndCacheVocabData(vocabObj, true))
     );
-    
+
+    const availableCount = updatedVocabs.filter(v => v.name).length;
+    const unavailableCount = updatedVocabs.filter(v => !v.name).length;
+
     this.save(updatedVocabs, false);
+
+    btn.disabled = false;
     this.toggleBtnText('.force-fetch-btn', 'Обновлено!', () => 'Обновить все');
     await this.refresh();
+
+    alert(
+      `Обновление завершено!\n\n` +
+      `Всего словарей: ${updatedVocabs.length}\n` +
+      `Доступно: ${availableCount}\n` +
+      `Недоступно: ${unavailableCount}`
+    );
   },
   
   async handleSave() {
@@ -215,24 +228,28 @@ export const BannedVocabPopup = {
       textContent: 'Все'
     });
     allBtn.setAttribute('data-filter', 'all');
+    createCustomTooltip(allBtn, 'Показать все словари');
 
     const newBtn = Object.assign(document.createElement('button'), {
       className: 'filter-btn',
       textContent: 'Новые'
     });
     newBtn.setAttribute('data-filter', 'new');
+    createCustomTooltip(newBtn, 'Показать только новые словари');
 
     const oldBtn = Object.assign(document.createElement('button'), {
       className: 'filter-btn',
       textContent: 'Старые'
     });
     oldBtn.setAttribute('data-filter', 'old');
+    createCustomTooltip(oldBtn, 'Показать только старые словари');
 
     const unavailableBtn = Object.assign(document.createElement('button'), {
       className: 'filter-btn',
       textContent: 'Недоступные'
     });
     unavailableBtn.setAttribute('data-filter', 'unavailable');
+    createCustomTooltip(unavailableBtn, 'Показать только недоступные словари');
 
     filterContainer.append(allBtn, newBtn, oldBtn, unavailableBtn);
     searchSection.append(searchInput, filterContainer);
@@ -268,12 +285,9 @@ export const BannedVocabPopup = {
     const removeAllBtn = Object.assign(document.createElement('button'), {
       className: 'remove-all-btn', textContent: 'Удалить всё', disabled: !v.length, onclick: () => this.removeAll()
     });
-    createCustomTooltip(removeAllBtn, 'Удалить все заблокированные словари');
-
     const sortBtn = Object.assign(document.createElement('button'), {
       className: 'sort-all-btn', textContent: 'Сортировать', disabled: !v.length, onclick: () => this.sortAll()
     });
-    createCustomTooltip(sortBtn, 'Сортировать по возрастанию ID и снять статус "новый"');
     
     const forceFetchBtn = Object.assign(document.createElement('button'), {
       className: 'force-fetch-btn', textContent: 'Обновить все', disabled: !v.length, onclick: () => this.forceFetchAll()
