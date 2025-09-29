@@ -28,10 +28,16 @@ export const BannedVocabPopup = {
     } catch { return []; } 
   },
   
-  save(arr) { 
-    // Save to backup when making changes
-    localStorage['bannedVocabularies*Backup'] = JSON.stringify(arr);
-    this.hasUnsavedChanges = true;
+  save(arr, createBackup = true) { 
+    if (createBackup) {
+      // Save to backup when making changes
+      localStorage['bannedVocabularies*Backup'] = JSON.stringify(arr);
+      this.hasUnsavedChanges = true;
+    } else {
+      // Save enriched data without creating backup
+      const targetKey = this.hasUnsavedChanges ? 'bannedVocabularies*Backup' : 'bannedVocabularies';
+      localStorage[targetKey] = JSON.stringify(arr);
+    }
   },
   
   commitSave() {
@@ -278,8 +284,8 @@ export const BannedVocabPopup = {
         v.map(vocabObj => this.fetchAndCacheVocabData(vocabObj))
       );
       
-      // Save updated data back to localStorage
-      this.save(updatedVocabs);
+      // Save enriched data without creating backup
+      this.save(updatedVocabs, false);
       
       let currentFilteredVocabs = updatedVocabs; // Track currently displayed vocabularies
       let currentStatusFilter = 'all'; // Track current filter
@@ -494,7 +500,11 @@ export const BannedVocabPopup = {
 
   toggle(x, y) { this.popup ? this.hide() : this.show(x, y); },
 
-  outside: e => { if (!BannedVocabPopup.popup?.contains(e.target) && !e.target.classList?.contains('remove-btn')) BannedVocabPopup.hide(); },
+  outside: e => { 
+    if (!BannedVocabPopup.popup?.contains(e.target) && !e.target.classList?.contains('remove-btn')) 
+      BannedVocabPopup.hide(); 
+  },
+  
   keydown: e => {
     if (e.key === 'Escape') {
       BannedVocabPopup.hide();
