@@ -500,8 +500,12 @@ export const BannedVocabPopup = {
 
   toggle(x, y) { this.popup ? this.hide() : this.show(x, y); },
 
+  // outside: e => { 
+  //   if (!BannedVocabPopup.popup?.contains(e.target) && !e.target.classList?.contains('remove-btn')) 
+  //     BannedVocabPopup.hide(); 
+  // },
   outside: e => { 
-    if (!BannedVocabPopup.popup?.contains(e.target) && !e.target.classList?.contains('remove-btn')) 
+    if (!BannedVocabPopup.popup?.contains(e.target) && e.target.tagName !== 'BUTTON') 
       BannedVocabPopup.hide(); 
   },
   
