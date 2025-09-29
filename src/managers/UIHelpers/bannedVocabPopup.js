@@ -113,7 +113,7 @@ export const BannedVocabPopup = {
     setTimeout(() => btn.textContent = originalText, duration);
   },
 
-  async copy(vocabsToCopy = null, useAlternativeFormat = false) {
+  async copy(vocabsToCopy = null, useAlternativeFormat = false, filterType = 'all') {
     const vocabs = vocabsToCopy || this.get();
     
     let textToCopy;
@@ -138,13 +138,47 @@ export const BannedVocabPopup = {
       // Silent fail if clipboard is not available
     }
     
-    this.toggleBtnText('.copy-all-btn', 'Скопировано!', () => `Копировать все (${vocabs.length})`);
+    this.toggleBtnText('.copy-all-btn', 'Скопировано!', () => this.getButtonText('copy', filterType, vocabs.length));
   },
 
-  removeAll() {
-    this.save([]);
-    this.toggleBtnText('.remove-all-btn', 'Удалено!', () => 'Удалить всё');
+  removeAll(filterType = 'all') {
+    const vocabs = this.get();
+    let filtered;
+    
+    if (filterType === 'all') {
+      filtered = [];
+    } else if (filterType === 'new') {
+      filtered = vocabs.filter(v => !v.isNew);
+    } else if (filterType === 'old') {
+      filtered = vocabs.filter(v => v.isNew);
+    } else if (filterType === 'unavailable') {
+      filtered = vocabs.filter(v => v.name);
+    }
+    
+    this.save(filtered);
+    
+    const countToDelete = vocabs.length - filtered.length;
+    this.toggleBtnText('.remove-all-btn', 'Удалено!', () => this.getButtonText('remove', filterType, countToDelete));
     this.refresh();
+  },
+  
+  getButtonText(action, filterType, count) {
+    const filterNames = {
+      'all': 'все',
+      'new': 'новые',
+      'old': 'старые',
+      'unavailable': 'недоступные'
+    };
+    
+    const actionVerbs = {
+      'copy': 'Копировать',
+      'remove': 'Удалить'
+    };
+    
+    const filterName = filterNames[filterType] || 'все';
+    const actionVerb = actionVerbs[action] || '';
+    
+    return `${actionVerb} ${filterName} (${count})`;
   },
 
   sortAll() {
@@ -274,7 +308,7 @@ export const BannedVocabPopup = {
     
     const copyBtn = Object.assign(document.createElement('button'), {
       className: 'copy-all-btn', 
-      textContent: `Копировать все (${v.length})`, 
+      textContent: this.getButtonText('copy', 'all', v.length), 
       disabled: !v.length,
     });
     createCustomTooltip(copyBtn,
@@ -283,14 +317,23 @@ export const BannedVocabPopup = {
     );
     
     const removeAllBtn = Object.assign(document.createElement('button'), {
-      className: 'remove-all-btn', textContent: 'Удалить всё', disabled: !v.length, onclick: () => this.removeAll()
+      className: 'remove-all-btn', 
+      textContent: this.getButtonText('remove', 'all', v.length), 
+      disabled: !v.length
     });
+    
     const sortBtn = Object.assign(document.createElement('button'), {
-      className: 'sort-all-btn', textContent: 'Сортировать', disabled: !v.length, onclick: () => this.sortAll()
+      className: 'sort-all-btn', 
+      textContent: 'Сортировать', 
+      disabled: !v.length, 
+      onclick: () => this.sortAll()
     });
     
     const forceFetchBtn = Object.assign(document.createElement('button'), {
-      className: 'force-fetch-btn', textContent: 'Обновить все', disabled: !v.length, onclick: () => this.forceFetchAll()
+      className: 'force-fetch-btn', 
+      textContent: 'Обновить', 
+      disabled: !v.length, 
+      onclick: () => this.forceFetchAll()
     });
     createCustomTooltip(forceFetchBtn, 'Принудительно обновить информацию о всех словарях');
     
@@ -336,9 +379,17 @@ export const BannedVocabPopup = {
       let currentFilteredVocabs = updatedVocabs; // Track currently displayed vocabularies
       let currentStatusFilter = 'all'; // Track current filter
       
-      const updateCopyButton = (vocabCount) => {
-        copyBtn.textContent = `Копировать все (${vocabCount})`;
-        copyBtn.disabled = vocabCount === 0;
+      const updateButtons = (filterType, filteredVocabs) => {
+        // Get the vocabs that match the filter (not search)
+        const filterOnlyVocabs = this.filterVocabs(updatedVocabs, '', filterType);
+        
+        // Update copy button - count of currently displayed items
+        copyBtn.textContent = this.getButtonText('copy', filterType, filteredVocabs.length);
+        copyBtn.disabled = filteredVocabs.length === 0;
+        
+        // Update remove button - count of items that would be deleted (based on filter, not search)
+        removeAllBtn.textContent = this.getButtonText('remove', filterType, filterOnlyVocabs.length);
+        removeAllBtn.disabled = filterOnlyVocabs.length === 0;
       };
       
       const updateFilterButtonCounts = () => {
@@ -361,7 +412,6 @@ export const BannedVocabPopup = {
         // Clear existing items
         list.innerHTML = '';
         currentFilteredVocabs = vocabsToRender; // Update the current filtered list
-        updateCopyButton(vocabsToRender.length); // Update copy button text
         
         if (vocabsToRender.length === 0) {
           const noResults = document.createElement('div');
@@ -427,20 +477,24 @@ export const BannedVocabPopup = {
         this.scheduleScrollToBottom();
       };
 
-      // Update copy button to handle both normal and shift+click
-      copyBtn.addEventListener('click', (e) => {
-        const useAlternativeFormat = e.shiftKey;
-        this.copy(currentFilteredVocabs, useAlternativeFormat);
-      });
-
       const applyFilters = () => {
         const filteredVocabs = this.filterVocabs(updatedVocabs, searchInput.value, currentStatusFilter);
         renderVocabs(filteredVocabs);
+        updateButtons(currentStatusFilter, filteredVocabs);
       };
 
       // Initial render with all vocabularies and update filter button counts
       updateFilterButtonCounts();
       renderVocabs(updatedVocabs);
+      updateButtons(currentStatusFilter, currentFilteredVocabs);
+
+      // Add event listeners for buttons
+      copyBtn.addEventListener('click', (e) => {
+        const useAlternativeFormat = e.shiftKey;
+        this.copy(currentFilteredVocabs, useAlternativeFormat, currentStatusFilter);
+      });
+
+      removeAllBtn.addEventListener('click', () => this.removeAll(currentStatusFilter));
 
       // Add search functionality
       searchInput.addEventListener('input', applyFilters);
