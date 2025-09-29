@@ -25,6 +25,7 @@
     padding-bottom: 0.5em;
     border-bottom: 1px solid rgb(60, 60, 60);
     font-size: 1.1em;
+    position: relative;
   }
 
   .popup-actions {
@@ -39,7 +40,9 @@
 
     .copy-all-btn,
     .remove-all-btn,
-    .sort-all-btn {
+    .sort-all-btn,
+    .save-btn,
+    .revert-btn {
       background: rgb(40, 40, 40);
       color: lightblue;
       border: 1px solid rgb(80, 80, 80);
@@ -93,6 +96,40 @@
 
       &:active:not(:disabled) {
         background: rgb(40, 100, 40);
+      }
+    }
+    
+    .save-btn {
+      color: rgb(100, 220, 255);
+      border-color: rgb(60, 100, 140);
+      font-weight: 600;
+      box-shadow: 0 0 8px rgba(100, 220, 255, 0.3);
+
+      &:hover:not(:disabled) {
+        background: rgb(60, 100, 140);
+        color: white;
+        border-color: rgb(80, 120, 160);
+        box-shadow: 0 0 12px rgba(100, 220, 255, 0.5);
+      }
+
+      &:active:not(:disabled) {
+        background: rgb(50, 90, 130);
+        box-shadow: 0 0 6px rgba(100, 220, 255, 0.4);
+      }
+    }
+    
+    .revert-btn {
+      color: rgb(255, 180, 100);
+      border-color: rgb(140, 100, 60);
+
+      &:hover:not(:disabled) {
+        background: rgb(140, 100, 60);
+        color: white;
+        border-color: rgb(160, 120, 80);
+      }
+
+      &:active:not(:disabled) {
+        background: rgb(120, 80, 40);
       }
     }
   }

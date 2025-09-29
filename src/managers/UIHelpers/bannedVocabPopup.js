@@ -7,10 +7,20 @@ export const BannedVocabPopup = {
   isDragging: false,
   offsetX: 0,
   offsetY: 0,
+  hasUnsavedChanges: false,
 
   get() { 
-    try { 
-      const data = JSON.parse(localStorage.bannedVocabularies) || [];
+    try {
+      // If backup exists, load from backup (unsaved changes)
+      const backupKey = 'bannedVocabularies*Backup';
+      const mainKey = 'bannedVocabularies';
+      
+      const source = localStorage[backupKey] ? backupKey : mainKey;
+      const data = JSON.parse(localStorage[source]) || [];
+      
+      // Set unsaved flag if we're loading from backup
+      this.hasUnsavedChanges = source === backupKey;
+      
       // Handle legacy format (array of strings) by converting to objects
       return data.map(item => 
         typeof item === 'string' ? { id: item, isNew: false } : { ...item, isNew: item.isNew || false }
@@ -18,7 +28,27 @@ export const BannedVocabPopup = {
     } catch { return []; } 
   },
   
-  save(arr) { localStorage.bannedVocabularies = JSON.stringify(arr); },
+  save(arr) { 
+    // Save to backup when making changes
+    localStorage['bannedVocabularies*Backup'] = JSON.stringify(arr);
+    this.hasUnsavedChanges = true;
+  },
+  
+  commitSave() {
+    // Move backup to main storage
+    const backup = localStorage['bannedVocabularies*Backup'];
+    if (backup) {
+      localStorage.bannedVocabularies = backup;
+      delete localStorage['bannedVocabularies*Backup'];
+    }
+    this.hasUnsavedChanges = false;
+  },
+  
+  revertChanges() {
+    // Discard backup, reload from main
+    delete localStorage['bannedVocabularies*Backup'];
+    this.hasUnsavedChanges = false;
+  },
 
   // Method to add a new vocabulary (should be called when adding vocabularies)
   add(vocabularyId) {
@@ -116,6 +146,18 @@ export const BannedVocabPopup = {
     this.toggleBtnText('.sort-all-btn', 'Отсортировано!', () => 'Сортировать');
     this.refresh();
   },
+  
+  async handleSave() {
+    this.commitSave();
+    this.toggleBtnText('.save-btn', 'Сохранено!', () => 'Сохранить');
+    await this.refresh();
+  },
+  
+  async handleRevert() {
+    this.revertChanges();
+    this.toggleBtnText('.revert-btn', 'Отменено!', () => 'Отменить');
+    await this.refresh();
+  },
 
   scrollToBottom() {
     if (this.popup) {
@@ -177,7 +219,7 @@ export const BannedVocabPopup = {
 
     const header = document.createElement('div');
     header.className = 'popup-header';
-    header.textContent = 'Заблокированные словари';
+    header.textContent = this.hasUnsavedChanges ? 'Заблокированные словари *' : 'Заблокированные словари';
     header.style.cursor = 'move';
     header.addEventListener('mousedown', (e) => this.startDrag(e));
     container.appendChild(header);
@@ -201,7 +243,26 @@ export const BannedVocabPopup = {
     const sortBtn = Object.assign(document.createElement('button'), {
       className: 'sort-all-btn', textContent: 'Сортировать', disabled: !v.length, onclick: () => this.sortAll()
     });
+    
     actions.append(copyBtn, removeAllBtn, sortBtn);
+    
+    // Save/Revert buttons (only show if there are unsaved changes)
+    if (this.hasUnsavedChanges) {
+      const saveBtn = Object.assign(document.createElement('button'), {
+        className: 'save-btn',
+        textContent: 'Сохранить',
+        onclick: () => this.handleSave()
+      });
+      
+      const revertBtn = Object.assign(document.createElement('button'), {
+        className: 'revert-btn',
+        textContent: 'Отменить',
+        onclick: () => this.handleRevert()
+      });
+      
+      actions.append(saveBtn, revertBtn);
+    }
+    
     container.appendChild(actions);
 
     // Search and filter section
@@ -434,7 +495,21 @@ export const BannedVocabPopup = {
   toggle(x, y) { this.popup ? this.hide() : this.show(x, y); },
 
   outside: e => { if (!BannedVocabPopup.popup?.contains(e.target) && !e.target.classList?.contains('remove-btn')) BannedVocabPopup.hide(); },
-  keydown: e => e.key === 'Escape' && BannedVocabPopup.hide(),
+  keydown: e => {
+    if (e.key === 'Escape') {
+      BannedVocabPopup.hide();
+    } else if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      if (BannedVocabPopup.hasUnsavedChanges) {
+        BannedVocabPopup.handleSave();
+      }
+    } else if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+      e.preventDefault();
+      if (BannedVocabPopup.hasUnsavedChanges) {
+        BannedVocabPopup.handleRevert();
+      }
+    }
+  },
 
   startDrag(e) {
     this.isDragging = true;
