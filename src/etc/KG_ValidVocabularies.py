@@ -26,8 +26,91 @@ except ImportError: # Unix/Linux/Mac
     WINDOWS = False
 
 
+class DirectoryManager:
+    """Manages persistent directory configuration"""
+    def __init__(self):
+        self.config_file = os.path.join(os.path.expanduser("~"), ".vocab_checker_config.json")
+        self.default_desktop_paths = [
+            os.path.join(os.environ.get('USERPROFILE', ''), 'Desktop'),
+            os.path.join(os.environ.get('HOMEDRIVE', 'C:'), os.environ.get('HOMEPATH', ''), 'Desktop'),
+            os.path.join(os.path.expanduser("~"), "Desktop"),
+        ]
+    
+    def get_default_desktop(self):
+        """Find the default desktop path"""
+        for path in self.default_desktop_paths:
+            if os.path.exists(path):
+                return path
+        return os.getcwd()
+    
+    def load_saved_directory(self):
+        """Load the last used directory from config file"""
+        try:
+            if os.path.exists(self.config_file):
+                with open(self.config_file, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+                    saved_dir = config.get('last_directory')
+                    if saved_dir and os.path.exists(saved_dir):
+                        return saved_dir
+        except Exception as e:
+            print(f"Could not load saved directory: {e}")
+        return None
+    
+    def save_directory(self, directory):
+        """Save the current directory to config file"""
+        try:
+            config = {'last_directory': directory}
+            with open(self.config_file, 'w', encoding='utf-8') as f:
+                json.dump(config, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"Could not save directory preference: {e}")
+    
+    def get_working_directory(self):
+        """Get the working directory (saved or default)"""
+        saved_dir = self.load_saved_directory()
+        if saved_dir:
+            print(f"Using saved directory: {saved_dir}")
+            return saved_dir
+        else:
+            default_dir = self.get_default_desktop()
+            print(f"Using default directory: {default_dir}")
+            return default_dir
+    
+    def prompt_for_directory(self):
+        """Prompt user to confirm or change directory"""
+        current_dir = self.get_working_directory()
+        print(f"\nCurrent working directory: {current_dir}")
+        print("Press [Enter] to use this directory, or [c] to change it:")
+        
+        if WINDOWS:
+            choice = msvcrt.getch().decode('utf-8', errors='ignore').lower()
+        else:
+            fd = sys.stdin.fileno()
+            old_settings = termios.tcgetattr(fd)
+            try:
+                tty.setraw(sys.stdin.fileno())
+                choice = sys.stdin.read(1).lower()
+            finally:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        
+        print()  # New line after keypress
+        
+        if choice == 'c':
+            print("\nEnter new directory path (or press Enter to cancel):")
+            new_dir = input().strip()
+            if new_dir and os.path.exists(new_dir):
+                self.save_directory(new_dir)
+                print(f"Directory saved: {new_dir}")
+                return new_dir
+            elif new_dir:
+                print(f"Directory does not exist: {new_dir}")
+                print(f"Using current directory: {current_dir}")
+        
+        return current_dir
+
+
 class StatusChecker:
-    def __init__(self, base_url, start_id=1, num_threads=20):
+    def __init__(self, base_url, start_id=1, num_threads=20, working_directory=None):
         self.base_url = base_url
         self.found_vocabularies = {
             "words": [],
@@ -46,6 +129,9 @@ class StatusChecker:
         self.results_lock = threading.Lock()
         self.pending_results = {}
         self.next_to_print = start_id
+        
+        # Set working directory
+        self.working_directory = working_directory or os.getcwd()
 
         # Moderation queue
         self.moderation_queue = queue.Queue()
@@ -63,7 +149,7 @@ class StatusChecker:
         self.running = False
         print(f"\n\nScript cancelled.")
         print(f"Successful requests: {self.successful_requests}")
-        print(f"Saving found vocabularies to desktop...")
+        print(f"Saving found vocabularies to {self.working_directory}...")
         self.save_log()
         print(f"Log saved successfully!")
         sys.exit(0)
@@ -81,24 +167,9 @@ class StatusChecker:
         return type_mapping.get(russian_type, "unknown")
 
     def save_log(self):
-        """Save all logged vocabularies to desktop as JSON, preserving previous data"""
+        """Save all logged vocabularies to working directory as JSON, preserving previous data"""
         try:
-            desktop_paths = [
-                os.path.join(os.environ.get('USERPROFILE', ''), 'Desktop'),
-                os.path.join(os.environ.get('HOMEDRIVE', 'C:'), os.environ.get('HOMEPATH', ''), 'Desktop'),
-                os.path.join(os.path.expanduser("~"), "Desktop"),
-            ]
-
-            desktop_path = None
-            for path in desktop_paths:
-                if os.path.exists(path):
-                    desktop_path = path
-                    break
-
-            if not desktop_path:
-                desktop_path = os.getcwd()
-
-            log_file_path = os.path.join(desktop_path, "valid_vocabularies.txt")
+            log_file_path = os.path.join(self.working_directory, "valid_vocabularies.txt")
 
             # Load existing data if file exists
             existing_data = {"validVocabularies": {}}
@@ -325,7 +396,7 @@ class StatusChecker:
                         driver.quit()
                         self.save_log()
                         print(f"Successful requests: {self.successful_requests}")
-                        print(f"Log saved to desktop!")
+                        print(f"Log saved to {self.working_directory}!")
                         sys.exit(0)
                     elif choice == ' ':
                         self.successful_requests += 1
@@ -404,7 +475,8 @@ class StatusChecker:
 
         print(f"Starting {self.num_threads} threads for sequential vocabulary checking")
         print(f"Starting from ID: {self.start_id}")
-        print("Press Ctrl+C to stop and save log to desktop")
+        print(f"Working directory: {self.working_directory}")
+        print("Press Ctrl+C to stop and save log")
         print("-" * 50)
 
         # Start moderation thread
@@ -439,27 +511,13 @@ def find_max_id_from_file(file_path):
         return None
 
 
-def get_start_id():
+def get_start_id(working_directory):
     """Ask user for starting ID with validation and file checking"""
-    desktop_paths = [
-        os.path.join(os.environ.get('USERPROFILE', ''), 'Desktop'),
-        os.path.join(os.environ.get('HOMEDRIVE', 'C:'), os.environ.get('HOMEPATH', ''), 'Desktop'),
-        os.path.join(os.path.expanduser("~"), "Desktop"),
-    ]
-
-    desktop_path = None
-    for path in desktop_paths:
-        if os.path.exists(path):
-            desktop_path = path
-            break
-
-    json_file_path = None
-    if desktop_path:
-        json_file_path = os.path.join(desktop_path, "valid_vocabularies.txt")
+    json_file_path = os.path.join(working_directory, "valid_vocabularies.txt")
 
     # Check if file exists and get suggested ID
     suggested_id = None
-    if json_file_path and os.path.exists(json_file_path):
+    if os.path.exists(json_file_path):
         max_id = find_max_id_from_file(json_file_path)
         if max_id and max_id > 0:
             suggested_id = max_id + 1
@@ -496,6 +554,13 @@ if __name__ == "__main__":
     BASE_URL = "https://klavogonki.ru/vocs/"
     NUM_THREADS = 10
 
-    start_id = get_start_id()
-    checker = StatusChecker(BASE_URL, start_id, NUM_THREADS)
+    # Initialize directory manager
+    dir_manager = DirectoryManager()
+    working_directory = dir_manager.prompt_for_directory()
+    
+    # Get starting ID based on files in working directory
+    start_id = get_start_id(working_directory)
+    
+    # Create and run checker with working directory
+    checker = StatusChecker(BASE_URL, start_id, NUM_THREADS, working_directory)
     checker.run()
