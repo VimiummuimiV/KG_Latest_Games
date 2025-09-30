@@ -98,7 +98,7 @@ class StatusChecker:
             if not desktop_path:
                 desktop_path = os.getcwd()
 
-            log_file_path = os.path.join(desktop_path, "valid_vocabularies.json")
+            log_file_path = os.path.join(desktop_path, "valid_vocabularies.txt")
 
             output_data = {
                 "validVocabularies": self.found_vocabularies
@@ -193,10 +193,11 @@ class StatusChecker:
             dt_elements = driver.find_elements(By.TAG_NAME, "dt")
             
             for dt in dt_elements:
-                if "Публичный" in dt.text:
+                dt_text = dt.text.strip().replace('\n', '').replace('\t', '')
+                if "Публичный:" in dt_text or "Публичный" in dt_text:
                     # Get the next sibling <dd> element
                     dd = dt.find_element(By.XPATH, "following-sibling::dd[1]")
-                    value = dd.text.strip()
+                    value = dd.text.strip().split('\n')[0].strip()
                     
                     if value == "Да":
                         return True
@@ -217,9 +218,12 @@ class StatusChecker:
             dt_elements = driver.find_elements(By.TAG_NAME, "dt")
             
             for dt in dt_elements:
-                if "Тип словаря" in dt.text:
+                dt_text = dt.text.strip().replace('\n', '').replace('\t', '')
+                if "Тип словаря:" in dt_text or "Тип словаря" in dt_text:
                     dd = dt.find_element(By.XPATH, "following-sibling::dd[1]")
-                    russian_type = dd.text.strip()
+                    # Get only the first line, ignore the note div
+                    dd_text = dd.text.strip().split('\n')[0].strip()
+                    russian_type = dd_text
                     return self.get_vocab_type_english(russian_type)
             
             return "unknown"
@@ -423,7 +427,7 @@ def get_start_id():
 
     json_file_path = None
     if desktop_path:
-        json_file_path = os.path.join(desktop_path, "valid_vocabularies.json")
+        json_file_path = os.path.join(desktop_path, "valid_vocabularies.txt")
 
     # Check if file exists
     if json_file_path and os.path.exists(json_file_path):
