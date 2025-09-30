@@ -5,6 +5,7 @@ import sys
 import os
 import threading
 import queue
+import json
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
@@ -28,7 +29,14 @@ except ImportError: # Unix/Linux/Mac
 class StatusChecker:
     def __init__(self, base_url, start_id=1, num_threads=20):
         self.base_url = base_url
-        self.found_vocab_ids = []
+        self.found_vocabularies = {
+            "words": [],
+            "phrases": [],
+            "texts": [],
+            "url": [],
+            "books": [],
+            "generator": []
+        }
         self.running = True
         self.successful_requests = 0
         self.num_threads = num_threads
@@ -55,13 +63,25 @@ class StatusChecker:
         self.running = False
         print(f"\n\nScript cancelled.")
         print(f"Successful requests: {self.successful_requests}")
-        print(f"Saving {len(self.found_vocab_ids)} found vocabularies to desktop...")
+        print(f"Saving found vocabularies to desktop...")
         self.save_log()
         print(f"Log saved successfully!")
         sys.exit(0)
 
+    def get_vocab_type_english(self, russian_type):
+        """Convert Russian vocabulary type to English key"""
+        type_mapping = {
+            "Слова": "words",
+            "Фразы": "phrases",
+            "Тексты": "texts",
+            "URL": "url",
+            "Книга": "books",
+            "Генератор": "generator"
+        }
+        return type_mapping.get(russian_type, "unknown")
+
     def save_log(self):
-        """Save all logged numbers to desktop"""
+        """Save all logged vocabularies to desktop as JSON"""
         try:
             desktop_paths = [
                 os.path.join(os.environ.get('USERPROFILE', ''), 'Desktop'),
@@ -78,19 +98,14 @@ class StatusChecker:
             if not desktop_path:
                 desktop_path = os.getcwd()
 
-            log_file_path = os.path.join(desktop_path, "valid_vocabularies.txt")
+            log_file_path = os.path.join(desktop_path, "valid_vocabularies.json")
+
+            output_data = {
+                "validVocabularies": self.found_vocabularies
+            }
 
             with open(log_file_path, 'w', encoding='utf-8') as f:
-                f.write(f"Status Check Log - Created: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                f.write(f"Base URL: {self.base_url}\n")
-                f.write(f"Starting ID: {self.start_id}\n")
-                f.write(f"Successful requests: {self.successful_requests}\n")
-                f.write(f"Threads used: {self.num_threads}\n")
-                f.write("-" * 50 + "\n")
-
-                f.write("FOUND VOCABULARIES:\n")
-                for vocab_id in self.found_vocab_ids:
-                    f.write(f"{vocab_id}\n")
+                json.dump(output_data, f, ensure_ascii=False, indent=2)
 
         except Exception as e:
             print(f"Error saving log: {e}")
@@ -196,6 +211,23 @@ class StatusChecker:
             # On error, assume public to allow manual moderation
             return True
 
+    def get_vocab_type(self, driver):
+        """Extract vocabulary type from the page"""
+        try:
+            dt_elements = driver.find_elements(By.TAG_NAME, "dt")
+            
+            for dt in dt_elements:
+                if "Тип словаря" in dt.text:
+                    dd = dt.find_element(By.XPATH, "following-sibling::dd[1]")
+                    russian_type = dd.text.strip()
+                    return self.get_vocab_type_english(russian_type)
+            
+            return "unknown"
+            
+        except Exception as e:
+            print(f"Error parsing vocabulary type: {e}")
+            return "unknown"
+
     def moderate_results(self):
         """Run Selenium moderation loop with Firefox"""
         options = Options()
@@ -242,9 +274,13 @@ class StatusChecker:
                     self.process_pending_results()
                     continue
                 
+                # Get vocabulary type
+                vocab_type = self.get_vocab_type(driver)
+                
                 # If public, show for manual moderation
                 print(f"\n{'='*60}")
                 print(f"Moderating {vocab_id} → {url}")
+                print(f"Type: {vocab_type}")
                 print(f"{'='*60}")
                 print("Press [SPACE] to approve, [s] to skip, [q] to quit:")
 
@@ -261,8 +297,12 @@ class StatusChecker:
                         sys.exit(0)
                     elif choice == ' ':
                         self.successful_requests += 1
-                        self.found_vocab_ids.append(vocab_id)
-                        print(f"SPACE - ➕ Approved {vocab_id}")
+                        if vocab_type in self.found_vocabularies:
+                            self.found_vocabularies[vocab_type].append(vocab_id)
+                        else:
+                            self.found_vocabularies["unknown"] = self.found_vocabularies.get("unknown", [])
+                            self.found_vocabularies["unknown"].append(vocab_id)
+                        print(f"SPACE - ➕ Approved {vocab_id} ({vocab_type})")
                         
                         # Resume processing after moderation
                         with self.results_lock:
@@ -348,8 +388,51 @@ class StatusChecker:
             self.signal_handler(signal.SIGINT, None)
 
 
+def find_max_id_from_file(file_path):
+    """Find the maximum ID from existing JSON file"""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            
+        max_id = 0
+        valid_vocabs = data.get("validVocabularies", {})
+        
+        for vocab_type, ids in valid_vocabs.items():
+            if ids and len(ids) > 0:
+                max_id = max(max_id, max(ids))
+        
+        return max_id
+    except Exception as e:
+        print(f"Error reading file: {e}")
+        return None
+
+
 def get_start_id():
-    """Ask user for starting ID with validation"""
+    """Ask user for starting ID with validation and file checking"""
+    desktop_paths = [
+        os.path.join(os.environ.get('USERPROFILE', ''), 'Desktop'),
+        os.path.join(os.environ.get('HOMEDRIVE', 'C:'), os.environ.get('HOMEPATH', ''), 'Desktop'),
+        os.path.join(os.path.expanduser("~"), "Desktop"),
+    ]
+
+    desktop_path = None
+    for path in desktop_paths:
+        if os.path.exists(path):
+            desktop_path = path
+            break
+
+    json_file_path = None
+    if desktop_path:
+        json_file_path = os.path.join(desktop_path, "valid_vocabularies.json")
+
+    # Check if file exists
+    if json_file_path and os.path.exists(json_file_path):
+        max_id = find_max_id_from_file(json_file_path)
+        if max_id and max_id > 0:
+            suggested_id = max_id + 1
+            print(f"Found existing file with max ID: {max_id}")
+            print(f"Suggested starting ID: {suggested_id}")
+
     while True:
         try:
             user_input = input("Enter starting vocabulary ID (press Enter for 1): ").strip()
