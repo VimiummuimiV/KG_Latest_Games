@@ -429,7 +429,8 @@ def get_start_id():
     if desktop_path:
         json_file_path = os.path.join(desktop_path, "valid_vocabularies.txt")
 
-    # Check if file exists
+    # Check if file exists and get suggested ID
+    suggested_id = None
     if json_file_path and os.path.exists(json_file_path):
         max_id = find_max_id_from_file(json_file_path)
         if max_id and max_id > 0:
@@ -437,12 +438,16 @@ def get_start_id():
             print(f"Found existing file with max ID: {max_id}")
             print(f"Suggested starting ID: {suggested_id}")
 
+    # Set default based on whether we have a suggestion
+    default_id = suggested_id if suggested_id is not None else 1
+    prompt = f"Enter starting vocabulary ID (press Enter for {default_id}): "
+
     while True:
         try:
-            user_input = input("Enter starting vocabulary ID (press Enter for 1): ").strip()
+            user_input = input(prompt).strip()
 
             if user_input == "":
-                return 1
+                return default_id
 
             start_id = int(user_input)
 
