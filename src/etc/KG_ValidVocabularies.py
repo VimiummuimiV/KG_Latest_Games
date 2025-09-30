@@ -12,7 +12,17 @@ from concurrent.futures import ThreadPoolExecutor
 from selenium import webdriver
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.common.by import By
 from webdriver_manager.firefox import GeckoDriverManager
+
+# For reading single keypresses
+try:
+    import msvcrt  # Windows
+    WINDOWS = True
+except ImportError: # Unix/Linux/Mac
+    import tty
+    import termios
+    WINDOWS = False
 
 
 class StatusChecker:
@@ -145,6 +155,47 @@ class StatusChecker:
             except Exception:
                 self.process_result(vocab_id, 404)
 
+    def get_single_keypress(self):
+        """Read a single keypress without requiring Enter"""
+        if WINDOWS:
+            # Windows
+            return msvcrt.getch().decode('utf-8', errors='ignore').lower()
+        else:
+            # Unix/Linux/Mac
+            fd = sys.stdin.fileno()
+            old_settings = termios.tcgetattr(fd)
+            try:
+                tty.setraw(sys.stdin.fileno())
+                ch = sys.stdin.read(1)
+                return ch.lower()
+            finally:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+
+    def check_if_public(self, driver):
+        """Parse the page to check if vocabulary is public (Публичный: Да)"""
+        try:
+            # Find all <dt> elements
+            dt_elements = driver.find_elements(By.TAG_NAME, "dt")
+            
+            for dt in dt_elements:
+                if "Публичный" in dt.text:
+                    # Get the next sibling <dd> element
+                    dd = dt.find_element(By.XPATH, "following-sibling::dd[1]")
+                    value = dd.text.strip()
+                    
+                    if value == "Да":
+                        return True
+                    elif value == "Нет":
+                        return False
+            
+            # If we can't find the field, assume it's public
+            return True
+            
+        except Exception as e:
+            print(f"Error parsing public status: {e}")
+            # On error, assume public to allow manual moderation
+            return True
+
     def moderate_results(self):
         """Run Selenium moderation loop with Firefox"""
         options = Options()
@@ -167,25 +218,51 @@ class StatusChecker:
 
             try:
                 driver.get(url)
+                
+                # Wait a moment for page to load
+                time.sleep(0.5)
+                
+                # Check if vocabulary is public
+                is_public = self.check_if_public(driver)
+                
+                if not is_public:
+                    print(f"not public {vocab_id}")
+                    
+                    # Resume processing after auto-skip
+                    with self.results_lock:
+                        if vocab_id in self.pending_results:
+                            del self.pending_results[vocab_id]
+                        self.next_to_print += 1
+                        self.currently_moderating = False
+                    
+                    self.workers_paused.set()  # Resume workers
+                    print("WORKERS RESUMED\n")
+                    
+                    # Trigger processing of any pending results
+                    self.process_pending_results()
+                    continue
+                
+                # If public, show for manual moderation
                 print(f"\n{'='*60}")
                 print(f"Moderating {vocab_id} → {url}")
                 print(f"{'='*60}")
-                print("Press [a] to approve, [s] to skip, [q] to quit:")
+                print("Press [SPACE] to approve, [s] to skip, [q] to quit:")
 
                 while True:
-                    choice = input("Choice: ").strip().lower()
-                    if choice == "q":
-                        print("\nExiting...")
+                    choice = self.get_single_keypress()
+                    
+                    if choice == 'q':
+                        print("\nq - Exiting...")
                         self.running = False
                         driver.quit()
                         self.save_log()
                         print(f"Successful requests: {self.successful_requests}")
                         print(f"Log saved to desktop!")
                         sys.exit(0)
-                    elif choice == "a":
+                    elif choice == ' ':
                         self.successful_requests += 1
                         self.found_vocab_ids.append(vocab_id)
-                        print(f"✔ Approved {vocab_id}")
+                        print(f"SPACE - ➕ Approved {vocab_id}")
                         
                         # Resume processing after moderation
                         with self.results_lock:
@@ -200,8 +277,8 @@ class StatusChecker:
                         # Trigger processing of any pending results
                         self.process_pending_results()
                         break
-                    elif choice == "s":
-                        print(f"✘ Skipped {vocab_id}")
+                    elif choice == 's':
+                        print(f"s - ❌ Skipped {vocab_id}")
                         
                         # Resume processing after moderation
                         with self.results_lock:
@@ -216,8 +293,7 @@ class StatusChecker:
                         # Trigger processing of any pending results
                         self.process_pending_results()
                         break
-                    else:
-                        print("Invalid input. Use 'a' to approve, 's' to skip, or 'q' to quit.")
+                        
             except Exception as e:
                 print(f"Error moderating {vocab_id}: {e}")
                 # Resume workers even on error
