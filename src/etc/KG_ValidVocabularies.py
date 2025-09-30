@@ -81,7 +81,7 @@ class StatusChecker:
         return type_mapping.get(russian_type, "unknown")
 
     def save_log(self):
-        """Save all logged vocabularies to desktop as JSON"""
+        """Save all logged vocabularies to desktop as JSON, preserving previous data"""
         try:
             desktop_paths = [
                 os.path.join(os.environ.get('USERPROFILE', ''), 'Desktop'),
@@ -100,10 +100,38 @@ class StatusChecker:
 
             log_file_path = os.path.join(desktop_path, "valid_vocabularies.txt")
 
+            # Load existing data if file exists
+            existing_data = {"validVocabularies": {}}
+            if os.path.exists(log_file_path):
+                try:
+                    with open(log_file_path, 'r', encoding='utf-8') as f:
+                        existing_data = json.load(f)
+                        print(f"Loaded existing data from file")
+                except Exception as e:
+                    print(f"Could not load existing data: {e}")
+                    existing_data = {"validVocabularies": {}}
+
+            # Merge new data with existing data
+            merged_vocabularies = existing_data.get("validVocabularies", {})
+            
+            for vocab_type, new_ids in self.found_vocabularies.items():
+                if new_ids:  # Only process if there are new IDs
+                    # Get existing IDs for this type
+                    existing_ids = merged_vocabularies.get(vocab_type, [])
+                    
+                    # Combine and remove duplicates, then sort
+                    combined_ids = list(set(existing_ids + new_ids))
+                    combined_ids.sort()
+                    
+                    merged_vocabularies[vocab_type] = combined_ids
+                    
+                    print(f"Type '{vocab_type}': {len(existing_ids)} existing + {len(new_ids)} new = {len(combined_ids)} total")
+
             output_data = {
-                "validVocabularies": self.found_vocabularies
+                "validVocabularies": merged_vocabularies
             }
 
+            # Save merged data
             with open(log_file_path, 'w', encoding='utf-8') as f:
                 json.dump(output_data, f, ensure_ascii=False, indent=2)
 
