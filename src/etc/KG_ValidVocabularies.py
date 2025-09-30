@@ -197,6 +197,10 @@ class StatusChecker:
                     merged_vocabularies[vocab_type] = combined_ids
                     
                     print(f"Type '{vocab_type}': {len(existing_ids)} existing + {len(new_ids)} new = {len(combined_ids)} total")
+                    # Print the new IDs that were added
+                    new_ids_str = ', '.join(map(str, sorted(new_ids)))
+                    print(f"  New IDs: {new_ids_str}")
+                    print()  # Empty line after each type
 
             output_data = {
                 "validVocabularies": merged_vocabularies
