@@ -426,25 +426,67 @@ class StatusChecker:
                     self.process_pending_results()
                     continue
                 
-                # Auto-approve books type vocabularies
+                # Auto-approve books type vocabularies if they have at least 10 pieces
                 if vocab_type == "books":
-                    self.successful_requests += 1
-                    self.found_vocabularies["books"].append(vocab_id)
-                    print(f"approved {vocab_id}: books")
-                    
-                    # Resume processing after auto-approval
-                    with self.results_lock:
-                        if vocab_id in self.pending_results:
-                            del self.pending_results[vocab_id]
-                        self.next_to_print += 1
-                        self.currently_moderating = False
-                    
-                    self.workers_paused.set()  # Resume workers
-                    print("WORKERS RESUMED\n")
-                    
-                    # Trigger processing of any pending results
-                    self.process_pending_results()
-                    continue
+                    try:
+                        # Find the table with words/pieces
+                        user_content = driver.find_element(By.CLASS_NAME, "user-content")
+                        words_div = user_content.find_element(By.CLASS_NAME, "words")
+                        table = words_div.find_element(By.TAG_NAME, "table")
+                        rows = table.find_elements(By.TAG_NAME, "tr")
+                        
+                        # Count rows (excluding header if present)
+                        row_count = len(rows)
+                        
+                        if row_count >= 10:
+                            self.successful_requests += 1
+                            self.found_vocabularies["books"].append(vocab_id)
+                            print(f"approved {vocab_id}: books ({row_count} pieces)")
+                            
+                            # Resume processing after auto-approval
+                            with self.results_lock:
+                                if vocab_id in self.pending_results:
+                                    del self.pending_results[vocab_id]
+                                self.next_to_print += 1
+                                self.currently_moderating = False
+                            
+                            self.workers_paused.set()  # Resume workers
+                            print("WORKERS RESUMED\n")
+                            
+                            # Trigger processing of any pending results
+                            self.process_pending_results()
+                            continue
+                        else:
+                            print(f"skipped {vocab_id}: books (only {row_count} pieces, need at least 10)")
+                            
+                            # Resume processing after auto-skip
+                            with self.results_lock:
+                                if vocab_id in self.pending_results:
+                                    del self.pending_results[vocab_id]
+                                self.next_to_print += 1
+                                self.currently_moderating = False
+                            
+                            self.workers_paused.set()  # Resume workers
+                            print("WORKERS RESUMED\n")
+                            
+                            # Trigger processing of any pending results
+                            self.process_pending_results()
+                            continue
+                            
+                    except Exception as e:
+                        print(f"Error checking book pieces for {vocab_id}: {e}")
+                        print(f"Skipping {vocab_id} due to error")
+                        
+                        # Resume processing after error
+                        with self.results_lock:
+                            if vocab_id in self.pending_results:
+                                del self.pending_results[vocab_id]
+                            self.next_to_print += 1
+                            self.currently_moderating = False
+                        
+                        self.workers_paused.set()
+                        self.process_pending_results()
+                        continue
                 
                 # If public and not URL/books type, show for manual moderation
                 print(f"\n{'='*60}")
