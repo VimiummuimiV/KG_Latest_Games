@@ -34,6 +34,18 @@
     background-color: var(--rg-bg-card-pinned-normal) !important;
     border: 2px solid var(--rg-border-pinned-normal) !important;
   }
+
+  &.warning {
+    color: var(--rg-gametype-chars) !important;
+    background-color: var(--rg-bg-card-pinned-chars) !important;
+    border: 2px solid var(--rg-border-pinned-chars) !important;
+  }
+
+  &.danger {
+    color: var(--rg-gametype-marathon) !important;
+    background-color: var(--rg-bg-card-pinned-marathon) !important;
+    border: 2px solid var(--rg-border-pinned-marathon) !important;
+  }
 }
 
 @mixin game-action-button($bg, $hover-bg, $icon-stroke) {
