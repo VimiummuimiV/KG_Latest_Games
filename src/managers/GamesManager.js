@@ -46,6 +46,7 @@ export class GamesManager {
       gametype: gameType,
       vocName,
       vocId,
+      vocType: null,
       type,
       level_from: levelFrom,
       level_to: levelTo,
@@ -330,6 +331,7 @@ export class GamesManager {
           gametype: 'voc',
           vocName: '',
           vocId: randVocId,
+          vocType: null,
           type: 'normal',
           level_from: 1,
           level_to: 9,
@@ -405,6 +407,7 @@ export class GamesManager {
                 id: idStr,
                 name: null,
                 author: null,
+                vocType: null,
                 isNew: true
               };
               played.push(vocabToAdd);

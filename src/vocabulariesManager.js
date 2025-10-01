@@ -1,6 +1,7 @@
 import { fetchVocabularyContent, showTooltip, startHideTimeout } from "./vocabularyParser";
 import { fetchVocabularyBasicData } from "./vocabularyCreation";
 import { createCustomTooltip } from "./tooltip";
+import { typeMapping } from "./definitions";
 
 export const VocabulariesManager = {
   popup: null,
@@ -8,9 +9,8 @@ export const VocabulariesManager = {
   offsetX: 0,
   offsetY: 0,
   hasUnsavedChanges: false,
-  currentListType: 'bannedVocabularies', // Track which list we're managing
+  currentListType: 'bannedVocabularies',
 
-  // Configuration for different list types
   listConfigs: {
     bannedVocabularies: {
       title: 'Заблокированные словари',
@@ -36,7 +36,6 @@ export const VocabulariesManager = {
       
       this.hasUnsavedChanges = source === config.backupKey;
       
-      // Handle legacy format (array of strings) by converting to objects
       return data.map(item => 
         typeof item === 'string' ? { id: item, isNew: false } : { ...item, isNew: item.isNew || false }
       );
@@ -70,7 +69,6 @@ export const VocabulariesManager = {
     this.hasUnsavedChanges = false;
   },
 
-  // Method to add a new vocabulary (should be called when adding vocabularies)
   add(vocabularyId) {
     const existing = this.get();
     const alreadyExists = existing.some(v => v.id === vocabularyId);
@@ -81,15 +79,17 @@ export const VocabulariesManager = {
     }
   },
 
-  filterVocabs(vocabs, searchTerm, statusFilter = 'all') {
+  filterVocabs(vocabs, searchTerm, statusFilter = 'all', typeFilter = 'all') {
     let filtered = vocabs;
 
-    // Apply status filter
     if (statusFilter === 'new') filtered = filtered.filter(vocab => vocab.isNew);
     else if (statusFilter === 'old') filtered = filtered.filter(vocab => !vocab.isNew);
     else if (statusFilter === 'unavailable') filtered = filtered.filter(vocab => !vocab.name);
 
-    // Apply search filter
+    if (typeFilter !== 'all') {
+      filtered = filtered.filter(vocab => vocab.vocType === typeFilter);
+    }
+
     if (searchTerm?.trim()) {
       const term = searchTerm.toLowerCase().trim();
       filtered = filtered.filter(vocab => 
@@ -103,19 +103,18 @@ export const VocabulariesManager = {
   },
   
   async fetchAndCacheVocabData(vocabObj, forceRefetch = false) {
-    // If we already have name and author is defined (not empty string) and not forcing refetch, return as is
-    if (!forceRefetch && vocabObj.name && vocabObj.author) return vocabObj;
+    if (!forceRefetch && vocabObj.name && vocabObj.author && vocabObj.vocType) return vocabObj;
     
     const data = await fetchVocabularyBasicData(vocabObj.id);
     if (data) {
       return { 
         ...vocabObj,
         name: data.vocabularyName, 
-        author: data.vocabularyAuthor 
+        author: data.vocabularyAuthor,
+        vocType: data.vocabularyType
       };
     }
-    // Mark as unavailable if fetch failed
-    return { ...vocabObj, name: null, author: null };
+    return { ...vocabObj, name: null, author: null, vocType: null };
   },
 
   remove(id) { this.save(this.get().filter(v => v.id !== id)); this.refresh(); },
@@ -127,12 +126,11 @@ export const VocabulariesManager = {
     setTimeout(() => btn.textContent = originalText, duration);
   },
 
-  async copy(vocabsToCopy = null, useAlternativeFormat = false, filterType = 'all', isSearchActive = false) {
+  async copy(vocabsToCopy = null, useAlternativeFormat = false, filterType = 'all', typeFilter = 'all', isSearchActive = false) {
     const vocabs = vocabsToCopy || this.get();
     
     let textToCopy;
     if (useAlternativeFormat) {
-      // Create alternative format: each vocabulary on a new line with author, name, and URL
       const lines = vocabs.map((v, index) => {
         const author = v.author || 'Неизвестный автор';
         const name = v.name || 'Название недоступно';
@@ -141,53 +139,64 @@ export const VocabulariesManager = {
       });
       textToCopy = lines.join('\n');
     } else {
-      // Original format: comma-separated IDs
       textToCopy = vocabs.map(v => v.id).join(',');
     }
     
     try { 
       await navigator.clipboard.writeText(textToCopy); 
     }
-    catch { 
-      // Silent fail if clipboard is not available
-    }
+    catch { }
     
-    this.toggleBtnText('.copy-all-btn', 'Скопировано!', () => this.getButtonText('copy', filterType, vocabs.length, isSearchActive));
+    this.toggleBtnText('.copy-all-btn', 'Скопировано!', () => this.getButtonText('copy', filterType, typeFilter, vocabs.length, isSearchActive));
   },
 
-  removeAll(filterType = 'all', filteredVocabs = null) {
+  removeAll(filterType = 'all', typeFilter = 'all', filteredVocabs = null) {
     const vocabs = this.get();
     let filtered;
     
-    // If filteredVocabs is provided (search is active), remove only those specific items
     if (filteredVocabs) {
       const idsToRemove = new Set(filteredVocabs.map(v => v.id));
       filtered = vocabs.filter(v => !idsToRemove.has(v.id));
     } else {
-      // Original filter-based removal
-      if (filterType === 'all') {
+      if (filterType === 'all' && typeFilter === 'all') {
         filtered = [];
-      } else if (filterType === 'new') {
-        filtered = vocabs.filter(v => !v.isNew);
-      } else if (filterType === 'old') {
-        filtered = vocabs.filter(v => v.isNew);
-      } else if (filterType === 'unavailable') {
-        filtered = vocabs.filter(v => v.name);
+      } else {
+        filtered = vocabs.filter(v => {
+          let keepStatus = true;
+          let keepType = true;
+          
+          if (filterType === 'new') keepStatus = !v.isNew;
+          else if (filterType === 'old') keepStatus = v.isNew;
+          else if (filterType === 'unavailable') keepStatus = !!v.name;
+          
+          if (typeFilter !== 'all') keepType = v.vocType !== typeFilter;
+          
+          return keepStatus && keepType;
+        });
       }
     }
     
     const countToDelete = vocabs.length - filtered.length;
     this.save(filtered);
-    this.toggleBtnText('.remove-all-btn', 'Удалено!', () => this.getButtonText('remove', filterType, countToDelete, !!filteredVocabs));
+    this.toggleBtnText('.remove-all-btn', 'Удалено!', () => this.getButtonText('remove', filterType, typeFilter, countToDelete, !!filteredVocabs));
     this.refresh();
   },
   
-  getButtonText(action, filterType, count, isSearchActive = false) {
+  getButtonText(action, filterType, typeFilter, count, isSearchActive = false) {
     const filterNames = {
       'all': 'все',
       'new': 'новые',
       'old': 'старые',
       'unavailable': 'недоступные'
+    };
+    
+    const typeNames = {
+      'words': 'Слова',
+      'phrases': 'Фразы',
+      'texts': 'Тексты',
+      'url': 'URL',
+      'books': 'Книга',
+      'generator': 'Генератор'
     };
     
     const actionVerbs = {
@@ -201,12 +210,20 @@ export const VocabulariesManager = {
       return `${actionVerb} результат (${count})`;
     }
     
-    const filterName = filterNames[filterType] || 'все';
-    return `${actionVerb} ${filterName} (${count})`;
+    const parts = [];
+    if (filterType !== 'all') {
+      parts.push(filterNames[filterType]);
+    }
+    if (typeFilter !== 'all') {
+      parts.push(typeNames[typeFilter]);
+    }
+    
+    const filterText = parts.length > 0 ? parts.join(' ') : filterNames['all'];
+    return `${actionVerb} ${filterText} (${count})`;
   },
 
   sortAll() {
-    const vocabs = this.get().map(vocab => ({ ...vocab, isNew: false })); // Remove new status
+    const vocabs = this.get().map(vocab => ({ ...vocab, isNew: false }));
     const sorted = vocabs.sort((a, b) => parseInt(a.id) - parseInt(b.id));
     this.save(sorted);
     this.toggleBtnText('.sort-all-btn', 'Отсортировано!', () => 'Сортировать');
@@ -269,18 +286,15 @@ export const VocabulariesManager = {
     const searchSection = document.createElement('div');
     searchSection.className = 'popup-search-filters';
 
-    // Search input
     const searchInput = Object.assign(document.createElement('input'), {
       type: 'text',
       placeholder: 'Поиск по ID, названию или автору...',
       className: 'search-input'
     });
 
-    // Filter buttons container
-    const filterContainer = document.createElement('div');
-    filterContainer.className = 'filter-buttons';
+    const statusFilterContainer = document.createElement('div');
+    statusFilterContainer.className = 'filter-buttons';
 
-    // Create filter buttons
     const allBtn = Object.assign(document.createElement('button'), {
       className: 'filter-btn active',
       textContent: 'Все'
@@ -309,16 +323,71 @@ export const VocabulariesManager = {
     unavailableBtn.setAttribute('data-filter', 'unavailable');
     createCustomTooltip(unavailableBtn, 'Показать только недоступные словари');
 
-    filterContainer.append(allBtn, newBtn, oldBtn, unavailableBtn);
-    searchSection.append(searchInput, filterContainer);
+    statusFilterContainer.append(allBtn, newBtn, oldBtn, unavailableBtn);
 
-    return { searchSection, searchInput, filterContainer };
+    const typeFilterContainer = document.createElement('div');
+    typeFilterContainer.className = 'filter-buttons type-filter-buttons';
+
+    const allTypesBtn = Object.assign(document.createElement('button'), {
+      className: 'filter-btn active',
+      textContent: 'Все типы'
+    });
+    allTypesBtn.setAttribute('data-type-filter', 'all');
+    createCustomTooltip(allTypesBtn, 'Показать все типы словарей');
+
+    const wordsBtn = Object.assign(document.createElement('button'), {
+      className: 'filter-btn',
+      textContent: 'Слова'
+    });
+    wordsBtn.setAttribute('data-type-filter', 'words');
+    createCustomTooltip(wordsBtn, 'Показать только словари типа "Слова"');
+
+    const phrasesBtn = Object.assign(document.createElement('button'), {
+      className: 'filter-btn',
+      textContent: 'Фразы'
+    });
+    phrasesBtn.setAttribute('data-type-filter', 'phrases');
+    createCustomTooltip(phrasesBtn, 'Показать только словари типа "Фразы"');
+
+    const textsBtn = Object.assign(document.createElement('button'), {
+      className: 'filter-btn',
+      textContent: 'Тексты'
+    });
+    textsBtn.setAttribute('data-type-filter', 'texts');
+    createCustomTooltip(textsBtn, 'Показать только словари типа "Тексты"');
+
+    const urlBtn = Object.assign(document.createElement('button'), {
+      className: 'filter-btn',
+      textContent: 'URL'
+    });
+    urlBtn.setAttribute('data-type-filter', 'url');
+    createCustomTooltip(urlBtn, 'Показать только словари типа "URL"');
+
+    const booksBtn = Object.assign(document.createElement('button'), {
+      className: 'filter-btn',
+      textContent: 'Книга'
+    });
+    booksBtn.setAttribute('data-type-filter', 'books');
+    createCustomTooltip(booksBtn, 'Показать только словари типа "Книга"');
+
+    const generatorBtn = Object.assign(document.createElement('button'), {
+      className: 'filter-btn',
+      textContent: 'Генератор'
+    });
+    generatorBtn.setAttribute('data-type-filter', 'generator');
+    createCustomTooltip(generatorBtn, 'Показать только словари типа "Генератор"');
+
+    typeFilterContainer.append(allTypesBtn, wordsBtn, phrasesBtn, textsBtn, urlBtn, booksBtn, generatorBtn);
+
+    searchSection.append(searchInput, statusFilterContainer, typeFilterContainer);
+
+    return { searchSection, searchInput, statusFilterContainer, typeFilterContainer };
   },
 
   async createElements() {
     const v = this.get();
     const container = document.createElement('div');
-    container.className = 'banned-vocabularies-popup';
+    container.className = 'vocabularies-manager-popup';
 
     const header = document.createElement('div');
     header.className = 'popup-header';
@@ -333,7 +402,7 @@ export const VocabulariesManager = {
     
     const copyBtn = Object.assign(document.createElement('button'), {
       className: 'copy-all-btn', 
-      textContent: this.getButtonText('copy', 'all', v.length, false), 
+      textContent: this.getButtonText('copy', 'all', 'all', v.length, false), 
       disabled: !v.length,
     });
     createCustomTooltip(copyBtn,
@@ -343,7 +412,7 @@ export const VocabulariesManager = {
     
     const removeAllBtn = Object.assign(document.createElement('button'), {
       className: 'remove-all-btn', 
-      textContent: this.getButtonText('remove', 'all', v.length, false), 
+      textContent: this.getButtonText('remove', 'all', 'all', v.length, false), 
       disabled: !v.length
     });
     createCustomTooltip(removeAllBtn, 'Удалить в соответствии с текущим фильтром или результатами поиска');
@@ -366,7 +435,6 @@ export const VocabulariesManager = {
     
     actions.append(copyBtn, removeAllBtn, sortBtn, forceFetchBtn);
     
-    // Save/Revert buttons (only show if there are unsaved changes)
     if (this.hasUnsavedChanges) {
       const saveBtn = Object.assign(document.createElement('button'), {
         className: 'save-btn',
@@ -387,48 +455,44 @@ export const VocabulariesManager = {
     
     container.appendChild(actions);
 
-    // Search and filter section
-    const { searchSection, searchInput, filterContainer } = this.createSearchAndFilterSection();
+    const { searchSection, searchInput, statusFilterContainer, typeFilterContainer } = this.createSearchAndFilterSection();
     container.appendChild(searchSection);
 
     const list = document.createElement('div');
     list.className = 'vocab-list';
 
     if (v.length) {
-      // Fetch vocabulary data for items that don't have it cached
       const updatedVocabs = await Promise.all(
         v.map(vocabObj => this.fetchAndCacheVocabData(vocabObj))
       );
       
-      // Save enriched data without creating backup
       this.save(updatedVocabs, false);
       
-      let currentFilteredVocabs = updatedVocabs; // Track currently displayed vocabularies
-      let currentStatusFilter = 'all'; // Track current filter
+      let currentFilteredVocabs = updatedVocabs;
+      let currentStatusFilter = 'all';
+      let currentTypeFilter = 'all';
       
-      const updateButtons = (filterType, filteredVocabs, searchTerm) => {
+      const updateButtons = (filterType, typeFilter, filteredVocabs, searchTerm) => {
         const isSearchActive = searchTerm?.trim().length > 0;
         
-        // Update copy button - always based on currently displayed items
-        copyBtn.textContent = this.getButtonText('copy', filterType, filteredVocabs.length, isSearchActive);
+        copyBtn.textContent = this.getButtonText('copy', filterType, typeFilter, filteredVocabs.length, isSearchActive);
         copyBtn.disabled = filteredVocabs.length === 0;
         
-        // Update remove button - based on displayed items when searching, or filter when not
         if (isSearchActive) {
-          removeAllBtn.textContent = this.getButtonText('remove', filterType, filteredVocabs.length, true);
+          removeAllBtn.textContent = this.getButtonText('remove', filterType, typeFilter, filteredVocabs.length, true);
           removeAllBtn.disabled = filteredVocabs.length === 0;
         } else {
-          const filterOnlyVocabs = this.filterVocabs(updatedVocabs, '', filterType);
-          removeAllBtn.textContent = this.getButtonText('remove', filterType, filterOnlyVocabs.length, false);
+          const filterOnlyVocabs = this.filterVocabs(updatedVocabs, '', filterType, typeFilter);
+          removeAllBtn.textContent = this.getButtonText('remove', filterType, typeFilter, filterOnlyVocabs.length, false);
           removeAllBtn.disabled = filterOnlyVocabs.length === 0;
         }
       };
       
       const updateFilterButtonCounts = () => {
-        const allBtn = filterContainer.querySelector('[data-filter="all"]');
-        const newBtn = filterContainer.querySelector('[data-filter="new"]');
-        const oldBtn = filterContainer.querySelector('[data-filter="old"]');
-        const unavailableBtn = filterContainer.querySelector('[data-filter="unavailable"]');
+        const allBtn = statusFilterContainer.querySelector('[data-filter="all"]');
+        const newBtn = statusFilterContainer.querySelector('[data-filter="new"]');
+        const oldBtn = statusFilterContainer.querySelector('[data-filter="old"]');
+        const unavailableBtn = statusFilterContainer.querySelector('[data-filter="unavailable"]');
         
         const newCount = updatedVocabs.filter(v => v.isNew).length;
         const oldCount = updatedVocabs.filter(v => !v.isNew).length;
@@ -438,12 +502,27 @@ export const VocabulariesManager = {
         newBtn.textContent = `Новые (${newCount})`;
         oldBtn.textContent = `Старые (${oldCount})`;
         unavailableBtn.textContent = `Недоступные (${unavailableCount})`;
+
+        const allTypesBtn = typeFilterContainer.querySelector('[data-type-filter="all"]');
+        const wordsCount = updatedVocabs.filter(v => v.vocType === 'words').length;
+        const phrasesCount = updatedVocabs.filter(v => v.vocType === 'phrases').length;
+        const textsCount = updatedVocabs.filter(v => v.vocType === 'texts').length;
+        const urlCount = updatedVocabs.filter(v => v.vocType === 'url').length;
+        const booksCount = updatedVocabs.filter(v => v.vocType === 'books').length;
+        const generatorCount = updatedVocabs.filter(v => v.vocType === 'generator').length;
+
+        allTypesBtn.textContent = `Все типы (${updatedVocabs.length})`;
+        typeFilterContainer.querySelector('[data-type-filter="words"]').textContent = `Слова (${wordsCount})`;
+        typeFilterContainer.querySelector('[data-type-filter="phrases"]').textContent = `Фразы (${phrasesCount})`;
+        typeFilterContainer.querySelector('[data-type-filter="texts"]').textContent = `Тексты (${textsCount})`;
+        typeFilterContainer.querySelector('[data-type-filter="url"]').textContent = `URL (${urlCount})`;
+        typeFilterContainer.querySelector('[data-type-filter="books"]').textContent = `Книга (${booksCount})`;
+        typeFilterContainer.querySelector('[data-type-filter="generator"]').textContent = `Генератор (${generatorCount})`;
       };
       
       const renderVocabs = (vocabsToRender) => {
-        // Clear existing items
         list.innerHTML = '';
-        currentFilteredVocabs = vocabsToRender; // Update the current filtered list
+        currentFilteredVocabs = vocabsToRender;
         
         if (vocabsToRender.length === 0) {
           const noResults = document.createElement('div');
@@ -488,6 +567,15 @@ export const VocabulariesManager = {
               });
               rightSection.appendChild(authorSpan);
             }
+
+            if (vocabObj.vocType) {
+              const typeNameRu = Object.keys(typeMapping).find(key => typeMapping[key] === vocabObj.vocType) || vocabObj.vocType;
+              const typeSpan = Object.assign(document.createElement('div'), {
+                className: 'vocab-type',
+                textContent: `Тип словаря: ${typeNameRu}`
+              });
+              rightSection.appendChild(typeSpan);
+            }
           } else {
             const loadingSpan = Object.assign(document.createElement('div'), {
               className: 'vocab-loading',
@@ -505,54 +593,55 @@ export const VocabulariesManager = {
           list.appendChild(item);
         });
 
-        // Schedule scroll to bottom after rendering
         this.scheduleScrollToBottom();
       };
 
       const applyFilters = () => {
         const searchTerm = searchInput.value;
-        const filteredVocabs = this.filterVocabs(updatedVocabs, searchTerm, currentStatusFilter);
+        const filteredVocabs = this.filterVocabs(updatedVocabs, searchTerm, currentStatusFilter, currentTypeFilter);
         renderVocabs(filteredVocabs);
-        updateButtons(currentStatusFilter, filteredVocabs, searchTerm);
+        updateButtons(currentStatusFilter, currentTypeFilter, filteredVocabs, searchTerm);
       };
 
-      // Initial render with all vocabularies and update filter button counts
       updateFilterButtonCounts();
       renderVocabs(updatedVocabs);
-      updateButtons(currentStatusFilter, currentFilteredVocabs, '');
+      updateButtons(currentStatusFilter, currentTypeFilter, currentFilteredVocabs, '');
 
-      // Add event listeners for buttons
       copyBtn.addEventListener('click', (e) => {
         const useAlternativeFormat = e.shiftKey;
         const isSearchActive = searchInput.value.trim().length > 0;
-        this.copy(currentFilteredVocabs, useAlternativeFormat, currentStatusFilter, isSearchActive);
+        this.copy(currentFilteredVocabs, useAlternativeFormat, currentStatusFilter, currentTypeFilter, isSearchActive);
       });
 
       removeAllBtn.addEventListener('click', () => {
         const isSearchActive = searchInput.value.trim().length > 0;
-        // If search is active, pass the filtered vocabs to remove only those
-        this.removeAll(currentStatusFilter, isSearchActive ? currentFilteredVocabs : null);
+        this.removeAll(currentStatusFilter, currentTypeFilter, isSearchActive ? currentFilteredVocabs : null);
       });
 
-      // Add search functionality
       searchInput.addEventListener('input', applyFilters);
 
-      // Add filter button functionality
-      filterContainer.addEventListener('click', (e) => {
+      statusFilterContainer.addEventListener('click', (e) => {
         if (!e.target.classList.contains('filter-btn')) return;
         
-        // Update active button
-        filterContainer.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        statusFilterContainer.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
         e.target.classList.add('active');
         
-        // Update current filter
         currentStatusFilter = e.target.dataset.filter;
         
-        // Apply filters
         applyFilters();
       });
 
-      // delegated handler (only one for the whole list)
+      typeFilterContainer.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('filter-btn')) return;
+        
+        typeFilterContainer.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+        
+        currentTypeFilter = e.target.dataset.typeFilter;
+        
+        applyFilters();
+      });
+
       list.addEventListener('click', (e) => {
         const item = e.target.closest('.vocab-item');
         if (!item) return;
@@ -566,22 +655,18 @@ export const VocabulariesManager = {
         }
       });
 
-      // Shift + hover: show shared tooltip anchored to the .vocab-item
       list.addEventListener('mouseover', (e) => {
         if (!e.shiftKey) return;
         const item = e.target.closest('.vocab-item');
         if (!item) return;
         const id = item.dataset.id || item.querySelector('.vocab-id')?.textContent;
         if (!id) return;
-        // Use shared fetch + tooltip functions from vocabularyParser
         fetchVocabularyContent(id).then(content => showTooltip(item, content)).catch(() => {});
       }, { capture: true });
 
       list.addEventListener('mouseout', (e) => {
         const item = e.target.closest('.vocab-item');
         if (!item) return;
-        // Trigger the normal tooltip hide flow (shared helper) which
-        // respects hover state handled inside vocabularyParser.
         startHideTimeout();
       }, { capture: true });
 
@@ -605,7 +690,6 @@ export const VocabulariesManager = {
       this.popup = newPopup;
       this.popup.style.left = rect.left + 'px';
       this.popup.style.top = rect.top + 'px';
-      // Schedule scroll to bottom after refresh
       this.scheduleScrollToBottom();
     }
   },
@@ -618,7 +702,6 @@ export const VocabulariesManager = {
     this.popup.style.top = y + 'px';
     this.constrainToScreen();
     
-    // Schedule scroll to bottom when showing
     this.scheduleScrollToBottom();
     
     setTimeout(() => {

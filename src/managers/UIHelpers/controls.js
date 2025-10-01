@@ -665,6 +665,7 @@ export function createControls(main) {
         id: String(currentVocabId),
         name: null,
         author: null,
+        vocType: null,
         isNew: true
       };
 

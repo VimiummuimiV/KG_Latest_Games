@@ -1,9 +1,10 @@
-import { generateUniqueId, getContainerSelector, extractVocabularyId } from './utils.js';
-import { highlightExistingVocabularies } from './vocabularyChecker.js';
-import { createPopup } from './menuPopup.js';
-import { hideTooltip } from './vocabularyParser.js';
+import { generateUniqueId, getContainerSelector, extractVocabularyId } from "./utils.js";
+import { highlightExistingVocabularies } from "./vocabularyChecker.js";
+import { createPopup } from "./menuPopup.js";
+import { hideTooltip } from "./vocabularyParser.js";
+import { typeMapping } from "./definitions.js";
 
-// Function to fetch basic vocabulary data (name, rating, fans, author) from the server
+// Function to fetch basic vocabulary data (name, rating, fans, author, type) from the server
 export async function fetchVocabularyBasicData(vocId) {
   const controller = new AbortController();
   const signal = controller.signal;
@@ -46,11 +47,37 @@ export async function fetchVocabularyBasicData(vocId) {
         const ratingCount = parseInt(ratingSpan.textContent.trim(), 10);
         const fansCount = parseInt(fansSpan.textContent.trim(), 10);
 
-        // try to get author data
-        const authorLink = doc.querySelector('.user-content a[href^="/profile/"]');
-        const vocabularyAuthor = authorLink?.textContent.trim() || '';
+        // try to get author data and vocabulary type
+        let vocabularyAuthor = '';
+        let vocabularyType = null;
+        
+        const dlElements = doc.querySelectorAll('.user-content dl');
+        for (const dl of dlElements) {
+          const dt = dl.querySelector('dt');
+          const dd = dl.querySelector('dd');
+          
+          if (!dt || !dd) continue;
+          
+          const dtText = dt.textContent.trim();
+          
+          // Get author
+          if (dtText === 'Автор:') {
+            const authorLink = dd.querySelector('a[href^="/profile/"]');
+            if (authorLink) {
+              vocabularyAuthor = authorLink.textContent.trim();
+            }
+          }
+          
+          // Get vocabulary type
+          if (dtText === 'Тип словаря:') {
+            const typeText = dd.childNodes[0]?.textContent?.trim();
+            if (typeText && typeMapping[typeText]) {
+              vocabularyType = typeMapping[typeText];
+            }
+          }
+        }
 
-        return { vocId, vocabularyName, ratingCount, fansCount, vocabularyAuthor };
+        return { vocId, vocabularyName, ratingCount, fansCount, vocabularyAuthor, vocabularyType };
       }
     }
 
@@ -65,7 +92,7 @@ export async function fetchVocabularyBasicData(vocId) {
   }
 }
 
-export function addGameToGroup(group, vocId, vocName, groups, main) {
+export function addGameToGroup(group, vocId, vocName, vocType, groups, main) {
   if (group.games.some(game => String(game.params?.vocId) === String(vocId))) {
     alert(`Этот словарь уже добавлен в ${group.title}`);
     return;
@@ -76,6 +103,7 @@ export function addGameToGroup(group, vocId, vocName, groups, main) {
       gametype: 'voc',
       vocName: vocName,
       vocId: vocId,
+      vocType: vocType || null,
       type: 'normal',
       level_from: 1,
       level_to: 9,
@@ -100,9 +128,10 @@ export function addGameToGroup(group, vocId, vocName, groups, main) {
  * @param {MouseEvent} event - The contextmenu event.
  * @param {string} vocId - The vocabulary ID to add.
  * @param {string} vocName - The vocabulary name from the link text.
+ * @param {string|null} vocType - The vocabulary type.
  * @param {object} main - The main manager instance.
  */
-export function showVocabularyCreationPopup(groups, event, vocId, vocName, main) {
+export function showVocabularyCreationPopup(groups, event, vocId, vocName, vocType, main) {
   hideTooltip(); // Hide any existing tooltip
 
   // Create button configurations for each group
@@ -113,7 +142,7 @@ export function showVocabularyCreationPopup(groups, event, vocId, vocName, main)
       className: `group-tab${alreadyExists ? ' active' : ''}`,
       dataset: { groupId: group.id },
       onClick: () => {
-        addGameToGroup(group, vocId, vocName, groups, main);
+        addGameToGroup(group, vocId, vocName, vocType, groups, main);
       }
     };
   });
@@ -179,10 +208,12 @@ function attachEventToContainer(container, groups, main) {
           e.stopPropagation();
 
           let vocName = '';
+          let vocType = null;
           if (href.includes('/create/')) {
             const basicData = await fetchVocabularyBasicData(vocId);
             if (basicData && basicData.vocabularyName) {
               vocName = basicData.vocabularyName;
+              vocType = basicData.vocabularyType;
             } else {
               vocName = prompt('Не удалось получить название словаря. Введите название для словаря:') || '';
             }
@@ -190,7 +221,7 @@ function attachEventToContainer(container, groups, main) {
             vocName = extractVocabularyName(anchor);
           }
 
-          addGameToGroup(group, vocId, vocName, groups, main);
+          addGameToGroup(group, vocId, vocName, vocType, groups, main);
           return; // Exit early
         }
       }
@@ -202,10 +233,12 @@ function attachEventToContainer(container, groups, main) {
     e.stopPropagation();
 
     let vocName = '';
+    let vocType = null;
     if (href.includes('/create/')) {
       const basicData = await fetchVocabularyBasicData(vocId);
       if (basicData && basicData.vocabularyName) {
         vocName = basicData.vocabularyName;
+        vocType = basicData.vocabularyType;
       } else {
         // If fetching basic data fails, prompt the user to set a name manually.
         vocName = prompt('Не удалось получить название словаря. Введите название для словаря:') || '';
@@ -214,7 +247,7 @@ function attachEventToContainer(container, groups, main) {
       vocName = extractVocabularyName(anchor);
     }
 
-    showVocabularyCreationPopup(groups, e, vocId, vocName, main);
+    showVocabularyCreationPopup(groups, e, vocId, vocName, vocType, main);
   });
 }
 

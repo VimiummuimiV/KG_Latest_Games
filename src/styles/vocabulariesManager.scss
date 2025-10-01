@@ -1,4 +1,4 @@
-.banned-vocabularies-popup {
+.vocabularies-manager-popup {
   position: fixed;
   background: var(--rg-bg-primary);
   color: var(--rg-text-primary);
@@ -291,7 +291,8 @@
           text-overflow: ellipsis;
         }
         
-        .vocab-author {
+        .vocab-author,
+        .vocab-type {
           color: var(--rg-text-tertiary);
           font-size: 0.75em;
           margin-top: 0.2em;

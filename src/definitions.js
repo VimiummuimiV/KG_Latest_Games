@@ -25,6 +25,16 @@ export const gameCategories = {
   book: 'Книги'
 };
 
+// Map Russian vocabularies type names to English constants
+export const typeMapping = {
+  'Слова': 'words',
+  'Фразы': 'phrases',
+  'Тексты': 'texts',
+  'URL': 'url',
+  'Книга': 'books',
+  'Генератор': 'generator'
+};
+
 export const visibilities = {
   normal: 'открытый',
   practice: 'одиночный',
