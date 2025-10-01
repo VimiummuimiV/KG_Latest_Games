@@ -167,6 +167,10 @@ class StatusChecker:
         }
         return type_mapping.get(russian_type, "unknown")
 
+    def format_id_as_bbcode(self, vocab_id):
+        """Format a single ID as BBCode link"""
+        return f'[url="{self.base_url}{vocab_id}/"]{vocab_id}[/url]'
+
     def save_log(self):
         """Save all logged vocabularies to working directory as JSON, preserving previous data"""
         try:
@@ -202,8 +206,11 @@ class StatusChecker:
                     
                     print(f"Type '{vocab_type}': {len(existing_ids)} existing + {len(new_ids)} new = {len(combined_ids)} total")
                     
-                    # Build clipboard summary
-                    new_ids_str = ', '.join(map(str, sorted(new_ids)))
+                    # Build clipboard summary with BBCode formatted IDs
+                    sorted_new_ids = sorted(new_ids)
+                    bbcode_ids = [self.format_id_as_bbcode(vid) for vid in sorted_new_ids]
+                    new_ids_str = ', '.join(bbcode_ids)
+                    
                     clipboard_lines.append(f"Type '{vocab_type}': {len(existing_ids)} existing + {len(new_ids)} new = {len(combined_ids)} total")
                     clipboard_lines.append(f"New IDs: {new_ids_str}")
                     clipboard_lines.append("")  # Empty line
@@ -224,7 +231,7 @@ class StatusChecker:
                 clipboard_text = '\n'.join(clipboard_lines)
                 try:
                     pyperclip.copy(clipboard_text)
-                    print("📋 Summary copied to clipboard!")
+                    print("📋 Summary copied to clipboard (BBCode format)!")
                 except Exception as e:
                     print(f"Could not copy to clipboard: {e}")
 
