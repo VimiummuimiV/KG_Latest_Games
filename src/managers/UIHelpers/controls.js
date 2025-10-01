@@ -7,6 +7,7 @@ import { addGameToGroup, fetchVocabularyBasicData } from "../../vocabularyCreati
 import { showMigrationPopup } from "../../vocabularyMigration.js";
 import { getSessionVocId } from "../../vocabularyParser.js";
 import { VocabulariesManager } from "../../vocabulariesManager.js";
+import { showVocabularyTypesPopup } from "../../vocabularyType.js";
 
 export function createControls(main) {
   const controlsContainer = createElement('div', { className: 'latest-games-controls' });
@@ -58,16 +59,18 @@ export function createControls(main) {
 
   // Function to update the tooltip text based on button state
   const updateTooltip = (button, isEnabled, texts, delay) => {
-    // texts: { click, shift, ctrl, alt }
+    // texts: { click, shift, ctrl, alt, shiftAlt }
     const clickText = typeof texts.click === 'function' ? texts.click(isEnabled) : texts.click;
     const shiftText = typeof texts.shift === 'function' ? texts.shift(isEnabled) : texts.shift;
     const ctrlText = texts.ctrl ? (typeof texts.ctrl === 'function' ? texts.ctrl(isEnabled) : texts.ctrl) : '';
     const altText = texts.alt ? (typeof texts.alt === 'function' ? texts.alt(isEnabled) : texts.alt) : '';
+    const shiftAltText = texts.shiftAlt ? (typeof texts.shiftAlt === 'function' ? texts.shiftAlt(isEnabled) : texts.shiftAlt) : '';
     createCustomTooltip(button, `
       [Клик] ${clickText}
       [Shift + Клик] ${shiftText}${delay ? ` (${delay} мс)` : ''}
       ${ctrlText ? `[Ctrl + Клик] ${ctrlText}` : ''}
       ${altText ? `[Alt + Клик] ${altText}` : ''}
+      ${shiftAltText ? `[Shift + Alt + Клик] ${shiftAltText}` : ''}
     `);
   };
 
@@ -491,7 +494,8 @@ export function createControls(main) {
         return `Обновить список допустимых словарей (загружено: ${count})`;
       },
       ctrl: () => main.showBlockedVocabAlert ? 'Отключить предупреждение о недоступных словарях' : 'Включить предупреждение о недоступных словарях',
-      alt: (isEnabled) => isEnabled === 'global' || main.randomGameId === 'global' ? 'Отключить глобальный режим' : 'Включить глобальный режим'
+      alt: (isEnabled) => isEnabled === 'global' || main.randomGameId === 'global' ? 'Отключить глобальный режим' : 'Включить глобальный режим',
+      shiftAlt: () => 'Выбрать типы словарей'
     });
     // Reflect disabled state visually
     randomRaceBtn.classList.toggle('latest-games-disabled', !main.randomGameId);
@@ -508,6 +512,12 @@ export function createControls(main) {
   // Toggle random game selection setting when clicking the button
   // Shift+Click: set globalLatestId
   randomRaceBtn.onclick = (e) => {
+    // Shift+Alt+Click: show vocabulary types toggle popup
+    if (e.shiftKey && e.altKey) {
+      e.preventDefault();
+      showVocabularyTypesPopup(e, main);
+      return;
+    }
     // Ctrl+Click: toggle showing the blocked-vocab alert
     if (e.ctrlKey) {
       main.showBlockedVocabAlert = !main.showBlockedVocabAlert;
@@ -539,12 +549,11 @@ export function createControls(main) {
             alert('⚠️ Не удалось сохранить список в localStorage.');
           }
         }).catch(err => {
-        console.warn('Failed to fetch valid vocabularies:', err);
-        alert('⚠️ Ошибка загрузки списка допустимых словарей: ' + err.message);
-      });
+          console.warn('Failed to fetch valid vocabularies:', err);
+          alert('⚠️ Ошибка загрузки списка допустимых словарей: ' + err.message);
+        });
       return;
     }
-
     // Alt+Click: toggle global mode on/off
     if (e.altKey) {
       if (main.randomGameId === 'global') {
@@ -556,7 +565,6 @@ export function createControls(main) {
       updateRandomTooltip();
       return;
     }
-
     // Regular click: toggle between false and 'local'
     if (main.randomGameId === 'local') {
       main.randomGameId = false;
@@ -575,7 +583,7 @@ export function createControls(main) {
   createCustomTooltip(
     startRaceBtn, `
     [Shift + Enter | Клик] Начать игру
-    [Alt + Shift + Enter | Клик] Добавить текущий словарь в Избранные
+    [Shift + Alt + Enter | Клик] Добавить текущий словарь в Избранные
     `
   );
 

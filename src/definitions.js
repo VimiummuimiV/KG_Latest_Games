@@ -81,6 +81,14 @@ export const DEFAULTS = {
   replayWithoutWaiting: false,
   // randomGameId: false | 'local' | 'global' - mode for random selection
   randomGameId: false,
+  randomVocabulariesType: {
+    words: true,
+    phrases: true,
+    texts: true,
+    url: true,
+    books: true,
+    generator: true
+  },
   showSearchBox: false,
   showButtonDescriptions: true,
   showHelpTooltips: true,

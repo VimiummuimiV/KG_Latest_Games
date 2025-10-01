@@ -39,6 +39,14 @@ export class SettingsManager {
       // Load persisted validVocabularies into runtime state
       this.loadValidVocabularies();
 
+      // Handle randomVocabulariesType state
+      if (settings.randomVocabulariesType && typeof settings.randomVocabulariesType === 'object') {
+        this.main.randomVocabulariesType = {
+          ...this.main.randomVocabulariesType,
+          ...settings.randomVocabulariesType
+        };
+      }
+
       // Handle panelYPosition and alwaysVisiblePanel as objects (per-page)
       if (settings.panelYPosition && typeof settings.panelYPosition === 'object') {
         this.main.panelYPosition = {
@@ -236,6 +244,7 @@ export class SettingsManager {
         showHelpTooltips: this.main.showHelpTooltips,
         showBlockedVocabAlert: this.main.showBlockedVocabAlert,
         randomGameId: this.main.randomGameId,
+        randomVocabulariesType: this.main.randomVocabulariesType,
         alwaysVisiblePanel: this.main.alwaysVisiblePanel
       };
 

@@ -7,9 +7,10 @@ import { createElement } from './utils.js';
  * @param {MouseEvent} event - The mouse event for positioning
  * @param {string} className - CSS class name for the popup
  * @param {string} header - Optional header text to display at the top
+ * @param {boolean} persistent - Whether the popup should remain open after button clicks
  * @returns {HTMLElement} The created popup element
  */
-export function createPopup(buttonConfigs, event, className = 'popup', header) {
+export function createPopup(buttonConfigs, event, className = 'popup', header, persistent = false) {
   // Remove any existing popup with the same class
   const existingPopup = document.querySelector(`.${className}`);
   if (existingPopup) existingPopup.remove();
@@ -35,8 +36,10 @@ export function createPopup(buttonConfigs, event, className = 'popup', header) {
 
     if (config.onClick) {
       button.addEventListener('click', () => {
-        config.onClick();
-        popup.remove();
+        config.onClick(button);
+        if (!persistent) {
+          popup.remove();
+        }
       });
     }
 
