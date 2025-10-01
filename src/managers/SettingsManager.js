@@ -112,12 +112,17 @@ export class SettingsManager {
           const playedParsed = playedRaw ? JSON.parse(playedRaw) : [];
           
           if (Array.isArray(bannedParsed) || Array.isArray(playedParsed)) {
+            // Extract IDs from both old format (strings) and new format (objects with id property)
             const bannedIds = Array.isArray(bannedParsed) ? bannedParsed.map(item => 
-              typeof item === 'string' ? item : (item.id || String(item))
+              typeof item === 'string' ? item : (typeof item === 'object' && item !== null ? (item.id || String(item)) : String(item))
+            ) : [];
+            
+            const playedIds = Array.isArray(playedParsed) ? playedParsed.map(item =>
+              typeof item === 'string' ? item : (typeof item === 'object' && item !== null ? (item.id || String(item)) : String(item))
             ) : [];
             
             const bannedSet = new Set(bannedIds.map(id => String(id)));
-            const playedSet = new Set(Array.isArray(playedParsed) ? playedParsed.map(id => String(id)) : []);
+            const playedSet = new Set(playedIds.map(id => String(id)));
             const combined = new Set([...bannedSet, ...playedSet]);
             
             // Filter each type

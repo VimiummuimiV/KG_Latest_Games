@@ -315,6 +315,33 @@ export class GamesManager {
       return null;
     }
 
+    // Get banned and played vocabulary IDs
+    const excludedSet = new Set();
+    try {
+      const bannedRaw = localStorage.getItem('bannedVocabularies');
+      if (bannedRaw) {
+        const banned = JSON.parse(bannedRaw);
+        if (Array.isArray(banned)) {
+          banned.forEach(item => {
+            const id = typeof item === 'string' ? item : (item.id || String(item));
+            excludedSet.add(String(id));
+          });
+        }
+      }
+      const playedRaw = localStorage.getItem('playedVocabularies');
+      if (playedRaw) {
+        const played = JSON.parse(playedRaw);
+        if (Array.isArray(played)) {
+          played.forEach(item => {
+            const id = typeof item === 'string' ? item : (item.id || String(item));
+            excludedSet.add(String(id));
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Could not parse banned/played vocabularies', err);
+    }
+
     // Get allowed vocabulary types based on randomVocabulariesType settings
     const allowedTypes = Object.keys(this.mainManager.randomVocabulariesType).filter(
       type => this.mainManager.randomVocabulariesType[type] === true
@@ -322,10 +349,10 @@ export class GamesManager {
 
     // Global random: generate params with a random voc id from allowed types
     if (this.mainManager.randomGameId === 'global') {
-      // Collect IDs from allowed types only
+      // Collect IDs from allowed types only, excluding banned and played
       const allIds = allowedTypes
         .flatMap(type => this.mainManager.validVocabularies[type] || [])
-        .filter(id => id !== undefined && id !== null);
+        .filter(id => id !== undefined && id !== null && !excludedSet.has(String(id)));
 
       if (allIds.length === 0) {
         return null;
@@ -351,12 +378,15 @@ export class GamesManager {
       };
     }
 
-    // Local random: pick a saved game from allowed types
+    // Local random: pick a saved game from allowed types, excluding banned and played
     const all = [];
     this.mainManager.groupsManager.groups.forEach(group => {
       group.games.forEach(game => {
+        const vocId = String(game.params.vocId || '');
+        const isExcluded = vocId && excludedSet.has(vocId);
         // Only include games where vocType is in allowedTypes (or null/undefined for compatibility)
-        if (!game.params.vocType || allowedTypes.includes(game.params.vocType)) {
+        // and vocId is not in the excluded set
+        if (!isExcluded && (!game.params.vocType || allowedTypes.includes(game.params.vocType))) {
           all.push({ game, groupId: group.id });
         }
       });
