@@ -491,7 +491,7 @@ export function createControls(main) {
         const count = main.validVocabularies && typeof main.validVocabularies === 'object'
           ? Object.values(main.validVocabularies).flat().length
           : 0;
-        return `Обновить список допустимых словарей (загружено: ${count})`;
+        return `Обновить список допустимых словарей (доступно: ${count})`;
       },
       ctrl: () => main.showBlockedVocabAlert ? 'Отключить предупреждение о недоступных словарях' : 'Включить предупреждение о недоступных словарях',
       alt: (isEnabled) => isEnabled === 'global' || main.randomGameId === 'global' ? 'Отключить глобальный режим' : 'Включить глобальный режим',
