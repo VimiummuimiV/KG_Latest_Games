@@ -14,11 +14,13 @@ export const VocabulariesManager = {
   listConfigs: {
     bannedVocabularies: {
       title: 'Заблокированные словари',
+      adjective: 'заблокированных',
       mainKey: 'bannedVocabularies',
       backupKey: 'bannedVocabularies*Backup'
     },
     playedVocabularies: {
       title: 'Проигранные словари',
+      adjective: 'проигранных',
       mainKey: 'playedVocabularies',
       backupKey: 'playedVocabularies*Backup'
     }
@@ -673,7 +675,7 @@ export const VocabulariesManager = {
     } else {
       const empty = document.createElement('div');
       empty.className = 'empty-state';
-      empty.textContent = 'Нет заблокированных словарей';
+      empty.textContent = `Нет ${this.getConfig().adjective} словарей`;
       list.appendChild(empty);
     }
 
