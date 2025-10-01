@@ -30,7 +30,6 @@ export const typeMapping = {
   'Слова': 'words',
   'Фразы': 'phrases',
   'Тексты': 'texts',
-  'URL': 'url',
   'Книга': 'books',
   'Генератор': 'generator'
 };
@@ -85,7 +84,6 @@ export const DEFAULTS = {
     words: true,
     phrases: true,
     texts: true,
-    url: true,
     books: true,
     generator: true
   },

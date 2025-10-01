@@ -308,21 +308,30 @@ export class GamesManager {
       : null;
   }
 
-  // Return a structured random game result:
-  // { mode: 'local', game, groupId } or { mode: 'global', params }
   getRandomGame() {
-    // Global random: generate params with a random voc id
-    if (this.mainManager && this.mainManager.randomGameId === 'global') {
-      // Get all vocabulary IDs from all types
-      if (!(this.mainManager && this.mainManager.validVocabularies && typeof this.mainManager.validVocabularies === 'object')) {
-        return null;
-      }
-      const allIds = Object.values(this.mainManager.validVocabularies).flat();
+    // Ensure validVocabularies and randomVocabulariesType are available
+    if (!(this.mainManager && this.mainManager.validVocabularies && typeof this.mainManager.validVocabularies === 'object' &&
+          this.mainManager.randomVocabulariesType && typeof this.mainManager.randomVocabulariesType === 'object')) {
+      return null;
+    }
+
+    // Get allowed vocabulary types based on randomVocabulariesType settings
+    const allowedTypes = Object.keys(this.mainManager.randomVocabulariesType).filter(
+      type => this.mainManager.randomVocabulariesType[type] === true
+    );
+
+    // Global random: generate params with a random voc id from allowed types
+    if (this.mainManager.randomGameId === 'global') {
+      // Collect IDs from allowed types only
+      const allIds = allowedTypes
+        .flatMap(type => this.mainManager.validVocabularies[type] || [])
+        .filter(id => id !== undefined && id !== null);
+
       if (allIds.length === 0) {
         return null;
       }
+
       const idx = Math.floor(Math.random() * allIds.length);
-      // Values may be strings; preserve as-is (generateGameLink will stringify)
       const randVocId = allIds[idx];
 
       return {
@@ -342,11 +351,17 @@ export class GamesManager {
       };
     }
 
-    // Local random: pick a saved game and return it with its group id
+    // Local random: pick a saved game from allowed types
     const all = [];
     this.mainManager.groupsManager.groups.forEach(group => {
-      group.games.forEach(game => all.push({ game, groupId: group.id }));
+      group.games.forEach(game => {
+        // Only include games where vocType is in allowedTypes (or null/undefined for compatibility)
+        if (!game.params.vocType || allowedTypes.includes(game.params.vocType)) {
+          all.push({ game, groupId: group.id });
+        }
+      });
     });
+
     if (all.length === 0) return null;
     const idx = Math.floor(Math.random() * all.length);
     return { mode: 'local', game: all[idx].game, groupId: all[idx].groupId };
