@@ -117,7 +117,6 @@ class StatusChecker:
             "words": [],
             "phrases": [],
             "texts": [],
-            "url": [],
             "books": [],
             "generator": []
         }
@@ -409,7 +408,25 @@ class StatusChecker:
                 # Get vocabulary type
                 vocab_type = self.get_vocab_type(driver)
                 
-                # If public, show for manual moderation
+                # Auto-skip URL type vocabularies
+                if vocab_type == "url":
+                    print(f"skipped {vocab_id}: url")
+                    
+                    # Resume processing after auto-skip
+                    with self.results_lock:
+                        if vocab_id in self.pending_results:
+                            del self.pending_results[vocab_id]
+                        self.next_to_print += 1
+                        self.currently_moderating = False
+                    
+                    self.workers_paused.set()  # Resume workers
+                    print("WORKERS RESUMED\n")
+                    
+                    # Trigger processing of any pending results
+                    self.process_pending_results()
+                    continue
+                
+                # If public and not URL type, show for manual moderation
                 print(f"\n{'='*60}")
                 print(f"Moderating {vocab_id} → {url}")
                 print(f"Type: {vocab_type}")
@@ -450,7 +467,7 @@ class StatusChecker:
                         self.process_pending_results()
                         break
                     elif choice == 's':
-                        print(f"s - ❌ Skipped {vocab_id}")
+                        print(f"s - ❌ Skipped {vocab_id}: {vocab_type}")
                         
                         # Resume processing after moderation
                         with self.results_lock:
