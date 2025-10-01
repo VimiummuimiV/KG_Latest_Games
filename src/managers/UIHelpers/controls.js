@@ -485,7 +485,9 @@ export function createControls(main) {
           : `Включить случайный выбор игры (${modeLabel})`;
       },
       shift: () => {
-        const count = Array.isArray(main.validVocabularies) ? main.validVocabularies.length : 0;
+        const count = main.validVocabularies && typeof main.validVocabularies === 'object'
+          ? Object.values(main.validVocabularies).flat().length
+          : 0;
         return `Обновить список допустимых словарей (загружено: ${count})`;
       },
       ctrl: () => main.showBlockedVocabAlert ? 'Отключить предупреждение о недоступных словарях' : 'Включить предупреждение о недоступных словарях',
@@ -524,20 +526,19 @@ export function createControls(main) {
       fetch(url, { cache: 'no-store' })
         .then(r => {
           if (!r.ok) throw new Error('Network response was not ok: ' + r.status);
-          return r.text();
+          return r.json();
         })
-        .then(text => {
-        // Parse by commas and/or newlines, trim and filter
-        const parts = text.split(/[,\n\r]+/).map(s => s.trim()).filter(s => s !== '');
-        try {
-          const saved = main.settingsManager.saveValidVocabularies(parts);
-          updateRandomTooltip();
-          alert(`✔️ Список словарей обновлён, записано ${saved.length} ID.`);
-        } catch (err) {
-          console.warn('Could not save valid vocabularies via SettingsManager', err);
-          alert('⚠️ Не удалось сохранить список в localStorage.');
-        }
-      }).catch(err => {
+        .then(data => {
+          try {
+            const saved = main.settingsManager.saveValidVocabularies(data.validVocabularies || {});
+            const totalCount = Object.values(saved).flat().length;
+            updateRandomTooltip();
+            alert(`✔️ Список словарей обновлён, записано ${totalCount} ID.`);
+          } catch (err) {
+            console.warn('Could not save valid vocabularies via SettingsManager', err);
+            alert('⚠️ Не удалось сохранить список в localStorage.');
+          }
+        }).catch(err => {
         console.warn('Failed to fetch valid vocabularies:', err);
         alert('⚠️ Ошибка загрузки списка допустимых словарей: ' + err.message);
       });

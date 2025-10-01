@@ -82,61 +82,102 @@ export class SettingsManager {
       const validRaw = localStorage.getItem('validVocabularies');
       if (validRaw) {
         const validParsed = JSON.parse(validRaw);
-        if (Array.isArray(validParsed)) {
-          const normalized = this._normalizeVocabList(validParsed);
-          
-          // Filter out banned vocabularies and already-played vocabularies
-          try {
-            const bannedRaw = localStorage.getItem('bannedVocabularies');
-            const playedRaw = localStorage.getItem('playedVocabularies');
-            const bannedParsed = bannedRaw ? JSON.parse(bannedRaw) : [];
-            const playedParsed = playedRaw ? JSON.parse(playedRaw) : [];
-            
-            if (Array.isArray(bannedParsed) || Array.isArray(playedParsed)) {
-              // Handle both old format (array of strings) and new format (array of objects)
-              const bannedIds = Array.isArray(bannedParsed) ? bannedParsed.map(item => 
-                typeof item === 'string' ? item : (item.id || String(item))
-              ) : [];
-              
-              const bannedSet = new Set(bannedIds.map(id => String(id)));
-              const playedSet = new Set(Array.isArray(playedParsed) ? playedParsed.map(id => String(id)) : []);
-              const combined = new Set([...bannedSet, ...playedSet]);
-              const filtered = normalized.filter(id => !combined.has(String(id)));
-
-              if (filtered.length === 0 && normalized.length > 0) {
-                const ok = confirm('Все доступные словари уже были проиграны. Очистить данные о проигранных словарях и начать заново?');
-                if (ok) {
-                  localStorage.removeItem('playedVocabularies');
-                  this.main.validVocabularies = normalized.filter(id => !bannedSet.has(String(id)));
-                } else {
-                  this.main.validVocabularies = [];
-                }
-                return;
-              }
-
-              this.main.validVocabularies = filtered;
-              return;
-            }
-          } catch (err) {
-            console.warn('Could not parse banned/played vocabularies from localStorage', err);
-          }
-          
-          this.main.validVocabularies = normalized;
+        
+        if (!validParsed || typeof validParsed !== 'object' || Array.isArray(validParsed)) {
+          this.main.validVocabularies = {};
           return;
         }
+        
+        // Normalize each type
+        const normalized = {};
+        for (const [type, arr] of Object.entries(validParsed)) {
+          if (Array.isArray(arr)) {
+            normalized[type] = this._normalizeVocabList(arr);
+          }
+        }
+        
+        // Filter out banned vocabularies and already-played vocabularies
+        try {
+          const bannedRaw = localStorage.getItem('bannedVocabularies');
+          const playedRaw = localStorage.getItem('playedVocabularies');
+          const bannedParsed = bannedRaw ? JSON.parse(bannedRaw) : [];
+          const playedParsed = playedRaw ? JSON.parse(playedRaw) : [];
+          
+          if (Array.isArray(bannedParsed) || Array.isArray(playedParsed)) {
+            const bannedIds = Array.isArray(bannedParsed) ? bannedParsed.map(item => 
+              typeof item === 'string' ? item : (item.id || String(item))
+            ) : [];
+            
+            const bannedSet = new Set(bannedIds.map(id => String(id)));
+            const playedSet = new Set(Array.isArray(playedParsed) ? playedParsed.map(id => String(id)) : []);
+            const combined = new Set([...bannedSet, ...playedSet]);
+            
+            // Filter each type
+            const filtered = {};
+            for (const [type, arr] of Object.entries(normalized)) {
+              filtered[type] = arr.filter(id => !combined.has(String(id)));
+            }
+            
+            // Check if all types are empty
+            const totalFiltered = Object.values(filtered).flat().length;
+            const totalOriginal = Object.values(normalized).flat().length;
+            
+            if (totalFiltered === 0 && totalOriginal > 0) {
+              const ok = confirm('Все доступные словари уже были проиграны. Очистить данные о проигранных словарях и начать заново?');
+              if (ok) {
+                localStorage.removeItem('playedVocabularies');
+                // Re-filter with only banned
+                const refilteredObject = {};
+                for (const [type, arr] of Object.entries(normalized)) {
+                  refilteredObject[type] = arr.filter(id => !bannedSet.has(String(id)));
+                }
+                this.main.validVocabularies = refilteredObject;
+              } else {
+                this.main.validVocabularies = {};
+              }
+              return;
+            }
+            
+            this.main.validVocabularies = filtered;
+            return;
+          }
+        } catch (err) {
+          console.warn('Could not parse banned/played vocabularies from localStorage', err);
+        }
+        
+        this.main.validVocabularies = normalized;
+        return;
       }
     } catch (err) {
       console.warn('Could not parse validVocabularies from localStorage', err);
     }
-    this.main.validVocabularies = this.main.validVocabularies || [];
+    this.main.validVocabularies = {};
   }
 
-  // Normalize and persist an array of vocab ids (strings or numbers)
-  saveValidVocabularies(arr) {
+  // Normalize and persist vocabulary object (with types) or convert array to object
+  saveValidVocabularies(data) {
     try {
-      const normalized = this._normalizeVocabList(arr || []);
+      let normalized;
+      
+      // Handle array input (old format)
+      if (Array.isArray(data)) {
+        normalized = { all: this._normalizeVocabList(data) };
+      }
+      // Handle object input (new format with types)
+      else if (data && typeof data === 'object') {
+        normalized = {};
+        for (const [type, arr] of Object.entries(data)) {
+          if (Array.isArray(arr)) {
+            normalized[type] = this._normalizeVocabList(arr);
+          }
+        }
+      } else {
+        normalized = {};
+      }
+      
       localStorage.setItem('validVocabularies', JSON.stringify(normalized));
       this.main.validVocabularies = normalized;
+      
       // Refresh UI so tooltips/counts reflect the new list immediately
       if (this.main.uiManager && typeof this.main.uiManager.refreshContainer === 'function') {
         this.main.uiManager.refreshContainer();
@@ -144,7 +185,7 @@ export class SettingsManager {
       return normalized;
     } catch (err) {
       console.warn('Could not save validVocabularies to localStorage', err);
-      return [];
+      return {};
     }
   }
 

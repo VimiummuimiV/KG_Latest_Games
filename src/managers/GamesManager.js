@@ -312,15 +312,17 @@ export class GamesManager {
   getRandomGame() {
     // Global random: generate params with a random voc id
     if (this.mainManager && this.mainManager.randomGameId === 'global') {
-      // Prefer an explicitly loaded list of valid vocabularies (from main.validVocabularies).
-      // If not present, return null so callers can handle "no suitable game" consistently.
-      if (!(this.mainManager && Array.isArray(this.mainManager.validVocabularies) && this.mainManager.validVocabularies.length > 0)) {
+      // Get all vocabulary IDs from all types
+      if (!(this.mainManager && this.mainManager.validVocabularies && typeof this.mainManager.validVocabularies === 'object')) {
         return null;
       }
-      const arr = this.mainManager.validVocabularies;
-      const idx = Math.floor(Math.random() * arr.length);
+      const allIds = Object.values(this.mainManager.validVocabularies).flat();
+      if (allIds.length === 0) {
+        return null;
+      }
+      const idx = Math.floor(Math.random() * allIds.length);
       // Values may be strings; preserve as-is (generateGameLink will stringify)
-      const randVocId = arr[idx];
+      const randVocId = allIds[idx];
 
       return {
         mode: 'global',
