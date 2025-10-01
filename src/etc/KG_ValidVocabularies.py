@@ -8,6 +8,7 @@ import queue
 import json
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
+import pyperclip
 
 # Selenium imports (Firefox)
 from selenium import webdriver
@@ -185,6 +186,9 @@ class StatusChecker:
             # Merge new data with existing data
             merged_vocabularies = existing_data.get("validVocabularies", {})
             
+            # Track stats for clipboard
+            clipboard_lines = []
+            
             for vocab_type, new_ids in self.found_vocabularies.items():
                 if new_ids:  # Only process if there are new IDs
                     # Get existing IDs for this type
@@ -197,8 +201,13 @@ class StatusChecker:
                     merged_vocabularies[vocab_type] = combined_ids
                     
                     print(f"Type '{vocab_type}': {len(existing_ids)} existing + {len(new_ids)} new = {len(combined_ids)} total")
-                    # Print the new IDs that were added
+                    
+                    # Build clipboard summary
                     new_ids_str = ', '.join(map(str, sorted(new_ids)))
+                    clipboard_lines.append(f"Type '{vocab_type}': {len(existing_ids)} existing + {len(new_ids)} new = {len(combined_ids)} total")
+                    clipboard_lines.append(f"New IDs: {new_ids_str}")
+                    clipboard_lines.append("")  # Empty line
+                    
                     print(f"  New IDs: {new_ids_str}")
                     print()  # Empty line after each type
 
@@ -209,6 +218,15 @@ class StatusChecker:
             # Save merged data
             with open(log_file_path, 'w', encoding='utf-8') as f:
                 json.dump(output_data, f, ensure_ascii=False, indent=2)
+
+            # Copy to clipboard
+            if clipboard_lines:
+                clipboard_text = '\n'.join(clipboard_lines)
+                try:
+                    pyperclip.copy(clipboard_text)
+                    print("📋 Summary copied to clipboard!")
+                except Exception as e:
+                    print(f"Could not copy to clipboard: {e}")
 
         except Exception as e:
             print(f"Error saving log: {e}")
