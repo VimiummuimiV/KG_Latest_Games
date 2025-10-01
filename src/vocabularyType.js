@@ -43,13 +43,44 @@ function getVocabularyCounts(main, typeKey) {
 }
 
 /**
- * Toggle the vocabulary type setting and update button class
+ * Get status class based on remained count (only when type is active)
+ * @param {number} remained - Number of remaining vocabularies
+ * @param {number} total - Total number of vocabularies
+ * @param {boolean} isActive - Whether this type is currently active
+ * @returns {string} Status class ('danger', 'warning', or empty string)
+ */
+function getStatusClass(remained, total, isActive) {
+  if (!isActive || total === 0) return '';
+  if (remained === 0) return ' danger';
+  if (remained <= 10) return ' warning';
+  return '';
+}
+
+/**
+ * Toggle the vocabulary type setting and update button classes
  */
 function toggleType(button, typeKey, main) {
   if (!(button instanceof HTMLElement)) return;
+  
   const currentState = main.randomVocabulariesType[typeKey];
-  main.randomVocabulariesType[typeKey] = !currentState;
-  button.classList.toggle('active', !currentState);
+  const newState = !currentState;
+  main.randomVocabulariesType[typeKey] = newState;
+  
+  // Remove all state classes first
+  button.classList.remove('active', 'warning', 'danger');
+  
+  // Add appropriate classes based on new state
+  if (newState) {
+    button.classList.add('active');
+    
+    // Get counts to determine status class
+    const counts = getVocabularyCounts(main, typeKey);
+    const statusClass = getStatusClass(counts.remained, counts.total, true).trim();
+    if (statusClass) {
+      button.classList.add(statusClass);
+    }
+  }
+  
   main.settingsManager.saveSettings();
 }
 
@@ -63,11 +94,12 @@ export function showVocabularyTypesPopup(event, main) {
   // Create button configurations with counts for each type
   const buttonConfigs = vocabularyTypes.map(({ label, key }) => {
     const counts = getVocabularyCounts(main, key);
-    const hasNoRemaining = counts.remained === 0 && counts.total > 0;
+    const isActive = main.randomVocabulariesType[key];
+    const statusClass = getStatusClass(counts.remained, counts.total, isActive);
     
     return {
       text: label,
-      className: `group-tab${main.randomVocabulariesType[key] ? ' active' : ''}${hasNoRemaining ? ' no-remaining' : ''}`,
+      className: `group-tab${isActive ? ' active' : ''}${statusClass}`,
       onClick: (button) => toggleType(button, key, main),
       counts
     };
@@ -79,7 +111,7 @@ export function showVocabularyTypesPopup(event, main) {
   // Add tooltips to each button showing total/played/remained counts
   popup.querySelectorAll('.group-tab').forEach((button, i) => {
     const { total, played, remained } = buttonConfigs[i].counts;
-    createCustomTooltip(button, `[Total:]${total} [Played:]${played} [Remained:]${remained}`, 'stats');
+    createCustomTooltip(button, `[Всего:]${total} [Проиграно:]${played} [Осталось:]${remained}`, 'stats');
   });
   
   return popup;
