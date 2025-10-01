@@ -426,7 +426,27 @@ class StatusChecker:
                     self.process_pending_results()
                     continue
                 
-                # If public and not URL type, show for manual moderation
+                # Auto-approve books type vocabularies
+                if vocab_type == "books":
+                    self.successful_requests += 1
+                    self.found_vocabularies["books"].append(vocab_id)
+                    print(f"approved {vocab_id}: books")
+                    
+                    # Resume processing after auto-approval
+                    with self.results_lock:
+                        if vocab_id in self.pending_results:
+                            del self.pending_results[vocab_id]
+                        self.next_to_print += 1
+                        self.currently_moderating = False
+                    
+                    self.workers_paused.set()  # Resume workers
+                    print("WORKERS RESUMED\n")
+                    
+                    # Trigger processing of any pending results
+                    self.process_pending_results()
+                    continue
+                
+                # If public and not URL/books type, show for manual moderation
                 print(f"\n{'='*60}")
                 print(f"Moderating {vocab_id} → {url}")
                 print(f"Type: {vocab_type}")
