@@ -1,25 +1,40 @@
-import { fetchVocabularyContent, showTooltip, startHideTimeout } from "../../vocabularyParser";
-import { fetchVocabularyBasicData } from "../../vocabularyCreation";
-import { createCustomTooltip } from "../../tooltip";
+import { fetchVocabularyContent, showTooltip, startHideTimeout } from "./vocabularyParser";
+import { fetchVocabularyBasicData } from "./vocabularyCreation";
+import { createCustomTooltip } from "./tooltip";
 
-export const BannedVocabPopup = {
+export const VocabulariesManager = {
   popup: null,
   isDragging: false,
   offsetX: 0,
   offsetY: 0,
   hasUnsavedChanges: false,
+  currentListType: 'bannedVocabularies', // Track which list we're managing
+
+  // Configuration for different list types
+  listConfigs: {
+    bannedVocabularies: {
+      title: 'Заблокированные словари',
+      mainKey: 'bannedVocabularies',
+      backupKey: 'bannedVocabularies*Backup'
+    },
+    playedVocabularies: {
+      title: 'Проигранные словари',
+      mainKey: 'playedVocabularies',
+      backupKey: 'playedVocabularies*Backup'
+    }
+  },
+
+  getConfig() {
+    return this.listConfigs[this.currentListType];
+  },
 
   get() { 
     try {
-      // If backup exists, load from backup (unsaved changes)
-      const backupKey = 'bannedVocabularies*Backup';
-      const mainKey = 'bannedVocabularies';
-      
-      const source = localStorage[backupKey] ? backupKey : mainKey;
+      const config = this.getConfig();
+      const source = localStorage[config.backupKey] ? config.backupKey : config.mainKey;
       const data = JSON.parse(localStorage[source]) || [];
       
-      // Set unsaved flag if we're loading from backup
-      this.hasUnsavedChanges = source === backupKey;
+      this.hasUnsavedChanges = source === config.backupKey;
       
       // Handle legacy format (array of strings) by converting to objects
       return data.map(item => 
@@ -28,31 +43,30 @@ export const BannedVocabPopup = {
     } catch { return []; } 
   },
   
-  save(arr, createBackup = true) { 
+  save(arr, createBackup = true) {
+    const config = this.getConfig();
     if (createBackup) {
-      // Save to backup when making changes
-      localStorage['bannedVocabularies*Backup'] = JSON.stringify(arr);
+      localStorage[config.backupKey] = JSON.stringify(arr);
       this.hasUnsavedChanges = true;
     } else {
-      // Save enriched data without creating backup
-      const targetKey = this.hasUnsavedChanges ? 'bannedVocabularies*Backup' : 'bannedVocabularies';
+      const targetKey = this.hasUnsavedChanges ? config.backupKey : config.mainKey;
       localStorage[targetKey] = JSON.stringify(arr);
     }
   },
   
   commitSave() {
-    // Move backup to main storage
-    const backup = localStorage['bannedVocabularies*Backup'];
+    const config = this.getConfig();
+    const backup = localStorage[config.backupKey];
     if (backup) {
-      localStorage.bannedVocabularies = backup;
-      delete localStorage['bannedVocabularies*Backup'];
+      localStorage[config.mainKey] = backup;
+      delete localStorage[config.backupKey];
     }
     this.hasUnsavedChanges = false;
   },
   
   revertChanges() {
-    // Discard backup, reload from main
-    delete localStorage['bannedVocabularies*Backup'];
+    const config = this.getConfig();
+    delete localStorage[config.backupKey];
     this.hasUnsavedChanges = false;
   },
 
@@ -308,7 +322,8 @@ export const BannedVocabPopup = {
 
     const header = document.createElement('div');
     header.className = 'popup-header';
-    header.textContent = this.hasUnsavedChanges ? 'Заблокированные словари *' : 'Заблокированные словари';
+    const config = this.getConfig();
+    header.textContent = this.hasUnsavedChanges ? `${config.title} *` : config.title;
     header.style.cursor = 'move';
     header.addEventListener('mousedown', (e) => this.startDrag(e));
     container.appendChild(header);
@@ -624,25 +639,28 @@ export const BannedVocabPopup = {
     }
   },
 
-  toggle(x, y) { this.popup ? this.hide() : this.show(x, y); },
+  toggle(x, y, listType = 'bannedVocabularies') { 
+    this.currentListType = listType;
+    this.popup ? this.hide() : this.show(x, y); 
+  },
 
   outside: e => { 
-    if (!BannedVocabPopup.popup?.contains(e.target) && e.target.tagName !== 'BUTTON') 
-      BannedVocabPopup.hide(); 
+    if (!VocabulariesManager.popup?.contains(e.target) && e.target.tagName !== 'BUTTON') 
+      VocabulariesManager.hide(); 
   },
   
   keydown: e => {
     if (e.key === 'Escape') {
-      BannedVocabPopup.hide();
+      VocabulariesManager.hide();
     } else if ((e.ctrlKey || e.metaKey) && e.key === 's') {
       e.preventDefault();
-      if (BannedVocabPopup.hasUnsavedChanges) {
-        BannedVocabPopup.handleSave();
+      if (VocabulariesManager.hasUnsavedChanges) {
+        VocabulariesManager.handleSave();
       }
     } else if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
       e.preventDefault();
-      if (BannedVocabPopup.hasUnsavedChanges) {
-        BannedVocabPopup.handleRevert();
+      if (VocabulariesManager.hasUnsavedChanges) {
+        VocabulariesManager.handleRevert();
       }
     }
   },
@@ -657,16 +675,16 @@ export const BannedVocabPopup = {
   },
 
   drag: (e) => {
-    if (!BannedVocabPopup.isDragging || !BannedVocabPopup.popup) return;
-    BannedVocabPopup.popup.style.left = (e.clientX - BannedVocabPopup.offsetX) + 'px';
-    BannedVocabPopup.popup.style.top = (e.clientY - BannedVocabPopup.offsetY) + 'px';
-    BannedVocabPopup.constrainToScreen();
+    if (!VocabulariesManager.isDragging || !VocabulariesManager.popup) return;
+    VocabulariesManager.popup.style.left = (e.clientX - VocabulariesManager.offsetX) + 'px';
+    VocabulariesManager.popup.style.top = (e.clientY - VocabulariesManager.offsetY) + 'px';
+    VocabulariesManager.constrainToScreen();
   },
 
   stopDrag: () => {
-    BannedVocabPopup.isDragging = false;
-    document.removeEventListener('mousemove', BannedVocabPopup.drag);
-    document.removeEventListener('mouseup', BannedVocabPopup.stopDrag);
+    VocabulariesManager.isDragging = false;
+    document.removeEventListener('mousemove', VocabulariesManager.drag);
+    document.removeEventListener('mouseup', VocabulariesManager.stopDrag);
   },
 
   constrainToScreen() {

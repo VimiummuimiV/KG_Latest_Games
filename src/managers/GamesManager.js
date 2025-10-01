@@ -393,8 +393,21 @@ export class GamesManager {
             const playedRaw = localStorage.getItem('playedVocabularies') || '[]';
             const played = JSON.parse(playedRaw);
             const idStr = String(candidate.id);
-            if (!played.includes(idStr)) {
-              played.push(idStr);
+            
+            // Check if already exists (handle both old array format and new object format)
+            const alreadyExists = played.some(item => 
+              typeof item === 'string' ? item === idStr : item.id === idStr
+            );
+            
+            if (!alreadyExists) {
+              // Create vocabulary object with full structure
+              const vocabToAdd = {
+                id: idStr,
+                name: null,
+                author: null,
+                isNew: true
+              };
+              played.push(vocabToAdd);
               localStorage.setItem('playedVocabularies', JSON.stringify(played));
             }
           } catch (_) {}

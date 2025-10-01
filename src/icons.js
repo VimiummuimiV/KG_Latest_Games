@@ -321,4 +321,12 @@ export const icons = {
       <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
     </svg>
   `,
+
+  book: `
+    <svg xmlns="${SVG_NS}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+    </svg>
+  `,
 };

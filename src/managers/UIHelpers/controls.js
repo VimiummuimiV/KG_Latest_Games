@@ -1,12 +1,12 @@
-import { createElement, generateUniqueId, getCurrentPage } from '../../utils.js';
-import { createCustomTooltip, refreshTooltipSettings } from '../../tooltip.js';
-import { icons } from '../../icons.js';
-import { toggleSearchBox } from './search.js';
-import { DEFAULTS } from '../../definitions.js';
-import { BannedVocabPopup } from '../UIHelpers/bannedVocabPopup.js';
-import { addGameToGroup, fetchVocabularyBasicData } from '../../vocabularyCreation.js';
-import { showMigrationPopup } from '../../vocabularyMigration.js';
-import { getSessionVocId } from '../../vocabularyParser.js';
+import { createElement, generateUniqueId, getCurrentPage } from "../../utils.js";
+import { createCustomTooltip, refreshTooltipSettings } from "../../tooltip.js";
+import { icons } from "../../icons.js";
+import { toggleSearchBox } from "./search.js";
+import { DEFAULTS } from "../../definitions.js";
+import { addGameToGroup, fetchVocabularyBasicData } from "../../vocabularyCreation.js";
+import { showMigrationPopup } from "../../vocabularyMigration.js";
+import { getSessionVocId } from "../../vocabularyParser.js";
+import { VocabulariesManager } from "../../vocabulariesManager.js";
 
 export function createControls(main) {
   const controlsContainer = createElement('div', { className: 'latest-games-controls' });
@@ -651,7 +651,8 @@ export function createControls(main) {
 
     try {
       // Check if already banned using BannedVocabPopup
-      const existing = BannedVocabPopup.get();
+      VocabulariesManager.currentListType = 'bannedVocabularies';
+      const existing = VocabulariesManager.get();
       const alreadyBanned = existing.some(v => v.id === String(currentVocabId));
       
       if (alreadyBanned) {
@@ -669,7 +670,7 @@ export function createControls(main) {
 
       // Add to BannedVocabPopup's enhanced storage
       const updatedList = [...existing, vocabToAdd];
-      BannedVocabPopup.save(updatedList, false); // prevent save with backup key creation
+      VocabulariesManager.save(updatedList, false); // prevent save with backup key creation
 
       alert(`✔️ Словарь ${currentVocabId} добавлен в чёрный список`);
       
@@ -759,12 +760,12 @@ export function createControls(main) {
     }
   };
 
-  const banVocabularyBtn = createElement('span', {
+  const bannedVocabulariesBtn = createElement('span', {
     className: 'latest-games-ban-vocabulary control-button',
     innerHTML: icons.slash
   });
   createCustomTooltip(
-    banVocabularyBtn, `
+    bannedVocabulariesBtn, `
     [Клик] Показать заблокированные словари
     [Alt + Enter | Alt + Клик] Заблокировать текущий словарь
     `
@@ -772,15 +773,25 @@ export function createControls(main) {
 
   // Open banned vocabularies popup when clicking the button
   // Alt+Click: ban current vocabulary
-  banVocabularyBtn.onclick = (e) => {
+  bannedVocabulariesBtn.onclick = (e) => {
     // Alt+Click: ban current vocabulary
     if (e.altKey) {
       e.preventDefault();
       banCurrentVocabulary();
     // Click: open the banned vocabularies popup
     } else {
-      BannedVocabPopup.toggle(e.clientX, e.clientY);
+      VocabulariesManager.toggle(e.clientX, e.clientY, 'bannedVocabularies');
     }
+  };
+
+  const playedVocabulariesBtn = createElement('span', {
+    className: 'latest-games-played-vocabularies control-button',
+    innerHTML: icons.book
+  });
+  createCustomTooltip(playedVocabulariesBtn, 'Показать проигранные словари');
+
+  playedVocabulariesBtn.onclick = (e) => {
+    VocabulariesManager.toggle(e.clientX, e.clientY, 'playedVocabularies');
   };
 
   // Start latest played or random game when pressing Shift+Enter
@@ -812,7 +823,7 @@ export function createControls(main) {
     pinAllBtn, unpinAllBtn, sortBtn, importBtn,
     exportBtn, removeAllBtn, removeUnpinnedBtn,
     dragToggleBtn, descToggleBtn, helpToggleBtn, searchBtn,
-    randomRaceBtn, startRaceBtn, banVocabularyBtn
+    randomRaceBtn, startRaceBtn, bannedVocabulariesBtn, playedVocabulariesBtn
   );
 
   return controlsContainer;
