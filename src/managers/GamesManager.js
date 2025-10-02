@@ -434,30 +434,7 @@ export class GamesManager {
         let resp = await fetch(candidate.url, { method: 'HEAD', cache: 'no-store' });
         if (resp.status === 405) resp = await fetch(candidate.url, { method: 'GET', cache: 'no-store' });
         if (resp.ok) {
-          // Persist this played vocabulary id so it can be filtered out later
-          try {
-            const playedRaw = localStorage.getItem('playedVocabularies') || '[]';
-            const played = JSON.parse(playedRaw);
-            const idStr = String(candidate.id);
-            
-            // Check if already exists (handle both old array format and new object format)
-            const alreadyExists = played.some(item => 
-              typeof item === 'string' ? item === idStr : item.id === idStr
-            );
-            
-            if (!alreadyExists) {
-              // Create vocabulary object with full structure
-              const vocabToAdd = {
-                id: idStr,
-                name: null,
-                author: null,
-                vocType: null,
-                isNew: true
-              };
-              played.push(vocabToAdd);
-              localStorage.setItem('playedVocabularies', JSON.stringify(played));
-            }
-          } catch (_) {}
+          this.markVocabAsPlayed(candidate.id);
           return candidate;
         }
         if (resp.status === 403) {
@@ -476,5 +453,47 @@ export class GamesManager {
       }
     }
     return null;
+  }
+
+  /**
+   * Mark a vocabulary as played in localStorage (with duplicate check).
+   * Always sets sessionStorage for tooltip (shows vocab info on game page).
+   * @param {string} vocId - The vocabulary ID to mark.
+   * @param {string|null} name - Optional: Vocab name (from saved game).
+   * @param {string|null} vocType - Optional: Vocab type (from saved game).
+   */
+  markVocabAsPlayed(vocId, name = null, vocType = null) {
+    const idStr = String(vocId);
+    if (!idStr) return; // Skip non-vocabs
+
+    try {
+      const playedRaw = localStorage.getItem('playedVocabularies') || '[]';
+      const played = JSON.parse(playedRaw);
+      
+      // Check if already exists (handle both old array format and new object format)
+      const alreadyExists = played.some(item => 
+        typeof item === 'string' ? item === idStr : item.id === idStr
+      );
+      
+      if (!alreadyExists) {
+        // Create vocabulary object with full structure
+        const vocabToAdd = {
+          id: idStr,
+          name,
+          author: null,
+          vocType,
+          isNew: true
+        };
+        played.push(vocabToAdd);
+        localStorage.setItem('playedVocabularies', JSON.stringify(played));
+      }
+
+      // Always set sessionStorage for tooltip (useful for both modes)
+      try {
+        sessionStorage.setItem('latestGames_showVocTooltip', JSON.stringify({ vocId: idStr }));
+      } catch (__) { }
+    } catch (_) {
+      // Silently fail (non-critical)
+    }
   }
 }

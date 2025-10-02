@@ -112,6 +112,12 @@ export function createGameElement(main, game, id) {
         localStorage.setItem('latestGamesData', JSON.stringify(data));
       }
     } catch (err) { }
+
+    // Mark the vocab as played (using game details)
+    const vocId = String(game.params.vocId || '');
+    if (vocId) {
+      main.gamesManager.markVocabAsPlayed(vocId, game.params.vocName, game.params.vocType);
+    }
   });
 
   // Default tooltip content

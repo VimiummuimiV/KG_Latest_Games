@@ -637,42 +637,6 @@ export function createControls(main) {
   // Start race action function
   // Choose id (random or previous), switch group if needed, save and navigate
   const startRaceAction = () => {
-    // Inner helper to mark vocab as played (shared for local and global)
-    const markVocabAsPlayed = (vocId, name = null, vocType = null) => {
-      const idStr = String(vocId);
-      if (!idStr) return; // Skip non-vocabs
-
-      try {
-        const playedRaw = localStorage.getItem('playedVocabularies') || '[]';
-        const played = JSON.parse(playedRaw);
-        
-        // Check if already exists (handle both old array format and new object format)
-        const alreadyExists = played.some(item => 
-          typeof item === 'string' ? item === idStr : item.id === idStr
-        );
-        
-        if (!alreadyExists) {
-          // Create vocabulary object with full structure
-          const vocabToAdd = {
-            id: idStr,
-            name,
-            author: null,
-            vocType,
-            isNew: true
-          };
-          played.push(vocabToAdd);
-          localStorage.setItem('playedVocabularies', JSON.stringify(played));
-        }
-
-        // Set sessionStorage for tooltip (for both modes: shows vocab info on game page)
-        try {
-          sessionStorage.setItem('latestGames_showVocTooltip', JSON.stringify({ vocId: idStr }));
-        } catch (__) { }
-      } catch (_) {
-        // Silently fail (non-critical)
-      }
-    };
-
     // If random mode is ON, get structured random info; otherwise use previousGameId
     const randomMode = main.randomGameId;
     let res = null;
@@ -704,10 +668,10 @@ export function createControls(main) {
       main.gamesManager.latestGamesData.previousGameId = res.id;
       main.gamesManager.saveGameData();
 
-      // Mark the vocab as played (using saved game details; includes tooltip)
+      // Mark the vocab as played (using saved game details)
       const vocId = String(res.game.params.vocId || '');
       if (vocId) {
-        markVocabAsPlayed(vocId, res.game.params.vocName, res.game.params.vocType);
+        main.gamesManager.markVocabAsPlayed(vocId, res.game.params.vocName, res.game.params.vocType);
       }
 
       if (!res.url) {
@@ -724,9 +688,9 @@ export function createControls(main) {
         const validated = await main.gamesManager.getValidRandomGameId();
         if (!validated) return alert('🔒 Максимальное количество попыток поиска подходящей игры исчерпано. Попробуйте ещё раз.');
         
-        // Mark the vocab as played (with tooltip for global)
+        // Mark the vocab as played
         if (validated.id) {
-          markVocabAsPlayed(validated.id);
+          main.gamesManager.markVocabAsPlayed(validated.id);
         }
         
         window.location.href = validated.url;
