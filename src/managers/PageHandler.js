@@ -214,56 +214,82 @@ export class PageHandler {
     const groupsManager = this.main.groupsManager; // Access the groups manager from main
     const gamesManager = this.main.gamesManager; // Access the games manager from main
 
+    let targetVocId = null;
+    let targetName = null;
+    let targetType = null;
+    let nextUrl = null;
+
     // If random mode is enabled, pick a random game and start it immediately
     if (this.main.randomGameId) {
       const randRes = gamesManager.getRandomGameId();
       if (!randRes) return;
-      // If global mode, we get a URL directly
+
       if (randRes.mode === 'global') {
         (async () => {
           const validated = await gamesManager.getValidRandomGameId();
           if (!validated) return alert('Максимальное количество попыток поиска подходящей игры исчерпано. Попробуйте ещё раз.');
-          try {
-            if (validated.mode === 'global' && validated.id) {
-              sessionStorage.setItem('latestGames_showVocTooltip', JSON.stringify({ vocId: String(validated.id) }));
-            }
-          } catch (__) { }
-          window.location.href = validated.url;
+          
+          targetVocId = validated.id;
+          nextUrl = validated.url;
+          
+          // Single call for global
+          if (targetVocId) {
+            gamesManager.markVocabAsPlayed(targetVocId);
+          }
+          
+          window.location.href = nextUrl;
         })();
         return;
       }
-      // Local mode: ensure the group is selected and persist previousGameId
+
+      // Local random: setup group and data
       if (randRes.mode === 'local') {
-        const group = this.main.groupsManager.groups.find(g => g.games.some(game => game.id === randRes.id));
-        if (group) this.main.groupsManager.selectGroup(group.id);
+        const group = groupsManager.groups.find(g => g.games.some(game => game.id === randRes.id));
+        if (group) groupsManager.selectGroup(group.id);
         gamesManager.latestGamesData = gamesManager.latestGamesData || {};
         gamesManager.latestGamesData.previousGameId = randRes.id;
         gamesManager.saveGameData();
-        if (!randRes.url && randRes.game) randRes.url = gamesManager.generateGameLink(randRes.game);
-        if (randRes.url) window.location.href = randRes.url;
+        
+        targetVocId = String(randRes.game?.params?.vocId || '');
+        targetName = randRes.game?.params?.vocName || null;
+        targetType = randRes.game?.params?.vocType || null;
+        nextUrl = randRes.game ? gamesManager.generateGameLink(randRes.game) : randRes.url;
+        
+        // Single call for local random
+        if (targetVocId) {
+          gamesManager.markVocabAsPlayed(targetVocId, targetName, targetType);
+        }
+        
+        if (nextUrl) window.location.href = nextUrl;
       }
       return;
     }
 
+    // Fallback: Sequential next game from current group
     const currentGroup = groupsManager.getCurrentGroup(groupsManager.groups, groupsManager.currentGroupId);
-    // Ensure currentGroup is valid and has games
     if (!currentGroup || !Array.isArray(currentGroup.games) || currentGroup.games.length === 0) return;
-    // Find the next game based on the previousGameId
+
     const prevGameId = gamesManager.latestGamesData?.previousGameId;
-    // If no previousGameId, start from the first game
     let idx = currentGroup.games.findIndex(g => g.id === prevGameId);
-    // If latest game already played set idx to first game
     if (idx === -1) idx = 0;
-    // If idx is the last game, loop to the first game
     else idx = (idx + 1) % currentGroup.games.length;
-    // Ensure the next game exists
+
     const nextGame = currentGroup.games[idx];
     if (!nextGame) return;
-    // Update latestGamesData with the next game ID
+
     gamesManager.latestGamesData.previousGameId = nextGame.id;
     gamesManager.saveGameData();
-    // Create new race (not replay)
-    const nextUrl = gamesManager.generateGameLink(nextGame);
+
+    targetVocId = String(nextGame.params.vocId || '');
+    targetName = nextGame.params.vocName || null;
+    targetType = nextGame.params.vocType || null;
+    nextUrl = gamesManager.generateGameLink(nextGame);
+
+    // Single call for fallback
+    if (targetVocId) {
+      gamesManager.markVocabAsPlayed(targetVocId, targetName, targetType);
+    }
+
     window.location.href = nextUrl;
   } // End of replayNextGame
 
