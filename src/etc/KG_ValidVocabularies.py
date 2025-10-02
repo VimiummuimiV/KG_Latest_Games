@@ -365,8 +365,19 @@ class StatusChecker:
         options.add_argument("--width=1200")
         options.add_argument("--height=800")
 
-        # Uncomment if you want no browser window:
-        # options.add_argument("--headless")
+        # Configure persistent Firefox profile
+        # Option 1: Create profile on Desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        profile_path = os.path.join(desktop_path, "vocab_checker_firefox_profile")
+        
+        # Create profile directory if it doesn't exist
+        if not os.path.exists(profile_path):
+            os.makedirs(profile_path)
+            print(f"Created Firefox profile directory: {profile_path}")
+        
+        # Set the profile
+        options.add_argument('-profile')
+        options.add_argument(profile_path)
 
         driver = webdriver.Firefox(
             service=Service(GeckoDriverManager().install()),
