@@ -10,6 +10,7 @@ const VOCABULARY_ANCHOR_SELECTOR = 'a[href*="/vocs/"], a[href*="/create/"]';
 // List of selectors to exclude from processing
 const EXCLUSION_SELECTORS = [
   '#latest-games-container',
+  '.game-popup',
   '.userpanel',
   '#head',
   '#footer'

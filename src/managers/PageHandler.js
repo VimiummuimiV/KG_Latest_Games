@@ -1,8 +1,9 @@
-import { highlightExistingVocabularies } from '../vocabularyChecker.js';
-import { attachVocabularyCreation } from '../vocabularyCreation.js';
-import { attachVocabularyParser } from '../vocabularyParser.js';
-import { sleep, generateUniqueId } from '../utils.js';
-import { isVocabularyCreationSupported } from '../vocabularyCreation.js';
+import { highlightExistingVocabularies } from "../vocabularyChecker.js";
+import { attachVocabularyCreation } from "../vocabularyCreation.js";
+import { attachVocabularyParser } from "../vocabularyParser.js";
+import { sleep, generateUniqueId } from "../utils.js";
+import { isVocabularyCreationSupported } from "../vocabularyCreation.js";
+import { detectGameType } from "../utils.js";
 
 export class PageHandler {
   constructor(main) {
@@ -294,6 +295,9 @@ export class PageHandler {
   } // End of replayNextGame
 
   handleReplayAction() {
+    // Do not auto-replay for competition or qualification games
+    if (['competition', 'qualification'].includes(detectGameType().category)) return;
+
     // Handle auto-replay - affected by hover state
     if (this.main.shouldReplay) {
       // Check the appropriate element based on replayWithoutWaiting setting

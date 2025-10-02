@@ -1,3 +1,5 @@
+import { gameTypes } from "./definitions.js";
+
 function generateRandomString() {
   return Array.from(crypto.getRandomValues(new Uint8Array(32)))
     .map(b => (b % 36).toString(36))
@@ -119,4 +121,44 @@ export function extractVocabularyId(anchor) {
       return null;
     }
   }
+}
+
+/**
+ * Detects the type of game from the #gamedesc element.
+ * Returns an object with category ('competition', 'qualification', 'vocabulary', 'default')
+ * and subtype (from gameTypes map, e.g., 'Oбычный' or 'Словарь').
+ * @returns {Object} { category: string, subtype: string }
+ */
+export function detectGameType() {
+  const gamedesc = document.querySelector('#gamedesc');
+  if (!gamedesc) return { category: 'default', subtype: 'Unknown' };
+
+  const text = gamedesc.textContent.toLowerCase();
+  const span = gamedesc.querySelector('span');
+  if (!span) return { category: 'default', subtype: 'Unknown' };
+
+  const classMatch = span.className.match(/gametype-(\w+)/);
+  const gametypeKey = classMatch ? classMatch[1] : null;
+  const subtype = gametypeKey ? gameTypes[gametypeKey] || 'Unknown' : 'Unknown';
+
+  // Check for competition
+  if (text.includes('соревнование')) {
+    return { category: 'competition', subtype };
+  }
+
+  // Check for qualification
+  if (text.includes('квалификация')) {
+    return { category: 'qualification', subtype };
+  }
+
+  // Check for vocabulary (gametype-voc + vocs link)
+  if (gametypeKey === 'voc') {
+    const vocLink = gamedesc.querySelector('a[href*="/vocs/"]');
+    if (vocLink) {
+      return { category: 'vocabulary', subtype };
+    }
+  }
+
+  // Default for other gametypes (abra, chars, etc.)
+  return { category: 'default', subtype };
 }
