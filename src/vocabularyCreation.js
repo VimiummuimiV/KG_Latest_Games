@@ -1,7 +1,7 @@
 import { generateUniqueId, getContainerSelector, extractVocabularyId } from "./utils.js";
 import { highlightExistingVocabularies } from "./vocabularyChecker.js";
 import { createPopup } from "./menuPopup.js";
-import { hideTooltip } from "./vocabularyParser.js";
+import { hideTooltip } from "./vocabularyContent.js";
 import { typeMapping } from "./definitions.js";
 
 // Function to fetch basic vocabulary data (name, rating, fans, author, type) from the server

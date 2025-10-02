@@ -5,7 +5,7 @@ import { toggleSearchBox } from "./search.js";
 import { DEFAULTS } from "../../definitions.js";
 import { addGameToGroup, fetchVocabularyBasicData } from "../../vocabularyCreation.js";
 import { showMigrationPopup } from "../../vocabularyMigration.js";
-import { getSessionVocId } from "../../vocabularyParser.js";
+import { getSessionVocId } from "../../vocabularyContent.js";
 import { VocabulariesManager } from "../../vocabulariesManager.js";
 import { showVocabularyTypesPopup } from "../../vocabularyType.js";
 

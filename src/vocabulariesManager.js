@@ -1,4 +1,4 @@
-import { fetchVocabularyContent, showTooltip, startHideTimeout } from "./vocabularyParser";
+import { fetchVocabularyContent, showTooltip, startHideTimeout } from "./vocabularyContent";
 import { fetchVocabularyBasicData } from "./vocabularyCreation";
 import { createCustomTooltip } from "./tooltip";
 import { typeMapping } from "./definitions";

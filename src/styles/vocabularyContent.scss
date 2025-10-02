@@ -1,0 +1,46 @@
+.vocabulary-tooltip-popup {
+  font: 500 14px "Montserrat", sans-serif;
+  position: fixed;
+  background: var(--rg-bg-primary);
+  color: var(--rg-text-primary);
+  padding: 0.5em;
+  z-index: 1200;
+  font-size: 0.9em;
+  pointer-events: auto;
+  white-space: pre-wrap;
+  border: 1px solid var(--rg-border-primary) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3) !important;
+  max-width: 700px;
+  width: auto;
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rg-text-tertiary) var(--rg-bg-primary);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+
+  .tooltip-number {
+    color: var(--rg-text-secondary);
+    opacity: 0.8;
+  }
+
+  // WebKit browsers (Chrome, Safari, Edge)
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--rg-bg-primary) !important;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--rg-text-tertiary) !important;
+
+    &:hover {
+      background-color: var(--rg-text-secondary) !important;
+    }
+  }
+}

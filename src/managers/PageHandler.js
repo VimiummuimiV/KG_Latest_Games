@@ -1,6 +1,6 @@
 import { highlightExistingVocabularies } from "../vocabularyChecker.js";
 import { attachVocabularyCreation } from "../vocabularyCreation.js";
-import { attachVocabularyParser } from "../vocabularyParser.js";
+import { attachVocabularyParser } from "../vocabularyContent.js";
 import { sleep, generateUniqueId } from "../utils.js";
 import { isVocabularyCreationSupported } from "../vocabularyCreation.js";
 import { detectGameType } from "../utils.js";
