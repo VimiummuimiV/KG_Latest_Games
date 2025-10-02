@@ -1,4 +1,4 @@
-import { getCurrentPage } from "./utils";
+import { getCurrentPage, detectGameType } from "./utils";
 
 // Function to fetch and parse vocabulary content from a URL
 export async function fetchVocabularyContent(vocId) {
@@ -329,21 +329,12 @@ async function showSessionTooltip() {
     console.warn('Could not read randomGameId from localStorage:', error);
     randomGameId = undefined;
   }
-
   // Show vocabulary preview (tooltip) on game page for any played vocab (global or local)
   if (getCurrentPage() !== 'game') return;
-
   try {
     const vocId = getSessionVocId();
     if (!vocId) return;
-
-    // Ensure there's an anchor with /vocs/ in #gamedesc (voc game only)
-    const gameDescAnchor = document.querySelector('#gamedesc a[href*="/vocs/"]');
-    if (!gameDescAnchor) {
-      console.log('Skipping tooltip: No vocabulary anchor found in #gamedesc');
-      return; // Not a voc game, skip
-    }
-
+    if (detectGameType().category !== 'vocabulary') return;
     const content = await fetchVocabularyContent(vocId);
     try {
       showTooltip(null, content);
