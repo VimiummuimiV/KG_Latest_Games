@@ -315,7 +315,7 @@ export class GamesManager {
       return null;
     }
 
-    // Get banned and played vocabulary IDs
+    // Get banned and played vocabulary IDs (shared for both modes)
     const excludedSet = new Set();
     try {
       const bannedRaw = localStorage.getItem('bannedVocabularies');
@@ -342,7 +342,7 @@ export class GamesManager {
       console.warn('Could not parse banned/played vocabularies', err);
     }
 
-    // Get allowed vocabulary types based on randomVocabulariesType settings
+    // Get allowed vocabulary types based on randomVocabulariesType settings (shared for both modes)
     const allowedTypes = Object.keys(this.mainManager.randomVocabulariesType).filter(
       type => this.mainManager.randomVocabulariesType[type] === true
     );
@@ -378,15 +378,14 @@ export class GamesManager {
       };
     }
 
-    // Local random: pick a saved game from allowed types, excluding banned and played
+    // Local random: pick a saved game from allowed types (strict: require vocType match, no null fallback), excluding banned and played
     const all = [];
     this.mainManager.groupsManager.groups.forEach(group => {
       group.games.forEach(game => {
         const vocId = String(game.params.vocId || '');
         const isExcluded = vocId && excludedSet.has(vocId);
-        // Only include games where vocType is in allowedTypes (or null/undefined for compatibility)
-        // and vocId is not in the excluded set
-        if (!isExcluded && (!game.params.vocType || allowedTypes.includes(game.params.vocType))) {
+        // Strict filter: require vocType to be set and match allowedTypes
+        if (!isExcluded && game.params.vocType && allowedTypes.includes(game.params.vocType)) {
           all.push({ game, groupId: group.id });
         }
       });
