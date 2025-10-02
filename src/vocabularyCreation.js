@@ -182,6 +182,21 @@ function attachEventToContainer(container, groups, main) {
   if (attachedContainers.has(container)) return;
   attachedContainers.add(container);
 
+  // Helper function to fetch vocabulary data
+  async function getVocabularyData(vocId, href) {
+    const basicData = await fetchVocabularyBasicData(vocId);
+    if (basicData && basicData.vocabularyName) {
+      return {
+        success: true,
+        vocName: basicData.vocabularyName,
+        vocType: basicData.vocabularyType || null
+      };
+    } else {
+      alert('⚠️ Не удалось получить данные словаря. Добавление отменено.');
+      return { success: false };
+    }
+  }
+
   container.addEventListener('contextmenu', async (e) => {
     const anchor = e.target.closest('a');
     if (!anchor) return;
@@ -207,21 +222,10 @@ function attachEventToContainer(container, groups, main) {
           e.preventDefault();
           e.stopPropagation();
 
-          let vocName = '';
-          let vocType = null;
-          if (href.includes('/create/')) {
-            const basicData = await fetchVocabularyBasicData(vocId);
-            if (basicData && basicData.vocabularyName) {
-              vocName = basicData.vocabularyName;
-              vocType = basicData.vocabularyType;
-            } else {
-              vocName = prompt('Не удалось получить название словаря. Введите название для словаря:') || '';
-            }
-          } else {
-            vocName = extractVocabularyName(anchor);
-          }
+          const data = await getVocabularyData(vocId, href);
+          if (!data.success) return; // Abort on fetch failure
 
-          addGameToGroup(group, vocId, vocName, vocType, groups, main);
+          addGameToGroup(group, vocId, data.vocName, data.vocType, groups, main);
           return; // Exit early
         }
       }
@@ -232,22 +236,10 @@ function attachEventToContainer(container, groups, main) {
     e.preventDefault();
     e.stopPropagation();
 
-    let vocName = '';
-    let vocType = null;
-    if (href.includes('/create/')) {
-      const basicData = await fetchVocabularyBasicData(vocId);
-      if (basicData && basicData.vocabularyName) {
-        vocName = basicData.vocabularyName;
-        vocType = basicData.vocabularyType;
-      } else {
-        // If fetching basic data fails, prompt the user to set a name manually.
-        vocName = prompt('Не удалось получить название словаря. Введите название для словаря:') || '';
-      }
-    } else {
-      vocName = extractVocabularyName(anchor);
-    }
+    const data = await getVocabularyData(vocId, href);
+    if (!data.success) return; // Abort on fetch failure
 
-    showVocabularyCreationPopup(groups, e, vocId, vocName, vocType, main);
+    showVocabularyCreationPopup(groups, e, vocId, data.vocName, data.vocType, main);
   });
 }
 
