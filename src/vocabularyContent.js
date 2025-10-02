@@ -330,6 +330,7 @@ async function showSessionTooltip() {
     randomGameId = undefined;
   }
   // Show vocabulary preview (tooltip) on game page for any played vocab (global or local)
+  await new Promise(resolve => setTimeout(resolve, 500)); // Wait a bit for the page to stabilize
   if (getCurrentPage() !== 'game') return;
   try {
     const vocId = getSessionVocId();
