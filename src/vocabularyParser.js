@@ -313,7 +313,7 @@ export function attachVocabularyParser() {
 // If a transient sessionStorage flag was set before navigation, show the
 // parsed vocabulary centered and auto-hide after 5 seconds.
 async function showSessionTooltip() {
-  // Read randomGameId from localStorage
+  // Read randomGameId from localStorage (for logging/context)
   let randomGameId;
   try {
     const settings = JSON.parse(localStorage.getItem('latestGamesSettings') || '{}');
@@ -323,12 +323,19 @@ async function showSessionTooltip() {
     randomGameId = undefined;
   }
 
-  // Only show vocabulary preview (tooltip) on game page and when randomGameId is 'global'
-  if (getCurrentPage() !== 'game' || randomGameId !== 'global') return;
+  // Show vocabulary preview (tooltip) on game page for any played vocab (global or local)
+  if (getCurrentPage() !== 'game') return;
 
   try {
     const vocId = getSessionVocId();
     if (!vocId) return;
+
+    // Ensure there's an anchor with /vocs/ in #gamedesc (voc game only)
+    const gameDescAnchor = document.querySelector('#gamedesc a[href*="/vocs/"]');
+    if (!gameDescAnchor) {
+      console.log('Skipping tooltip: No vocabulary anchor found in #gamedesc');
+      return; // Not a voc game, skip
+    }
 
     const content = await fetchVocabularyContent(vocId);
     try {
