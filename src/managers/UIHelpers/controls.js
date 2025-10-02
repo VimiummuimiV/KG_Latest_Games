@@ -723,8 +723,12 @@ export function createControls(main) {
     (async () => {
       try {
         let vocName = '';
+        let vocType = null;
         const basic = await fetchVocabularyBasicData(currentVocabId).catch(() => null);
-        if (basic && basic.vocabularyName) vocName = basic.vocabularyName;
+        if (basic && basic.vocabularyName) {
+          vocName = basic.vocabularyName;
+          vocType = basic.vocabularyType || null;
+        }
 
         // Prevent adding if the vocabulary already exists in any group
         const existingGroup = main.groupsManager.groups.find(g => g.games.some(game => String(game.params?.vocId) === String(currentVocabId)));
@@ -737,7 +741,8 @@ export function createControls(main) {
           return;
         }
 
-        addGameToGroup(favGroup, String(currentVocabId), vocName, main.groupsManager.groups, main);
+        // Now pass all 6 args: group, vocId, vocName, vocType, groups, main
+        addGameToGroup(favGroup, String(currentVocabId), vocName, vocType, main.groupsManager.groups, main);
         alert(`✔️ Словарь ${currentVocabId} добавлен в группу "Избранные"`);
 
         // Find the newly added game and show migration popup so user can move it immediately if desired
