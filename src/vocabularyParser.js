@@ -261,15 +261,17 @@ function positionTooltip(anchor, tooltip) {
 
 // Function to attach the delegated event listener
 export function attachVocabularyParser() {
-  const voclist = document.querySelector('.columns.voclist');
-  if (!voclist) {
-    console.warn('Element with class "columns voclist" not found.');
+  const selectors = ['.columns.voclist', '#gamelist', '#gamedesc'];
+  const containers = selectors.map(sel => document.querySelector(sel)).filter(container => container);
+
+  if (containers.length === 0) {
+    console.warn('No supported containers found.');
     return;
   }
-  
-  voclist.addEventListener('mouseenter', async (e) => {
+
+  const mouseenterHandler = async (e) => {
     if (!e.shiftKey) return; // Only trigger on Shift + mouseenter
-    const anchor = e.target.closest('a.name[href*="/vocs/"]');
+    const anchor = e.target.closest('a[href*="/vocs/"]');
     if (anchor) {
       // Extract vocId from href (e.g., /vocs/1885/)
       const href = anchor.getAttribute('href');
@@ -295,10 +297,10 @@ export function attachVocabularyParser() {
         showTooltip(anchor, anchor._tooltipContent);
       }
     }
-  }, { capture: true });
-  
-  voclist.addEventListener('mouseleave', (e) => {
-    const anchor = e.target.closest('a.name[href*="/vocs/"]');
+  };
+
+  const mouseleaveHandler = (e) => {
+    const anchor = e.target.closest('a[href*="/vocs/"]');
     if (anchor && currentAnchor === anchor) {
       startHideTimeout();
     }
@@ -307,7 +309,12 @@ export function attachVocabularyParser() {
       clearTimeout(showTimeout);
       showTimeout = null;
     }
-  }, { capture: true });
+  };
+
+  containers.forEach(container => {
+    container.addEventListener('mouseenter', mouseenterHandler, { capture: true });
+    container.addEventListener('mouseleave', mouseleaveHandler, { capture: true });
+  });
 }
 
 // If a transient sessionStorage flag was set before navigation, show the
