@@ -118,58 +118,105 @@ export function createControls(main) {
     };
   };
 
-  // Add refresh IDs button
-  const refreshIdsBtn = createElement('span', {
-    className: 'latest-games-refresh-ids control-button',
+  // Add refresh button (regenerate all IDs or vocTypes)
+  const refreshBtn = createElement('span', {
+    className: 'latest-games-refresh control-button',
     innerHTML: icons.refresh
   });
-  createCustomTooltip(refreshIdsBtn, 'Сгенерировать новые уникальные ID для всех групп и игр');
-  refreshIdsBtn.addEventListener('click', () => {
-    if (!confirm('Вы уверены, что хотите сгенерировать новые уникальные ID для всех групп и игр? Это действие нельзя отменить.')) return;
 
-    // Save previous group and game IDs
-    const previousGroupId = main.groupsManager.currentGroupId;
-    const previousGameId = main.gamesManager.latestGamesData?.previousGameId;
+  createCustomTooltip(refreshBtn, `
+    [Клик] Сгенерировать новые уникальные ID для всех групп и игр
+    [Shift + Клик] Обновить типы словарей для всех игр (если отсутствуют)
+  `);
 
-    // Store old IDs before regeneration
-    main.groupsManager.groups.forEach(group => {
-      group._oldId = group.id;
-      group.games.forEach(game => {
-        game._oldId = game.id;
+  refreshBtn.addEventListener('click', async (e) => {
+    if (e.shiftKey) {
+      // Shift+Click: Update missing vocType for all games
+      if (!confirm('Вы уверены, что хотите обновить типы словарей для всех игр без них? Это может занять время.')) return;
+
+      const allGames = [];
+      main.groupsManager.groups.forEach(group => {
+        group.games.forEach(game => {
+          if (game.params && (game.params.vocType === null || game.params.vocType === undefined)) {
+            allGames.push({ group, game });
+          }
+        });
       });
-    });
 
-    // Regenerate all IDs
-    main.groupsManager.groups.forEach(group => {
-      group.id = generateUniqueId(main.groupsManager.groups);
-      group.games.forEach(game => {
-        game.id = generateUniqueId(main.groupsManager.groups);
-      });
-    });
+      if (allGames.length === 0) {
+        alert('✔️ Все игры уже имеют типы словарей.');
+        return;
+      }
 
-    // Restore currentGroupId if possible
-    if (previousGroupId) {
-      const foundGroup = main.groupsManager.groups.find(g => g._oldId === previousGroupId);
-      if (foundGroup) main.groupsManager.currentGroupId = foundGroup.id;
-    }
-    // Restore previousGameId if possible
-    if (previousGameId) {
-      for (const group of main.groupsManager.groups) {
-        const found = group.games.find(g => g._oldId === previousGameId);
-        if (found) {
-          main.gamesManager.latestGamesData.previousGameId = found.id;
-          break;
+      let updatedCount = 0;
+      const DELAY_MS = 500; // Optional delay between fetches (set to 0 for no rate limiting)
+
+      for (const { group, game } of allGames) {
+        const vocId = game.params.vocId;
+        if (vocId) {
+          const basic = await fetchVocabularyBasicData(vocId).catch(() => null);
+          if (basic && basic.vocabularyType) {
+            game.params.vocType = basic.vocabularyType;
+            updatedCount++;
+          }
+        }
+        // Optional rate limiting delay
+        if (DELAY_MS > 0) {
+          await new Promise(resolve => setTimeout(resolve, DELAY_MS));
         }
       }
+
+      main.gamesManager.saveGameData();
+      main.uiManager.refreshContainer();
+      alert(`✔️ Обновлено ${updatedCount} игр с типами словарей.`);
+    } else {
+      // Original Click: Refresh IDs only
+      if (!confirm('Вы уверены, что хотите сгенерировать новые уникальные ID для всех групп и игр? Это действие нельзя отменить.')) return;
+
+      // Save previous group and game IDs
+      const previousGroupId = main.groupsManager.currentGroupId;
+      const previousGameId = main.gamesManager.latestGamesData?.previousGameId;
+
+      // Store old IDs before regeneration
+      main.groupsManager.groups.forEach(group => {
+        group._oldId = group.id;
+        group.games.forEach(game => {
+          game._oldId = game.id;
+        });
+      });
+
+      // Regenerate all IDs
+      main.groupsManager.groups.forEach(group => {
+        group.id = generateUniqueId(main.groupsManager.groups);
+        group.games.forEach(game => {
+          game.id = generateUniqueId(main.groupsManager.groups);
+        });
+      });
+
+      // Restore currentGroupId if possible
+      if (previousGroupId) {
+        const foundGroup = main.groupsManager.groups.find(g => g._oldId === previousGroupId);
+        if (foundGroup) main.groupsManager.currentGroupId = foundGroup.id;
+      }
+      // Restore previousGameId if possible
+      if (previousGameId) {
+        for (const group of main.groupsManager.groups) {
+          const found = group.games.find(g => g._oldId === previousGameId);
+          if (found) {
+            main.gamesManager.latestGamesData.previousGameId = found.id;
+            break;
+          }
+        }
+      }
+      // Remove temporary _oldId properties
+      main.groupsManager.groups.forEach(group => {
+        delete group._oldId;
+        group.games.forEach(game => delete game._oldId);
+      });
+      main.gamesManager.saveGameData();
+      main.uiManager.refreshContainer();
+      alert('✔️ Все ID для групп и игр были обновлены!');
     }
-    // Remove temporary _oldId properties
-    main.groupsManager.groups.forEach(group => {
-      delete group._oldId;
-      group.games.forEach(game => delete game._oldId);
-    });
-    main.gamesManager.saveGameData();
-    main.uiManager.refreshContainer();
-    alert('✔️ Все ID для групп и игр были обновлены!');
   });
 
   // Add button to reset panel individual page settings to defaults
@@ -877,7 +924,7 @@ export function createControls(main) {
   controlsButtons.append(
     main.themeManager.createThemeToggle(),
     main.viewManager.createDisplayModeToggle(),
-    refreshIdsBtn, resetButton, playBtn, replayBtn, replayMoreBtn,
+    refreshBtn, resetButton, playBtn, replayBtn, replayMoreBtn,
     pinAllBtn, unpinAllBtn, sortBtn, importBtn,
     exportBtn, removeAllBtn, removeUnpinnedBtn,
     dragToggleBtn, descToggleBtn, helpToggleBtn, searchBtn,
