@@ -1,6 +1,8 @@
 import { createElement, generateUniqueId } from '../utils.js';
 import { gameTypes, visibilities, ranks, ranksMap } from '../definitions.js';
 import { icons } from '../icons.js';
+import { fetchVocabularyBasicData } from "../vocabularyCreation.js";
+
 export class GamesManager {
   constructor(mainManager) {
     this.mainManager = mainManager;
@@ -434,7 +436,7 @@ export class GamesManager {
         let resp = await fetch(candidate.url, { method: 'HEAD', cache: 'no-store' });
         if (resp.status === 405) resp = await fetch(candidate.url, { method: 'GET', cache: 'no-store' });
         if (resp.ok) {
-          this.markVocabAsPlayed(candidate.id);
+          await this.markVocabAsPlayed(candidate.id);
           return candidate;
         }
         if (resp.status === 403) {
@@ -458,11 +460,12 @@ export class GamesManager {
   /**
    * Mark a vocabulary as played in localStorage (with duplicate check).
    * Always sets sessionStorage for tooltip (shows vocab info on game page).
+   * Fetches vocabulary data if not provided.
    * @param {string} vocId - The vocabulary ID to mark.
    * @param {string|null} name - Optional: Vocab name (from saved game).
    * @param {string|null} vocType - Optional: Vocab type (from saved game).
    */
-  markVocabAsPlayed(vocId, name = null, vocType = null) {
+  async markVocabAsPlayed(vocId, name = null, vocType = null) {
     const idStr = String(vocId);
     if (!idStr) return; // Skip non-vocabs
 
@@ -476,12 +479,17 @@ export class GamesManager {
       );
       
       if (!alreadyExists) {
+        // Fetch vocabulary data if not provided
+        const basicData = !name || !vocType 
+          ? await fetchVocabularyBasicData(idStr).catch(() => null)
+          : null;
+        
         // Create vocabulary object with full structure
         const vocabToAdd = {
           id: idStr,
-          name,
-          author: null,
-          vocType,
+          name: name || basicData?.vocabularyName || null,
+          author: basicData?.vocabularyAuthor || null,
+          vocType: vocType || basicData?.vocabularyType || null,
           isNew: true
         };
         played.push(vocabToAdd);

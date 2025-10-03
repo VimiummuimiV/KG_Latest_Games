@@ -699,7 +699,7 @@ export function createControls(main) {
     }
   };
 
-  // Function to ban current vocabulary
+  // Function to ban current vocabulary (add to BannedVocabPopup)
   async function banCurrentVocabulary() {
     if (getCurrentPage() !== 'game') {
       alert('⚠️ Блокировать словарь можно только на странице игры');
@@ -723,12 +723,15 @@ export function createControls(main) {
         return false;
       }
 
-      // Create vocabulary object - fetchAndCacheVocabData will get name/author later
+      // Fetch vocabulary data
+      const basicData = await fetchVocabularyBasicData(currentVocabId).catch(() => null);
+      
+      // Create vocabulary object with full structure
       const vocabToAdd = {
         id: String(currentVocabId),
-        name: null,
-        author: null,
-        vocType: null,
+        name: basicData?.vocabularyName || null,
+        author: basicData?.vocabularyAuthor || null,
+        vocType: basicData?.vocabularyType || null,
         isNew: true
       };
 
