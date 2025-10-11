@@ -535,10 +535,23 @@ export function createControls(main) {
           : `Включить случайный выбор игры (${modeLabel})`;
       },
       shift: () => {
-        const count = main.validVocabularies && typeof main.validVocabularies === 'object'
-          ? Object.values(main.validVocabularies).flat().length
-          : 0;
-        return `Обновить список допустимых словарей (доступно: ${count})`;
+        // total: from raw validVocabularies in localStorage (pre-filter)
+        let totalIds = [];
+        try {
+          const raw = JSON.parse(localStorage.getItem('validVocabularies') || '{}');
+          if (raw && typeof raw === 'object') totalIds = Object.values(raw).flat().filter(Boolean).map(String);
+        } catch (_) { totalIds = []; }
+        const total = new Set(totalIds).size;
+        const excluded = (() => {
+          try {
+            return new Set([
+              ...(JSON.parse(localStorage.getItem('bannedVocabularies')||'[]')||[]).map(x=>String(typeof x==='string'?x:x.id||x||'')),
+              ...(JSON.parse(localStorage.getItem('playedVocabularies')||'[]')||[]).map(x=>String(typeof x==='string'?x:x.id||x||''))
+            ].filter(Boolean));
+          } catch (_) { return new Set(); }
+        })();
+        let available = 0; for (const id of new Set(totalIds)) if (!excluded.has(id)) available++;
+        return `Обновить список допустимых словарей (всего: ${total}, доступно: ${available})`;
       },
       ctrl: () => main.showBlockedVocabAlert ? 'Отключить предупреждение о недоступных словарях' : 'Включить предупреждение о недоступных словарях',
       alt: (isEnabled) => isEnabled === 'global' || main.randomGameId === 'global' ? 'Отключить глобальный режим' : 'Включить глобальный режим',
