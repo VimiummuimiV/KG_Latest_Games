@@ -725,8 +725,19 @@ export const VocabulariesManager = {
   },
 
   toggle(x, y, listType = 'bannedVocabularies') { 
-    this.currentListType = listType;
-    this.popup ? this.hide() : this.show(x, y); 
+    // If popup is open and same type requested -> hide. If open and different type -> switch and refresh.
+    if (this.popup) {
+      if (this.currentListType === listType) {
+        this.hide();
+      } else {
+        this.currentListType = listType;
+        // refresh will recreate contents while preserving popup element position
+        this.refresh().catch(() => {});
+      }
+    } else {
+      this.currentListType = listType;
+      this.show(x, y);
+    }
   },
 
   outside: e => { 

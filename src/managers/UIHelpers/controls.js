@@ -865,6 +865,7 @@ export function createControls(main) {
       banCurrentVocabulary();
     // Click: open the banned vocabularies popup
     } else {
+      e.stopPropagation();
       VocabulariesManager.toggle(e.clientX, e.clientY, 'bannedVocabularies');
     }
   };
@@ -876,6 +877,7 @@ export function createControls(main) {
   createCustomTooltip(playedVocabulariesBtn, 'Показать проигранные словари');
 
   playedVocabulariesBtn.onclick = (e) => {
+    e.stopPropagation();
     VocabulariesManager.toggle(e.clientX, e.clientY, 'playedVocabularies');
   };
 
