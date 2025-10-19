@@ -767,11 +767,9 @@ tables.push(table_{unique_id});
                     table.redraw();
                     const typeSection = table.element.closest('.type-section');
                     if (typeSection && typeSection.style.display !== 'none') {
-                        const rowCount = table.getRows('active').length;
                         const headerHeight = table.header.element.offsetHeight || 50;
-                        const firstRow = table.getRows('active')[0];
-                        const rowHeight = firstRow ? firstRow.getElement().offsetHeight : 40;
-                        const calculatedHeight = headerHeight + (rowCount * rowHeight);
+                        const rowsHeight = table.rowManager.element.offsetHeight;
+                        const calculatedHeight = headerHeight + rowsHeight;
                         const newHeight = Math.min(400, calculatedHeight);
                         table.setHeight(newHeight);
                         table.redraw(true);
