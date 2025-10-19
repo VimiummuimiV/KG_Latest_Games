@@ -771,7 +771,7 @@ tables.push(table_{unique_id});
                         const headerHeight = table.header.element.offsetHeight || 50;
                         const firstRow = table.getRows('active')[0];
                         const rowHeight = firstRow ? firstRow.getElement().offsetHeight : 40;
-                        const calculatedHeight = headerHeight + (rowCount * rowHeight) + (rowCount > 0 ? rowHeight : 0);
+                        const calculatedHeight = headerHeight + (rowCount * rowHeight);
                         const newHeight = Math.min(400, calculatedHeight);
                         table.setHeight(newHeight);
                         table.redraw(true);
