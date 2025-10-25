@@ -14,7 +14,13 @@ export function createControls(main) {
 
   const controlsLimiter = createElement('div', { className: 'controls-limiter' });
   const controlsButtons = createElement('div', { className: 'controls-buttons' });
-  controlsContainer.append(controlsLimiter, controlsButtons);
+  // Create visible and more buttons containers
+  const visibleButtons = createElement('div', { className: 'controls-visible' });
+  const moreButtons = createElement('div', { className: 'controls-more' });
+
+  controlsButtons.append(visibleButtons, moreButtons);
+  moreButtons.appendChild(controlsLimiter);
+  controlsContainer.append(controlsButtons);
 
   // Create the options section with buttons to adjust game count
   const options = createElement('span', { id: 'latest-games-options' });
@@ -903,15 +909,54 @@ export function createControls(main) {
     }
   });
 
-  controlsButtons.append(
+  // Frequently used buttons that should always be visible
+  const alwaysVisible = [playBtn, replayBtn, replayMoreBtn, randomRaceBtn, startRaceBtn];
+
+  // Rarerly used buttons grouped under 'More' panel
+  const moreGroup = [
     main.themeManager.createThemeToggle(),
     main.viewManager.createDisplayModeToggle(),
-    refreshBtn, resetButton, playBtn, replayBtn, replayMoreBtn,
+    refreshBtn, resetButton,
     pinAllBtn, unpinAllBtn, sortBtn, importBtn,
     exportBtn, removeAllBtn, removeUnpinnedBtn,
     dragToggleBtn, descToggleBtn, helpToggleBtn, searchBtn,
-    randomRaceBtn, startRaceBtn, bannedVocabulariesBtn, playedVocabulariesBtn
-  );
+    bannedVocabulariesBtn, playedVocabulariesBtn
+  ];
+
+  // Create a dedicated 'More' toggle button for accessibility and stable interaction
+  const moreToggleBtn = createElement('span', {
+    className: 'latest-games-more-toggle control-button',
+    innerHTML: icons.moreHorizontal,
+  });
+  // Append the frequently visible buttons first, then the More toggle at the end
+  alwaysVisible.forEach(btn => visibleButtons.appendChild(btn));
+  visibleButtons.appendChild(moreToggleBtn);
+  // Use the unified tooltip helper for the More toggle as well
+  createCustomTooltip(moreToggleBtn, 'Показать дополнительные кнопки');
+  moreGroup.forEach(btn => moreButtons.appendChild(btn));
+
+  // Toggle behavior: click to open/close the more panel; close on outside click
+  const openMore = () => {
+    moreButtons.classList.add('open');
+    moreToggleBtn.classList.add('open');
+    // prevent immediate document click from closing
+    setTimeout(() => {
+      document.addEventListener('click', outsideClickHandler);
+    }, 0);
+  };
+  const closeMore = () => {
+    moreButtons.classList.remove('open');
+    moreToggleBtn.classList.remove('open');
+    document.removeEventListener('click', outsideClickHandler);
+  };
+  const outsideClickHandler = (e) => {
+    if (!controlsButtons.contains(e.target)) closeMore();
+  };
+
+  moreToggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (moreButtons.classList.contains('open')) closeMore(); else openMore();
+  });
 
   return controlsContainer;
 }

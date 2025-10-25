@@ -309,6 +309,59 @@
       gap: 2px;
       display: flex;
       flex-wrap: wrap;
+      position: relative;
+
+      .controls-visible {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        flex-basis: 100%; /* force this block onto a new row */
+      }
+
+      .controls-limiter {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        align-items: center;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--rg-border-primary);
+      }
+
+      .controls-more {
+        display: none;
+        position: absolute;
+        left: 0;
+        top: 100%;
+        margin-top: 6px;
+        background: var(--rg-bg-card);
+        padding: 8px;
+        border-radius: 8px !important;
+        border: 1px solid var(--rg-border-primary);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+        flex-wrap: wrap;
+        gap: 6px;
+        z-index: 2000;
+        min-width: 400px;
+      }
+
+      .controls-more.open {
+        display: flex;
+      }
+
+      .latest-games-more-toggle {
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px !important;
+        background: transparent;
+      }
+
+      .latest-games-more-toggle.open {
+        color: var(--rg-enabled-yellow);
+      }
 
       .latest-games-replay.replay-next-game,
       .latest-games-random.random-global {
