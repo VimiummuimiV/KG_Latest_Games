@@ -912,7 +912,7 @@ export function createControls(main) {
   });
 
   // Frequently used buttons that should always be visible
-  const alwaysVisible = [playBtn, replayBtn, replayMoreBtn, randomRaceBtn, startRaceBtn];
+  const alwaysVisible = [playBtn, replayBtn, replayMoreBtn, randomRaceBtn, startRaceBtn, bannedVocabulariesBtn, playedVocabulariesBtn];
 
   // Rarerly used buttons grouped under 'More' panel
   const moreGroup = [
@@ -921,8 +921,7 @@ export function createControls(main) {
     refreshBtn, resetButton,
     pinAllBtn, unpinAllBtn, sortBtn, importBtn,
     exportBtn, removeAllBtn, removeUnpinnedBtn,
-    dragToggleBtn, descToggleBtn, helpToggleBtn, searchBtn,
-    bannedVocabulariesBtn, playedVocabulariesBtn
+    dragToggleBtn, descToggleBtn, helpToggleBtn, searchBtn
   ];
 
   // Create a dedicated 'More' toggle button for accessibility and stable interaction
