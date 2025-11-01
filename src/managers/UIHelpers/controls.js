@@ -687,10 +687,12 @@ export function createControls(main) {
       main.gamesManager.latestGamesData.previousGameId = res.id;
       main.gamesManager.saveGameData();
 
-      // Mark the vocab as played (using saved game details)
+      // Register pending played vocab if vocId exists
       const vocId = String(res.game.params.vocId || '');
       if (vocId) {
-        main.gamesManager.markVocabAsPlayed(vocId, res.game.params.vocName, res.game.params.vocType);
+        try {
+          main.gamesManager.registerPendingPlayed(vocId, res.game.params.vocName || null, res.game.params.vocType || null);
+        } catch (__) { }
       }
 
       if (!res.url) {
@@ -707,10 +709,10 @@ export function createControls(main) {
         const validated = await main.gamesManager.getValidRandomGameId();
         if (!validated) return alert('🔒 Максимальное количество попыток поиска подходящей игры исчерпано. Попробуйте ещё раз.');
         
-        // Mark the vocab as played
-        if (validated.id) {
-          main.gamesManager.markVocabAsPlayed(validated.id);
-        }
+          // Register pending played vocab if id exists
+          if (validated.id) {
+            try { main.gamesManager.registerPendingPlayed(validated.id); } catch (__) { }
+          }
         
         window.location.href = validated.url;
       })();

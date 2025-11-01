@@ -113,10 +113,11 @@ export function createGameElement(main, game, id) {
       }
     } catch (err) { }
 
-    // Mark the vocab as played (using game details)
     const vocId = String(game.params.vocId || '');
     if (vocId) {
-      main.gamesManager.markVocabAsPlayed(vocId, game.params.vocName, game.params.vocType);
+      try {
+        main.gamesManager.registerPendingPlayed(vocId, game.params.vocName || null, game.params.vocType || null);
+      } catch (__) { }
     }
   });
 

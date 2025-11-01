@@ -1,6 +1,6 @@
 import { highlightExistingVocabularies } from "../vocabularyChecker.js";
 import { attachVocabularyCreation } from "../vocabularyCreation.js";
-import { attachVocabularyParser } from "../vocabularyContent.js";
+import { attachVocabularyParser, getSessionVocId } from "../vocabularyContent.js";
 import { sleep, generateUniqueId } from "../utils.js";
 import { isVocabularyCreationSupported } from "../vocabularyCreation.js";
 import { detectGameType } from "../utils.js";
@@ -122,6 +122,13 @@ export class PageHandler {
       if (elementToObserve) {
         const finishObserver = new MutationObserver(() => {
           finishObserver.disconnect();
+          // Mark any pending played vocabulary after the game finishes
+          try {
+            const pending = getSessionVocId();
+            if (pending) {
+              try { this.main.gamesManager.markVocabAsPlayed(pending); } catch (__) { }
+            }
+          } catch (__) { }
           this.handleReplayAction();
         });
         finishObserver.observe(elementToObserve, { attributes: true });
@@ -235,7 +242,7 @@ export class PageHandler {
           
           // Single call for global
           if (targetVocId) {
-            gamesManager.markVocabAsPlayed(targetVocId);
+            try { gamesManager.registerPendingPlayed(targetVocId); } catch (__) { }
           }
           
           window.location.href = nextUrl;
@@ -256,9 +263,9 @@ export class PageHandler {
         targetType = randRes.game?.params?.vocType || null;
         nextUrl = randRes.game ? gamesManager.generateGameLink(randRes.game) : randRes.url;
         
-        // Single call for local random
+        // Update pending played for local random
         if (targetVocId) {
-          gamesManager.markVocabAsPlayed(targetVocId, targetName, targetType);
+          try { gamesManager.registerPendingPlayed(targetVocId, targetName || null, targetType || null); } catch (__) { }
         }
         
         if (nextUrl) window.location.href = nextUrl;
@@ -286,9 +293,9 @@ export class PageHandler {
     targetType = nextGame.params.vocType || null;
     nextUrl = gamesManager.generateGameLink(nextGame);
 
-    // Single call for fallback
+    // Update pending played for sequential next
     if (targetVocId) {
-      gamesManager.markVocabAsPlayed(targetVocId, targetName, targetType);
+      try { gamesManager.registerPendingPlayed(targetVocId, targetName || null, targetType || null); } catch (__) { }
     }
 
     window.location.href = nextUrl;

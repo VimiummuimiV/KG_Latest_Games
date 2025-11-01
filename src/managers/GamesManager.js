@@ -436,7 +436,7 @@ export class GamesManager {
         let resp = await fetch(candidate.url, { method: 'HEAD', cache: 'no-store' });
         if (resp.status === 405) resp = await fetch(candidate.url, { method: 'GET', cache: 'no-store' });
         if (resp.ok) {
-          await this.markVocabAsPlayed(candidate.id);
+          try { this.registerPendingPlayed(candidate.id); } catch (__) { }
           return candidate;
         }
         if (resp.status === 403) {
@@ -455,6 +455,24 @@ export class GamesManager {
       }
     }
     return null;
+  }
+
+  /**
+   * Register a pending played vocabulary in sessionStorage so the PageHandler
+   * can finalize marking it as played when the game truly finishes.
+   * @param {string} vocId
+   * @param {string|null} vocName
+   * @param {string|null} vocType
+   */
+  registerPendingPlayed(vocId, vocName = null, vocType = null) {
+    try {
+      const idStr = String(vocId);
+      if (!idStr) return false;
+      sessionStorage.setItem('latestGames_showVocTooltip', JSON.stringify({ vocId: idStr, vocName: vocName || null, vocType: vocType || null }));
+      return true;
+    } catch (err) {
+      return false;
+    }
   }
 
   /**
@@ -498,7 +516,7 @@ export class GamesManager {
 
       // Always set sessionStorage for tooltip (useful for both modes)
       try {
-        sessionStorage.setItem('latestGames_showVocTooltip', JSON.stringify({ vocId: idStr }));
+        this.registerPendingPlayed(idStr);
       } catch (__) { }
     } catch (_) {
       // Silently fail (non-critical)
