@@ -1,6 +1,7 @@
 import { fetchVocabularyContent, showTooltip, startHideTimeout } from "./vocabularyContent";
 import { fetchVocabularyBasicData } from "./vocabularyCreation";
 import { createCustomTooltip } from "./tooltip";
+import { icons } from './icons.js';
 import { typeMapping } from "./definitions";
 
 export const VocabulariesManager = {
@@ -546,10 +547,30 @@ export const VocabulariesManager = {
           const leftSection = document.createElement('div');
           leftSection.className = 'vocab-left';
           
+          // Play button (open a creation page for this vocab)
+          const playBtn = Object.assign(document.createElement('button'), {
+            className: 'vocab-play-btn control-button',
+            innerHTML: icons.start
+          });
+          playBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const params = new URLSearchParams({
+              gametype: 'voc',
+              type: 'normal',
+              timeout: '10',
+              level_from: '1',
+              level_to: '9',
+              submit: '1',
+              voc: String(vocabObj.id)
+            });
+            window.location.href = `${location.protocol}//klavogonki.ru/create/?${params.toString()}`;
+          });
+
           const idSpan = Object.assign(document.createElement('span'), { 
             className: 'vocab-id', 
             textContent: vocabObj.id 
           });
+          leftSection.appendChild(playBtn);
           leftSection.appendChild(idSpan);
 
           const rightSection = document.createElement('div');

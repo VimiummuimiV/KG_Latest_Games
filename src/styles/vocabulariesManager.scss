@@ -269,6 +269,36 @@
       .vocab-left {
         flex-shrink: 0;
         
+        .vocab-play-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 28px;
+          height: 28px;
+          margin-right: 0.5em;
+          padding: 0;
+          background: transparent;
+          border: none;
+          outline: none;
+          -webkit-appearance: none;
+          -moz-appearance: none;
+          appearance: none;
+          cursor: pointer;
+          border-radius: 4px;
+          transition: background 0.15s ease, color 0.15s ease, transform 0.06s ease;
+          color: var(--rg-text-secondary);
+
+          svg {
+            width: 16px;
+            height: 16px;
+          }
+
+          &:hover {
+            background: var(--rg-bg-hover);
+            color: var(--rg-text-primary);
+          }
+        }
+
         .vocab-id {
           color: var(--rg-text-primary);
           font-weight: 500;
