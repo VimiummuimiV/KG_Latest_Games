@@ -535,7 +535,26 @@ export const VocabulariesManager = {
           return;
         }
         
+        let lastDate = null;
+        
         vocabsToRender.forEach((vocabObj) => {
+          // Add date separator for new items with playedAt timestamp
+          if (vocabObj.isNew && vocabObj.playedAt) {
+            const currentDate = new Date(vocabObj.playedAt).toLocaleDateString('ru-RU', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            });
+            
+            if (currentDate !== lastDate) {
+              const dateSeparator = document.createElement('div');
+              dateSeparator.className = 'vocab-date-separator';
+              dateSeparator.textContent = currentDate;
+              list.appendChild(dateSeparator);
+              lastDate = currentDate;
+            }
+          }
+          
           const item = document.createElement('div');
           item.className = 'vocab-item';
           if (vocabObj.isNew) {

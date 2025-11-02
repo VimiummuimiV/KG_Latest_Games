@@ -508,7 +508,8 @@ export class GamesManager {
           name: name || basicData?.vocabularyName || null,
           author: basicData?.vocabularyAuthor || null,
           vocType: vocType || basicData?.vocabularyType || null,
-          isNew: true
+          isNew: true,
+          playedAt: new Date().toISOString()
         };
         played.push(vocabToAdd);
         localStorage.setItem('playedVocabularies', JSON.stringify(played));

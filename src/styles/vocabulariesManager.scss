@@ -238,6 +238,30 @@
     max-height: 80vh;
     overflow-y: auto;
     overflow-x: hidden;
+
+    .vocab-date-separator {
+      padding: 0.5em 0.7em;
+      margin: 0.6em 0 0.3em 0;
+      background: var(--rg-bg-secondary);
+      border-left: 3px solid hsl(var(--rg-popup-item-new));
+      font-weight: 600;
+      font-size: 0.85em;
+      color: var(--rg-text-secondary);
+      border-radius: 2px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      
+      // Add slight transparency for backdrop effect
+      background: linear-gradient(
+        to bottom,
+        var(--rg-bg-secondary) 0%,
+        var(--rg-bg-secondary) 85%,
+        transparent 100%
+      );
+    }
     
     .vocab-item {
       display: flex;
