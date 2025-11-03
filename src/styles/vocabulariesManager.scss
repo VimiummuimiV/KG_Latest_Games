@@ -291,7 +291,23 @@
       }
 
       .vocab-left {
+        display: inline-flex;
+        align-items: center;
         flex-shrink: 0;
+
+        .vocab-play-count-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          margin-left: 0.5em;
+          padding: 4px 8px;
+          background: var(--rg-vocab-badge-bg);
+          color: var(--rg-vocab-badge-text);
+          border-radius: 6px;
+          font-size: 1em;
+          font-weight: 600;
+          font-family: "Montserrat", "Courier New", monospace;
+        }
         
         .vocab-play-btn {
           display: inline-flex;
@@ -304,12 +320,10 @@
           background: transparent;
           border: none;
           outline: none;
-          -webkit-appearance: none;
-          -moz-appearance: none;
           appearance: none;
           cursor: pointer;
           border-radius: 4px;
-          transition: background 0.15s ease, color 0.15s ease, transform 0.06s ease;
+          transition: background 0.15s ease;
           color: var(--rg-text-secondary);
 
           svg {
@@ -318,15 +332,15 @@
           }
 
           &:hover {
-            background: var(--rg-bg-hover);
-            color: var(--rg-text-primary);
+            background: var(--rg-vocab-play-hover-bg);
+            color: var(--rg-bg-primary);
           }
         }
 
         .vocab-id {
           color: var(--rg-text-primary);
           font-weight: 500;
-          font-family: "Courier New", monospace;
+          font-family: "Montserrat", "Courier New", monospace;
           font-size: 0.9em;
         }
       }

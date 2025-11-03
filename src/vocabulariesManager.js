@@ -31,20 +31,20 @@ export const VocabulariesManager = {
     return this.listConfigs[this.currentListType];
   },
 
-  get() { 
+  get() {
     try {
       const config = this.getConfig();
       const source = localStorage[config.backupKey] ? config.backupKey : config.mainKey;
       const data = JSON.parse(localStorage[source]) || [];
-      
+     
       this.hasUnsavedChanges = source === config.backupKey;
-      
-      return data.map(item => 
+     
+      return data.map(item =>
         typeof item === 'string' ? { id: item, isNew: false } : { ...item, isNew: item.isNew || false }
       );
-    } catch { return []; } 
+    } catch { return []; }
   },
-  
+ 
   save(arr, createBackup = true) {
     const config = this.getConfig();
     if (createBackup) {
@@ -55,7 +55,7 @@ export const VocabulariesManager = {
       localStorage[targetKey] = JSON.stringify(arr);
     }
   },
-  
+ 
   commitSave() {
     const config = this.getConfig();
     const backup = localStorage[config.backupKey];
@@ -65,7 +65,7 @@ export const VocabulariesManager = {
     }
     this.hasUnsavedChanges = false;
   },
-  
+ 
   revertChanges() {
     const config = this.getConfig();
     delete localStorage[config.backupKey];
@@ -75,7 +75,7 @@ export const VocabulariesManager = {
   add(vocabularyId) {
     const existing = this.get();
     const alreadyExists = existing.some(v => v.id === vocabularyId);
-    
+   
     if (!alreadyExists) {
       existing.push({ id: vocabularyId, isNew: true });
       this.save(existing);
@@ -95,7 +95,7 @@ export const VocabulariesManager = {
 
     if (searchTerm?.trim()) {
       const term = searchTerm.toLowerCase().trim();
-      filtered = filtered.filter(vocab => 
+      filtered = filtered.filter(vocab =>
         vocab.id.toLowerCase().includes(term) ||
         (vocab.name && vocab.name.toLowerCase().includes(term)) ||
         (vocab.author && vocab.author.toLowerCase().includes(term))
@@ -104,15 +104,15 @@ export const VocabulariesManager = {
 
     return filtered;
   },
-  
+ 
   async fetchAndCacheVocabData(vocabObj, forceRefetch = false) {
     if (!forceRefetch && vocabObj.name && vocabObj.author && vocabObj.vocType) return vocabObj;
-    
+   
     const data = await fetchVocabularyBasicData(vocabObj.id);
     if (data) {
-      return { 
+      return {
         ...vocabObj,
-        name: data.vocabularyName, 
+        name: data.vocabularyName,
         author: data.vocabularyAuthor,
         vocType: data.vocabularyType
       };
@@ -131,7 +131,7 @@ export const VocabulariesManager = {
 
   async copy(vocabsToCopy = null, useAlternativeFormat = false, filterType = 'all', typeFilter = 'all', isSearchActive = false) {
     const vocabs = vocabsToCopy || this.get();
-    
+   
     let textToCopy;
     if (useAlternativeFormat) {
       const lines = vocabs.map((v, index) => {
@@ -144,19 +144,19 @@ export const VocabulariesManager = {
     } else {
       textToCopy = vocabs.map(v => v.id).join(',');
     }
-    
-    try { 
-      await navigator.clipboard.writeText(textToCopy); 
+   
+    try {
+      await navigator.clipboard.writeText(textToCopy);
     }
     catch { }
-    
+   
     this.toggleBtnText('.copy-all-btn', 'Скопировано!', () => this.getButtonText('copy', filterType, typeFilter, vocabs.length, isSearchActive));
   },
 
   removeAll(filterType = 'all', typeFilter = 'all', filteredVocabs = null) {
     const vocabs = this.get();
     let filtered;
-    
+   
     if (filteredVocabs) {
       const idsToRemove = new Set(filteredVocabs.map(v => v.id));
       filtered = vocabs.filter(v => !idsToRemove.has(v.id));
@@ -167,24 +167,24 @@ export const VocabulariesManager = {
         filtered = vocabs.filter(v => {
           let keepStatus = true;
           let keepType = true;
-          
+         
           if (filterType === 'new') keepStatus = !v.isNew;
           else if (filterType === 'old') keepStatus = v.isNew;
           else if (filterType === 'unavailable') keepStatus = !!v.name;
-          
+         
           if (typeFilter !== 'all') keepType = v.vocType !== typeFilter;
-          
+         
           return keepStatus && keepType;
         });
       }
     }
-    
+   
     const countToDelete = vocabs.length - filtered.length;
     this.save(filtered);
     this.toggleBtnText('.remove-all-btn', 'Удалено!', () => this.getButtonText('remove', filterType, typeFilter, countToDelete, !!filteredVocabs));
     this.refresh();
   },
-  
+ 
   getButtonText(action, filterType, typeFilter, count, isSearchActive = false) {
     const filterNames = {
       'all': 'все',
@@ -192,7 +192,7 @@ export const VocabulariesManager = {
       'old': 'старые',
       'unavailable': 'недоступные'
     };
-    
+   
     const typeNames = {
       'words': 'Слова',
       'phrases': 'Фразы',
@@ -201,18 +201,18 @@ export const VocabulariesManager = {
       'books': 'Книга',
       'generator': 'Генератор'
     };
-    
+   
     const actionVerbs = {
       'copy': 'Копировать',
       'remove': 'Удалить'
     };
-    
+   
     const actionVerb = actionVerbs[action] || '';
-    
+   
     if (isSearchActive) {
       return `${actionVerb} результат (${count})`;
     }
-    
+   
     const parts = [];
     if (filterType !== 'all') {
       parts.push(filterNames[filterType]);
@@ -220,19 +220,60 @@ export const VocabulariesManager = {
     if (typeFilter !== 'all') {
       parts.push(typeNames[typeFilter]);
     }
-    
+   
     const filterText = parts.length > 0 ? parts.join(' ') : filterNames['all'];
     return `${actionVerb} ${filterText} (${count})`;
   },
 
   sortAll() {
-    const vocabs = this.get().map(vocab => ({ ...vocab, isNew: false }));
-    const sorted = vocabs.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+    // Minimal: handle banned lists separately — they don't have playHistory.
+    if (this.currentListType === 'bannedVocabularies') {
+      const vocabs = this.get().map(vocab => ({ ...vocab, isNew: false }));
+      // Simple numeric ID sort for banned lists
+      vocabs.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+      this.save(vocabs);
+      this.toggleBtnText('.sort-all-btn', 'Отсортировано!', () => 'Сортировать');
+      this.refresh();
+      return;
+    }
+
+    let vocabs = this.get().map(vocab => ({ ...vocab, isNew: false }));
+
+    // Sort playHistory within each vocab by date ascending
+    vocabs.forEach(v => {
+      if (v.playHistory && Array.isArray(v.playHistory)) {
+        v.playHistory = v.playHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
+      }
+    });
+
+    // Group by primary date (earliest play date)
+    const groups = {};
+    vocabs.forEach(vocab => {
+      if (vocab.playHistory && vocab.playHistory.length > 0) {
+        const primaryDate = vocab.playHistory[0].date;
+        const dateStr = new Date(primaryDate).toLocaleDateString('ru-RU', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        });
+        if (!groups[dateStr]) {
+          groups[dateStr] = [];
+        }
+        groups[dateStr].push(vocab);
+      }
+    });
+
+    // Sort date keys ascending (oldest first)
+    const sortedDateStr = Object.keys(groups).sort((a, b) => new Date(a) - new Date(b));
+
+    // Sort within each group by ID ascending and flatten
+    const sorted = sortedDateStr.flatMap(date => groups[date].sort((a, b) => parseInt(a.id) - parseInt(b.id)));
+
     this.save(sorted);
     this.toggleBtnText('.sort-all-btn', 'Отсортировано!', () => 'Сортировать');
     this.refresh();
   },
-  
+ 
   async forceFetchAll() {
     const btn = this.popup.querySelector('.force-fetch-btn');
     btn.textContent = 'Обновление...';
@@ -259,13 +300,13 @@ export const VocabulariesManager = {
       `Недоступно: ${unavailableCount}`
     );
   },
-  
+ 
   async handleSave() {
     this.commitSave();
     this.toggleBtnText('.save-btn', 'Сохранено!', () => 'Сохранить');
     await this.refresh();
   },
-  
+ 
   async handleRevert() {
     this.revertChanges();
     this.toggleBtnText('.revert-btn', 'Отменено!', () => 'Отменить');
@@ -387,6 +428,93 @@ export const VocabulariesManager = {
     return { searchSection, searchInput, statusFilterContainer, typeFilterContainer };
   },
 
+  // Create a vocab item DOM node. count is optional (used for played count badges).
+  createVocabItem(vocabObj, count = 0) {
+    const item = document.createElement('div');
+    item.className = 'vocab-item';
+    if (vocabObj.isNew) item.classList.add('vocab-item-new');
+    item.dataset.id = vocabObj.id;
+    item.style.cursor = 'pointer';
+
+    const leftSection = document.createElement('div');
+    leftSection.className = 'vocab-left';
+
+    const playBtn = Object.assign(document.createElement('button'), {
+      className: 'vocab-play-btn control-button',
+      innerHTML: icons.start
+    });
+    playBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const params = new URLSearchParams({
+        gametype: 'voc',
+        type: 'normal',
+        timeout: '10',
+        level_from: '1',
+        level_to: '9',
+        submit: '1',
+        voc: String(vocabObj.id)
+      });
+      window.location.href = `${location.protocol}//klavogonki.ru/create/?${params.toString()}`;
+    });
+
+    const idSpan = Object.assign(document.createElement('span'), {
+      className: 'vocab-id',
+      textContent: vocabObj.id
+    });
+    leftSection.appendChild(playBtn);
+    leftSection.appendChild(idSpan);
+
+    if (count > 1) {
+      const badge = Object.assign(document.createElement('span'), {
+        className: 'vocab-play-count-badge',
+        textContent: count.toString()
+      });
+      leftSection.appendChild(badge);
+    }
+
+    const rightSection = document.createElement('div');
+    rightSection.className = 'vocab-right';
+
+    if (vocabObj.name) {
+      const nameSpan = Object.assign(document.createElement('div'), {
+        className: 'vocab-name',
+        textContent: vocabObj.name
+      });
+      rightSection.appendChild(nameSpan);
+
+      if (vocabObj.author) {
+        const authorSpan = Object.assign(document.createElement('div'), {
+          className: 'vocab-author',
+          textContent: `Автор: ${vocabObj.author}`
+        });
+        rightSection.appendChild(authorSpan);
+      }
+
+      if (vocabObj.vocType) {
+        const typeNameRu = Object.keys(typeMapping).find(key => typeMapping[key] === vocabObj.vocType) || vocabObj.vocType;
+        const typeSpan = Object.assign(document.createElement('div'), {
+          className: 'vocab-type',
+          textContent: `Тип словаря: ${typeNameRu}`
+        });
+        rightSection.appendChild(typeSpan);
+      }
+    } else {
+      const loadingSpan = Object.assign(document.createElement('div'), {
+        className: 'vocab-loading',
+        textContent: 'Не удалось загрузить'
+      });
+      rightSection.appendChild(loadingSpan);
+    }
+
+    const removeBtn = Object.assign(document.createElement('button'), {
+      className: 'remove-btn',
+      textContent: 'Удалить'
+    });
+
+    item.append(leftSection, rightSection, removeBtn);
+    return item;
+  },
+
   async createElements() {
     const v = this.get();
     const container = document.createElement('div');
@@ -402,42 +530,42 @@ export const VocabulariesManager = {
 
     const actions = document.createElement('div');
     actions.className = 'popup-actions';
-    
+   
     const copyBtn = Object.assign(document.createElement('button'), {
-      className: 'copy-all-btn', 
-      textContent: this.getButtonText('copy', 'all', 'all', v.length, false), 
+      className: 'copy-all-btn',
+      textContent: this.getButtonText('copy', 'all', 'all', v.length, false),
       disabled: !v.length,
     });
     createCustomTooltip(copyBtn,
-      `[Клик] Копировать в соответствии с текущим фильтром или результатами поиска 
+      `[Клик] Копировать в соответствии с текущим фильтром или результатами поиска
       [Shift + Клик] Копировать в расширенном формате с авторами, названиями и ссылками`
     );
-    
+   
     const removeAllBtn = Object.assign(document.createElement('button'), {
-      className: 'remove-all-btn', 
-      textContent: this.getButtonText('remove', 'all', 'all', v.length, false), 
+      className: 'remove-all-btn',
+      textContent: this.getButtonText('remove', 'all', 'all', v.length, false),
       disabled: !v.length
     });
     createCustomTooltip(removeAllBtn, 'Удалить в соответствии с текущим фильтром или результатами поиска');
-    
+   
     const sortBtn = Object.assign(document.createElement('button'), {
-      className: 'sort-all-btn', 
-      textContent: 'Сортировать', 
-      disabled: !v.length, 
+      className: 'sort-all-btn',
+      textContent: 'Сортировать',
+      disabled: !v.length,
       onclick: () => this.sortAll()
     });
     createCustomTooltip(sortBtn, 'Отсортировать все словари по ID и снять статус новых');
-    
+   
     const forceFetchBtn = Object.assign(document.createElement('button'), {
-      className: 'force-fetch-btn', 
-      textContent: 'Обновить', 
-      disabled: !v.length, 
+      className: 'force-fetch-btn',
+      textContent: 'Обновить',
+      disabled: !v.length,
       onclick: () => this.forceFetchAll()
     });
     createCustomTooltip(forceFetchBtn, 'Принудительно обновить информацию о всех словарях');
-    
+   
     actions.append(copyBtn, removeAllBtn, sortBtn, forceFetchBtn);
-    
+   
     if (this.hasUnsavedChanges) {
       const saveBtn = Object.assign(document.createElement('button'), {
         className: 'save-btn',
@@ -445,17 +573,17 @@ export const VocabulariesManager = {
         onclick: () => this.handleSave()
       });
       createCustomTooltip(saveBtn, '[Ctrl + S] Сохранить изменения');
-      
+     
       const revertBtn = Object.assign(document.createElement('button'), {
         className: 'revert-btn',
         textContent: 'Отменить',
         onclick: () => this.handleRevert()
       });
       createCustomTooltip(revertBtn, '[Ctrl + Z] Отменить все изменения');
-      
+     
       actions.append(saveBtn, revertBtn);
     }
-    
+   
     container.appendChild(actions);
 
     const { searchSection, searchInput, statusFilterContainer, typeFilterContainer } = this.createSearchAndFilterSection();
@@ -468,19 +596,19 @@ export const VocabulariesManager = {
       const updatedVocabs = await Promise.all(
         v.map(vocabObj => this.fetchAndCacheVocabData(vocabObj))
       );
-      
+     
       this.save(updatedVocabs, false);
-      
+     
       let currentFilteredVocabs = updatedVocabs;
       let currentStatusFilter = 'all';
       let currentTypeFilter = 'all';
-      
+     
       const updateButtons = (filterType, typeFilter, filteredVocabs, searchTerm) => {
         const isSearchActive = searchTerm?.trim().length > 0;
-        
+       
         copyBtn.textContent = this.getButtonText('copy', filterType, typeFilter, filteredVocabs.length, isSearchActive);
         copyBtn.disabled = filteredVocabs.length === 0;
-        
+       
         if (isSearchActive) {
           removeAllBtn.textContent = this.getButtonText('remove', filterType, typeFilter, filteredVocabs.length, true);
           removeAllBtn.disabled = filteredVocabs.length === 0;
@@ -490,17 +618,17 @@ export const VocabulariesManager = {
           removeAllBtn.disabled = filterOnlyVocabs.length === 0;
         }
       };
-      
+     
       const updateFilterButtonCounts = () => {
         const allBtn = statusFilterContainer.querySelector('[data-filter="all"]');
         const newBtn = statusFilterContainer.querySelector('[data-filter="new"]');
         const oldBtn = statusFilterContainer.querySelector('[data-filter="old"]');
         const unavailableBtn = statusFilterContainer.querySelector('[data-filter="unavailable"]');
-        
+       
         const newCount = updatedVocabs.filter(v => v.isNew).length;
         const oldCount = updatedVocabs.filter(v => !v.isNew).length;
         const unavailableCount = updatedVocabs.filter(v => !v.name).length;
-        
+       
         allBtn.textContent = `Все (${updatedVocabs.length})`;
         newBtn.textContent = `Новые (${newCount})`;
         oldBtn.textContent = `Старые (${oldCount})`;
@@ -522,11 +650,11 @@ export const VocabulariesManager = {
         typeFilterContainer.querySelector('[data-type-filter="books"]').textContent = `Книга (${booksCount})`;
         typeFilterContainer.querySelector('[data-type-filter="generator"]').textContent = `Генератор (${generatorCount})`;
       };
-      
+     
       const renderVocabs = (vocabsToRender) => {
         list.innerHTML = '';
         currentFilteredVocabs = vocabsToRender;
-        
+       
         if (vocabsToRender.length === 0) {
           const noResults = document.createElement('div');
           noResults.className = 'empty-state';
@@ -534,107 +662,62 @@ export const VocabulariesManager = {
           list.appendChild(noResults);
           return;
         }
-        
-        let lastDate = null;
-        
+        // When rendering banned vocabularies, render them as a flat list
+        // (do not rely on playHistory grouping which is only for played lists)
+        if (this.currentListType === 'bannedVocabularies') {
+          vocabsToRender.forEach(vocabObj => list.appendChild(this.createVocabItem(vocabObj, 0)));
+          this.scheduleScrollToBottom();
+          return;
+        }
+       
+        // Group vocabs by date from playHistory
+        const vocabsByDate = new Map();
+       
         vocabsToRender.forEach((vocabObj) => {
-          // Add date separator for new items with playedAt timestamp
-          if (vocabObj.isNew && vocabObj.playedAt) {
-            const currentDate = new Date(vocabObj.playedAt).toLocaleDateString('ru-RU', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric'
-            });
-            
-            if (currentDate !== lastDate) {
-              const dateSeparator = document.createElement('div');
-              dateSeparator.className = 'vocab-date-separator';
-              dateSeparator.textContent = currentDate;
-              list.appendChild(dateSeparator);
-              lastDate = currentDate;
-            }
-          }
-          
-          const item = document.createElement('div');
-          item.className = 'vocab-item';
-          if (vocabObj.isNew) {
-            item.classList.add('vocab-item-new');
-          }
-          item.dataset.id = vocabObj.id;
-          item.style.cursor = 'pointer';
-
-          const leftSection = document.createElement('div');
-          leftSection.className = 'vocab-left';
-          
-          // Play button (open a creation page for this vocab)
-          const playBtn = Object.assign(document.createElement('button'), {
-            className: 'vocab-play-btn control-button',
-            innerHTML: icons.start
-          });
-          playBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const params = new URLSearchParams({
-              gametype: 'voc',
-              type: 'normal',
-              timeout: '10',
-              level_from: '1',
-              level_to: '9',
-              submit: '1',
-              voc: String(vocabObj.id)
-            });
-            window.location.href = `${location.protocol}//klavogonki.ru/create/?${params.toString()}`;
-          });
-
-          const idSpan = Object.assign(document.createElement('span'), { 
-            className: 'vocab-id', 
-            textContent: vocabObj.id 
-          });
-          leftSection.appendChild(playBtn);
-          leftSection.appendChild(idSpan);
-
-          const rightSection = document.createElement('div');
-          rightSection.className = 'vocab-right';
-          
-          if (vocabObj.name) {
-            const nameSpan = Object.assign(document.createElement('div'), {
-              className: 'vocab-name',
-              textContent: vocabObj.name
-            });
-            rightSection.appendChild(nameSpan);
-            
-            if (vocabObj.author) {
-              const authorSpan = Object.assign(document.createElement('div'), {
-                className: 'vocab-author',
-                textContent: `Автор: ${vocabObj.author}`
+          if (vocabObj.playHistory && Array.isArray(vocabObj.playHistory)) {
+            vocabObj.playHistory.forEach(historyEntry => {
+              const dateStr = new Date(historyEntry.date).toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
               });
-              rightSection.appendChild(authorSpan);
-            }
-
-            if (vocabObj.vocType) {
-              const typeNameRu = Object.keys(typeMapping).find(key => typeMapping[key] === vocabObj.vocType) || vocabObj.vocType;
-              const typeSpan = Object.assign(document.createElement('div'), {
-                className: 'vocab-type',
-                textContent: `Тип словаря: ${typeNameRu}`
+             
+              if (!vocabsByDate.has(dateStr)) {
+                vocabsByDate.set(dateStr, {
+                  items: [],
+                  sortDate: new Date(historyEntry.date)
+                });
+              }
+             
+              vocabsByDate.get(dateStr).items.push({
+                vocab: vocabObj,
+                count: historyEntry.count,
+                date: historyEntry.date
               });
-              rightSection.appendChild(typeSpan);
-            }
-          } else {
-            const loadingSpan = Object.assign(document.createElement('div'), {
-              className: 'vocab-loading',
-              textContent: 'Не удалось загрузить'
             });
-            rightSection.appendChild(loadingSpan);
           }
-
-          const removeBtn = Object.assign(document.createElement('button'), {
-            className: 'remove-btn',
-            textContent: 'Удалить'
-          });
-
-          item.append(leftSection, rightSection, removeBtn);
-          list.appendChild(item);
         });
-
+       
+        // Sort dates in ascending order (oldest first)
+        const sortedDates = Array.from(vocabsByDate.entries())
+          .sort((a, b) => a[1].sortDate - b[1].sortDate)
+          .map(([dateStr]) => dateStr);
+       
+        sortedDates.forEach(dateStr => {
+          // Add date separator
+          const dateSeparator = document.createElement('div');
+          dateSeparator.className = 'vocab-date-separator';
+          dateSeparator.textContent = dateStr;
+          list.appendChild(dateSeparator);
+         
+          // Get vocabs for this date
+          const vocabsForDate = vocabsByDate.get(dateStr).items;
+         
+          // Render vocabs for this date
+          vocabsForDate.forEach(({ vocab: vocabObj, count }) => {
+            list.appendChild(this.createVocabItem(vocabObj, count));
+          });
+        });
         this.scheduleScrollToBottom();
       };
 
@@ -664,23 +747,23 @@ export const VocabulariesManager = {
 
       statusFilterContainer.addEventListener('click', (e) => {
         if (!e.target.classList.contains('filter-btn')) return;
-        
+       
         statusFilterContainer.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
         e.target.classList.add('active');
-        
+       
         currentStatusFilter = e.target.dataset.filter;
-        
+       
         applyFilters();
       });
 
       typeFilterContainer.addEventListener('click', (e) => {
         if (!e.target.classList.contains('filter-btn')) return;
-        
+       
         typeFilterContainer.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
         e.target.classList.add('active');
-        
+       
         currentTypeFilter = e.target.dataset.typeFilter;
-        
+       
         applyFilters();
       });
 
@@ -743,9 +826,9 @@ export const VocabulariesManager = {
     this.popup.style.left = x + 'px';
     this.popup.style.top = y + 'px';
     this.constrainToScreen();
-    
+   
     this.scheduleScrollToBottom();
-    
+   
     setTimeout(() => {
       document.addEventListener('click', this.outside);
       document.addEventListener('keydown', this.keydown);
@@ -764,7 +847,7 @@ export const VocabulariesManager = {
     }
   },
 
-  toggle(x, y, listType = 'bannedVocabularies') { 
+  toggle(x, y, listType = 'bannedVocabularies') {
     // If popup is open and same type requested -> hide. If open and different type -> switch and refresh.
     if (this.popup) {
       if (this.currentListType === listType) {
@@ -780,11 +863,11 @@ export const VocabulariesManager = {
     }
   },
 
-  outside: e => { 
-    if (!VocabulariesManager.popup?.contains(e.target) && e.target.tagName !== 'BUTTON') 
-      VocabulariesManager.hide(); 
+  outside: e => {
+    if (!VocabulariesManager.popup?.contains(e.target) && e.target.tagName !== 'BUTTON')
+      VocabulariesManager.hide();
   },
-  
+ 
   keydown: e => {
     if (e.key === 'Escape') {
       VocabulariesManager.hide();

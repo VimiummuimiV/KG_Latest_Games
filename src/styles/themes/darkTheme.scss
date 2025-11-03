@@ -84,4 +84,9 @@ $darkTheme: (
   "--rg-popup-btn-save": 195 100% 70%,
   "--rg-popup-btn-revert": 30 100% 70%,
   "--rg-popup-item-new": 120 60% 40%,
+  // Vocab Badge Games Counter
+  "--rg-vocab-badge-bg": hsla(195, 100%, 70%, 0.9),
+  "--rg-vocab-badge-text": hsl(0, 0%, 11%),
+  // Vocab Play Vocabulary Button
+  "--rg-vocab-play-hover-bg": hsl(30, 100%, 70%),
 );

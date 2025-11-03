@@ -485,42 +485,62 @@ export class GamesManager {
    */
   async markVocabAsPlayed(vocId, name = null, vocType = null) {
     const idStr = String(vocId);
-    if (!idStr) return; // Skip non-vocabs
+    if (!idStr) return;
 
     try {
       const playedRaw = localStorage.getItem('playedVocabularies') || '[]';
       const played = JSON.parse(playedRaw);
       
-      // Check if already exists (handle both old array format and new object format)
-      const alreadyExists = played.some(item => 
-        typeof item === 'string' ? item === idStr : item.id === idStr
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString();
+      
+      const existingIndex = played.findIndex(item => 
+        (typeof item === 'string' ? item : item.id) === idStr
       );
       
-      if (!alreadyExists) {
-        // Fetch vocabulary data if not provided
+      if (existingIndex !== -1) {
+        if (typeof played[existingIndex] === 'string') {
+          played[existingIndex] = { id: played[existingIndex], playHistory: [] };
+        }
+        if (!played[existingIndex].playHistory) played[existingIndex].playHistory = [];
+        
+        const todayEntry = played[existingIndex].playHistory.find(entry => {
+          const entryDate = new Date(entry.date);
+          entryDate.setHours(0, 0, 0, 0);
+          return entryDate.toISOString() === todayStr;
+        });
+        
+        if (todayEntry) {
+          todayEntry.count++;
+        } else {
+          played[existingIndex].playHistory.push({ date: todayStr, count: 1 });
+        }
+        
+        played[existingIndex].playedAt = new Date().toISOString();
+        played[existingIndex].isNew = true;
+      } else {
         const basicData = !name || !vocType 
           ? await fetchVocabularyBasicData(idStr).catch(() => null)
           : null;
         
-        // Create vocabulary object with full structure
-        const vocabToAdd = {
+        played.push({
           id: idStr,
           name: name || basicData?.vocabularyName || null,
           author: basicData?.vocabularyAuthor || null,
           vocType: vocType || basicData?.vocabularyType || null,
           isNew: true,
-          playedAt: new Date().toISOString()
-        };
-        played.push(vocabToAdd);
-        localStorage.setItem('playedVocabularies', JSON.stringify(played));
+          playedAt: new Date().toISOString(),
+          playHistory: [{ date: todayStr, count: 1 }]
+        });
       }
+      
+      localStorage.setItem('playedVocabularies', JSON.stringify(played));
 
-      // Always set sessionStorage for tooltip (useful for both modes)
       try {
         this.registerPendingPlayed(idStr);
       } catch (__) { }
     } catch (_) {
-      // Silently fail (non-critical)
     }
   }
 }
