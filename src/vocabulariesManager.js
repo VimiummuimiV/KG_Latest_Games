@@ -226,50 +226,44 @@ export const VocabulariesManager = {
   },
 
   sortAll() {
-    // Minimal: handle banned lists separately — they don't have playHistory.
-    if (this.currentListType === 'bannedVocabularies') {
-      const vocabs = this.get().map(vocab => ({ ...vocab, isNew: false }));
-      // Simple numeric ID sort for banned lists
-      vocabs.sort((a, b) => parseInt(a.id) - parseInt(b.id));
-      this.save(vocabs);
-      this.toggleBtnText('.sort-all-btn', 'Отсортировано!', () => 'Сортировать');
-      this.refresh();
-      return;
-    }
-
     let vocabs = this.get().map(vocab => ({ ...vocab, isNew: false }));
 
-    // Sort playHistory within each vocab by date ascending
-    vocabs.forEach(v => {
-      if (v.playHistory && Array.isArray(v.playHistory)) {
-        v.playHistory = v.playHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
-      }
-    });
-
-    // Group by primary date (earliest play date)
-    const groups = {};
-    vocabs.forEach(vocab => {
-      if (vocab.playHistory && vocab.playHistory.length > 0) {
-        const primaryDate = vocab.playHistory[0].date;
-        const dateStr = new Date(primaryDate).toLocaleDateString('ru-RU', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
-        });
-        if (!groups[dateStr]) {
-          groups[dateStr] = [];
+    if (this.currentListType === 'playedVocabularies') {
+      // Sort playHistory within each vocab by date ascending
+      vocabs.forEach(v => {
+        if (v.playHistory && Array.isArray(v.playHistory)) {
+          v.playHistory = v.playHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
         }
-        groups[dateStr].push(vocab);
-      }
-    });
+      });
 
-    // Sort date keys ascending (oldest first)
-    const sortedDateStr = Object.keys(groups).sort((a, b) => new Date(a) - new Date(b));
+      // Group by primary date (earliest play date)
+      const groups = {};
+      vocabs.forEach(vocab => {
+        if (vocab.playHistory && vocab.playHistory.length > 0) {
+          const primaryDate = vocab.playHistory[0].date;
+          const dateStr = new Date(primaryDate).toLocaleDateString('ru-RU', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+          });
+          if (!groups[dateStr]) {
+            groups[dateStr] = [];
+          }
+          groups[dateStr].push(vocab);
+        }
+      });
 
-    // Sort within each group by ID ascending and flatten
-    const sorted = sortedDateStr.flatMap(date => groups[date].sort((a, b) => parseInt(a.id) - parseInt(b.id)));
+      // Sort date keys ascending (oldest first)
+      const sortedDateStr = Object.keys(groups).sort((a, b) => new Date(a) - new Date(b));
 
-    this.save(sorted);
+      // Sort within each group by ID ascending and flatten
+      vocabs = sortedDateStr.flatMap(date => groups[date].sort((a, b) => parseInt(a.id) - parseInt(b.id)));
+    } else {
+      // Simple numeric ID sort for banned lists (or any other list type)
+      vocabs.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+    }
+
+    this.save(vocabs);
     this.toggleBtnText('.sort-all-btn', 'Отсортировано!', () => 'Сортировать');
     this.refresh();
   },
@@ -654,7 +648,7 @@ export const VocabulariesManager = {
       const renderVocabs = (vocabsToRender) => {
         list.innerHTML = '';
         currentFilteredVocabs = vocabsToRender;
-       
+
         if (vocabsToRender.length === 0) {
           const noResults = document.createElement('div');
           noResults.className = 'empty-state';
@@ -662,62 +656,61 @@ export const VocabulariesManager = {
           list.appendChild(noResults);
           return;
         }
-        // When rendering banned vocabularies, render them as a flat list
-        // (do not rely on playHistory grouping which is only for played lists)
-        if (this.currentListType === 'bannedVocabularies') {
-          vocabsToRender.forEach(vocabObj => list.appendChild(this.createVocabItem(vocabObj, 0)));
-          this.scheduleScrollToBottom();
-          return;
-        }
-       
-        // Group vocabs by date from playHistory
-        const vocabsByDate = new Map();
-       
-        vocabsToRender.forEach((vocabObj) => {
-          if (vocabObj.playHistory && Array.isArray(vocabObj.playHistory)) {
-            vocabObj.playHistory.forEach(historyEntry => {
-              const dateStr = new Date(historyEntry.date).toLocaleDateString('ru-RU', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-              });
-             
-              if (!vocabsByDate.has(dateStr)) {
-                vocabsByDate.set(dateStr, {
-                  items: [],
-                  sortDate: new Date(historyEntry.date)
+
+        if (this.currentListType === 'playedVocabularies') {
+          // Group vocabs by date from playHistory
+          const vocabsByDate = new Map();
+          
+          vocabsToRender.forEach((vocabObj) => {
+            if (vocabObj.playHistory && Array.isArray(vocabObj.playHistory)) {
+              vocabObj.playHistory.forEach(historyEntry => {
+                const dateStr = new Date(historyEntry.date).toLocaleDateString('ru-RU', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric'
                 });
-              }
-             
-              vocabsByDate.get(dateStr).items.push({
-                vocab: vocabObj,
-                count: historyEntry.count,
-                date: historyEntry.date
+                
+                if (!vocabsByDate.has(dateStr)) {
+                  vocabsByDate.set(dateStr, {
+                    items: [],
+                    sortDate: new Date(historyEntry.date)
+                  });
+                }
+                
+                vocabsByDate.get(dateStr).items.push({
+                  vocab: vocabObj,
+                  count: historyEntry.count,
+                  date: historyEntry.date
+                });
               });
-            });
-          }
-        });
-       
-        // Sort dates in ascending order (oldest first)
-        const sortedDates = Array.from(vocabsByDate.entries())
-          .sort((a, b) => a[1].sortDate - b[1].sortDate)
-          .map(([dateStr]) => dateStr);
-       
-        sortedDates.forEach(dateStr => {
-          // Add date separator
-          const dateSeparator = document.createElement('div');
-          dateSeparator.className = 'vocab-date-separator';
-          dateSeparator.textContent = dateStr;
-          list.appendChild(dateSeparator);
-         
-          // Get vocabs for this date
-          const vocabsForDate = vocabsByDate.get(dateStr).items;
-         
-          // Render vocabs for this date
-          vocabsForDate.forEach(({ vocab: vocabObj, count }) => {
-            list.appendChild(this.createVocabItem(vocabObj, count));
+            }
           });
-        });
+          
+          // Sort dates in ascending order (oldest first)
+          const sortedDates = Array.from(vocabsByDate.entries())
+            .sort((a, b) => a[1].sortDate - b[1].sortDate)
+            .map(([dateStr]) => dateStr);
+          
+          sortedDates.forEach(dateStr => {
+            // Add date separator
+            const dateSeparator = document.createElement('div');
+            dateSeparator.className = 'vocab-date-separator';
+            dateSeparator.textContent = dateStr;
+            list.appendChild(dateSeparator);
+            
+            // Get vocabs for this date
+            const vocabsForDate = vocabsByDate.get(dateStr).items;
+            
+            // Render vocabs for this date
+            vocabsForDate.forEach(({ vocab: vocabObj, count }) => {
+              list.appendChild(this.createVocabItem(vocabObj, count));
+            });
+          });
+        } else {
+          // Flat list rendering for banned vocabularies (or any other list type)
+          vocabsToRender.forEach(vocabObj => list.appendChild(this.createVocabItem(vocabObj, 0)));
+        }
+        
         this.scheduleScrollToBottom();
       };
 
@@ -819,16 +812,16 @@ export const VocabulariesManager = {
     }
   },
 
-  async show(x = 100, y = 100) {
+  async show(x = 100, y = 100, offsetX = 20, offsetY = 20) {
     this.hide();
     this.popup = await this.createElements();
     document.body.appendChild(this.popup);
-    this.popup.style.left = x + 'px';
-    this.popup.style.top = y + 'px';
+    this.popup.style.left = (x + offsetX) + 'px';
+    this.popup.style.top = (y + offsetY) + 'px';
     this.constrainToScreen();
-   
+
     this.scheduleScrollToBottom();
-   
+
     setTimeout(() => {
       document.addEventListener('click', this.outside);
       document.addEventListener('keydown', this.keydown);
