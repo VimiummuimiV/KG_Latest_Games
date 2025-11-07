@@ -251,18 +251,13 @@
       justify-content: space-between;
       align-items: center;
       gap: 1em;
+      font-family: "Montserrat", "Noto Color Emoji", sans-serif;
 
-      .vocab-date {
+      .vocab-date,
+      .vocab-count {
         font-weight: 600;
         font-size: 0.85em;
         color: var(--rg-bg-primary);
-      }
-
-      .vocab-count {
-        font-size: 0.8em;
-        color: var(--rg-bg-primary);
-        font-weight: 500;
-        opacity: 0.9;
       }
     }
     

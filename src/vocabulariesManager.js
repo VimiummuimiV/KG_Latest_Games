@@ -695,6 +695,10 @@ export const VocabulariesManager = {
             // Get vocabs for this date
             const vocabsForDate = vocabsByDate.get(dateStr).items;
             
+            // Calculate total vocabularies and total races
+            const totalVocabs = vocabsForDate.length;
+            const totalRaces = vocabsForDate.reduce((sum, { count }) => sum + count, 0);
+            
             // Create container for date and count
             const labelsContainer = document.createElement('div');
             labelsContainer.className = 'vocab-labels-container';
@@ -702,12 +706,18 @@ export const VocabulariesManager = {
             // Add date
             const dateElement = document.createElement('div');
             dateElement.className = 'vocab-date';
-            dateElement.textContent = dateStr;
+            dateElement.textContent = `${dateStr}`;
             
             // Add count
             const countElement = document.createElement('div');
             countElement.className = 'vocab-count';
-            countElement.textContent = `Всего: ${vocabsForDate.length}`;
+            
+            // Show "Заездов" only if total races > total vocabs (meaning at least one vocab was played multiple times)
+            if (totalRaces > totalVocabs) {
+              countElement.textContent = `Словарей: ${totalVocabs} | Заездов: ${totalRaces}`;
+            } else {
+              countElement.textContent = `Словарей: ${totalVocabs}`;
+            }
             
             labelsContainer.appendChild(dateElement);
             labelsContainer.appendChild(countElement);
