@@ -692,14 +692,26 @@ export const VocabulariesManager = {
             .map(([dateStr]) => dateStr);
           
           sortedDates.forEach(dateStr => {
-            // Add date separator
-            const dateSeparator = document.createElement('div');
-            dateSeparator.className = 'vocab-date-separator';
-            dateSeparator.textContent = dateStr;
-            list.appendChild(dateSeparator);
-            
             // Get vocabs for this date
             const vocabsForDate = vocabsByDate.get(dateStr).items;
+            
+            // Create container for date and count
+            const labelsContainer = document.createElement('div');
+            labelsContainer.className = 'vocab-labels-container';
+            
+            // Add date
+            const dateElement = document.createElement('div');
+            dateElement.className = 'vocab-date';
+            dateElement.textContent = dateStr;
+            
+            // Add count
+            const countElement = document.createElement('div');
+            countElement.className = 'vocab-count';
+            countElement.textContent = `Всего: ${vocabsForDate.length}`;
+            
+            labelsContainer.appendChild(dateElement);
+            labelsContainer.appendChild(countElement);
+            list.appendChild(labelsContainer);
             
             // Render vocabs for this date
             vocabsForDate.forEach(({ vocab: vocabObj, count }) => {
