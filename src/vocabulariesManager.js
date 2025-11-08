@@ -3,6 +3,7 @@ import { fetchVocabularyBasicData } from "./vocabularyCreation";
 import { createCustomTooltip } from "./tooltip";
 import { icons } from './icons.js';
 import { typeMapping } from "./definitions";
+import { createGameInfoPopup } from "./gameInfo.js";
 
 export const VocabulariesManager = {
   popup: null,
@@ -451,11 +452,28 @@ export const VocabulariesManager = {
       window.location.href = `${location.protocol}//klavogonki.ru/create/?${params.toString()}`;
     });
 
+    const infoBtn = Object.assign(document.createElement('button'), {
+      className: 'vocab-info-btn control-button',
+      innerHTML: icons.info
+    });
+    infoBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const game = {
+        params: {
+          gametype: 'voc',
+          vocId: vocabObj.id
+        }
+      };
+      createGameInfoPopup(e, game);
+    });
+
     const idSpan = Object.assign(document.createElement('span'), {
       className: 'vocab-id',
       textContent: vocabObj.id
     });
+
     leftSection.appendChild(playBtn);
+    leftSection.appendChild(infoBtn);
     leftSection.appendChild(idSpan);
 
     if (count > 1) {
