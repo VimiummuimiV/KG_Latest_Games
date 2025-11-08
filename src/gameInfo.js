@@ -1,5 +1,6 @@
 import { createPopup } from './menuPopup.js';
 import { popupIcons } from './definitions.js';
+import { gameStatsApi } from './gameStatsApi.js';
 
 /**
  * Create a game info popup with game-related links
@@ -10,6 +11,7 @@ import { popupIcons } from './definitions.js';
 export function createGameInfoPopup(event, game) {
   const isVocGame = game.params.gametype === 'voc' && game.params.vocId;
   const gameType = game.params.gametype;
+  const siteRoot = 'https://klavogonki.ru';
   
   let buttonConfigs = [
     {
@@ -17,8 +19,8 @@ export function createGameInfoPopup(event, game) {
       className: 'popup-button',
       onClick: () => {
         const url = isVocGame 
-          ? `https://klavogonki.ru/vocs/${game.params.vocId}/top/day/`
-          : `https://klavogonki.ru/top/day/${gameType}/`;
+          ? `${siteRoot}/vocs/${game.params.vocId}/top/day/`
+          : `${siteRoot}/top/day/${gameType}/`;
         window.open(url, '_blank');
       }
     },
@@ -27,8 +29,8 @@ export function createGameInfoPopup(event, game) {
       className: 'popup-button',
       onClick: () => {
         const url = isVocGame 
-          ? `https://klavogonki.ru/vocs/${game.params.vocId}/top/week/`
-          : `https://klavogonki.ru/top/week/${gameType}/`;
+          ? `${siteRoot}/vocs/${game.params.vocId}/top/week/`
+          : `${siteRoot}/top/week/${gameType}/`;
         window.open(url, '_blank');
       }
     }
@@ -37,24 +39,31 @@ export function createGameInfoPopup(event, game) {
   // Add vocabulary-specific links only for voc games
   if (isVocGame) {
     const vocId = game.params.vocId;
-    const baseUrl = `https://klavogonki.ru/vocs/${vocId}`;
+    const vocsBaseUrl = `${siteRoot}/vocs/${vocId}`;
+    const userId = gameStatsApi.getUserId();
+    const profileBaseUrl = `${siteRoot}/u/#/${userId}/stats`;
     
     buttonConfigs.unshift({
       text: `${popupIcons.general} Общая`,
       className: 'popup-button',
-      onClick: () => window.open(baseUrl + '/', '_blank')
+      onClick: () => window.open(vocsBaseUrl + '/', '_blank')
     });
     
     buttonConfigs.push(
       {
         text: `${popupIcons.history} История`,
         className: 'popup-button',
-        onClick: () => window.open(baseUrl + '/history/', '_blank')
+        onClick: () => window.open(vocsBaseUrl + '/history/', '_blank')
       },
       {
         text: `${popupIcons.comments} Комментарии`,
         className: 'popup-button',
-        onClick: () => window.open(baseUrl + '/comments/', '_blank')
+        onClick: () => window.open(vocsBaseUrl + '/comments/', '_blank')
+      },
+      {
+        text: `${popupIcons.stats} Статистика`,
+        className: 'popup-button',
+        onClick: () => window.open(profileBaseUrl + `/voc-${vocId}/`, '_blank')
       }
     );
   }

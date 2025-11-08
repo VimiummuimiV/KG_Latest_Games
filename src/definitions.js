@@ -3,7 +3,8 @@ export const popupIcons = {
   week: '📅',
   general: '📋',
   history: '📜',
-  comments: '💬'
+  comments: '💬',
+  stats: '⚡'
 };
 
 export const gameTypes = {
