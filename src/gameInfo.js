@@ -8,7 +8,7 @@ import { gameStatsApi } from './gameStatsApi.js';
  * @param {Object} game - The game object containing params
  * @returns {HTMLElement} The created popup element
  */
-export function createGameInfoPopup(event, game) {
+export async function createGameInfoPopup(event, game) {
   const isVocGame = game.params.gametype === 'voc' && game.params.vocId;
   const gameType = game.params.gametype;
   const siteRoot = 'https://klavogonki.ru';
@@ -59,13 +59,28 @@ export function createGameInfoPopup(event, game) {
         text: `${popupIcons.comments} Комментарии`,
         className: 'popup-button',
         onClick: () => window.open(vocsBaseUrl + '/comments/', '_blank')
-      },
-      {
-        text: `${popupIcons.stats} Статистика`,
-        className: 'popup-button',
-        onClick: () => window.open(profileBaseUrl + `/voc-${vocId}/`, '_blank')
       }
     );
+    
+    // Check if stats exist before adding stats button
+    if (userId) {
+      // Ensure the params have the correct property name for the API
+      const apiParams = {
+        gametype: game.params.gametype,
+        voc: game.params.vocId || game.params.voc  // Handle both vocId and voc
+      };
+      const apiUrl = gameStatsApi.buildApiUrl(userId, apiParams);
+      const statsData = await gameStatsApi.fetchGameStats(apiUrl);
+      
+      // Only add stats button if user has played this game (num_races > 0)
+      if (statsData && statsData.ok && statsData.info && statsData.info.num_races > 0) {
+        buttonConfigs.push({
+          text: `${popupIcons.stats} Статистика`,
+          className: 'popup-button',
+          onClick: () => window.open(profileBaseUrl + `/voc-${vocId}/`, '_blank')
+        });
+      }
+    }
   }
 
   return createPopup(buttonConfigs, event, 'game-popup', 'Информация');

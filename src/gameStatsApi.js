@@ -144,11 +144,11 @@ export class GameStatsApi {
   /**
    * Format game stats for tooltip display with bracket formatting
    * @param {Object} statsData 
-   * @param {string} gameId 
-   * @param {Object} gameParams 
+   * @param {string} _gameId 
+   * @param {Object} _gameParams 
    * @returns {string} Formatted tooltip content
    */
-  formatStats(statsData, gameId, gameParams) {
+  formatStats(statsData, _gameId, _gameParams) {
     if (!statsData || !statsData.ok) {
       return `Данные отсутствуют`;
     }
