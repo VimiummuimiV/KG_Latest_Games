@@ -1,3 +1,5 @@
+import { createCustomTooltip } from "../tooltip.js";
+
 export class GamesDataContainer {
   constructor(main) {
     this.main = main;
@@ -21,11 +23,14 @@ export class GamesDataContainer {
     this.container = container;
   }
 
-  createIndicator(className, textContent) {
+  createIndicator(className, textContent, tooltipText = null) {
     this.ensureContainer();
     const indicator = document.createElement('div');
     indicator.className = className;
     indicator.textContent = textContent;
+    if (tooltipText) {
+      createCustomTooltip(indicator, tooltipText);
+    }
     this.container.appendChild(indicator);
     return indicator;
   }
@@ -72,7 +77,8 @@ export class GamesDataContainer {
   createTodayPlayCountIndicator() {
     this.todayPlayCountIndicator = this.createIndicator(
       'today-play-count-indicator',
-      `${this.getTodayPlayCount()}`
+      `${this.getTodayPlayCount()}`,
+      "Количество сыгранных за сегодня игр"
     );
   }
 
@@ -80,7 +86,8 @@ export class GamesDataContainer {
     if (!this.main.shouldReplayMore) return;
     this.createIndicator(
       'remaining-count-indicator',
-      `${this.main.remainingReplayCount}`
+      `${this.main.remainingReplayCount}`,
+      "Колличество оставшихся повторов текущего словаря"
     );
   }
 

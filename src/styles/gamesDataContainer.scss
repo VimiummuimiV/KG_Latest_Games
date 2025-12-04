@@ -14,14 +14,13 @@
 }
 
 .games-data-container {
-  position: absolute;
+  position: fixed;
   display: flex;
   flex-direction: row;
   top: 50px;
   right: 5px;
   gap: 5px;
   user-select: none;
-  pointer-events: none;
   z-index: 3000;
 
   // Start sleep indicator
