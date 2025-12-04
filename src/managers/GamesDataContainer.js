@@ -36,6 +36,8 @@ export class GamesDataContainer {
     indicator.className = type === 'start' ? 'sleep-start-indicator' : 'sleep-replay-indicator';
     this.container.insertBefore(indicator, this.container.firstChild);
 
+    type === 'start' ? this.startIndicator = indicator : this.replayIndicator = indicator;
+
     let remainingMs = totalMs;
     const startTime = Date.now();
 
@@ -58,7 +60,6 @@ export class GamesDataContainer {
     };
 
     updateTimer();
-    return indicator;
   }
 
   removeSleepIndicator(type) {

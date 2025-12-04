@@ -4,7 +4,7 @@ import { attachVocabularyParser, getSessionVocId } from "../vocabularyContent.js
 import { sleep, generateUniqueId } from "../utils.js";
 import { isVocabularyCreationSupported } from "../vocabularyCreation.js";
 import { detectGameType } from "../utils.js";
-import { GamesDataContainer } from  "./GamesDataContainer.js";
+import { GamesDataContainer } from "./GamesDataContainer.js";
 
 export class PageHandler {
   constructor(main) {
@@ -123,7 +123,7 @@ export class PageHandler {
           // Remove existing start indicator if any
           this.gamesDataContainer.removeSleepIndicator('start');
 
-          this.gamesDataContainer.startIndicator = this.gamesDataContainer.createSleepIndicator('start', this.main.startDelay);
+          this.gamesDataContainer.createSleepIndicator('start', this.main.startDelay);
           this.startSleep = sleep(this.main.startDelay);
           this.startSleep.then(() => {
             this.gamesDataContainer.removeSleepIndicator('start');
@@ -239,7 +239,7 @@ export class PageHandler {
             // Remove existing replay indicator if any
             this.gamesDataContainer.removeSleepIndicator('replay');
 
-            this.gamesDataContainer.replayIndicator = this.gamesDataContainer.createSleepIndicator('replay', this.main.replayDelay);
+            this.gamesDataContainer.createSleepIndicator('replay', this.main.replayDelay);
             this.replaySleep = sleep(this.main.replayDelay);
             this.replaySleep.then(() => {
               this.gamesDataContainer.removeSleepIndicator('replay');
