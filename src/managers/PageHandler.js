@@ -4,100 +4,20 @@ import { attachVocabularyParser, getSessionVocId } from "../vocabularyContent.js
 import { sleep, generateUniqueId } from "../utils.js";
 import { isVocabularyCreationSupported } from "../vocabularyCreation.js";
 import { detectGameType } from "../utils.js";
+import { GamesDataContainer } from  "./GamesDataContainer.js";
 
 export class PageHandler {
   constructor(main) {
     this.main = main;
     // Initialize the games data container
-    this.gamesDataContainer = null;
+    this.gamesDataContainer = new GamesDataContainer(main);
     // Initialize sleep indicators and timers
     this.replaySleep = null;
     this.startSleep = null;
-    // Create indicators for start and replay actions
-    this.startIndicator = null;
-    this.replayIndicator = null;
-    // Initialize timers for start and replay actions
-    this.startTimer = null;
-    this.replayTimer = null;
     // Flag to track if hovering over latest games container
     this.isHoveringLatestGames = false;
     this.remainingReplayCount = this.main.replayNextGameCount;
-  } // End of constructor
-
-  createGamesDataContainer() {
-    const container = document.createElement('div');
-    container.className = 'games-data-container';
-    document.body.appendChild(container);
-    this.gamesDataContainer = container;
-    this.createRemainingCountIndicator();
   }
-
-  createRemainingCountIndicator() {
-    // No need to create indicator if replay more is not enabled
-    if (!this.main.shouldReplayMore) return;
-    // Ensure the games data container exists
-    if (!this.gamesDataContainer) this.createGamesDataContainer();
-
-    const indicator = document.createElement('div');
-    indicator.className = 'remaining-count-indicator';
-    indicator.textContent = `${this.main.remainingReplayCount}`;
-    this.gamesDataContainer.appendChild(indicator);
-  } // End of createRemainingCountIndicator
-
-  createSleepIndicator(type, totalMs) {
-    // Ensure the games data container exists
-    if (!this.gamesDataContainer) this.createGamesDataContainer();
-
-    const indicator = document.createElement('div');
-    indicator.className = type === 'start' ? 'sleep-start-indicator' : 'sleep-replay-indicator';
-    this.gamesDataContainer.insertBefore(indicator, this.gamesDataContainer.firstChild);
-
-    let remainingMs = totalMs;
-    const startTime = Date.now();
-
-    const updateTimer = () => {
-      const elapsed = Date.now() - startTime;
-      remainingMs = Math.max(0, totalMs - elapsed);
-
-      const seconds = Math.floor(remainingMs / 1000);
-      const milliseconds = Math.floor((remainingMs % 1000) / 10); // Show 2 decimal places
-      indicator.textContent = `${seconds.toString().padStart(2, '0')}:${milliseconds.toString().padStart(2, '0')}`;
-
-      if (remainingMs > 0) {
-        const timerId = requestAnimationFrame(updateTimer);
-        if (type === 'start') {
-          this.startTimer = timerId;
-        } else {
-          this.replayTimer = timerId;
-        }
-      }
-    };
-
-    updateTimer();
-    return indicator;
-  } // End of createSleepIndicator
-
-  removeSleepIndicator(type) {
-    if (type === 'start') {
-      if (this.startTimer) {
-        cancelAnimationFrame(this.startTimer);
-        this.startTimer = null;
-      }
-      if (this.startIndicator) {
-        this.startIndicator.remove();
-        this.startIndicator = null;
-      }
-    } else if (type === 'replay') {
-      if (this.replayTimer) {
-        cancelAnimationFrame(this.replayTimer);
-        this.replayTimer = null;
-      }
-      if (this.replayIndicator) {
-        this.replayIndicator.remove();
-        this.replayIndicator = null;
-      }
-    }
-  } // End of removeSleepIndicator
 
   handlePageSpecificLogic() {
     const { href } = location;
@@ -141,7 +61,7 @@ export class PageHandler {
       attachVocabularyCreation(this.main.groupsManager.groups, this.main);
       attachVocabularyParser();
     }
-  } // End of handlePageSpecificLogic
+  }
 
   setupHoverListeners() {
     const latestGamesContainer = document.querySelector('#latest-games-container');
@@ -152,7 +72,7 @@ export class PageHandler {
         if (this.replaySleep && typeof this.replaySleep.cancel === 'function') {
           this.replaySleep.cancel();
           this.replaySleep = null;
-          this.removeSleepIndicator('replay');
+          this.gamesDataContainer.removeSleepIndicator('replay');
         }
       });
 
@@ -162,7 +82,7 @@ export class PageHandler {
         this.handleReplayAction();
       });
     }
-  } // End of setupHoverListeners
+  }
 
   saveCurrentGameParams() {
     const gameDesc = document.querySelector('#gamedesc');
@@ -192,7 +112,7 @@ export class PageHandler {
     }
     this.main.gamesManager.assignGameIds();
     this.main.gamesManager.saveGameData();
-  } // End of saveCurrentGameParams
+  }
 
   handleStartAction() {
     // Handle auto-start - NEVER affected by hover state
@@ -201,26 +121,26 @@ export class PageHandler {
       if (pausedElement && pausedElement.style.display !== 'none') {
         if (typeof game !== 'undefined' && game.hostStart) {
           // Remove existing start indicator if any
-          this.removeSleepIndicator('start');
+          this.gamesDataContainer.removeSleepIndicator('start');
 
-          this.startIndicator = this.createSleepIndicator('start', this.main.startDelay);
+          this.gamesDataContainer.startIndicator = this.gamesDataContainer.createSleepIndicator('start', this.main.startDelay);
           this.startSleep = sleep(this.main.startDelay);
           this.startSleep.then(() => {
-            this.removeSleepIndicator('start');
+            this.gamesDataContainer.removeSleepIndicator('start');
             game.hostStart();
           }).catch(() => {
-            this.removeSleepIndicator('start');
+            this.gamesDataContainer.removeSleepIndicator('start');
             this.startSleep = null;
           });
         }
       }
     }
-  } // End of handleStartAction
+  }
 
   // Create and start the next game from the current group
   replayNextGame() {
-    const groupsManager = this.main.groupsManager; // Access the groups manager from main
-    const gamesManager = this.main.gamesManager; // Access the games manager from main
+    const groupsManager = this.main.groupsManager;
+    const gamesManager = this.main.gamesManager;
 
     let targetVocId = null;
     let targetName = null;
@@ -240,7 +160,6 @@ export class PageHandler {
           targetVocId = validated.id;
           nextUrl = validated.url;
           
-          // Single call for global
           if (targetVocId) {
             try { gamesManager.registerPendingPlayed(targetVocId); } catch (__) { }
           }
@@ -263,7 +182,6 @@ export class PageHandler {
         targetType = randRes.game?.params?.vocType || null;
         nextUrl = randRes.game ? gamesManager.generateGameLink(randRes.game) : randRes.url;
         
-        // Update pending played for local random
         if (targetVocId) {
           try { gamesManager.registerPendingPlayed(targetVocId, targetName || null, targetType || null); } catch (__) { }
         }
@@ -293,13 +211,12 @@ export class PageHandler {
     targetType = nextGame.params.vocType || null;
     nextUrl = gamesManager.generateGameLink(nextGame);
 
-    // Update pending played for sequential next
     if (targetVocId) {
       try { gamesManager.registerPendingPlayed(targetVocId, targetName || null, targetType || null); } catch (__) { }
     }
 
     window.location.href = nextUrl;
-  } // End of replayNextGame
+  }
 
   handleReplayAction() {
     // Do not auto-replay for competition or qualification games
@@ -320,22 +237,20 @@ export class PageHandler {
           // Only start replay timer if not hovering over latest games container
           if (!this.isHoveringLatestGames) {
             // Remove existing replay indicator if any
-            this.removeSleepIndicator('replay');
+            this.gamesDataContainer.removeSleepIndicator('replay');
 
-            this.replayIndicator = this.createSleepIndicator('replay', this.main.replayDelay);
+            this.gamesDataContainer.replayIndicator = this.gamesDataContainer.createSleepIndicator('replay', this.main.replayDelay);
             this.replaySleep = sleep(this.main.replayDelay);
             this.replaySleep.then(() => {
-              this.removeSleepIndicator('replay');
+              this.gamesDataContainer.removeSleepIndicator('replay');
 
-              // —— NEW: “replay more” repeat-count logic ——
+              // "replay more" repeat-count logic
               if (this.main.shouldReplayMore) {
-                // if there are still repeats left, decrement and replay the same game
                 if (this.main.remainingReplayCount > 1) {
                   this.main.remainingReplayCount--;
                   this.main.settingsManager.saveSettings();
                   window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
                 } else {
-                  // counter exhausted → reset it and then advance (or replay) as usual
                   this.main.remainingReplayCount = this.main.replayNextGameCount;
                   this.main.settingsManager.saveSettings();
                   if (this.main.replayNextGame) {
@@ -352,16 +267,13 @@ export class PageHandler {
                   window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
                 }
               }
-              // —— end “replay more” logic ——
             }).catch(() => {
-              // Promise was cancelled, just clean up
-              this.removeSleepIndicator('replay');
+              this.gamesDataContainer.removeSleepIndicator('replay');
               this.replaySleep = null;
             });
           }
         }
       }
     }
-  } // End of handleReplayAction
-
+  }
 }
