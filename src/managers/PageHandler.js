@@ -22,6 +22,9 @@ export class PageHandler {
   handlePageSpecificLogic() {
     const { href } = location;
     if (/https?:\/\/klavogonki\.ru\/g\/\?gmid=/.test(href)) {
+      // Create the games data container with indicators
+      this.gamesDataContainer.createGamesDataContainer();
+      
       this.setupHoverListeners();
 
       const startObserver = new MutationObserver(() => {

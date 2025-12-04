@@ -47,4 +47,12 @@
     background-color: hsl(50, 0%, 15%);
     border: 1px solid hsl(50, 0%, 30%);
   }
+
+  // Today play count indicator
+  .today-play-count-indicator {
+    @extend %sleep-indicator-base;
+    color: hsl(30, 60%, 65%);
+    background-color: hsl(30, 45%, 20%);
+    border: 1px solid hsl(30, 50%, 38%);
+  }
 }
