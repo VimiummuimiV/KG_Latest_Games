@@ -78,7 +78,7 @@ export class GamesDataContainer {
     this.todayPlayCountIndicator = this.createIndicator(
       'today-play-count-indicator',
       `${this.getTodayPlayCount()}`,
-      "Количество сыгранных за сегодня игр"
+      "Количество сыгранных за сегодня словарей"
     );
   }
 
