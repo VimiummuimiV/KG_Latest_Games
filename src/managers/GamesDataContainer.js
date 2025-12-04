@@ -101,6 +101,12 @@ export class GamesDataContainer {
     const indicator = document.createElement('div');
     indicator.className = type === 'start' ? 'sleep-start-indicator' : 'sleep-replay-indicator';
     this.container.insertBefore(indicator, this.container.firstChild);
+
+    // Add tooltip based on type
+    const tooltipText = type === 'start' 
+      ? 'Таймер автоматического старта игры'
+      : 'Таймер автоматического повтора игры';
+    createCustomTooltip(indicator, tooltipText);
     
     type === 'start' ? this.startIndicator = indicator : this.replayIndicator = indicator;
     
