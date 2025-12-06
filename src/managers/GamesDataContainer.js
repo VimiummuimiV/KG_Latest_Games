@@ -110,17 +110,19 @@ export class GamesDataContainer {
     this.container.appendChild(periodContainer);
 
     const indicators = [
-      { period: 'day', class: 'today-play-count-indicator', tooltip: 'Количество сыгранных словарей за сегодня' },
-      { period: 'week', class: 'week-play-count-indicator', tooltip: 'Количество сыгранных словарей за неделю' },
-      { period: 'month', class: 'month-play-count-indicator', tooltip: 'Количество сыгранных словарей за месяц' },
-      { period: 'year', class: 'year-play-count-indicator', tooltip: 'Количество сыгранных словарей за год' }
+      { period: 'day', class: 'today-play-count-indicator', tooltip: 'Количество сыгранных словарей за сегодня', emoji: '🌟' },
+      { period: 'week', class: 'week-play-count-indicator', tooltip: 'Количество сыгранных словарей за неделю', emoji: '7️⃣' },
+      { period: 'month', class: 'month-play-count-indicator', tooltip: 'Количество сыгранных словарей за месяц', emoji: '📆' },
+      { period: 'year', class: 'year-play-count-indicator', tooltip: 'Количество сыгранных словарей за год', emoji: '🎊' }
     ];
 
-    indicators.forEach(({ period, class: className, tooltip }) => {
+    indicators.forEach(({ period, class: className, tooltip, emoji }) => {
       const count = this.getPlayCount(period);
-      if (period === 'year' && count === 0) return; // Skip year if no data
+      if (count === 0 && period !== 'day') return; // Skip if no data (except for day which always shows)
       
       this.playCountIndicators[period] = this.createIndicator(className, `${count}`, tooltip, periodContainer);
+      this.playCountIndicators[period].dataset.emoji = emoji;
+      this.playCountIndicators[period].dataset.count = count;
       
       if (period !== 'day') {
         this.playCountIndicators[period].style.display = 'none';
@@ -133,9 +135,17 @@ export class GamesDataContainer {
   }
 
   toggleExtendedIndicators(show) {
-    ['week', 'month', 'year'].forEach(period => {
-      if (this.playCountIndicators[period]) {
-        this.playCountIndicators[period].style.display = show ? 'flex' : 'none';
+    ['day', 'week', 'month', 'year'].forEach(period => {
+      const indicator = this.playCountIndicators[period];
+      if (indicator) {
+        if (period !== 'day') {
+          indicator.style.display = show ? 'flex' : 'none';
+        }
+        if (show) {
+          indicator.textContent = `${indicator.dataset.emoji} ${indicator.dataset.count}`;
+        } else {
+          indicator.textContent = indicator.dataset.count;
+        }
       }
     });
   }
