@@ -43,46 +43,27 @@ export class GamesDataContainer {
   getPlayCount(period) {
     try {
       const playedVocabularies = JSON.parse(localStorage.getItem('playedVocabularies') || '[]');
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const weekStart = new Date(Math.max(monthStart, new Date(today).setDate(today.getDate() - 6)));
 
-      let totalCount = 0;
-
-      for (const vocab of playedVocabularies) {
-        if (!vocab.playHistory) continue;
-        for (const history of vocab.playHistory) {
-          const historyDate = new Date(history.date);
-          historyDate.setHours(0, 0, 0, 0);
-
-          let shouldCount = false;
-
-          switch (period) {
-            case 'day':
-              shouldCount = historyDate.toISOString() === today.toISOString();
-              break;
-
-            case 'week':
-              const weekAgo = new Date(today);
-              weekAgo.setDate(weekAgo.getDate() - 7);
-              shouldCount = historyDate >= weekAgo && historyDate <= today;
-              break;
-
-            case 'month':
-              shouldCount = historyDate.getMonth() === today.getMonth() && 
-                           historyDate.getFullYear() === today.getFullYear();
-              break;
-
-            case 'year':
-              shouldCount = historyDate.getFullYear() === today.getFullYear();
-              break;
-          }
-
-          if (shouldCount) {
-            totalCount += history.count || 0;
-          }
-        }
-      }
-      return totalCount;
+      return playedVocabularies.reduce((total, vocab) => {
+        if (!vocab.playHistory) return total;
+        return total + vocab.playHistory.reduce((sum, history) => {
+          const date = new Date(history.date);
+          const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+          
+          const match = (
+            (period === 'day' && localDate.getTime() === today.getTime()) ||
+            (period === 'week' && localDate >= weekStart && localDate <= today) ||
+            (period === 'month' && localDate.getMonth() === today.getMonth() && localDate.getFullYear() === today.getFullYear()) ||
+            (period === 'year' && localDate.getFullYear() === today.getFullYear())
+          );
+          
+          return sum + (match ? (history.count || 0) : 0);
+        }, 0);
+      }, 0);
     } catch (error) {
       console.error(`Error calculating ${period} play count:`, error);
       return 0;
