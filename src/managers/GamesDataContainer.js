@@ -8,7 +8,12 @@ export class GamesDataContainer {
     this.replayIndicator = null;
     this.startTimer = null;
     this.replayTimer = null;
-    this.todayPlayCountIndicator = null;
+    this.playCountIndicators = {
+      day: null,
+      week: null,
+      month: null,
+      year: null
+    };
   }
 
   // ============================================================================
@@ -23,7 +28,7 @@ export class GamesDataContainer {
     this.container = container;
   }
 
-  createIndicator(className, textContent, tooltipText = null) {
+  createIndicator(className, textContent, tooltipText = null, parent = null) {
     this.ensureContainer();
     const indicator = document.createElement('div');
     indicator.className = className;
@@ -31,8 +36,57 @@ export class GamesDataContainer {
     if (tooltipText) {
       createCustomTooltip(indicator, tooltipText);
     }
-    this.container.appendChild(indicator);
+    (parent || this.container).appendChild(indicator);
     return indicator;
+  }
+
+  getPlayCount(period) {
+    try {
+      const playedVocabularies = JSON.parse(localStorage.getItem('playedVocabularies') || '[]');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      let totalCount = 0;
+
+      for (const vocab of playedVocabularies) {
+        if (!vocab.playHistory) continue;
+        for (const history of vocab.playHistory) {
+          const historyDate = new Date(history.date);
+          historyDate.setHours(0, 0, 0, 0);
+
+          let shouldCount = false;
+
+          switch (period) {
+            case 'day':
+              shouldCount = historyDate.toISOString() === today.toISOString();
+              break;
+
+            case 'week':
+              const weekAgo = new Date(today);
+              weekAgo.setDate(weekAgo.getDate() - 7);
+              shouldCount = historyDate >= weekAgo && historyDate <= today;
+              break;
+
+            case 'month':
+              shouldCount = historyDate.getMonth() === today.getMonth() && 
+                           historyDate.getFullYear() === today.getFullYear();
+              break;
+
+            case 'year':
+              shouldCount = historyDate.getFullYear() === today.getFullYear();
+              break;
+          }
+
+          if (shouldCount) {
+            totalCount += history.count || 0;
+          }
+        }
+      }
+      return totalCount;
+    } catch (error) {
+      console.error(`Error calculating ${period} play count:`, error);
+      return 0;
+    }
   }
 
   // ============================================================================
@@ -41,7 +95,7 @@ export class GamesDataContainer {
 
   createGamesDataContainer() {
     this.ensureContainer();
-    this.createTodayPlayCountIndicator();
+    this.createPlayCountIndicators();
     this.createRemainingCountIndicator();
   }
 
@@ -49,37 +103,36 @@ export class GamesDataContainer {
   // Static Indicators
   // ============================================================================
 
-  getTodayPlayCount() {
-    try {
-      const playedVocabularies = JSON.parse(localStorage.getItem('playedVocabularies') || '[]');
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayStr = today.toISOString();
+  createPlayCountIndicators() {
+    const indicators = [
+      { period: 'day', class: 'today-play-count-indicator', tooltip: 'Количество сыгранных словарей за сегодня' },
+      { period: 'week', class: 'week-play-count-indicator', tooltip: 'Количество сыгранных словарей за неделю' },
+      { period: 'month', class: 'month-play-count-indicator', tooltip: 'Количество сыгранных словарей за месяц' },
+      { period: 'year', class: 'year-play-count-indicator', tooltip: 'Количество сыгранных словарей за год' }
+    ];
 
-      let totalCount = 0;
-      for (const vocab of playedVocabularies) {
-        if (!vocab.playHistory) continue;
-        for (const history of vocab.playHistory) {
-          const historyDate = new Date(history.date);
-          historyDate.setHours(0, 0, 0, 0);
-          if (historyDate.toISOString() === todayStr) {
-            totalCount += history.count || 0;
-          }
-        }
+    indicators.forEach(({ period, class: className, tooltip }) => {
+      const count = this.getPlayCount(period);
+      if (period === 'year' && count === 0) return; // Skip year if no data
+      
+      this.playCountIndicators[period] = this.createIndicator(className, `${count}`, tooltip);
+      
+      if (period !== 'day') {
+        this.playCountIndicators[period].style.display = 'none';
       }
-      return totalCount;
-    } catch (error) {
-      console.error('Error calculating today play count:', error);
-      return 0;
-    }
+    });
+
+    // Add hover listeners to container
+    this.container.addEventListener('mouseenter', () => this.toggleExtendedIndicators(true));
+    this.container.addEventListener('mouseleave', () => this.toggleExtendedIndicators(false));
   }
 
-  createTodayPlayCountIndicator() {
-    this.todayPlayCountIndicator = this.createIndicator(
-      'today-play-count-indicator',
-      `${this.getTodayPlayCount()}`,
-      "Количество сыгранных за сегодня словарей"
-    );
+  toggleExtendedIndicators(show) {
+    ['week', 'month', 'year'].forEach(period => {
+      if (this.playCountIndicators[period]) {
+        this.playCountIndicators[period].style.display = show ? 'flex' : 'none';
+      }
+    });
   }
 
   createRemainingCountIndicator() {
@@ -102,7 +155,6 @@ export class GamesDataContainer {
     indicator.className = type === 'start' ? 'sleep-start-indicator' : 'sleep-replay-indicator';
     this.container.insertBefore(indicator, this.container.firstChild);
 
-    // Add tooltip based on type
     const tooltipText = type === 'start' 
       ? 'Таймер автоматического старта игры'
       : 'Таймер автоматического повтора игры';
