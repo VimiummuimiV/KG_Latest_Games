@@ -104,6 +104,11 @@ export class GamesDataContainer {
   // ============================================================================
 
   createPlayCountIndicators() {
+    // Create period indicators container
+    const periodContainer = document.createElement('div');
+    periodContainer.className = 'period-indicators-container';
+    this.container.appendChild(periodContainer);
+
     const indicators = [
       { period: 'day', class: 'today-play-count-indicator', tooltip: 'Количество сыгранных словарей за сегодня' },
       { period: 'week', class: 'week-play-count-indicator', tooltip: 'Количество сыгранных словарей за неделю' },
@@ -115,16 +120,16 @@ export class GamesDataContainer {
       const count = this.getPlayCount(period);
       if (period === 'year' && count === 0) return; // Skip year if no data
       
-      this.playCountIndicators[period] = this.createIndicator(className, `${count}`, tooltip);
+      this.playCountIndicators[period] = this.createIndicator(className, `${count}`, tooltip, periodContainer);
       
       if (period !== 'day') {
         this.playCountIndicators[period].style.display = 'none';
       }
     });
 
-    // Add hover listeners to container
-    this.container.addEventListener('mouseenter', () => this.toggleExtendedIndicators(true));
-    this.container.addEventListener('mouseleave', () => this.toggleExtendedIndicators(false));
+    // Add hover listeners to period container
+    periodContainer.addEventListener('mouseenter', () => this.toggleExtendedIndicators(true));
+    periodContainer.addEventListener('mouseleave', () => this.toggleExtendedIndicators(false));
   }
 
   toggleExtendedIndicators(show) {
