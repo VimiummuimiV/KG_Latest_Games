@@ -27,6 +27,14 @@
     display: flex;
     flex-direction: column;
     gap: 5px;
+
+    .period-indicator-description {
+      padding-right: 5px;
+      font-family: "Montserrat", sans-serif;
+      font-size: 0.5em;
+      font-weight: 600;
+      text-transform: uppercase
+    }
   }
 
   // Start sleep indicator
@@ -58,31 +66,31 @@
     @extend %sleep-indicator-base;
     color: hsl(30, 60%, 65%);
     background-color: hsl(30, 45%, 20%);
-    border: 1px solid hsl(30, 50%, 38%);
+    border: 1px solid hsl(30, 50%, 40%);
     cursor: pointer;
   }
 
   // Week play count indicator
   .week-play-count-indicator {
     @extend %sleep-indicator-base;
-    color: hsl(150, 50%, 60%);
-    background-color: hsl(150, 40%, 20%);
-    border: 1px solid hsl(150, 45%, 35%);
+    color: hsl(150, 60%, 65%);
+    background-color: hsl(150, 45%, 20%);
+    border: 1px solid hsl(150, 50%, 40%);
   }
 
   // Month play count indicator
   .month-play-count-indicator {
     @extend %sleep-indicator-base;
-    color: hsl(270, 50%, 65%);
-    background-color: hsl(270, 40%, 20%);
-    border: 1px solid hsl(270, 45%, 38%);
+    color: hsl(340, 55%, 65%);
+    background-color: hsl(340, 40%, 20%);
+    border: 1px solid hsl(340, 45%, 40%);
   }
 
   // Year play count indicator
   .year-play-count-indicator {
     @extend %sleep-indicator-base;
     color: hsl(200, 55%, 65%);
-    background-color: hsl(200, 40%, 22%);
+    background-color: hsl(200, 40%, 20%);
     border: 1px solid hsl(200, 45%, 40%);
   }
 }

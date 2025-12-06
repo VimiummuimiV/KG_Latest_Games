@@ -110,18 +110,18 @@ export class GamesDataContainer {
     this.container.appendChild(periodContainer);
 
     const indicators = [
-      { period: 'day', class: 'today-play-count-indicator', tooltip: 'Количество сыгранных словарей за сегодня', emoji: '🌟' },
-      { period: 'week', class: 'week-play-count-indicator', tooltip: 'Количество сыгранных словарей за неделю', emoji: '7️⃣' },
-      { period: 'month', class: 'month-play-count-indicator', tooltip: 'Количество сыгранных словарей за месяц', emoji: '📆' },
-      { period: 'year', class: 'year-play-count-indicator', tooltip: 'Количество сыгранных словарей за год', emoji: '🎊' }
+      { period: 'day', class: 'today-play-count-indicator', tooltip: 'Количество сыгранных словарей за сегодня', description: 'День' },
+      { period: 'week', class: 'week-play-count-indicator', tooltip: 'Количество сыгранных словарей за неделю', description: 'Неделя' },
+      { period: 'month', class: 'month-play-count-indicator', tooltip: 'Количество сыгранных словарей за месяц', description: 'Месяц' },
+      { period: 'year', class: 'year-play-count-indicator', tooltip: 'Количество сыгранных словарей за год', description: 'Год' }
     ];
 
-    indicators.forEach(({ period, class: className, tooltip, emoji }) => {
+    indicators.forEach(({ period, class: className, tooltip, description }) => {
       const count = this.getPlayCount(period);
       if (count === 0 && period !== 'day') return; // Skip if no data (except for day which always shows)
       
       this.playCountIndicators[period] = this.createIndicator(className, `${count}`, tooltip, periodContainer);
-      this.playCountIndicators[period].dataset.emoji = emoji;
+      this.playCountIndicators[period].dataset.description = description;
       this.playCountIndicators[period].dataset.count = count;
       
       if (period !== 'day') {
@@ -142,7 +142,12 @@ export class GamesDataContainer {
           indicator.style.display = show ? 'flex' : 'none';
         }
         if (show) {
-          indicator.textContent = `${indicator.dataset.emoji} ${indicator.dataset.count}`;
+          indicator.textContent = '';
+          const descSpan = document.createElement('span');
+          descSpan.className = 'period-indicator-description';
+          descSpan.textContent = indicator.dataset.description;
+          indicator.appendChild(descSpan);
+          indicator.appendChild(document.createTextNode(indicator.dataset.count));
         } else {
           indicator.textContent = indicator.dataset.count;
         }
