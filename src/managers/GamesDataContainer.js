@@ -31,7 +31,7 @@ export class GamesDataContainer {
   createIndicator(className, textContent, tooltipText = null, parent = null) {
     this.ensureContainer();
     const indicator = document.createElement('div');
-    indicator.className = className;
+    indicator.className = `indicator ${className}`;
     indicator.textContent = textContent;
     if (tooltipText) {
       createCustomTooltip(indicator, tooltipText);
@@ -98,24 +98,32 @@ export class GamesDataContainer {
     ];
 
     let periodIndex = 0;
+
     indicators.forEach(({ period, class: className, tooltip, description }) => {
       const count = this.getPlayCount(period);
-      if (count === 0 && period !== 'day') return; // Skip if no data (except for day which always shows)
+      if (count === 0 && period !== 'day') return;
       
-      this.playCountIndicators[period] = this.createIndicator(className, `${count}`, tooltip, periodContainer);
-      this.playCountIndicators[period].dataset.description = description;
-      this.playCountIndicators[period].dataset.count = count;
+      const indicator = this.createIndicator(className, '', tooltip, periodContainer);
+      this.playCountIndicators[period] = indicator;
+      
+      // Pre-build complete structure once
+      const descSpan = document.createElement('span');
+      descSpan.className = 'period-indicator-description';
+      descSpan.textContent = description;
+      descSpan.style.display = 'none';
+      
+      const countText = document.createTextNode(count);
+      
+      indicator.appendChild(descSpan);
+      indicator.appendChild(countText);
+      indicator._descSpan = descSpan;
       
       if (period !== 'day') {
-        // mark as a period indicator so CSS can animate it
-        this.playCountIndicators[period].classList.add('period-indicator');
-        // stagger the fall animation slightly per item
-        this.playCountIndicators[period].style.setProperty('--fall-delay', `${periodIndex++ * 90}ms`);
-        // keep hidden by default (CSS uses .period-indicator without .show to hide)
+        indicator.classList.add('period-indicator');
+        indicator.style.setProperty('--fall-delay', `${periodIndex++ * 90}ms`);
       }
     });
 
-    // Add hover listeners to period container
     periodContainer.addEventListener('mouseenter', () => this.toggleExtendedIndicators(true));
     periodContainer.addEventListener('mouseleave', () => this.toggleExtendedIndicators(false));
   }
@@ -125,16 +133,7 @@ export class GamesDataContainer {
       const indicator = this.playCountIndicators[period];
       if (indicator) {
         if (period !== 'day') indicator.classList.toggle('show', show);
-        indicator.textContent = '';
-        if (show) {
-          const descSpan = document.createElement('span');
-          descSpan.className = 'period-indicator-description';
-          descSpan.textContent = indicator.dataset.description;
-          indicator.appendChild(descSpan);
-          indicator.appendChild(document.createTextNode(indicator.dataset.count));
-        } else {
-          indicator.textContent = indicator.dataset.count;
-        }
+        indicator._descSpan.style.display = show ? '' : 'none';
       }
     });
   }
@@ -156,7 +155,7 @@ export class GamesDataContainer {
     this.ensureContainer();
     
     const indicator = document.createElement('div');
-    indicator.className = type === 'start' ? 'sleep-start-indicator' : 'sleep-replay-indicator';
+    indicator.className = `indicator ${type === 'start' ? 'sleep-start-indicator' : 'sleep-replay-indicator'}`;
     this.container.insertBefore(indicator, this.container.firstChild);
 
     const tooltipText = type === 'start' 
