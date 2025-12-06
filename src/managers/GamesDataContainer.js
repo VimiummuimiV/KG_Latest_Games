@@ -110,9 +110,7 @@ export class GamesDataContainer {
         // mark as a period indicator so CSS can animate it
         this.playCountIndicators[period].classList.add('period-indicator');
         // stagger the fall animation slightly per item
-        const delay = periodIndex * 90; // ms
-        this.playCountIndicators[period].style.setProperty('--fall-delay', `${delay}ms`);
-        periodIndex++;
+        this.playCountIndicators[period].style.setProperty('--fall-delay', `${periodIndex++ * 90}ms`);
         // keep hidden by default (CSS uses .period-indicator without .show to hide)
       }
     });
@@ -126,12 +124,9 @@ export class GamesDataContainer {
     ['day', 'week', 'month', 'year'].forEach(period => {
       const indicator = this.playCountIndicators[period];
       if (indicator) {
-        if (period !== 'day') {
-          // toggle the CSS-driven show state (animation handled in CSS)
-          indicator.classList.toggle('show', show);
-        }
+        if (period !== 'day') indicator.classList.toggle('show', show);
+        indicator.textContent = '';
         if (show) {
-          indicator.textContent = '';
           const descSpan = document.createElement('span');
           descSpan.className = 'period-indicator-description';
           descSpan.textContent = indicator.dataset.description;

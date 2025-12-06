@@ -1,4 +1,4 @@
-%sleep-indicator-base {
+%indicator-base {
   transition: 0.2s ease-in-out;
   font-family: "Montserrat", sans-serif;
   font-size: 1.5em;
@@ -34,13 +34,13 @@
       font-family: "Montserrat", sans-serif;
       font-size: 0.5em;
       font-weight: 600;
-      text-transform: uppercase
+      text-transform: uppercase;
     }
   }
 
   // Start sleep indicator
   .sleep-start-indicator {
-    @extend %sleep-indicator-base;
+    @extend %indicator-base;
     color: hsl(88, 50%, 55%);
     background-color: hsl(88, 40%, 20%);
     border: 1px solid hsl(88, 45%, 35%);
@@ -48,7 +48,7 @@
 
   // Replay sleep indicator
   .sleep-replay-indicator {
-    @extend %sleep-indicator-base;
+    @extend %indicator-base;
     color: hsl(208, 50%, 70%);
     background-color: hsl(208, 40%, 25%);
     border: 1px solid hsl(208, 45%, 50%);
@@ -56,7 +56,7 @@
 
   // Remaining count indicator
   .remaining-count-indicator {
-    @extend %sleep-indicator-base;
+    @extend %indicator-base;
     color: hsl(50, 0%, 75%);
     background-color: hsl(50, 0%, 15%);
     border: 1px solid hsl(50, 0%, 30%);
@@ -64,7 +64,7 @@
 
   // Today play count indicator
   .today-play-count-indicator {
-    @extend %sleep-indicator-base;
+    @extend %indicator-base;
     color: hsl(30, 60%, 65%);
     background-color: hsl(30, 45%, 20%);
     border: 1px solid hsl(30, 50%, 40%);
@@ -72,15 +72,14 @@
   }
 
   // Period indicators (week, month, year) - falling animation from day indicator
-  .period-indicator {
-    @extend %sleep-indicator-base;
-    display: none;
-
-    &.show {
-      display: flex;
-      animation: fallDown 320ms cubic-bezier(.22,.9,.31,1) both;
-      animation-delay: var(--fall-delay, 0ms);
-    }
+  .period-indicator:not(.show) {
+    display: none !important;
+  }
+  
+  .period-indicator.show {
+    display: flex !important;
+    animation: fallDown 320ms cubic-bezier(.22, .9, .31, 1) both;
+    animation-delay: var(--fall-delay, 0ms);
   }
 
   @keyframes fallDown {
@@ -100,7 +99,7 @@
 
   // Week play count indicator
   .week-play-count-indicator {
-    @extend %sleep-indicator-base;
+    @extend %indicator-base;
     color: hsl(150, 60%, 65%);
     background-color: hsl(150, 45%, 20%);
     border: 1px solid hsl(150, 50%, 40%);
@@ -108,7 +107,7 @@
 
   // Month play count indicator
   .month-play-count-indicator {
-    @extend %sleep-indicator-base;
+    @extend %indicator-base;
     color: hsl(340, 55%, 65%);
     background-color: hsl(340, 40%, 20%);
     border: 1px solid hsl(340, 45%, 40%);
@@ -116,7 +115,7 @@
 
   // Year play count indicator
   .year-play-count-indicator {
-    @extend %sleep-indicator-base;
+    @extend %indicator-base;
     color: hsl(200, 55%, 65%);
     background-color: hsl(200, 40%, 20%);
     border: 1px solid hsl(200, 45%, 40%);
