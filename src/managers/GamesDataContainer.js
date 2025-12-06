@@ -91,10 +91,10 @@ export class GamesDataContainer {
     this.container.appendChild(periodContainer);
 
     const indicators = [
-      { period: 'day', class: 'today-play-count-indicator', tooltip: 'Количество сыгранных словарей за сегодня', description: 'День' },
-      { period: 'week', class: 'week-play-count-indicator', tooltip: 'Количество сыгранных словарей за неделю', description: 'Неделя' },
-      { period: 'month', class: 'month-play-count-indicator', tooltip: 'Количество сыгранных словарей за месяц', description: 'Месяц' },
-      { period: 'year', class: 'year-play-count-indicator', tooltip: 'Количество сыгранных словарей за год', description: 'Год' }
+      { period: 'day', class: 'today-play-count-indicator', tooltip: 'Количество сыгранных игр (по словарю) за сегодня', description: 'День' },
+      { period: 'week', class: 'week-play-count-indicator', tooltip: 'Количество сыгранных игр (по словарю) за неделю', description: 'Неделя' },
+      { period: 'month', class: 'month-play-count-indicator', tooltip: 'Количество сыгранных игр (по словарю) за месяц', description: 'Месяц' },
+      { period: 'year', class: 'year-play-count-indicator', tooltip: 'Количество сыгранных игр (по словарю) за год', description: 'Год' }
     ];
 
     let periodIndex = 0;
