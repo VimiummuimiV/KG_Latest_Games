@@ -10,6 +10,7 @@
   align-items: center;
   cursor: default;
   border-radius: 0.2em !important;
+  height: fit-content;
 }
 
 .games-data-container {
@@ -68,6 +69,33 @@
     background-color: hsl(30, 45%, 20%);
     border: 1px solid hsl(30, 50%, 40%);
     cursor: pointer;
+  }
+
+  // Period indicators (week, month, year) - falling animation from day indicator
+  .period-indicator {
+    @extend %sleep-indicator-base;
+    display: none;
+
+    &.show {
+      display: flex;
+      animation: fallDown 320ms cubic-bezier(.22,.9,.31,1) both;
+      animation-delay: var(--fall-delay, 0ms);
+    }
+  }
+
+  @keyframes fallDown {
+    0% {
+      transform: translateY(-20px) scaleY(0.98);
+      opacity: 0;
+    }
+    70% {
+      transform: translateY(8px) scaleY(1.02);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(0) scaleY(1);
+      opacity: 1;
+    }
   }
 
   // Week play count indicator

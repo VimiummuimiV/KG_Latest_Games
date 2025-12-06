@@ -97,6 +97,7 @@ export class GamesDataContainer {
       { period: 'year', class: 'year-play-count-indicator', tooltip: 'Количество сыгранных словарей за год', description: 'Год' }
     ];
 
+    let periodIndex = 0;
     indicators.forEach(({ period, class: className, tooltip, description }) => {
       const count = this.getPlayCount(period);
       if (count === 0 && period !== 'day') return; // Skip if no data (except for day which always shows)
@@ -106,7 +107,13 @@ export class GamesDataContainer {
       this.playCountIndicators[period].dataset.count = count;
       
       if (period !== 'day') {
-        this.playCountIndicators[period].style.display = 'none';
+        // mark as a period indicator so CSS can animate it
+        this.playCountIndicators[period].classList.add('period-indicator');
+        // stagger the fall animation slightly per item
+        const delay = periodIndex * 90; // ms
+        this.playCountIndicators[period].style.setProperty('--fall-delay', `${delay}ms`);
+        periodIndex++;
+        // keep hidden by default (CSS uses .period-indicator without .show to hide)
       }
     });
 
@@ -120,7 +127,8 @@ export class GamesDataContainer {
       const indicator = this.playCountIndicators[period];
       if (indicator) {
         if (period !== 'day') {
-          indicator.style.display = show ? 'flex' : 'none';
+          // toggle the CSS-driven show state (animation handled in CSS)
+          indicator.classList.toggle('show', show);
         }
         if (show) {
           indicator.textContent = '';
