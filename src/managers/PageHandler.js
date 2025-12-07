@@ -49,7 +49,12 @@ export class PageHandler {
           try {
             const pending = getSessionVocId();
             if (pending) {
-              try { this.main.gamesManager.markVocabAsPlayed(pending); } catch (__) { }
+              try {
+                // Only mark as played when the current page indicates a vocabulary game
+                if (detectGameType().category === 'vocabulary') {
+                  try { this.main.gamesManager.markVocabAsPlayed(pending); } catch (__) { }
+                }
+              } catch (__) { }
             }
           } catch (__) { }
           this.handleReplayAction();
