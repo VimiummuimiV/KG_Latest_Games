@@ -47,11 +47,12 @@ export class GamesDataContainer {
       
       // Get local dates at midnight
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-      const dayOfWeek = now.getDay(); // 0 = Sunday
+      // Week starts on Monday: convert Sunday=0 to Sunday=6, Monday=1 to Monday=0
+      const dayOfWeek = (now.getDay() + 6) % 7;
       const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek).getTime();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
       const yearStart = new Date(now.getFullYear(), 0, 1).getTime();
-
+      
       return playedVocabularies.reduce((total, vocab) => {
         if (!vocab.playHistory) return total;
         return total + vocab.playHistory.reduce((sum, history) => {
