@@ -44,21 +44,30 @@ export class GamesDataContainer {
     try {
       const playedVocabularies = JSON.parse(localStorage.getItem('playedVocabularies') || '[]');
       const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      const weekStart = new Date(Math.max(monthStart, new Date(today).setDate(today.getDate() - 6)));
+      
+      // Get local dates at midnight
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const dayOfWeek = now.getDay(); // 0 = Sunday
+      const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek).getTime();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+      const yearStart = new Date(now.getFullYear(), 0, 1).getTime();
 
       return playedVocabularies.reduce((total, vocab) => {
         if (!vocab.playHistory) return total;
         return total + vocab.playHistory.reduce((sum, history) => {
-          const date = new Date(history.date);
-          const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+          // Convert UTC stored date to local midnight date
+          const storedDate = new Date(history.date);
+          const localDate = new Date(
+            storedDate.getFullYear(), 
+            storedDate.getMonth(), 
+            storedDate.getDate()
+          ).getTime();
           
           const match = (
-            (period === 'day' && localDate.getTime() === today.getTime()) ||
+            (period === 'day' && localDate === today) ||
             (period === 'week' && localDate >= weekStart && localDate <= today) ||
-            (period === 'month' && localDate.getMonth() === today.getMonth() && localDate.getFullYear() === today.getFullYear()) ||
-            (period === 'year' && localDate.getFullYear() === today.getFullYear())
+            (period === 'month' && localDate >= monthStart && localDate <= today) ||
+            (period === 'year' && localDate >= yearStart && localDate <= today)
           );
           
           return sum + (match ? (history.count || 0) : 0);
