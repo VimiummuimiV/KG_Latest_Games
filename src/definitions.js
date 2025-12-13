@@ -92,6 +92,8 @@ export const DEFAULTS = {
   showButtonDescriptions: true,
   showHelpTooltips: true,
   showBlockedVocabAlert: true,
+  qualificationEnabled: false,
+  rankRange: [0, 8],
   panelYPosition: {
     main: 0,
     gamelist: 0,

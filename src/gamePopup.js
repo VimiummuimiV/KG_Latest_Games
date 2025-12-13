@@ -5,7 +5,6 @@ import { icons } from './icons.js';
 import { setupPopupDrag } from './drag/popupDrag.js';
 
 const visibilityTypes = Object.keys(visibilities);
-const SETTINGS_KEY = 'latestGamesSettings';
 
 // Configuration for rank slider constraints
 const RANK_CONSTRAINTS = {
@@ -33,49 +32,6 @@ const INTERACTIVE_SELECTORS = [
 ];
 
 /**
- * Settings helper functions
- */
-const settingsHelper = {
-  load() {
-    try {
-      return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
-    } catch (e) {
-      return {};
-    }
-  },
-
-  save(settings) {
-    try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    } catch (e) {
-      console.warn('Failed to save settings:', e);
-    }
-  },
-
-  getRankRange() {
-    const settings = this.load();
-    return settings.rankRange || [RANK_CONSTRAINTS.minFrom, RANK_CONSTRAINTS.maxTo];
-  },
-
-  saveRankRange(minIdx, maxIdx) {
-    const settings = this.load();
-    settings.rankRange = [minIdx, maxIdx];
-    this.save(settings);
-  },
-
-  getQualificationState() {
-    const settings = this.load();
-    return settings.qualificationEnabled !== undefined ? settings.qualificationEnabled : false;
-  },
-
-  saveQualificationState(enabled) {
-    const settings = this.load();
-    settings.qualificationEnabled = enabled;
-    this.save(settings);
-  }
-};
-
-/**
  * Clamp index to allowed range based on handle type
  */
 function clampIndex(idx, isMinHandle) {
@@ -92,11 +48,11 @@ function clampIndex(idx, isMinHandle) {
  * After the subheader for each type, a container for type buttons is created and each button is appended inside.
  * @param {Object} game - The game object containing parameters
  * @param {MouseEvent} event - The mouse event for positioning
- * @param {Object} gameManager - The GameManager instance to access its methods
+ * @param {Object} main - The main LatestGamesManager instance
  * @param {string} className - CSS class name for the popup (default: 'game-popup')
  * @returns {HTMLElement} The created popup element
  */
-export function createGamePopup(game, event, gameManager, className = 'game-popup') {
+export function createGamePopup(game, event, main, className = 'game-popup') {
   hideTooltipElement(); // Hide any existing tooltip
 
   const existingPopup = document.querySelector(`.${className}`);
@@ -117,7 +73,7 @@ export function createGamePopup(game, event, gameManager, className = 'game-popu
   });
 
   // Set qualification visibility based on qualification setting
-  let qualificationEnabled = settingsHelper.getQualificationState();
+  let qualificationEnabled = main.qualificationEnabled ?? false;
   qualification.classList.toggle('latest-games-disabled', !qualificationEnabled);
   createCustomTooltip(qualification, `Квалификация ${qualificationEnabled ? 'включена' : 'выключена'}`);
 
@@ -126,7 +82,8 @@ export function createGamePopup(game, event, gameManager, className = 'game-popu
     e.preventDefault();
     e.stopPropagation();
     qualificationEnabled = !qualificationEnabled;
-    settingsHelper.saveQualificationState(qualificationEnabled);
+    main.qualificationEnabled = qualificationEnabled;
+    main.settingsManager.saveSettings();
 
     qualification.classList.toggle('latest-games-disabled', !qualificationEnabled);
     createCustomTooltip(qualification, `Квалификация ${qualificationEnabled ? 'включена' : 'выключена'}`);
@@ -149,7 +106,7 @@ export function createGamePopup(game, event, gameManager, className = 'game-popu
   const rankDisplay = createElement('div', { className: 'rank-slider-display' });
 
   // Load saved range with proper clamping
-  let [minIdx, maxIdx] = settingsHelper.getRankRange();
+  let [minIdx, maxIdx] = main.rankRange || [RANK_CONSTRAINTS.minFrom, RANK_CONSTRAINTS.maxTo];
   minIdx = clampIndex(minIdx, true);
   maxIdx = clampIndex(maxIdx, false);
 
@@ -214,7 +171,7 @@ export function createGamePopup(game, event, gameManager, className = 'game-popu
         modifiedGame.params.qual = 1;
       }
 
-      const link = gameManager.generateGameLink(modifiedGame);
+      const link = main.gamesManager.generateGameLink(modifiedGame);
       btn.setAttribute('href', link);
       btn.onclick = (e) => {
         e.preventDefault();
@@ -224,7 +181,8 @@ export function createGamePopup(game, event, gameManager, className = 'game-popu
   }
 
   function saveRange() {
-    settingsHelper.saveRankRange(minIdx, maxIdx);
+    main.rankRange = [minIdx, maxIdx];
+    main.settingsManager.saveSettings();
   }
 
   // Handle click on slider track
@@ -319,7 +277,7 @@ export function createGamePopup(game, event, gameManager, className = 'game-popu
         modifiedGame.params.qual = 1;
       }
 
-      const link = gameManager.generateGameLink(modifiedGame);
+      const link = main.gamesManager.generateGameLink(modifiedGame);
       const btn = createElement('a', {
         href: link,
         className: 'game-popup-button',

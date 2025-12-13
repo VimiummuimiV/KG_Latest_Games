@@ -74,7 +74,7 @@ export class UIManager {
       if (!gameElement) return;
       const gameId = gameElement.id.replace('latest-game-', '');
       const game = this.main.gamesManager.findGameById(gameId);
-      if (game && !this.main.enableDragging) createGamePopup(game, e, this.main.gamesManager);
+      if (game && !this.main.enableDragging) createGamePopup(game, e, this.main);
     };
 
     gamesList.addEventListener('mousedown', (e) => {

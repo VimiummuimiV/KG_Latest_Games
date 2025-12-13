@@ -35,6 +35,8 @@ export class SettingsManager {
       this.main.showHelpTooltips = settings.showHelpTooltips ?? this.main.showHelpTooltips;
       this.main.randomGameId = settings.randomGameId ?? this.main.randomGameId;
       this.main.showBlockedVocabAlert = settings.showBlockedVocabAlert ?? this.main.showBlockedVocabAlert;
+      this.main.qualificationEnabled = settings.qualificationEnabled ?? this.main.qualificationEnabled;
+      this.main.rankRange = settings.rankRange ?? this.main.rankRange;
 
       // Load persisted validVocabularies into runtime state
       this.loadValidVocabularies();
@@ -248,6 +250,8 @@ export class SettingsManager {
         showButtonDescriptions: this.main.showButtonDescriptions,
         showHelpTooltips: this.main.showHelpTooltips,
         showBlockedVocabAlert: this.main.showBlockedVocabAlert,
+        qualificationEnabled: this.main.qualificationEnabled,
+        rankRange: this.main.rankRange,
         randomGameId: this.main.randomGameId,
         randomVocabulariesType: this.main.randomVocabulariesType,
         alwaysVisiblePanel: this.main.alwaysVisiblePanel
