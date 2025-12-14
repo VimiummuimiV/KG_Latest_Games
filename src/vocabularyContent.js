@@ -12,7 +12,7 @@ export async function fetchVocabularyContent(vocId) {
     const wordsDiv = doc.querySelector('.words');
     if (!wordsDiv) {
       console.warn(`No element with class "words" found for vocId ${vocId}`);
-      return 'Vocabulary content not found';
+      return 'Данные отсутствуют';
     }
     
     // Extract all table rows with text content
@@ -20,6 +20,7 @@ export async function fetchVocabularyContent(vocId) {
     if (rows.length === 0) {
       console.warn(`No table rows found for vocId ${vocId}`);
       return 'No words available';
+      return 'Содержимое словаря отсутствует';
     }
     
     // Build the text, handling both numbered and non-numbered formats
@@ -65,7 +66,7 @@ export async function fetchVocabularyContent(vocId) {
     return vocabularyText;
   } catch (error) {
     console.error(`Error fetching vocabulary content for vocId ${vocId}:`, error);
-    return 'Error loading vocabulary';
+    return 'Ошибка загрузки словаря';
   }
 }
 
