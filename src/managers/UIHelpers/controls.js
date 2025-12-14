@@ -649,14 +649,26 @@ export function createControls(main) {
   createCustomTooltip(
     startRaceBtn, `
     [Shift + Enter | Клик] Начать игру
+    [Ctrl + Shift + Enter | Клик] Начать игру (квалификация)
     [Shift + Alt + Enter | Клик] Добавить текущий словарь в Избранные
     `
   );
 
+  // Function to add 'qual=1' parameter to URL
+  const addQualParam = (url) => {
+    try {
+      const u = new URL(url);
+      u.searchParams.set('qual', '1');
+      return u.toString();
+    } catch (__) {
+      return url;
+    }
+  };
+
   // Start race action function
   // Choose id (random or previous), switch group if needed, save and navigate
-  const startRaceAction = () => {
-    // If random mode is ON, get structured random info; otherwise use previousGameId
+  const startRaceAction = (qual = false) => {
+    // Determine game ID based on randomMode or previousGameId
     const randomMode = main.randomGameId;
     let res = null;
     if (randomMode) {
@@ -675,7 +687,7 @@ export function createControls(main) {
       if (res.groupId) {
         main.groupsManager.selectGroup(res.groupId);
       } else {
-        // try to find the group containing the game
+        // Try to find the group containing the game
         for (const g of main.groupsManager.groups) {
           if (g.games.some(x => x.id === res.id)) {
             main.groupsManager.selectGroup(g.id);
@@ -699,7 +711,7 @@ export function createControls(main) {
         if (res.game) res.url = main.gamesManager.generateGameLink(res.game);
         else return alert('❌ Игра не найдена');
       }
-      location.href = res.url;
+      location.href = qual ? addQualParam(res.url) : res.url;
       return;
     }
 
@@ -709,12 +721,12 @@ export function createControls(main) {
         const validated = await main.gamesManager.getValidRandomGameId();
         if (!validated) return alert('🔒 Максимальное количество попыток поиска подходящей игры исчерпано. Попробуйте ещё раз.');
         
-          // Register pending played vocab if id exists
-          if (validated.id) {
-            try { main.gamesManager.registerPendingPlayed(validated.id); } catch (__) { }
-          }
+        // Register pending played vocab if id exists
+        if (validated.id) {
+          try { main.gamesManager.registerPendingPlayed(validated.id); } catch (__) { }
+        }
         
-        window.location.href = validated.url;
+        window.location.href = qual ? addQualParam(validated.url) : validated.url;
       })();
       return;
     }
@@ -842,15 +854,20 @@ export function createControls(main) {
   }
 
   startRaceBtn.onclick = (e) => {
-    // Alt+Shift+Click: add current vocabulary to Favorites 
+    // Add current vocabulary to favorites
     if (e.altKey && e.shiftKey) {
       e.preventDefault();
       addCurrentVocabularyToFavorites();
       return;
-    // Shift+Click: start latest played or random game
-    } else {
-      startRaceAction();
     }
+    // Start race in qualification mode
+    if (e.ctrlKey && e.shiftKey) {
+      e.preventDefault();
+      startRaceAction(true);
+      return;
+    }
+    // Regular click to start race in normal mode
+    startRaceAction();
   };
 
   const bannedVocabulariesBtn = createElement('span', {
@@ -898,12 +915,18 @@ export function createControls(main) {
       addCurrentVocabularyToFavorites();
       return;
     }
-
+    // Ctrl+Shift+Enter: start race in qualification mode
+    if (e.ctrlKey && e.shiftKey && e.code === 'Enter') {
+      e.preventDefault();
+      startRaceAction(true);
+      return;
+    }
+    // Shift+Enter: start race in normal mode
     if (e.shiftKey && e.code === 'Enter') {
       startRaceAction();
       return;
     }
-
+    // Alt+Enter: ban current vocabulary
     if (e.altKey && e.code === 'Enter') {
       e.preventDefault();
       banCurrentVocabulary();
