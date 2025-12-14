@@ -980,8 +980,8 @@ export function createControls(main) {
     createCustomTooltip(
       vocabularyDataBtn,
       main.showVocabularyData
-        ? 'Скрывать содержимое словаря'
-        : 'Показывать содержимое словаря'
+        ? 'Скрыть содержимое словаря'
+        : 'Показать содержимое словаря'
     );
     vocabularyDataBtn.classList.toggle('latest-games-disabled', !main.showVocabularyData);
   };
