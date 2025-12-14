@@ -648,8 +648,8 @@ export function createControls(main) {
   });
   createCustomTooltip(
     startRaceBtn, `
-    [Shift + Enter | Клик] Начать игру
-    [Ctrl + Shift + Enter | Клик] Начать игру (квалификация)
+    [Shift + Enter | Клик] Начать игру (последняя или следующая: работает только на странице игры)
+    [Ctrl + Shift + Enter | Клик] Пройти квалификацию по словарю
     [Shift + Alt + Enter | Клик] Добавить текущий словарь в Избранные
     `
   );
@@ -668,9 +668,45 @@ export function createControls(main) {
   // Start race action function
   // Choose id (random or previous), switch group if needed, save and navigate
   const startRaceAction = (qual = false) => {
-    // If qualification requested, force local mode (use latest passed game) — do not randomize
+    // If qualification requested, force local mode — do not randomize
     const randomMode = qual ? false : main.randomGameId;
     let res = null;
+
+    // If we're on a GAME page and not in random mode, pick the next
+    // game from the group after the previous played one.
+    // If NONE, pick the previous played.
+    try {
+      if (getCurrentPage() === 'game' && !randomMode && !qual) {
+        const currentGroup = main.groupsManager.getCurrentGroup(main.groupsManager.groups, main.groupsManager.currentGroupId);
+        if (!currentGroup || !Array.isArray(currentGroup.games) || currentGroup.games.length === 0) return alert('❌ Нет игр в текущей группе');
+        const prevId = main.gamesManager.getPreviousGameId();
+        let idx = currentGroup.games.findIndex(g => String(g.id) === String(prevId));
+        idx = (idx === -1) ? 0 : (idx + 1) % currentGroup.games.length;
+        const nextGame = currentGroup.games[idx];
+        if (!nextGame) return alert('❌ Не удалось определить следующую игру');
+
+        // Select group and persist previousGameId
+        main.groupsManager.selectGroup(currentGroup.id);
+        main.gamesManager.latestGamesData = main.gamesManager.latestGamesData || {};
+        main.gamesManager.latestGamesData.previousGameId = nextGame.id;
+        main.gamesManager.saveGameData();
+
+        // Register pending played vocab if vocId exists
+        const vocId = String(nextGame.params?.vocId || '');
+        if (vocId) {
+          try {
+            main.gamesManager.registerPendingPlayed(vocId, nextGame.params?.vocName || null, nextGame.params?.vocType || null);
+          } catch (__) { }
+        }
+
+        const url = main.gamesManager.generateGameLink(nextGame);
+        location.href = qual ? addQualParam(url) : url;
+        return;
+      }
+    } catch (err) {
+      console.warn('Error selecting next game in group', err);
+    }
+
     if (randomMode) {
       res = main.gamesManager.getRandomGameId();
       if (!res) return alert('❌ Нет подходящей игры');
