@@ -19,7 +19,6 @@ export async function fetchVocabularyContent(vocId) {
     const rows = wordsDiv.querySelectorAll('tr');
     if (rows.length === 0) {
       console.warn(`No table rows found for vocId ${vocId}`);
-      return 'No words available';
       return 'Содержимое словаря отсутствует';
     }
     
