@@ -559,8 +559,13 @@ export function createControls(main) {
         let available = 0; for (const id of new Set(totalIds)) if (!excluded.has(id)) available++;
         return `Обновить список допустимых словарей (всего: ${total}, доступно: ${available})`;
       },
-      ctrl: () => main.showBlockedVocabAlert ? 'Отключить предупреждение о недоступных словарях' : 'Включить предупреждение о недоступных словарях',
-      alt: (isEnabled) => isEnabled === 'global' || main.randomGameId === 'global' ? 'Отключить глобальный режим' : 'Включить глобальный режим',
+      alt: () => main.showBlockedVocabAlert
+        ? 'Отключить предупреждение о недоступных словарях'
+        : 'Включить предупреждение о недоступных словарях',
+      ctrl: () =>
+        main.randomGameId === 'global'
+          ? 'Отключить глобальный режим'
+          : 'Включить глобальный режим',
       shiftAlt: () => 'Выбрать типы словарей'
     });
     // Reflect disabled state visually
@@ -578,14 +583,15 @@ export function createControls(main) {
   // Toggle random game selection setting when clicking the button
   // Shift+Click: set globalLatestId
   randomRaceBtn.onclick = (e) => {
-    // Shift+Alt+Click: show vocabulary types toggle popup
+    // Shift + Alt + Click: show vocabulary types toggle popup
     if (e.shiftKey && e.altKey) {
       e.preventDefault();
       showVocabularyTypesPopup(e, main);
       return;
     }
-    // Ctrl+Click: toggle showing the blocked-vocab alert
-    if (e.ctrlKey) {
+
+    // Alt + Click: toggle showing the blocked-vocab alert
+    if (e.altKey) {
       main.showBlockedVocabAlert = !main.showBlockedVocabAlert;
       main.settingsManager.saveSettings();
       updateRandomTooltip();
@@ -596,8 +602,9 @@ export function createControls(main) {
       );
       return;
     }
+
+    // Shift + Click: update valid vocabularies list
     if (e.shiftKey) {
-      // Fetch the CSV/CSV-like list from the raw GitHub URL and store in localStorage
       const url = 'https://raw.githubusercontent.com/VimiummuimiV/KG_Latest_Games/refs/heads/main/src/etc/valid_vocabularies.txt';
       fetch(url, { cache: 'no-store' })
         .then(r => {
@@ -614,29 +621,24 @@ export function createControls(main) {
             console.warn('Could not save valid vocabularies via SettingsManager', err);
             alert('⚠️ Не удалось сохранить список в localStorage.');
           }
-        }).catch(err => {
+        })
+        .catch(err => {
           console.warn('Failed to fetch valid vocabularies:', err);
           alert('⚠️ Ошибка загрузки списка допустимых словарей: ' + err.message);
         });
       return;
     }
-    // Alt+Click: toggle global mode on/off
-    if (e.altKey) {
-      if (main.randomGameId === 'global') {
-        main.randomGameId = false;
-      } else {
-        main.randomGameId = 'global';
-      }
+
+    // Ctrl + Click: toggle global mode on/off
+    if (e.ctrlKey) {
+      main.randomGameId = main.randomGameId === 'global' ? false : 'global';
       main.settingsManager.saveSettings();
       updateRandomTooltip();
       return;
     }
+
     // Regular click: toggle between false and 'local'
-    if (main.randomGameId === 'local') {
-      main.randomGameId = false;
-    } else {
-      main.randomGameId = 'local';
-    }
+    main.randomGameId = main.randomGameId === 'local' ? false : 'local';
     main.settingsManager.saveSettings();
     updateRandomTooltip();
   };
