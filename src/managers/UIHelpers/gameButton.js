@@ -4,7 +4,7 @@ import { addDragFunctionality } from '../../drag/gameButtonDrag.js';
 import { icons } from '../../icons.js';
 import { gameStatsApi } from '../../gameStatsApi.js';
 import { createGameInfoPopup } from '../../gameInfo.js';
-import { fetchVocabularyContent, showTooltip, hideTooltip, startHideTimeout } from '../../vocabularyContent.js';
+import { fetchVocabularyData, showTooltip, hideTooltip, startHideTimeout } from '../../vocabularyContent.js';
 
 export function createGameElement(main, game, id) {
   const previousGameId = main.gamesManager.getPreviousGameId();
@@ -147,7 +147,7 @@ export function createGameElement(main, game, id) {
       
       try {
         if (!tooltipCache.vocabulary.has(link)) {
-          const content = await fetchVocabularyContent(game.params.vocId);
+          const content = await fetchVocabularyData(game.params.vocId);
           tooltipCache.vocabulary.set(link, content);
         }
         

@@ -1,4 +1,4 @@
-import { fetchVocabularyContent, showTooltip, startHideTimeout } from "./vocabularyContent";
+import { fetchVocabularyData, showTooltip, startHideTimeout } from "./vocabularyContent";
 import { fetchVocabularyBasicData } from "./vocabularyCreation";
 import { createCustomTooltip } from "./tooltip";
 import { icons } from './icons.js';
@@ -819,7 +819,7 @@ export const VocabulariesManager = {
         if (!item) return;
         const id = item.dataset.id || item.querySelector('.vocab-id')?.textContent;
         if (!id) return;
-        fetchVocabularyContent(id).then(content => showTooltip(item, content)).catch(() => {});
+        fetchVocabularyData(id).then(content => showTooltip(item, content)).catch(() => {});
       }, { capture: true });
 
       list.addEventListener('mouseout', (e) => {

@@ -1,152 +1,228 @@
 import { getCurrentPage, detectGameType } from "./utils";
 
-// Function to fetch and parse vocabulary content from a URL
-export async function fetchVocabularyContent(vocId) {
-  try {
-    const response = await fetch(`https://klavogonki.ru/vocs/${vocId}/`);
-    const htmlText = await response.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlText, 'text/html');
-    
-    // Find the <div class="words"> element
-    const wordsDiv = doc.querySelector('.words');
-    if (!wordsDiv) {
-      console.warn(`No element with class "words" found for vocId ${vocId}`);
-      return 'Данные отсутствуют';
-    }
-    
-    // Extract all table rows with text content
-    const rows = wordsDiv.querySelectorAll('tr');
-    if (rows.length === 0) {
-      console.warn(`No table rows found for vocId ${vocId}`);
-      return 'Содержимое словаря отсутствует';
-    }
-    
-    // Build the text, handling both numbered and non-numbered formats
-    const vocabularyText = Array.from(rows)
-      .map((row, index) => {
-        const numElement = row.querySelector('td.num');
-        const textElement = row.querySelector('td.text');
-        
-        // Skip rows without text content
-        if (!textElement) {
-          return null;
-        }
-        
-        // Convert <br> tags to newlines and get text content
-        const textWithBreaks = textElement.innerHTML
-          .replace(/<br\s*\/?>/gi, '\n')
-          .replace(/<[^>]*>/g, '') // Remove any other HTML tags
-          .trim();
-        
-        // Skip empty rows or placeholder rows
-        if (textWithBreaks === '' || textWithBreaks === '…') {
-          return null;
-        }
-        
-        // Handle numbered format
-        if (numElement) {
-          const num = numElement.textContent.trim();
-          
-          // Skip empty or placeholder numbers
-          if (num === '' || num === '…') {
-            return null;
-          }
-          
-          return `${num}. ${textWithBreaks}`;
-        } else {
-          // Handle non-numbered format - add sequential numbering
-          return `${index + 1}. ${textWithBreaks}`;
-        }
-      })
-      .filter(item => item !== null)
-      .join('\n\n');
-    
-    return vocabularyText;
-  } catch (error) {
-    console.error(`Error fetching vocabulary content for vocId ${vocId}:`, error);
-    return 'Ошибка загрузки словаря';
-  }
-}
-
 // Tooltip management
 let currentTooltip = null;
 let hideTimeout = null;
 let showTimeout = null;
 let currentAnchor = null;
 
-function createVocabularyTooltip(content) {
+// Function to fetch and parse vocabulary data (content + metadata) from a URL
+export async function fetchVocabularyData(vocId) {
+  try {
+    const response = await fetch(`https://klavogonki.ru/vocs/${vocId}/`);
+    const htmlText = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlText, 'text/html');
+    
+    // Extract content
+    let content = 'Данные отсутствуют';
+    const wordsDiv = doc.querySelector('.words');
+    if (wordsDiv) {
+      const rows = wordsDiv.querySelectorAll('tr');
+      if (rows.length > 0) {
+        content = Array.from(rows)
+          .map((row, index) => {
+            const numElement = row.querySelector('td.num');
+            const textElement = row.querySelector('td.text');
+            if (!textElement) return null;
+            
+            const textWithBreaks = textElement.innerHTML
+              .replace(/<br\s*\/?>/gi, '\n')
+              .replace(/<[^>]*>/g, '')
+              .trim();
+            
+            if (textWithBreaks === '' || textWithBreaks === '…') return null;
+            
+            if (numElement) {
+              const num = numElement.textContent.trim();
+              if (num === '' || num === '…') return null;
+              return `${num}. ${textWithBreaks}`;
+            } else {
+              return `${index + 1}. ${textWithBreaks}`;
+            }
+          })
+          .filter(item => item !== null)
+          .join('\n\n');
+      }
+    }
+    
+    // Extract metadata
+    const metadata = {};
+    
+    // Title
+    const titleElement = doc.querySelector('.user-title .title');
+    if (titleElement) {
+      const titleText = Array.from(titleElement.childNodes)
+        .find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
+      metadata.title = titleText ? titleText.textContent.trim() : 'Без названия';
+    }
+    
+    // Rating (out of 10)
+    const ratingElement = doc.querySelector('.rating_stars');
+    if (ratingElement) {
+      const match = ratingElement.className.match(/rating_stars(\d+)/);
+      if (match) metadata.rating = parseInt(match[1]);
+    }
+    
+    // Rating count and users count
+    const ratingCountElement = doc.querySelector('#rating_cnt');
+    if (ratingCountElement) metadata.ratingCount = ratingCountElement.textContent.trim();
+    
+    const favCountElement = doc.querySelector('#fav_cnt');
+    if (favCountElement) metadata.usersCount = favCountElement.textContent.trim();
+    
+    // Author info
+    const authorElement = doc.querySelector('.user-content dl dd[style*="background"]');
+    if (authorElement) {
+      const authorLink = authorElement.querySelector('a');
+      if (authorLink) {
+        metadata.authorName = authorLink.textContent.trim();
+        const hrefMatch = authorLink.getAttribute('href').match(/\/profile\/(\d+)/);
+        if (hrefMatch) metadata.authorId = hrefMatch[1];
+      }
+      
+      // Extract avatar from style or construct from ID
+      const styleAttr = authorElement.getAttribute('style');
+      if (styleAttr) {
+        const avatarMatch = styleAttr.match(/url\s*\(\s*['"&quot;]*([^'")\s]+)['"&quot;]*\s*\)/);
+        metadata.authorAvatar = avatarMatch ? avatarMatch[1].replace(/&quot;/g, '') : 
+          (metadata.authorId ? `/storage/avatars/${metadata.authorId}_big.png` : null);
+      }
+    }
+    
+    // Other metadata
+    const userContentDls = doc.querySelectorAll('.user-content dl');
+    for (const dl of userContentDls) {
+      const dt = dl.querySelector('dt');
+      const dd = dl.querySelector('dd');
+      if (!dt || !dd) continue;
+      
+      const dtText = dt.textContent;
+      if (dtText.includes('Создан:')) {
+        const dateText = Array.from(dd.childNodes)
+          .find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
+        if (dateText) metadata.createdDate = dateText.textContent.trim();
+        const versionNote = dd.querySelector('.note');
+        if (versionNote) metadata.versionDate = versionNote.textContent.trim();
+      } else if (dtText.includes('Тип словаря:')) {
+        metadata.vocabularyType = dd.textContent.trim().split('\n')[0].trim();
+      } else if (dtText.includes('Описание:')) {
+        metadata.description = dd.textContent.trim();
+      } else if (dtText.includes('Содержание:')) {
+        metadata.contentStats = dd.textContent.trim().split('\n')[0].trim();
+      }
+    }
+    
+    return { content, metadata };
+  } catch (error) {
+    console.error(`Error fetching vocabulary data for vocId ${vocId}:`, error);
+    return { content: 'Ошибка загрузки словаря', metadata: null };
+  }
+}
+
+function createVocabularyTooltip(content, metadata) {
   const tooltip = document.createElement('div');
   tooltip.className = 'vocabulary-tooltip-popup';
   
-  // Process content to wrap numbers in spans
-  const processedContent = content.replace(/^(\d+)\.\s/gm, '<span class="tooltip-number">$1.</span> ');
-  tooltip.innerHTML = processedContent;
+  // Handle case where content might be an object
+  let actualContent = content;
+  let actualMetadata = metadata;
   
+  if (content && typeof content === 'object' && 'content' in content) {
+    actualContent = content.content;
+    actualMetadata = content.metadata || metadata;
+  }
+  
+  actualContent = String(actualContent || 'Данные отсутствуют');
+  
+  let html = '';
+  
+  if (actualMetadata) {
+    html += '<div class="tooltip-header">';
+    
+    // Author with avatar
+    if (actualMetadata.authorAvatar && actualMetadata.authorName) {
+      html += `<div class="tooltip-author">
+        <img src="${actualMetadata.authorAvatar}" alt="${actualMetadata.authorName}" class="tooltip-avatar">
+        <span class="tooltip-author-name">${actualMetadata.authorName}</span>
+      </div>`;
+    }
+    
+    // Title
+    if (actualMetadata.title) {
+      html += `<div class="tooltip-title">${actualMetadata.title}</div>`;
+    }
+    
+    // Rating (convert from 10-point to 5-star scale)
+    if (actualMetadata.rating !== undefined) {
+      const rating = actualMetadata.rating / 2;
+      const percentage = (rating / 5) * 100;
+      
+      html += `<div class="tooltip-rating">
+        <div class="stars-container">
+          <div class="stars-bg">⭐️⭐️⭐️⭐️⭐️</div>
+          <div class="stars-filled" style="width: ${percentage}%">⭐️⭐️⭐️⭐️⭐️</div>
+        </div>`;
+      if (actualMetadata.ratingCount) html += ` <span class="rating-count">(${actualMetadata.ratingCount})</span>`;
+      html += '</div>';
+    }
+    
+    // Users count
+    if (actualMetadata.usersCount) {
+      html += `<div class="tooltip-users">Использует ${actualMetadata.usersCount} человек</div>`;
+    }
+    
+    // Type and description
+    if (actualMetadata.vocabularyType) {
+      html += `<div class="tooltip-type"><strong>Тип:</strong> ${actualMetadata.vocabularyType}</div>`;
+    }
+    if (actualMetadata.description) {
+      html += `<div class="tooltip-description">${actualMetadata.description}</div>`;
+    }
+    
+    html += '</div><div class="tooltip-divider"></div>';
+  }
+  
+  // Content with numbered lines
+  html += '<div class="tooltip-content">';
+  html += actualContent.replace(/^(\d+)\.\s/gm, '<span class="tooltip-number">$1.</span> ');
+  html += '</div>';
+  
+  tooltip.innerHTML = html;
   document.body.appendChild(tooltip);
   return tooltip;
 }
 
-export function showTooltip(anchor, content) {
-  // Clear any existing timeouts
-  if (hideTimeout) {
-    clearTimeout(hideTimeout);
-    hideTimeout = null;
-  }
-  if (showTimeout) {
-    clearTimeout(showTimeout);
-    showTimeout = null;
-  }
+export function showTooltip(anchor, content, metadata = null) {
+  if (hideTimeout) clearTimeout(hideTimeout);
+  if (showTimeout) clearTimeout(showTimeout);
   
-  // If tooltip already exists for same anchor, just keep it visible
-  if (currentTooltip && currentAnchor === anchor) {
-    return;
-  }
+  if (currentTooltip && currentAnchor === anchor) return;
+  if (currentTooltip) hideTooltip();
   
-  // Remove existing tooltip if different anchor
-  if (currentTooltip) {
-    hideTooltip();
-  }
-  
-  // If no anchor is provided, show immediately and center the tooltip
+  // Center tooltip if no anchor
   if (!anchor) {
     currentAnchor = null;
-    currentTooltip = createVocabularyTooltip(content);
+    currentTooltip = createVocabularyTooltip(content, metadata);
     positionTooltip(null, currentTooltip);
     currentTooltip.addEventListener('mouseenter', () => {
-      if (hideTimeout) {
-        clearTimeout(hideTimeout);
-        hideTimeout = null;
-      }
+      if (hideTimeout) clearTimeout(hideTimeout);
     });
-    currentTooltip.addEventListener('mouseleave', () => {
-      startHideTimeout();
-    });
+    currentTooltip.addEventListener('mouseleave', startHideTimeout);
     return;
   }
 
-  // Set up delayed show for anchored tooltips
+  // Delayed show for anchored tooltips
   showTimeout = setTimeout(() => {
     currentAnchor = anchor;
-    currentTooltip = createVocabularyTooltip(content);
-
-    // Position and show tooltip
+    currentTooltip = createVocabularyTooltip(content, metadata);
     positionTooltip(anchor, currentTooltip);
-
-    // Add event listeners to tooltip for hover behavior
+    
     currentTooltip.addEventListener('mouseenter', () => {
-      if (hideTimeout) {
-        clearTimeout(hideTimeout);
-        hideTimeout = null;
-      }
+      if (hideTimeout) clearTimeout(hideTimeout);
     });
-
-    currentTooltip.addEventListener('mouseleave', () => {
-      startHideTimeout();
-    });
-
-    showTimeout = null;
-  }, 400); // 400ms delay before showing
+    currentTooltip.addEventListener('mouseleave', startHideTimeout);
+  }, 400);
 }
 
 export function hideTooltip() {
@@ -155,48 +231,28 @@ export function hideTooltip() {
     currentTooltip = null;
     currentAnchor = null;
   }
-  if (hideTimeout) {
-    clearTimeout(hideTimeout);
-    hideTimeout = null;
-  }
-  if (showTimeout) {
-    clearTimeout(showTimeout);
-    showTimeout = null;
-  }
+  if (hideTimeout) clearTimeout(hideTimeout);
+  if (showTimeout) clearTimeout(showTimeout);
 }
 
 export function startHideTimeout() {
-  if (hideTimeout) {
-    clearTimeout(hideTimeout);
-  }
-  // If the tooltip is currently hovered, do not schedule hiding.
+  if (hideTimeout) clearTimeout(hideTimeout);
   try {
     if (currentTooltip && currentTooltip.matches(':hover')) return;
   } catch (_) {}
 
-  hideTimeout = setTimeout(() => {
-    hideTooltip();
-  }, 300); // 300ms delay before hiding
+  hideTimeout = setTimeout(hideTooltip, 300);
 }
 
-/**
- * Read transient sessionStorage flag set before navigation and return vocId if present.
- * Returns string ID or null.
- */
 export function getSessionVocId() {
   try {
-    // First, prefer the currently-visible vocabulary link in the page status area.
-  const anchor = document.querySelector('#status #gamedesc a, #status a[href*="/vocs/"]');
+    const anchor = document.querySelector('#status #gamedesc a, #status a[href*="/vocs/"]');
     if (anchor) {
       const href = anchor.getAttribute('href') || '';
       const m = href.match(/\/vocs\/(\d+)(?:\/|$)/);
-      if (m && m[1]) {
-        // Always prefer the anchor's id when present on the page.
-        return String(m[1]);
-      }
+      if (m && m[1]) return String(m[1]);
     }
 
-    // Fallback: read transient sessionStorage flag set before navigation
     const raw = sessionStorage.getItem('latestGames_showVocTooltip');
     if (!raw) return null;
     const parsed = JSON.parse(raw) || {};
@@ -211,58 +267,37 @@ function positionTooltip(anchor, tooltip) {
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
   const margin = 10;
-
-  // Get tooltip dimensions
   const tooltipRect = tooltip.getBoundingClientRect();
 
   let left, top;
 
-  // If anchor is not provided, center the tooltip
   if (!anchor) {
     left = Math.max(margin, Math.floor((viewportWidth - tooltipRect.width) / 2));
     top = Math.max(margin, Math.floor((viewportHeight - tooltipRect.height) / 2));
-    tooltip.style.left = `${left}px`;
-    tooltip.style.top = `${top}px`;
-    return;
-  }
-
-  const anchorRect = anchor.getBoundingClientRect();
-  left = anchorRect.left;
-  top = anchorRect.bottom + 5;
-  
-  // Adjust horizontal position to stay within viewport
-  if (left + tooltipRect.width > viewportWidth - margin) {
-    left = viewportWidth - tooltipRect.width - margin;
-  }
-  if (left < margin) {
-    left = margin;
-  }
-  
-  // Adjust vertical position to stay within viewport
-  if (top + tooltipRect.height > viewportHeight - margin) {
-    // Try positioning above the anchor
-    const topAbove = anchorRect.top - tooltipRect.height - 5;
-    if (topAbove >= margin) {
-      top = topAbove;
-    } else {
-      // If it doesn't fit above either, position at top of viewport
-      top = margin;
+  } else {
+    const anchorRect = anchor.getBoundingClientRect();
+    left = anchorRect.left;
+    top = anchorRect.bottom + 5;
+    
+    if (left + tooltipRect.width > viewportWidth - margin) {
+      left = viewportWidth - tooltipRect.width - margin;
     }
-  }
-  
-  // Ensure tooltip doesn't go above viewport
-  if (top < margin) {
-    top = margin;
+    if (left < margin) left = margin;
+    
+    if (top + tooltipRect.height > viewportHeight - margin) {
+      const topAbove = anchorRect.top - tooltipRect.height - 5;
+      top = topAbove >= margin ? topAbove : margin;
+    }
+    if (top < margin) top = margin;
   }
   
   tooltip.style.left = `${left}px`;
   tooltip.style.top = `${top}px`;
 }
 
-// Function to attach the delegated event listener
 export function attachVocabularyParser() {
   const selectors = ['.columns.voclist', '#gamelist', '#gamedesc'];
-  const containers = selectors.map(sel => document.querySelector(sel)).filter(container => container);
+  const containers = selectors.map(sel => document.querySelector(sel)).filter(c => c);
 
   if (containers.length === 0) {
     console.warn('No supported containers found.');
@@ -270,10 +305,9 @@ export function attachVocabularyParser() {
   }
 
   const mouseenterHandler = async (e) => {
-    if (!e.shiftKey) return; // Only trigger on Shift + mouseenter
+    if (!e.shiftKey) return;
     const anchor = e.target.closest('a[href*="/vocs/"]');
     if (anchor) {
-      // Extract vocId from href (e.g., /vocs/1885/)
       const href = anchor.getAttribute('href');
       const match = href.match(/\/vocs\/(\d+)(?:\/|$)/);
       if (!match) {
@@ -283,32 +317,20 @@ export function attachVocabularyParser() {
       
       const vocId = match[1];
       
-      // Check if tooltip content is already cached
-      if (!anchor._tooltipContent) {
-        // First parse the text, then display
-        fetchVocabularyContent(vocId).then(content => {
-          // Cache the content
-          anchor._tooltipContent = content;
-          // Show tooltip with parsed content
-          showTooltip(anchor, content);
-        });
+      if (!anchor._tooltipData) {
+        const data = await fetchVocabularyData(vocId);
+        anchor._tooltipData = data;
+        showTooltip(anchor, data.content, data.metadata);
       } else {
-        // Use cached content
-        showTooltip(anchor, anchor._tooltipContent);
+        showTooltip(anchor, anchor._tooltipData.content, anchor._tooltipData.metadata);
       }
     }
   };
 
   const mouseleaveHandler = (e) => {
     const anchor = e.target.closest('a[href*="/vocs/"]');
-    if (anchor && currentAnchor === anchor) {
-      startHideTimeout();
-    }
-    // Also cancel show timeout if mouse leaves before tooltip appears
-    if (showTimeout) {
-      clearTimeout(showTimeout);
-      showTimeout = null;
-    }
+    if (anchor && currentAnchor === anchor) startHideTimeout();
+    if (showTimeout) clearTimeout(showTimeout);
   };
 
   containers.forEach(container => {
@@ -317,30 +339,17 @@ export function attachVocabularyParser() {
   });
 }
 
-// If a transient sessionStorage flag was set before navigation, show the
-// parsed vocabulary centered and auto-hide after 5 seconds.
 async function showSessionTooltip() {
-  // Read randomGameId from localStorage (for logging/context)
-  let randomGameId;
-  try {
-    const settings = JSON.parse(localStorage.getItem('latestGamesSettings') || '{}');
-    randomGameId = settings.randomGameId;
-  } catch (error) {
-    console.warn('Could not read randomGameId from localStorage:', error);
-    randomGameId = undefined;
-  }
-  // Show vocabulary preview (tooltip) on game page for any played vocab (global or local)
-  await new Promise(resolve => setTimeout(resolve, 500)); // Wait a bit for the page to stabilize
+  await new Promise(resolve => setTimeout(resolve, 500));
   if (getCurrentPage() !== 'game') return;
   try {
     const vocId = getSessionVocId();
     if (!vocId) return;
     if (detectGameType().category !== 'vocabulary') return;
-    const content = await fetchVocabularyContent(vocId);
-    try {
-      showTooltip(null, content);
-      // After 5s, trigger the regular hide logic (which will respect hover).
-      setTimeout(() => { try { startHideTimeout(); } catch (_) {} }, 5000);
-    } catch (_) {}
+    
+    const data = await fetchVocabularyData(vocId);
+    showTooltip(null, data.content, data.metadata);
+    setTimeout(() => { try { startHideTimeout(); } catch (_) {} }, 5000);
   } catch (_) {}
-} showSessionTooltip();
+} 
+showSessionTooltip();
