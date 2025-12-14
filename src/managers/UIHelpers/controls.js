@@ -970,6 +970,32 @@ export function createControls(main) {
     }
   });
 
+  // Add vocabulary data toggle button
+  const vocabularyDataBtn = createElement('span', {
+    className: 'latest-games-vocabulary-data control-button',
+    innerHTML: icons.vocabularyData
+  });
+
+  const updateVocabularyDataTooltip = () => {
+    createCustomTooltip(
+      vocabularyDataBtn,
+      main.showVocabularyData
+        ? 'Скрывать содержимое словаря'
+        : 'Показывать содержимое словаря'
+    );
+    vocabularyDataBtn.classList.toggle('latest-games-disabled', !main.showVocabularyData);
+  };
+
+  updateVocabularyDataTooltip();
+
+  vocabularyDataBtn.addEventListener('click', () => {
+    main.showVocabularyData = !main.showVocabularyData;
+    main.settingsManager.saveSettings();
+    updateVocabularyDataTooltip();
+    // Refresh the container to update vocabulary data display
+    main.uiManager.refreshContainer();
+  });
+
   // Frequently used buttons that should always be visible
   const alwaysVisible = [playBtn, replayBtn, replayMoreBtn, randomRaceBtn, startRaceBtn, bannedVocabulariesBtn, playedVocabulariesBtn];
 
@@ -980,7 +1006,8 @@ export function createControls(main) {
     refreshBtn, resetButton,
     pinAllBtn, unpinAllBtn, sortBtn, importBtn,
     exportBtn, removeAllBtn, removeUnpinnedBtn,
-    dragToggleBtn, descToggleBtn, helpToggleBtn, searchBtn
+    dragToggleBtn, descToggleBtn, helpToggleBtn,
+    searchBtn, vocabularyDataBtn
   ];
 
   // Create a dedicated 'More' toggle button for accessibility and stable interaction

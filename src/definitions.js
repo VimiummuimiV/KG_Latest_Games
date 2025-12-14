@@ -93,6 +93,7 @@ export const DEFAULTS = {
   showHelpTooltips: true,
   showBlockedVocabAlert: true,
   qualificationEnabled: false,
+  showVocabularyData: true,
   rankRange: [0, 8],
   panelYPosition: {
     main: 0,
