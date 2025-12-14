@@ -668,8 +668,8 @@ export function createControls(main) {
   // Start race action function
   // Choose id (random or previous), switch group if needed, save and navigate
   const startRaceAction = (qual = false) => {
-    // Determine game ID based on randomMode or previousGameId
-    const randomMode = main.randomGameId;
+    // If qualification requested, force local mode (use latest passed game) — do not randomize
+    const randomMode = qual ? false : main.randomGameId;
     let res = null;
     if (randomMode) {
       res = main.gamesManager.getRandomGameId();
