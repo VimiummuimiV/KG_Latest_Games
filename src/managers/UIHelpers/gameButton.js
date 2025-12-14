@@ -1,9 +1,10 @@
 import { createElement, getCurrentPage } from '../../utils.js';
-import { createCustomTooltip, updateTooltipContent } from '../../tooltip.js';
+import { createCustomTooltip, updateTooltipContent, hideTooltipElement } from '../../tooltip.js';
 import { addDragFunctionality } from '../../drag/gameButtonDrag.js';
 import { icons } from '../../icons.js';
 import { gameStatsApi } from '../../gameStatsApi.js';
 import { createGameInfoPopup } from '../../gameInfo.js';
+import { fetchVocabularyContent, showTooltip, hideTooltip, startHideTimeout } from '../../vocabularyContent.js';
 
 export function createGameElement(main, game, id) {
   const previousGameId = main.gamesManager.getPreviousGameId();
@@ -13,13 +14,8 @@ export function createGameElement(main, game, id) {
 
   // Determine state icon for previous game
   let stateIcon = '';
-
   if (id === previousGameId) {
-    if (getCurrentPage() === 'game') {
-      stateIcon = icons.playing;
-    } else {
-      stateIcon = icons.paused;
-    }
+    stateIcon = getCurrentPage() === 'game' ? icons.playing : icons.paused;
   }
 
   const li = createElement('li', {
@@ -46,9 +42,11 @@ export function createGameElement(main, game, id) {
     innerHTML: game.pin ? icons.unpin : icons.pin
   });
 
-  createCustomTooltip(pinButton, game.pin
-    ? '[Клик] Открепить с подтверждением. [Shift + Клик] Открепить без подтверждения.'
-    : '[Клик] Закрепить с подтверждением. [Shift + Клик] Закрепить без подтверждения.'
+  createCustomTooltip(
+    pinButton,
+    game.pin
+      ? '[Клик] Открепить с подтверждением. [Shift + Клик] Открепить без подтверждения.'
+      : '[Клик] Закрепить с подтверждением. [Shift + Клик] Закрепить без подтверждения.'
   );
 
   pinButton.addEventListener('click', (e) => {
@@ -62,7 +60,8 @@ export function createGameElement(main, game, id) {
     innerHTML: icons.delete
   });
 
-  createCustomTooltip(deleteButton,
+  createCustomTooltip(
+    deleteButton,
     '[Клик] Удалить с подтверждением. [Shift + Клик] Удалить без подтверждения.'
   );
 
@@ -72,15 +71,15 @@ export function createGameElement(main, game, id) {
     }
   });
 
-  // Add info button for all game types
   const infoButton = createElement('div', {
     className: 'latest-game-info',
     innerHTML: icons.info
   });
 
-  const tooltipText = game.params.gametype === 'voc' && game.params.vocId
-    ? 'Показать информацию о словаре'
-    : 'Показать информацию об игре';
+  const tooltipText =
+    game.params.gametype === 'voc' && game.params.vocId
+      ? 'Показать информацию о словаре'
+      : 'Показать информацию об игре';
 
   createCustomTooltip(infoButton, tooltipText);
 
@@ -102,7 +101,6 @@ export function createGameElement(main, game, id) {
       e.preventDefault();
       main.wasDragging = false;
     }
-    // Save previousGameId on link click, preserving all other data
     try {
       const li = link.closest('li');
       if (li && li.id && li.id.startsWith('latest-game-')) {
@@ -111,39 +109,81 @@ export function createGameElement(main, game, id) {
         data.previousGameId = id;
         localStorage.setItem('latestGamesData', JSON.stringify(data));
       }
-    } catch (err) { }
+    } catch (_) {}
 
     const vocId = String(game.params.vocId || '');
     if (vocId) {
       try {
-        main.gamesManager.registerPendingPlayed(vocId, game.params.vocName || null, game.params.vocType || null);
-      } catch (__) { }
+        main.gamesManager.registerPendingPlayed(
+          vocId,
+          game.params.vocName || null,
+          game.params.vocType || null
+        );
+      } catch (_) {}
     }
   });
 
-  // Default tooltip content
+  const tooltipCache = {
+    vocabulary: new WeakMap(),
+    stats: new WeakMap()
+  };
+
   const defaultTooltipContent = `
+    [Shift + Наведение] Показать содержимое словаря
+    [Удерживание ЛКМ] Создать игру с альтернативными параметрами
     [Shift + Клик] Перейти к игре с альтернативными параметрами
-    [Удерживание (ЛКМ)] аналогично (Shift + Клик)
-    [Shift + Наведение] Показать статистику игры
+    [Ctrl + Наведение] Показать статистику игры
   `;
 
-  // Shift + hover event for game stats
   link.addEventListener('mouseover', async (e) => {
-    if (e.shiftKey) {
-      // Set loading content immediately
-      updateTooltipContent(link, '[Loading] Загрузка статистики...', 'stats');
+    const isVocGame = game.params?.gametype === 'voc' && game.params?.vocId;
+    
+    // Shift + hover: vocabulary preview
+    if (e.shiftKey && isVocGame) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      hideTooltipElement(); // Only hide custom tooltip system
+      
       try {
-        const statsContent = await gameStatsApi.getGameStats(link);
-        updateTooltipContent(link, statsContent, 'stats');
+        if (!tooltipCache.vocabulary.has(link)) {
+          const content = await fetchVocabularyContent(game.params.vocId);
+          tooltipCache.vocabulary.set(link, content);
+        }
+        
+        showTooltip(link, tooltipCache.vocabulary.get(link));
+      } catch (err) {
+        console.error('Error loading vocabulary:', err);
+      }
+      return;
+    }
+    
+    // Ctrl + hover: stats tooltip
+    if (e.ctrlKey) {
+      hideTooltip(); // Only hide vocabulary tooltip
+      
+      updateTooltipContent(link, '[Loading] Загрузка статистики...', 'stats');
+      
+      try {
+        if (!tooltipCache.stats.has(link)) {
+          const statsContent = await gameStatsApi.getGameStats(link);
+          tooltipCache.stats.set(link, statsContent);
+        }
+        
+        updateTooltipContent(link, tooltipCache.stats.get(link), 'stats');
       } catch (error) {
         console.error('Error loading game stats:', error);
         updateTooltipContent(link, '[Ошибка] Не удалось загрузить статистику', 'stats');
       }
-    } else {
-      // Set default content
-      updateTooltipContent(link, defaultTooltipContent, 'info');
+      return;
     }
+    
+    // Default tooltip
+    updateTooltipContent(link, defaultTooltipContent, 'info');
+  });
+
+  link.addEventListener('mouseleave', () => {
+    startHideTimeout();
   });
 
   li.appendChild(gameActionButtons);
