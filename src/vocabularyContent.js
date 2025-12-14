@@ -135,6 +135,15 @@ function createVocabularyTooltip(content, metadata) {
   
   actualContent = String(actualContent || 'Данные отсутствуют');
   
+  // Helper function for Russian plural form of "человек"
+  const getPersonForm = (number) => {
+    const n = Math.abs(number) % 100;
+    const n1 = n % 10;
+    if (n > 10 && n < 20) return 'человек';
+    if (n1 > 1 && n1 < 5) return 'человека';
+    return 'человек';
+  };
+  
   let html = '';
   
   if (actualMetadata) {
@@ -167,9 +176,11 @@ function createVocabularyTooltip(content, metadata) {
       html += '</div>';
     }
     
-    // Users count
+    // Users count with correct plural form
     if (actualMetadata.usersCount) {
-      html += `<div class="tooltip-users">Использует ${actualMetadata.usersCount} человек</div>`;
+      const count = parseInt(actualMetadata.usersCount);
+      const personForm = getPersonForm(count);
+      html += `<div class="tooltip-users">Использует ${actualMetadata.usersCount} ${personForm}</div>`;
     }
     
     // Type and description
