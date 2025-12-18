@@ -487,6 +487,10 @@ export class GamesManager {
     const idStr = String(vocId);
     if (!idStr) return;
 
+    // Check car position before proceeding
+    const carElement = document.querySelector(".player.you .car");
+    if (carElement && parseFloat(window.getComputedStyle(carElement).left) <= 400) return;
+
     try {
       const playedRaw = localStorage.getItem('playedVocabularies') || '[]';
       const played = JSON.parse(playedRaw);
