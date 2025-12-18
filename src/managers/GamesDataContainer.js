@@ -53,9 +53,15 @@ export class GamesDataContainer {
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
       const yearStart = new Date(now.getFullYear(), 0, 1).getTime();
       
-      return playedVocabularies.reduce((total, vocab) => {
-        if (!vocab.playHistory) return total;
-        return total + vocab.playHistory.reduce((sum, history) => {
+      let uniqueVocabs = 0;
+      let totalGames = 0;
+      
+      playedVocabularies.forEach(vocab => {
+        if (!vocab.playHistory) return;
+        
+        let hasMatchInPeriod = false;
+        
+        vocab.playHistory.forEach(history => {
           // Convert UTC stored date to local midnight date
           const storedDate = new Date(history.date);
           const localDate = new Date(
@@ -71,12 +77,21 @@ export class GamesDataContainer {
             (period === 'year' && localDate >= yearStart && localDate <= today)
           );
           
-          return sum + (match ? (history.count || 0) : 0);
-        }, 0);
-      }, 0);
+          if (match) {
+            hasMatchInPeriod = true;
+            totalGames += (history.count || 0);
+          }
+        });
+        
+        if (hasMatchInPeriod) {
+          uniqueVocabs++;
+        }
+      });
+      
+      return { uniqueVocabs, totalGames };
     } catch (error) {
       console.error(`Error calculating ${period} play count:`, error);
-      return 0;
+      return { uniqueVocabs: 0, totalGames: 0 };
     }
   }
 
@@ -100,20 +115,22 @@ export class GamesDataContainer {
     periodContainer.className = 'period-indicators-container';
     this.container.appendChild(periodContainer);
 
+    const tooltipPrefix = 'Количество словарей / Количество заездов за';
+    
     const indicators = [
-      { period: 'day', class: 'today-play-count-indicator', tooltip: 'Количество сыгранных игр (по словарю) за сегодня', description: 'День' },
-      { period: 'week', class: 'week-play-count-indicator', tooltip: 'Количество сыгранных игр (по словарю) за неделю', description: 'Неделя' },
-      { period: 'month', class: 'month-play-count-indicator', tooltip: 'Количество сыгранных игр (по словарю) за месяц', description: 'Месяц' },
-      { period: 'year', class: 'year-play-count-indicator', tooltip: 'Количество сыгранных игр (по словарю) за год', description: 'Год' }
+      { period: 'day', class: 'today-play-count-indicator', description: 'День', tooltipSuffix: 'сегодня' },
+      { period: 'week', class: 'week-play-count-indicator', description: 'Неделя', tooltipSuffix: 'неделю' },
+      { period: 'month', class: 'month-play-count-indicator', description: 'Месяц', tooltipSuffix: 'месяц' },
+      { period: 'year', class: 'year-play-count-indicator', description: 'Год', tooltipSuffix: 'год' }
     ];
 
     let periodIndex = 0;
 
-    indicators.forEach(({ period, class: className, tooltip, description }) => {
-      const count = this.getPlayCount(period);
-      if (count === 0 && period !== 'day') return;
+    indicators.forEach(({ period, class: className, description, tooltipSuffix }) => {
+      const { uniqueVocabs, totalGames } = this.getPlayCount(period);
+      if (totalGames === 0 && period !== 'day') return;
       
-      const indicator = this.createIndicator(className, '', tooltip, periodContainer);
+      const indicator = this.createIndicator(className, '', `${tooltipPrefix} ${tooltipSuffix}`, periodContainer);
       this.playCountIndicators[period] = indicator;
       
       // Pre-build complete structure once
@@ -122,7 +139,7 @@ export class GamesDataContainer {
       descSpan.textContent = description;
       descSpan.style.display = 'none';
       
-      const countText = document.createTextNode(count);
+      const countText = document.createTextNode(`${uniqueVocabs}/${totalGames}`);
       
       indicator.appendChild(descSpan);
       indicator.appendChild(countText);
