@@ -99,25 +99,38 @@ export class PageHandler {
     if (!span) throw new Error('#gamedesc span element not found.');
     const descText = gameDesc.textContent;
     if (/соревнование/.test(descText) || !this.main.maxGameCount || this.main.shouldAutoSave === false) return false;
+    
     const gameParams = this.main.gamesManager.parseGameParams(span, descText);
     const gameParamsString = JSON.stringify(gameParams);
-    const currentGroup = this.main.groupsManager.getCurrentGroup(this.main.groupsManager.groups, this.main.groupsManager.currentGroupId);
-    if (!currentGroup) return;
+    
+    // Find the "Сохранённые" group
+    let targetGroup = this.main.groupsManager.groups.find(g => g.title === 'Сохранённые');
+    
+    if (!targetGroup) {
+      // Create the "Сохранённые" group if it doesn't exist
+      targetGroup = this.main.groupsManager.createGroup('Сохранённые');
+      this.main.groupsManager.groups.push(targetGroup);
+    }
+    
     // Check if a game with the same parameters already exists (pinned or unpinned)
-    const gameExists = currentGroup.games.some(game => JSON.stringify(game.params) === gameParamsString);
+    const gameExists = targetGroup.games.some(game => JSON.stringify(game.params) === gameParamsString);
     if (gameExists) {
       return;
     }
+    
     // Create new game object (unpinned)
     const newGame = { params: gameParams, id: generateUniqueId(this.main.groupsManager.groups), pin: 0 };
+    
     // Insert after pinned games
-    const pinnedCount = currentGroup.games.filter(g => g.pin).length;
-    currentGroup.games.splice(pinnedCount, 0, newGame);
+    const pinnedCount = targetGroup.games.filter(g => g.pin).length;
+    targetGroup.games.splice(pinnedCount, 0, newGame);
+    
     // Enforce the limit: remove excess unpinned games from the end
     const maxGamesToKeep = pinnedCount + this.main.maxGameCount;
-    if (currentGroup.games.length > maxGamesToKeep) {
-      currentGroup.games.splice(maxGamesToKeep, currentGroup.games.length - maxGamesToKeep);
+    if (targetGroup.games.length > maxGamesToKeep) {
+      targetGroup.games.splice(maxGamesToKeep, targetGroup.games.length - maxGamesToKeep);
     }
+    
     this.main.gamesManager.assignGameIds();
     this.main.gamesManager.saveGameData();
   }
