@@ -174,6 +174,11 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
   }
 
   function updateButtonLinks() {
+    // Safety check: don't run if buttons haven't been created yet
+    if (buttonRefs.length === 0) {
+      return;
+    }
+    
     buttonRefs.forEach(({ btn, type, timeout }) => {
       const modifiedGame = {
         ...game,
@@ -189,8 +194,10 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
 
       const link = main.gamesManager.generateGameLink(modifiedGame);
       btn.setAttribute('href', link);
+      
       btn.onclick = (e) => {
         e.preventDefault();
+        e.stopPropagation();
         if (saveModeEnabled) {
           clearTimeout(autoSaveTimer);
           // Always update all params when clicking in save mode
@@ -241,6 +248,7 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
     
     updateQualUI();
     updateSliderUI();
+    updateButtonLinks();
   });
 
   headerControls.append(qualification, save);
@@ -302,7 +310,6 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
   rankSliderContainer.appendChild(rankDisplay);
   rankSliderContainer.appendChild(sliderTrack);
   popup.appendChild(rankSliderContainer);
-  updateSliderUI();
 
   // Create game type sections
   visibilityTypes.forEach(type => {
@@ -342,6 +349,8 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
 
     popup.appendChild(typeButtonsContainer);
   });
+
+  updateSliderUI();
 
   setupPopupPositioning(popup, event);
 
