@@ -6,15 +6,15 @@ import { setupPopupDrag } from './drag/popupDrag.js';
 
 const visibilityTypes = Object.keys(visibilities);
 
-// Configuration for rank slider constraints
 const RANK_CONSTRAINTS = {
-  minFrom: 0, // level_from 1-6 (indices 0-5)
+  minFrom: 0,
   maxFrom: 5,
-  minTo: 5, // level_to 6-9 (indices 5-8)  
+  minTo: 5,
   maxTo: 8
 };
 
-// Draggable and interactive selectors for this popup
+const AUTO_SAVE_DEBOUNCE_MS = 500;
+
 const DRAGGABLE_SELECTORS = [
   '.popup-header',
   '.popup-header-title',
@@ -36,36 +36,22 @@ const INTERACTIVE_SELECTORS = [
  * Clamp index to allowed range based on handle type
  */
 function clampIndex(idx, isMinHandle) {
-  if (isMinHandle) {
-    return Math.max(RANK_CONSTRAINTS.minFrom, Math.min(RANK_CONSTRAINTS.maxFrom, idx));
-  } else {
-    return Math.max(RANK_CONSTRAINTS.minTo, Math.min(RANK_CONSTRAINTS.maxTo, idx));
-  }
+  return isMinHandle
+    ? Math.max(RANK_CONSTRAINTS.minFrom, Math.min(RANK_CONSTRAINTS.maxFrom, idx))
+    : Math.max(RANK_CONSTRAINTS.minTo, Math.min(RANK_CONSTRAINTS.maxTo, idx));
 }
 
-/**
- * Create a game-specific popup with links to all game types and all timeouts.
- * Shows every combination regardless of the current game parameters.
- * After the subheader for each type, a container for type buttons is created and each button is appended inside.
- * @param {Object} game - The game object containing parameters
- * @param {MouseEvent} event - The mouse event for positioning
- * @param {Object} main - The main LatestGamesManager instance
- * @param {string} className - CSS class name for the popup (default: 'game-popup')
- * @returns {HTMLElement} The created popup element
- */
 export function createGamePopup(game, event, main, className = 'game-popup') {
-  hideTooltipElement(); // Hide any existing tooltip
+  hideTooltipElement();
 
   const existingPopup = document.querySelector(`.${className}`);
   existingPopup && existingPopup.remove();
 
   const popup = createElement('div', { className });
-
   const header = createElement('div', { className: 'popup-header' });
-
   const headerTitle = createElement('div', {
     className: 'popup-header-title',
-    textContent: main.saveModeEnabled ? 'Сохранить' : 'Выбрать'
+    textContent: main.saveModeEnabled ? 'Сохранить' : 'Создать'
   });
 
   const qualification = createElement('span', {
@@ -78,49 +64,72 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
     innerHTML: icons.save
   });
 
-  // Set qualification visibility based on qualification setting
-  let qualificationEnabled = main.qualificationEnabled ?? false;
-  qualification.classList.toggle('latest-games-disabled', !qualificationEnabled);
-  createCustomTooltip(qualification, `Квалификация ${qualificationEnabled ? 'включена' : 'выключена'}`);
-
-  // Save mode is persisted in settings (affects default behaviour)
+  // Initialize state from SettingsManager or game params from button based on save mode
   let saveModeEnabled = main.saveModeEnabled ?? false;
-  save.classList.toggle('latest-games-disabled', !saveModeEnabled);
-  createCustomTooltip(save, `Сохранение ${saveModeEnabled ? 'включено' : 'отключено'}`);
+  let qualificationEnabled = saveModeEnabled ? (game.params.qual === 1) : (main.qualificationEnabled ?? false);
+  let [minIdx, maxIdx] = saveModeEnabled 
+    ? [
+        clampIndex((game.params.level_from || 1) - 1, true),
+        clampIndex((game.params.level_to || 9) - 1, false)
+      ]
+    : (main.rankRange || [RANK_CONSTRAINTS.minFrom, RANK_CONSTRAINTS.maxTo]);
 
-  // Add click handler for qualification toggle
+  // Ensure valid range
+  if (minIdx > maxIdx) minIdx = maxIdx;
+  if (maxIdx < minIdx) maxIdx = minIdx;
+
+  let autoSaveTimer = null;
+  const buttonRefs = [];
+
+  const performSave = () => {
+    const isRangeModified = minIdx !== RANK_CONSTRAINTS.minFrom || maxIdx !== RANK_CONSTRAINTS.maxTo;
+    game.params.level_from = isRangeModified ? minIdx + 1 : game.params.level_from;
+    game.params.level_to = isRangeModified ? maxIdx + 1 : game.params.level_to;
+    game.params.qual = qualificationEnabled ? 1 : 0;
+
+    main.gamesManager.saveGameData();
+    main.uiManager?.refreshContainer?.();
+
+    save.classList.remove('rg-rotate');
+    void save.offsetWidth;
+    save.classList.add('rg-rotate');
+  };
+
+  const triggerAutoSave = () => {
+    if (!saveModeEnabled) return;
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(performSave, AUTO_SAVE_DEBOUNCE_MS);
+  };
+
+  const updateQualUI = () => {
+    qualification.classList.toggle('latest-games-disabled', !qualificationEnabled);
+    createCustomTooltip(qualification, `Квалификация ${qualificationEnabled ? 'включена' : 'выключена'}`);
+  };
+
+  const updateSaveModeUI = () => {
+    save.classList.toggle('latest-games-disabled', !saveModeEnabled);
+    headerTitle.textContent = saveModeEnabled ? 'Сохранить' : 'Создать';
+    createCustomTooltip(save, `Сохранение ${saveModeEnabled ? 'включено' : 'отключено'}`);
+  };
+
+  updateQualUI();
+  updateSaveModeUI();
+
   qualification.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     qualificationEnabled = !qualificationEnabled;
-    main.qualificationEnabled = qualificationEnabled;
-    main.settingsManager.saveSettings();
-
-    qualification.classList.toggle('latest-games-disabled', !qualificationEnabled);
-    createCustomTooltip(qualification, `Квалификация ${qualificationEnabled ? 'включена' : 'выключена'}`);
-
-    // Update all button links with new qualification setting
+    // Only update global settings when not in save mode
+    if (!saveModeEnabled) {
+      main.qualificationEnabled = qualificationEnabled;
+      main.settingsManager.saveSettings();
+    }
+    updateQualUI();
     updateButtonLinks();
+    triggerAutoSave();
   });
 
-  // Toggle save mode: change header title and update buttons' behaviour
-  save.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    saveModeEnabled = !saveModeEnabled;
-    // persist the choice across popups and sessions
-    main.saveModeEnabled = saveModeEnabled;
-    main.settingsManager.saveSettings();
-
-    save.classList.toggle('latest-games-disabled', !saveModeEnabled);
-    headerTitle.textContent = saveModeEnabled ? 'Сохранить' : 'Выбрать';
-    createCustomTooltip(save, `Сохранение ${saveModeEnabled ? 'включено' : 'отключено'}`);
-  });
-
-  header.append(headerTitle, qualification, save);
-  popup.appendChild(header);
-
-  // --- Dual-range slider for rank selection ---
+  // Dual-range slider
   const rankSliderContainer = createElement('div', { className: 'rank-slider-container' });
   const sliderTrack = createElement('div', { className: 'rank-slider-track' });
   const sliderRange = createElement('div', { className: 'rank-slider-range' });
@@ -130,24 +139,9 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
   ];
   const rankDisplay = createElement('div', { className: 'rank-slider-display' });
 
-  // Load saved range with proper clamping
-  let [minIdx, maxIdx] = main.rankRange || [RANK_CONSTRAINTS.minFrom, RANK_CONSTRAINTS.maxTo];
-  minIdx = clampIndex(minIdx, true);
-  maxIdx = clampIndex(maxIdx, false);
-
-  // Ensure valid range relationship
-  if (minIdx > maxIdx) minIdx = maxIdx;
-  if (maxIdx < minIdx) maxIdx = minIdx;
-
-  // Store references to all button elements and their config
-  const buttonRefs = [];
-
   function updateSliderUI() {
-    // Ensure indices are properly clamped
     minIdx = clampIndex(minIdx, true);
     maxIdx = clampIndex(maxIdx, false);
-
-    // Prevent invalid range relationships
     if (minIdx > maxIdx) minIdx = maxIdx;
     if (maxIdx < minIdx) maxIdx = minIdx;
 
@@ -187,40 +181,26 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
           type,
           timeout,
           level_from: isRangeModified ? minIdx + 1 : game.params.level_from,
-          level_to: isRangeModified ? maxIdx + 1 : game.params.level_to
+          level_to: isRangeModified ? maxIdx + 1 : game.params.level_to,
+          qual: qualificationEnabled ? 1 : 0
         }
       };
-
-      // Add qualification parameter if enabled
-      if (qualificationEnabled) {
-        modifiedGame.params.qual = 1;
-      }
 
       const link = main.gamesManager.generateGameLink(modifiedGame);
       btn.setAttribute('href', link);
       btn.onclick = (e) => {
         e.preventDefault();
         if (saveModeEnabled) {
-          // Commit new params to the original saved game object and persist
+          clearTimeout(autoSaveTimer);
+          // Always update all params when clicking in save mode
           game.params.type = type;
           game.params.timeout = timeout;
-          // Always write the current slider values (user expects these to be saved)
-          game.params.level_from = isRangeModified ? minIdx + 1 : game.params.level_from;
-          game.params.level_to = isRangeModified ? maxIdx + 1 : game.params.level_to;
+          game.params.level_from = minIdx + 1;
+          game.params.level_to = maxIdx + 1;
           game.params.qual = qualificationEnabled ? 1 : 0;
-
-          main.gamesManager.saveGameData();
-          if (main.uiManager && typeof main.uiManager.refreshContainer === 'function') {
-            main.uiManager.refreshContainer();
-          }
-
-          // Animate the save icon for visual feedback (rotate once)
-          save.classList.remove('rg-rotate');
-          // force reflow to restart animation
-          // eslint-disable-next-line no-unused-expressions
-          void save.offsetWidth;
-          save.classList.add('rg-rotate');
+          performSave();
         } else {
+          // Just navigate to create game, don't change any settings
           window.location.href = link;
         }
       };
@@ -230,9 +210,39 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
   function saveRange() {
     main.rankRange = [minIdx, maxIdx];
     main.settingsManager.saveSettings();
+    triggerAutoSave();
   }
 
-  // Handle click on slider track
+  save.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    saveModeEnabled = !saveModeEnabled;
+    main.saveModeEnabled = saveModeEnabled;
+    main.settingsManager.saveSettings();
+    updateSaveModeUI();
+    
+    // Sync UI to appropriate source when toggling
+    if (saveModeEnabled) {
+      // Switching to save mode: load from button params
+      qualificationEnabled = game.params.qual === 1;
+      minIdx = clampIndex((game.params.level_from || 1) - 1, true);
+      maxIdx = clampIndex((game.params.level_to || 9) - 1, false);
+    } else {
+      // Switching to select mode: load from settings
+      qualificationEnabled = main.qualificationEnabled ?? false;
+      [minIdx, maxIdx] = main.rankRange || [RANK_CONSTRAINTS.minFrom, RANK_CONSTRAINTS.maxTo];
+    }
+    
+    if (minIdx > maxIdx) minIdx = maxIdx;
+    if (maxIdx < minIdx) maxIdx = minIdx;
+    
+    updateQualUI();
+    updateSliderUI();
+  });
+
+  header.append(headerTitle, qualification, save);
+  popup.appendChild(header);
+
   sliderTrack.addEventListener('click', (e) => {
     const rect = sliderTrack.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -261,10 +271,7 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
         let idx = Math.round(((clientX - left) / width) * (ranks.length - 1));
         idx = clampIndex(idx, i === 0);
 
-        // compute the new value for minIdx or maxIdx
-        const newVal = i === 0
-          ? Math.min(idx, maxIdx)
-          : Math.max(idx, minIdx);
+        const newVal = i === 0 ? Math.min(idx, maxIdx) : Math.max(idx, minIdx);
 
         if (newVal !== prev) {
           prev = newVal;
@@ -304,7 +311,6 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
     const typeButtonsContainer = createElement('div', { className: 'timeouts-container' });
 
     timeouts.forEach(timeout => {
-      // Skip 5-second timeout for the normal type
       if (type === 'normal' && timeout === 5) return;
 
       const isRangeModified = minIdx !== RANK_CONSTRAINTS.minFrom || maxIdx !== RANK_CONSTRAINTS.maxTo;
@@ -312,17 +318,13 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
         ...game,
         params: {
           ...game.params,
-          type: type,
-          timeout: timeout,
+          type,
+          timeout,
           level_from: isRangeModified ? minIdx + 1 : game.params.level_from,
-          level_to: isRangeModified ? maxIdx + 1 : game.params.level_to
+          level_to: isRangeModified ? maxIdx + 1 : game.params.level_to,
+          qual: qualificationEnabled ? 1 : 0
         }
       };
-
-      // Add qualification parameter if enabled
-      if (qualificationEnabled) {
-        modifiedGame.params.qual = 1;
-      }
 
       const link = main.gamesManager.generateGameLink(modifiedGame);
       const btn = createElement('a', {
@@ -338,7 +340,6 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
     popup.appendChild(typeButtonsContainer);
   });
 
-  // Setup popup positioning, drag functionality, and event handlers
   setupPopupPositioning(popup, event);
 
   return popup;
