@@ -28,7 +28,8 @@ const INTERACTIVE_SELECTORS = [
   '.rank-slider-handle',
   '.rank-slider-track',
   '.rank-slider-range',
-  '.popup-header-qualification'
+  '.popup-header-qualification',
+  '.popup-header-save'
 ];
 
 /**
@@ -64,7 +65,7 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
 
   const headerTitle = createElement('div', {
     className: 'popup-header-title',
-    textContent: 'Выбрать'
+    textContent: main.saveModeEnabled ? 'Сохранить' : 'Выбрать'
   });
 
   const qualification = createElement('span', {
@@ -72,10 +73,20 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
     innerHTML: icons.qualification
   });
 
+  const save = createElement('span', {
+    className: 'popup-header-save',
+    innerHTML: icons.save
+  });
+
   // Set qualification visibility based on qualification setting
   let qualificationEnabled = main.qualificationEnabled ?? false;
   qualification.classList.toggle('latest-games-disabled', !qualificationEnabled);
   createCustomTooltip(qualification, `Квалификация ${qualificationEnabled ? 'включена' : 'выключена'}`);
+
+  // Save mode is persisted in settings (affects default behaviour)
+  let saveModeEnabled = main.saveModeEnabled ?? false;
+  save.classList.toggle('latest-games-disabled', !saveModeEnabled);
+  createCustomTooltip(save, `Сохранение ${saveModeEnabled ? 'включено' : 'отключено'}`);
 
   // Add click handler for qualification toggle
   qualification.addEventListener('click', (e) => {
@@ -92,7 +103,21 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
     updateButtonLinks();
   });
 
-  header.append(headerTitle, qualification);
+  // Toggle save mode: change header title and update buttons' behaviour
+  save.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    saveModeEnabled = !saveModeEnabled;
+    // persist the choice across popups and sessions
+    main.saveModeEnabled = saveModeEnabled;
+    main.settingsManager.saveSettings();
+
+    save.classList.toggle('latest-games-disabled', !saveModeEnabled);
+    headerTitle.textContent = saveModeEnabled ? 'Сохранить' : 'Выбрать';
+    createCustomTooltip(save, `Сохранение ${saveModeEnabled ? 'включено' : 'отключено'}`);
+  });
+
+  header.append(headerTitle, qualification, save);
   popup.appendChild(header);
 
   // --- Dual-range slider for rank selection ---
@@ -175,7 +200,29 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
       btn.setAttribute('href', link);
       btn.onclick = (e) => {
         e.preventDefault();
-        window.location.href = link;
+        if (saveModeEnabled) {
+          // Commit new params to the original saved game object and persist
+          game.params.type = type;
+          game.params.timeout = timeout;
+          // Always write the current slider values (user expects these to be saved)
+          game.params.level_from = isRangeModified ? minIdx + 1 : game.params.level_from;
+          game.params.level_to = isRangeModified ? maxIdx + 1 : game.params.level_to;
+          game.params.qual = qualificationEnabled ? 1 : 0;
+
+          main.gamesManager.saveGameData();
+          if (main.uiManager && typeof main.uiManager.refreshContainer === 'function') {
+            main.uiManager.refreshContainer();
+          }
+
+          // Animate the save icon for visual feedback (rotate once)
+          save.classList.remove('rg-rotate');
+          // force reflow to restart animation
+          // eslint-disable-next-line no-unused-expressions
+          void save.offsetWidth;
+          save.classList.add('rg-rotate');
+        } else {
+          window.location.href = link;
+        }
       };
     });
   }
@@ -282,11 +329,6 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
         href: link,
         className: 'game-popup-button',
         textContent: timeout
-      });
-
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        window.location.href = link;
       });
 
       buttonRefs.push({ btn, type, timeout });
