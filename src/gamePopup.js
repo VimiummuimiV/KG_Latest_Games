@@ -54,6 +54,10 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
     textContent: main.saveModeEnabled ? 'Сохранить' : 'Создать'
   });
 
+  const headerControls = createElement('div', {
+    className: 'popup-header-controls'
+  });
+
   const qualification = createElement('span', {
     className: 'popup-header-qualification',
     innerHTML: icons.qualification
@@ -240,7 +244,8 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
     updateSliderUI();
   });
 
-  header.append(headerTitle, qualification, save);
+  headerControls.append(qualification, save);
+  header.append(headerTitle, headerControls);
   popup.appendChild(header);
 
   sliderTrack.addEventListener('click', (e) => {
