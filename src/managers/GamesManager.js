@@ -99,7 +99,9 @@ export class GamesManager {
     if (level_from !== 1 || level_to !== 9) {
       const levelFromName = ranks[level_from - 1];
       const levelToName = ranks[level_to - 1];
-      levelText = ` ${levelFromName} - ${levelToName}`;
+      levelText = level_from === level_to 
+        ? ` ${levelFromName}` 
+        : ` ${levelFromName} - ${levelToName}`;
     }
 
     const levelsSpan = createElement('span', {

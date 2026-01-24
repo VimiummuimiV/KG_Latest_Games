@@ -95,7 +95,7 @@ export const DEFAULTS = {
   qualificationEnabled: false,
   saveModeEnabled: true,
   showVocabularyData: true,
-  rankRange: [0, 8],
+  rankRange: [1, 9],
   panelYPosition: {
     main: 0,
     gamelist: 0,
@@ -109,7 +109,7 @@ export const DEFAULTS = {
     game: 0
   },
   alwaysVisiblePanel: {
-    main: true,
+    main: false,
     gamelist: false,
     profile: false,
     chatlogs: false,
@@ -118,6 +118,6 @@ export const DEFAULTS = {
     about: false,
     donation: false,
     forum: false,
-    game: true
+    game: false 
   }
 };
