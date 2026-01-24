@@ -7,10 +7,10 @@ import { setupPopupDrag } from './drag/popupDrag.js';
 const visibilityTypes = Object.keys(visibilities);
 
 const RANK_CONSTRAINTS = {
-  minFrom: 0,
-  maxFrom: 5,
-  minTo: 5,
-  maxTo: 8
+  minFrom: 1,
+  maxFrom: 6,
+  minTo: 6,
+  maxTo: 9
 };
 
 const AUTO_SAVE_DEBOUNCE_MS = 500;
@@ -33,12 +33,12 @@ const INTERACTIVE_SELECTORS = [
 ];
 
 /**
- * Clamp index to allowed range based on handle type
+ * Clamp rank number (1-9) to allowed range based on handle type
  */
-function clampIndex(idx, isMinHandle) {
+function clampRank(rank, isMinHandle) {
   return isMinHandle
-    ? Math.max(RANK_CONSTRAINTS.minFrom, Math.min(RANK_CONSTRAINTS.maxFrom, idx))
-    : Math.max(RANK_CONSTRAINTS.minTo, Math.min(RANK_CONSTRAINTS.maxTo, idx));
+    ? Math.max(RANK_CONSTRAINTS.minFrom, Math.min(RANK_CONSTRAINTS.maxFrom, rank))
+    : Math.max(RANK_CONSTRAINTS.minTo, Math.min(RANK_CONSTRAINTS.maxTo, rank));
 }
 
 export function createGamePopup(game, event, main, className = 'game-popup') {
@@ -71,24 +71,23 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
   // Initialize state from SettingsManager or game params from button based on save mode
   let saveModeEnabled = main.saveModeEnabled ?? false;
   let qualificationEnabled = saveModeEnabled ? (game.params.qual === 1) : (main.qualificationEnabled ?? false);
-  let [minIdx, maxIdx] = saveModeEnabled 
+  let [minRank, maxRank] = saveModeEnabled 
     ? [
-        clampIndex((game.params.level_from || 1) - 1, true),
-        clampIndex((game.params.level_to || 9) - 1, false)
+        clampRank(game.params.level_from || 1, true),
+        clampRank(game.params.level_to || 9, false)
       ]
     : (main.rankRange || [RANK_CONSTRAINTS.minFrom, RANK_CONSTRAINTS.maxTo]);
 
   // Ensure valid range
-  if (minIdx > maxIdx) minIdx = maxIdx;
-  if (maxIdx < minIdx) maxIdx = minIdx;
+  if (minRank > maxRank) minRank = maxRank;
+  if (maxRank < minRank) maxRank = minRank;
 
   let autoSaveTimer = null;
   const buttonRefs = [];
 
   const performSave = () => {
-    const isRangeModified = minIdx !== RANK_CONSTRAINTS.minFrom || maxIdx !== RANK_CONSTRAINTS.maxTo;
-    game.params.level_from = isRangeModified ? minIdx + 1 : game.params.level_from;
-    game.params.level_to = isRangeModified ? maxIdx + 1 : game.params.level_to;
+    game.params.level_from = minRank;
+    game.params.level_to = maxRank;
     game.params.qual = qualificationEnabled ? 1 : 0;
 
     main.gamesManager.saveGameData();
@@ -144,23 +143,23 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
   const rankDisplay = createElement('div', { className: 'rank-slider-display' });
 
   function updateSliderUI() {
-    minIdx = clampIndex(minIdx, true);
-    maxIdx = clampIndex(maxIdx, false);
-    if (minIdx > maxIdx) minIdx = maxIdx;
-    if (maxIdx < minIdx) maxIdx = minIdx;
+    minRank = clampRank(minRank, true);
+    maxRank = clampRank(maxRank, false);
+    if (minRank > maxRank) minRank = maxRank;
+    if (maxRank < minRank) maxRank = minRank;
 
-    const percent1 = (minIdx / (ranks.length - 1)) * 100;
-    const percent2 = (maxIdx / (ranks.length - 1)) * 100;
+    const percent1 = ((minRank - 1) / (ranks.length - 1)) * 100;
+    const percent2 = ((maxRank - 1) / (ranks.length - 1)) * 100;
 
     sliderHandles[0].style.left = percent1 + '%';
     sliderHandles[1].style.left = percent2 + '%';
     sliderRange.style.left = percent1 + '%';
     sliderRange.style.width = (percent2 - percent1) + '%';
 
-    rankDisplay.textContent = ranks[minIdx] + (minIdx === maxIdx ? '' : ' — ' + ranks[maxIdx]);
+    rankDisplay.textContent = ranks[minRank - 1] + (minRank === maxRank ? '' : ' — ' + ranks[maxRank - 1]);
 
     // Handle overlap state
-    const isOverlap = minIdx === maxIdx;
+    const isOverlap = minRank === maxRank;
     const handleClasses = [
       ['overlap', 'overlap-left'],
       ['overlap', 'overlap-right']
@@ -175,8 +174,6 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
   }
 
   function updateButtonLinks() {
-    const isRangeModified = minIdx !== RANK_CONSTRAINTS.minFrom || maxIdx !== RANK_CONSTRAINTS.maxTo;
-
     buttonRefs.forEach(({ btn, type, timeout }) => {
       const modifiedGame = {
         ...game,
@@ -184,8 +181,8 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
           ...game.params,
           type,
           timeout,
-          level_from: isRangeModified ? minIdx + 1 : game.params.level_from,
-          level_to: isRangeModified ? maxIdx + 1 : game.params.level_to,
+          level_from: minRank,
+          level_to: maxRank,
           qual: qualificationEnabled ? 1 : 0
         }
       };
@@ -199,8 +196,8 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
           // Always update all params when clicking in save mode
           game.params.type = type;
           game.params.timeout = timeout;
-          game.params.level_from = minIdx + 1;
-          game.params.level_to = maxIdx + 1;
+          game.params.level_from = minRank;
+          game.params.level_to = maxRank;
           game.params.qual = qualificationEnabled ? 1 : 0;
           performSave();
         } else {
@@ -212,8 +209,10 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
   }
 
   function saveRange() {
-    main.rankRange = [minIdx, maxIdx];
-    main.settingsManager.saveSettings();
+    if (!saveModeEnabled) {
+      main.rankRange = [minRank, maxRank];
+      main.settingsManager.saveSettings();
+    }
     triggerAutoSave();
   }
 
@@ -229,16 +228,16 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
     if (saveModeEnabled) {
       // Switching to save mode: load from button params
       qualificationEnabled = game.params.qual === 1;
-      minIdx = clampIndex((game.params.level_from || 1) - 1, true);
-      maxIdx = clampIndex((game.params.level_to || 9) - 1, false);
+      minRank = clampRank(game.params.level_from || 1, true);
+      maxRank = clampRank(game.params.level_to || 9, false);
     } else {
       // Switching to select mode: load from settings
       qualificationEnabled = main.qualificationEnabled ?? false;
-      [minIdx, maxIdx] = main.rankRange || [RANK_CONSTRAINTS.minFrom, RANK_CONSTRAINTS.maxTo];
+      [minRank, maxRank] = main.rankRange || [RANK_CONSTRAINTS.minFrom, RANK_CONSTRAINTS.maxTo];
     }
     
-    if (minIdx > maxIdx) minIdx = maxIdx;
-    if (maxIdx < minIdx) maxIdx = minIdx;
+    if (minRank > maxRank) minRank = maxRank;
+    if (maxRank < minRank) maxRank = minRank;
     
     updateQualUI();
     updateSliderUI();
@@ -252,13 +251,13 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
     const rect = sliderTrack.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const percent = x / rect.width;
-    let idx = Math.round(percent * (ranks.length - 1));
+    let rank = Math.round(percent * (ranks.length - 1)) + 1;
 
     // Determine which handle to move based on proximity
-    if (Math.abs(idx - minIdx) < Math.abs(idx - maxIdx)) {
-      minIdx = Math.min(clampIndex(idx, true), maxIdx);
+    if (Math.abs(rank - minRank) < Math.abs(rank - maxRank)) {
+      minRank = Math.min(clampRank(rank, true), maxRank);
     } else {
-      maxIdx = Math.max(clampIndex(idx, false), minIdx);
+      maxRank = Math.max(clampRank(rank, false), minRank);
     }
 
     updateSliderUI();
@@ -269,19 +268,19 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
   sliderHandles.forEach((handle, i) => {
     handle.addEventListener('mousedown', (e) => {
       e.preventDefault();
-      let prev = i === 0 ? minIdx : maxIdx;
+      let prev = i === 0 ? minRank : maxRank;
 
       const onMove = ({ clientX }) => {
         const { left, width } = sliderTrack.getBoundingClientRect();
-        let idx = Math.round(((clientX - left) / width) * (ranks.length - 1));
-        idx = clampIndex(idx, i === 0);
+        let rank = Math.round(((clientX - left) / width) * (ranks.length - 1)) + 1;
+        rank = clampRank(rank, i === 0);
 
-        const newVal = i === 0 ? Math.min(idx, maxIdx) : Math.max(idx, minIdx);
+        const newVal = i === 0 ? Math.min(rank, maxRank) : Math.max(rank, minRank);
 
         if (newVal !== prev) {
           prev = newVal;
-          if (i === 0) minIdx = newVal;
-          else maxIdx = newVal;
+          if (i === 0) minRank = newVal;
+          else maxRank = newVal;
           updateSliderUI();
         }
       };
@@ -318,15 +317,14 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
     timeouts.forEach(timeout => {
       if (type === 'normal' && timeout === 5) return;
 
-      const isRangeModified = minIdx !== RANK_CONSTRAINTS.minFrom || maxIdx !== RANK_CONSTRAINTS.maxTo;
       const modifiedGame = {
         ...game,
         params: {
           ...game.params,
           type,
           timeout,
-          level_from: isRangeModified ? minIdx + 1 : game.params.level_from,
-          level_to: isRangeModified ? maxIdx + 1 : game.params.level_to,
+          level_from: minRank,
+          level_to: maxRank,
           qual: qualificationEnabled ? 1 : 0
         }
       };
