@@ -96,7 +96,8 @@ export class GamesManager {
     });
 
     let levelText = '';
-    if (level_from !== 1 || level_to !== 9) {
+    // Only show rank range for 'normal' type - practice and private don't use rank limits
+    if (visibility === 'normal' && (level_from !== 1 || level_to !== 9)) {
       const levelFromName = ranks[level_from - 1];
       const levelToName = ranks[level_to - 1];
       levelText = level_from === level_to 
