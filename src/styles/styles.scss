@@ -122,10 +122,6 @@
           border: 2px solid var(--rg-border-pinned-abra);
           background-color: var(--rg-bg-card-pinned-abra);
         }
-        &.pin-gametype-referats {
-          border: 2px solid var(--rg-border-pinned-referats);
-          background-color: var(--rg-bg-card-pinned-referats);
-        }
         &.pin-gametype-noerror {
           border: 2px solid var(--rg-border-pinned-noerror);
           background-color: var(--rg-bg-card-pinned-noerror);
@@ -186,9 +182,6 @@
         }
         &.gametype-abra {
           color: var(--rg-gametype-abra) !important;
-        }
-        &.gametype-referats {
-          color: var(--rg-gametype-referats) !important;
         }
         &.gametype-noerror {
           color: var(--rg-gametype-noerror) !important;

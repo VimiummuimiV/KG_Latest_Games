@@ -650,7 +650,7 @@ export function createControls(main) {
   });
   createCustomTooltip(
     startRaceBtn, `
-    [Shift + Enter | Клик] Начать игру (последняя или следующая: работает только на странице игры)
+    [Shift + Enter | Клик] Начать игру (последняя) или (следующая: работает только на странице игры)
     [Ctrl + Shift + Enter | Клик] Пройти квалификацию по словарю
     [Shift + Alt + Enter | Клик] Добавить текущий словарь в Избранные
     `

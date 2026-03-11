@@ -10,7 +10,6 @@ export const popupIcons = {
 export const gameTypes = {
   normal: 'Oбычный',
   abra: 'Абракадабра',
-  referats: 'Яндекс.Рефераты',
   noerror: 'Безошибочный',
   marathon: 'Марафон',
   chars: 'Буквы',
