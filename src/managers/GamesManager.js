@@ -117,7 +117,7 @@ export class GamesManager {
     });
 
     if (descSpan) {
-      let descText = `${visibilities[visibility]}, ${timeout} секунд`;
+      let descText = `${visibilities[visibility]}, TM ${timeout}`;
       if (idletime && idletime > 0) {
         descText += `, AFK ${idletime}`;
       }
