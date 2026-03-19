@@ -53,6 +53,8 @@ export const ranksMap = {
 
 export const timeouts = [5, 10, 20, 30, 45, 60];
 
+export const idleTimes = [0, 5, 10, 15, 20, 30, 45, 60, 120, 180, 300];
+
 // Centralized default values for LatestGamesManager and related managers
 export const DEFAULTS = {
   maxGameCount: 5,

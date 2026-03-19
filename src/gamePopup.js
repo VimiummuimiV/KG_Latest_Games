@@ -1,6 +1,6 @@
 import { createCustomTooltip, hideTooltipElement } from './tooltip.js';
 import { createElement } from './utils.js';
-import { visibilities, timeouts, ranks } from './definitions.js';
+import { visibilities, timeouts, idleTimes, ranks } from './definitions.js';
 import { icons } from './icons.js';
 import { setupPopupDrag } from './drag/popupDrag.js';
 
@@ -20,6 +20,7 @@ const DRAGGABLE_SELECTORS = [
   '.popup-header-title',
   '.popup-subheader',
   '.rank-slider-display',
+  '.idle-times-container',
   '.timeouts-container'
 ];
 
@@ -83,12 +84,14 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
   if (maxRank < minRank) maxRank = minRank;
 
   let autoSaveTimer = null;
+  let selectedIdleTime = saveModeEnabled ? (game.params.idletime || 0) : 0;
   const buttonRefs = [];
 
   const performSave = () => {
     game.params.level_from = minRank;
     game.params.level_to = maxRank;
     game.params.qual = qualificationEnabled ? 1 : 0;
+    game.params.idletime = selectedIdleTime;
 
     main.gamesManager.saveGameData();
     main.uiManager?.refreshContainer?.();
@@ -188,7 +191,8 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
           timeout,
           level_from: minRank,
           level_to: maxRank,
-          qual: qualificationEnabled ? 1 : 0
+          qual: qualificationEnabled ? 1 : 0,
+          idletime: selectedIdleTime
         }
       };
 
@@ -206,6 +210,7 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
           game.params.level_from = minRank;
           game.params.level_to = maxRank;
           game.params.qual = qualificationEnabled ? 1 : 0;
+          game.params.idletime = selectedIdleTime;
           performSave();
         } else {
           // Just navigate to create game, don't change any settings
@@ -310,6 +315,47 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
   rankSliderContainer.appendChild(rankDisplay);
   rankSliderContainer.appendChild(sliderTrack);
   popup.appendChild(rankSliderContainer);
+
+  // Create idle times section
+  const idleTimesHeader = createElement('div', {
+    className: 'popup-subheader',
+    textContent: 'AFK'
+  });
+  popup.appendChild(idleTimesHeader);
+
+  const idleTimesContainer = createElement('div', { className: 'idle-times-container' });
+
+  idleTimes.forEach(idleTime => {
+    const idleTimeBtn = createElement('a', {
+      href: '#',
+      className: 'game-popup-button',
+      textContent: idleTime
+    });
+
+    if (idleTime === selectedIdleTime) {
+      idleTimeBtn.classList.add('active');
+    }
+
+    idleTimeBtn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Remove active class from all idle time buttons
+      idleTimesContainer.querySelectorAll('.game-popup-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Add active class to selected button
+      idleTimeBtn.classList.add('active');
+      selectedIdleTime = idleTime;
+      updateButtonLinks();
+      triggerAutoSave();
+    };
+
+    idleTimesContainer.appendChild(idleTimeBtn);
+  });
+
+  popup.appendChild(idleTimesContainer);
 
   // Create game type sections
   visibilityTypes.forEach(type => {

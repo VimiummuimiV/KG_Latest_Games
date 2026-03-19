@@ -61,7 +61,7 @@ export function createElement(tag, options = {}) {
   if (options.innerHTML) {
     element.innerHTML = options.innerHTML;
   }
-  if (options.textContent) {
+  if (options.textContent !== undefined && options.textContent !== null) {
     element.textContent = options.textContent;
   }
   if (options.href) {

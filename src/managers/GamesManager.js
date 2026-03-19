@@ -42,6 +42,11 @@ export class GamesManager {
       ? (timeoutMatches[2] === 'сек' ? parseInt(timeoutMatches[1], 10) : parseInt(timeoutMatches[1], 10) * 60)
       : 60;
 
+    const idleMatches = descText.match(/AFK\s(\d+)\s(сек|мин)/i);
+    const idletime = idleMatches
+      ? (idleMatches[2] === 'сек' ? parseInt(idleMatches[1], 10) : parseInt(idleMatches[1], 10) * 60)
+      : 0;
+
     const qualification = /квалификация/.test(descText) ? 1 : 0;
 
     const result = {
@@ -53,6 +58,7 @@ export class GamesManager {
       level_from: levelFrom,
       level_to: levelTo,
       timeout,
+      idletime,
       qual: qualification,
       premium_abra: 0
     };
@@ -62,7 +68,7 @@ export class GamesManager {
 
   generateGameName(game, opts = {}) {
     const gameType = gameTypes[game.params.gametype];
-    const { vocName, timeout, type: visibility, level_from, level_to, qual } = game.params;
+    const { vocName, timeout, type: visibility, level_from, level_to, qual, idletime } = game.params;
 
     // Determine if we need to show a state icon (paused/playing)
     let stateIcon = '';
@@ -111,7 +117,11 @@ export class GamesManager {
     });
 
     if (descSpan) {
-      descSpan.textContent = `${visibilities[visibility]}, ${timeout} секунд`;
+      let descText = `${visibilities[visibility]}, ${timeout} секунд`;
+      if (idletime && idletime > 0) {
+        descText += `, AFK ${idletime}`;
+      }
+      descSpan.textContent = descText;
       descSpan.appendChild(qualSpan);
       if (levelText) {
         descSpan.appendChild(levelsSpan);
@@ -126,7 +136,7 @@ export class GamesManager {
   }
 
   generateGameLink(game) {
-    const { gametype, vocId, type, level_from, level_to, timeout, qual } = game.params;
+    const { gametype, vocId, type, level_from, level_to, timeout, qual, idletime } = game.params;
 
     const params = new URLSearchParams({
       gametype,
@@ -147,6 +157,10 @@ export class GamesManager {
 
     if (qual) {
       params.set('qual', '1');
+    }
+
+    if (idletime !== undefined && idletime !== null) {
+      params.set('idletime', idletime.toString());
     }
 
     return `${location.protocol}//klavogonki.ru/create/?${params.toString()}`;

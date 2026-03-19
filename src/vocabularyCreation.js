@@ -108,6 +108,7 @@ export function addGameToGroup(group, vocId, vocName, vocType, groups, main) {
       level_from: 1,
       level_to: 9,
       timeout: 10,
+      idletime: 0,
       qual: 0,
       premium_abra: 0
     },

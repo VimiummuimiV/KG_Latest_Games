@@ -72,9 +72,11 @@
     padding: 6px;
   }
 
-  .timeouts-container {
+  .timeouts-container,
+  .idle-times-container {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     gap: 5px;
 
     .game-popup-button {
