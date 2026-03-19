@@ -535,13 +535,11 @@ export function createControls(main) {
   const updateRandomTooltip = () => {
     updateTooltip(randomRaceBtn, !!main.randomGameId, {
       click: (isEnabled) => {
-        const modeLabel = main.randomGameId === 'global' ? 'глобальный' : main.randomGameId === 'local' ? 'локальный' : 'выключен';
-        return isEnabled
-          ? `Отключить случайный выбор игры (${modeLabel})`
-          : `Включить случайный выбор игры (${modeLabel})`;
+        const modeLabel = main.randomGameId === 'global' ? 'Глобальный' : main.randomGameId === 'local' ? 'Локальный' : 'Выключен';
+        return `Случайный выбор игры: ${modeLabel}`;
       },
-      shift: () => {
-        // total: from raw validVocabularies in localStorage (pre-filter)
+      shift: () => 'Выбрать типы словарей',
+      ctrl: () => {
         let totalIds = [];
         try {
           const raw = JSON.parse(localStorage.getItem('validVocabularies') || '{}');
@@ -561,12 +559,7 @@ export function createControls(main) {
       },
       alt: () => main.showBlockedVocabAlert
         ? 'Отключить предупреждение о недоступных словарях'
-        : 'Включить предупреждение о недоступных словарях',
-      ctrl: () =>
-        main.randomGameId === 'global'
-          ? 'Отключить глобальный режим'
-          : 'Включить глобальный режим',
-      shiftAlt: () => 'Выбрать типы словарей'
+        : 'Включить предупреждение о недоступных словарях'
     });
     // Reflect disabled state visually
     randomRaceBtn.classList.toggle('latest-games-disabled', !main.randomGameId);
@@ -581,30 +574,9 @@ export function createControls(main) {
   updateRandomTooltip();
 
   // Toggle random game selection setting when clicking the button
-  // Shift+Click: set globalLatestId
   randomRaceBtn.onclick = (e) => {
-    // Shift + Alt + Click: show vocabulary types toggle popup
-    if (e.shiftKey && e.altKey) {
-      e.preventDefault();
-      showVocabularyTypesPopup(e, main);
-      return;
-    }
-
-    // Alt + Click: toggle showing the blocked-vocab alert
-    if (e.altKey) {
-      main.showBlockedVocabAlert = !main.showBlockedVocabAlert;
-      main.settingsManager.saveSettings();
-      updateRandomTooltip();
-      alert(
-        main.showBlockedVocabAlert
-          ? '✔️ Предупреждение о заблокированных словарях включено.'
-          : '❌ Предупреждение о заблокированных словарях отключено.'
-      );
-      return;
-    }
-
-    // Shift + Click: update valid vocabularies list
-    if (e.shiftKey) {
+    // Ctrl + Click: update valid vocabularies list
+    if (e.ctrlKey) {
       const url = 'https://raw.githubusercontent.com/VimiummuimiV/KG_Latest_Games/refs/heads/main/src/etc/valid_vocabularies.txt';
       fetch(url, { cache: 'no-store' })
         .then(r => {
@@ -629,16 +601,34 @@ export function createControls(main) {
       return;
     }
 
-    // Ctrl + Click: toggle global mode on/off
-    if (e.ctrlKey) {
-      main.randomGameId = main.randomGameId === 'global' ? false : 'global';
+    // Alt + Click: toggle showing the blocked-vocab alert
+    if (e.altKey) {
+      main.showBlockedVocabAlert = !main.showBlockedVocabAlert;
       main.settingsManager.saveSettings();
       updateRandomTooltip();
+      alert(
+        main.showBlockedVocabAlert
+          ? '✔️ Предупреждение о заблокированных словарях включено.'
+          : '❌ Предупреждение о заблокированных словарях отключено.'
+      );
       return;
     }
 
-    // Regular click: toggle between false and 'local'
-    main.randomGameId = main.randomGameId === 'local' ? false : 'local';
+    // Shift + Click: show vocabulary types toggle popup
+    if (e.shiftKey) {
+      e.preventDefault();
+      showVocabularyTypesPopup(e, main);
+      return;
+    }
+
+    // Regular click: cycle through off -> local -> global -> off
+    if (main.randomGameId === false) {
+      main.randomGameId = 'local';
+    } else if (main.randomGameId === 'local') {
+      main.randomGameId = 'global';
+    } else {
+      main.randomGameId = false;
+    }
     main.settingsManager.saveSettings();
     updateRandomTooltip();
   };
