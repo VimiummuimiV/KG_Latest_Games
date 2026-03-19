@@ -109,7 +109,7 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
 
   const updateQualUI = () => {
     qualification.classList.toggle('latest-games-disabled', !qualificationEnabled);
-    createCustomTooltip(qualification, `Квалификация ${qualificationEnabled ? 'включена' : 'выключена'}`);
+    createCustomTooltip(qualification, `Квалификация ${qualificationEnabled ? 'включена' : 'отключена'}`);
   };
 
   const updateSaveModeUI = () => {

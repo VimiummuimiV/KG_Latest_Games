@@ -76,6 +76,19 @@ export function createCustomTooltip(element, tooltipContent, type = 'info') {
   element._tooltipContent = tooltipContent;
   element._tooltipType = type;
 
+  // ── LIVE UPDATE ──────────────────────────────────────────────────────────────
+  // If this element is currently hovered and the tooltip is visible, push the
+  // new content straight into the DOM so the user sees the state change
+  // (e.g. "Включено" → "Отключено") without the tooltip ever disappearing.
+  if (tooltipCurrentTarget === element && tooltipIsVisible && tooltipEl) {
+    clearTimeout(tooltipShowTimer);
+    tooltipEl.innerHTML = highlightTooltipActions(tooltipContent);
+    tooltipEl.style.display = 'flex';
+    tooltipEl.style.opacity = '1';
+    tooltipIsShown = true;
+  }
+  // ─────────────────────────────────────────────────────────────────────────────
+
   if (!element._tooltipInitialized) {
     element._tooltipInitialized = true;
 
@@ -115,7 +128,6 @@ export function createCustomTooltip(element, tooltipContent, type = 'info') {
       hideTooltipElement();
       document.removeEventListener('mousemove', tooltipTrackMouse);
     });
-    element.addEventListener('click', hideTooltipElement);
   }
 }
 
@@ -149,10 +161,6 @@ export function updateTooltipContent(element, newContent, type = 'info') {
       tooltipEl.style.opacity = '1';
       tooltipIsShown = true;
     }
-    
-    // Reposition tooltip in case content size changed
-    const rect = element.getBoundingClientRect();
-    positionTooltip(rect.left + rect.width / 2, rect.bottom);
   }
 }
 
