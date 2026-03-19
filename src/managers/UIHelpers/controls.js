@@ -260,9 +260,7 @@ export function createControls(main) {
     innerHTML: icons.play
   });
   setupControlButton(playBtn, main, 'shouldStart', 'startDelay', {
-    click: (isEnabled) => isEnabled
-      ? 'Отключить автозапуск игры'
-      : 'Включить автозапуск игры',
+    click: (isEnabled) => `Автозапуск игры: ${isEnabled ? 'Включено' : 'Отключено'}`,
     shift: () => 'Изменить задержку запуска в миллисекундах',
     delayErrorText: 'Пожалуйста, введите корректное значение задержки запуска.'
   });
@@ -276,12 +274,10 @@ export function createControls(main) {
     innerHTML: getReplayIcon()
   });
   setupControlButton(replayBtn, main, 'shouldReplay', 'replayDelay', {
-    click: (isEnabled) => isEnabled
-      ? 'Отключить автоповтор игры'
-      : 'Включить автоповтор игры',
+    click: (isEnabled) => `Автоповтор игры: ${isEnabled ? 'Включено' : 'Отключено'}`,
     shift: () => 'Изменить задержку автосоздания в миллисекундах:',
-    ctrl: () => main.replayNextGame ? 'Режим создания следующей игры' : 'Режим повтора текущей игры',
-    alt: () => main.replayWithoutWaiting ? 'Режим создания без ожидания игроков' : 'Режим создания с ожиданием игроков',
+    ctrl: () => `Создание игры: ${main.replayNextGame ? 'Следующей' : 'Текущей'}`,
+    alt: () => `Ожидание игроков: ${main.replayWithoutWaiting ? 'Отключено' : 'Включено'}`,
     delayErrorText: 'Пожалуйста, введите корректное значение задержки автоповтора.'
   });
 
@@ -293,7 +289,7 @@ export function createControls(main) {
 
   const updateReplayMoreTooltip = () => {
     createCustomTooltip(replayMoreBtn, `
-      [Клик] ${main.shouldReplayMore ? 'Отключить многократный повтор игры' : 'Включить многократный повтор игры'}
+      [Клик] Многократный повтор игры: ${main.shouldReplayMore ? 'Включено' : 'Отключено'}
       [Shift + Клик] Изменить количество повторов (${main.replayNextGameCount})
     `);
   };
@@ -535,7 +531,7 @@ export function createControls(main) {
   const updateRandomTooltip = () => {
     updateTooltip(randomRaceBtn, !!main.randomGameId, {
       click: (isEnabled) => {
-        const modeLabel = main.randomGameId === 'global' ? 'Глобальный' : main.randomGameId === 'local' ? 'Локальный' : 'Выключен';
+        const modeLabel = main.randomGameId === 'global' ? 'Глобальный' : main.randomGameId === 'local' ? 'Локальный' : 'Отключен';
         return `Случайный выбор игры: ${modeLabel}`;
       },
       shift: () => 'Выбрать типы словарей',
