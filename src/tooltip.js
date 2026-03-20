@@ -113,15 +113,23 @@ export function createCustomTooltip(element, tooltipContent, type = 'info') {
       // Highlight [Action]Message pairs and headers in the tooltip content
       tooltipEl.innerHTML = highlightTooltipActions(element._tooltipContent);
       tooltipEl.style.display = 'flex';
-      tooltipEl.style.opacity = '0';
-      tooltipEl.offsetHeight;
       positionTooltip(e.clientX, e.clientY);
       document.addEventListener('mousemove', tooltipTrackMouse);
 
-      tooltipShowTimer = setTimeout(() => {
+      const inExcludedContainer = !!element.closest('.latest-game') && !element.closest('.latest-game-buttons');
+      if (tooltipIsShown && !inExcludedContainer) {
+        // Already visible from a previous button — swap content instantly
         tooltipEl.style.opacity = '1';
-        tooltipIsShown = true;
-      }, 600);
+      } else {
+        // First appearance — fade in after delay
+        const showDelay = inExcludedContainer ? 1200 : 150;
+        tooltipEl.style.opacity = '0';
+        tooltipEl.offsetHeight; // force reflow for transition
+        tooltipShowTimer = setTimeout(() => {
+          tooltipEl.style.opacity = '1';
+          tooltipIsShown = true;
+        }, showDelay);
+      }
     });
 
     element.addEventListener('mouseleave', () => {
