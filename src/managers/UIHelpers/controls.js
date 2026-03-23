@@ -636,7 +636,7 @@ export function createControls(main) {
   });
   createCustomTooltip(
     startRaceBtn, `
-    [Ctrl + Enter | Ctrl + Клик] Повторить текущую игру
+    [Ctrl + Enter | Ctrl + Клик] Запустить (если Автозапуск выкл.) / Повторить текущую игру
     [Shift + Enter | Клик] Начать игру (последняя) или (следующая: работает только на странице игры)
     [Ctrl + Shift + Enter | Ctrl + Shift + Клик] Пройти квалификацию по словарю
     [Alt + Shift + Enter | Alt + Shift + Клик] Добавить текущий словарь в Избранные
@@ -880,6 +880,12 @@ export function createControls(main) {
 
   function replayCurrentGame() {
     if (getCurrentPage() !== 'game') { alert('⚠️ Повторить игру можно только на странице игры'); return; }
+    // If game hasn't started yet and auto-start is off — start it manually
+    const pausedElement = document.querySelector('#status-inner #paused');
+    if (!main.shouldStart && pausedElement && pausedElement.style.display !== 'none') {
+      if (typeof game !== 'undefined' && game.hostStart) game.hostStart();
+      return;
+    }
     const match = location.href.match(/[?&]gmid=(\d+)/);
     const gmid = match?.[1];
     if (!gmid) return;
