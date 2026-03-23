@@ -636,9 +636,10 @@ export function createControls(main) {
   });
   createCustomTooltip(
     startRaceBtn, `
-    [Shift + Enter | Клик] Начать игру (последняя) или (следующая: работает только на странице игры)
-    [Ctrl + Shift + Enter | Клик] Пройти квалификацию по словарю
-    [Shift + Alt + Enter | Клик] Добавить текущий словарь в Избранные
+    [Ctrl + Enter | Ctrl + Клик] Повторить текущую игру
+    [Shift + Enter | Shift + Клик] Начать игру (последняя) или (следующая: работает только на странице игры)
+    [Ctrl + Shift + Enter | Ctrl + Shift + Клик] Пройти квалификацию по словарю
+    [Alt + Shift + Enter | Alt + Shift + Клик] Добавить текущий словарь в Избранные
     `
   );
 
@@ -877,20 +878,34 @@ export function createControls(main) {
     })();
   }
 
+  function replayCurrentGame() {
+    if (getCurrentPage() !== 'game') { alert('⚠️ Повторить игру можно только на странице игры'); return; }
+    const match = location.href.match(/[?&]gmid=(\d+)/);
+    const gmid = match?.[1];
+    if (!gmid) return;
+    window.location.href = `https://klavogonki.ru/g/${gmid}.replay`;
+  }
+
   startRaceBtn.onclick = (e) => {
-    // Add current vocabulary to favorites
+    // Ctrl+Click: replay current game
+    if (e.ctrlKey && !e.shiftKey && !e.altKey) {
+      e.preventDefault();
+      replayCurrentGame();
+      return;
+    }
+    // Alt+Shift+Click: add current vocabulary to favorites
     if (e.altKey && e.shiftKey) {
       e.preventDefault();
       addCurrentVocabularyToFavorites();
       return;
     }
-    // Start race in qualification mode
+    // Ctrl+Shift+Click: start race in qualification mode
     if (e.ctrlKey && e.shiftKey) {
       e.preventDefault();
       startRaceAction(true);
       return;
     }
-    // Regular click to start race in normal mode
+    // Regular click: start race in normal mode
     startRaceAction();
   };
 
@@ -930,6 +945,9 @@ export function createControls(main) {
     VocabulariesManager.toggle(e.clientX, e.clientY, 'playedVocabularies');
   };
 
+  // Register hotkey so other scripts (KG_Easy_Race_Flow, KG_Wide_Typeblock) yield Ctrl+Enter to us
+  document.body.classList.add('replay-hotkey-registered');
+
   // Start latest played or random game when pressing Shift+Enter
   // or add current vocabulary to banned list when pressing Alt+Enter
   document.addEventListener('keydown', e => {
@@ -943,6 +961,12 @@ export function createControls(main) {
     if (e.ctrlKey && e.shiftKey && e.code === 'Enter') {
       e.preventDefault();
       startRaceAction(true);
+      return;
+    }
+    // Ctrl+Enter: replay same game
+    if (e.ctrlKey && e.code === 'Enter') {
+      e.preventDefault();
+      replayCurrentGame();
       return;
     }
     // Shift+Enter: start race in normal mode
