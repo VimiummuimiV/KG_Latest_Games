@@ -228,6 +228,15 @@ export class GroupsManager {
 
     // Create tabs-container for group tabs only
     const tabsContainer = createElement('div', { className: 'tabs-container' });
+
+    tabsContainer.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const direction = e.deltaY > 0 ? 1 : -1;
+      const currentIndex = this.groups.findIndex(g => g.id === this.currentGroupId);
+      const newIndex = (currentIndex + direction + this.groups.length) % this.groups.length;
+      this.selectGroup(this.groups[newIndex].id);
+    }, { passive: false });
+
     this.groups.forEach(group => {
       const tab = this.createGroupTab(group);
       tabsContainer.appendChild(tab);
