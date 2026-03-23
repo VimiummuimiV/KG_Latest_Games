@@ -945,8 +945,8 @@ export function createControls(main) {
     VocabulariesManager.toggle(e.clientX, e.clientY, 'playedVocabularies');
   };
 
-  // Register hotkey so other scripts (KG_Easy_Race_Flow, KG_Wide_Typeblock) yield Ctrl+Enter to us
-  document.body.classList.add('replay-hotkey-registered');
+  // Register hotkey so other scripts (KG_Wide_Typeblock) yield Ctrl+Enter to us
+  document.body.classList.add('latest-games-registered');
 
   // Start latest played or random game when pressing Shift+Enter
   // or add current vocabulary to banned list when pressing Alt+Enter
