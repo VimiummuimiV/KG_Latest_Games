@@ -637,7 +637,7 @@ export function createControls(main) {
   createCustomTooltip(
     startRaceBtn, `
     [Ctrl + Enter | Ctrl + Клик] Повторить текущую игру
-    [Shift + Enter | Shift + Клик] Начать игру (последняя) или (следующая: работает только на странице игры)
+    [Shift + Enter | Клик] Начать игру (последняя) или (следующая: работает только на странице игры)
     [Ctrl + Shift + Enter | Ctrl + Shift + Клик] Пройти квалификацию по словарю
     [Alt + Shift + Enter | Alt + Shift + Клик] Добавить текущий словарь в Избранные
     `
