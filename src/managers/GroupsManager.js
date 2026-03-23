@@ -137,6 +137,9 @@ export class GroupsManager {
       dataset: { groupId: group.id }
     });
     header.addEventListener('click', () => this.selectGroup(group.id));
+    if (header.className.includes('previous-game-group')) {
+      createCustomTooltip(header, 'В этой группе находится последняя сыгранная игра');
+    }
     return header;
   }
 
@@ -148,6 +151,9 @@ export class GroupsManager {
       dataset: { groupId: group.id }
     });
     tab.addEventListener('click', () => this.selectGroup(group.id));
+    if (tab.className.includes('previous-game-group')) {
+      createCustomTooltip(tab, 'В этой группе находится последняя сыгранная игра');
+    }
     return tab;
   }
 

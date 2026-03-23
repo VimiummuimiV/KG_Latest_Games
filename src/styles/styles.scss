@@ -279,7 +279,23 @@
         );
       }
 
-      &.previous-game,
+      &.previous-game {
+        animation: tilt-n-move-shaking 0.3s ease 5;
+
+        .latest-game-name,
+        .latest-game-description {
+          color: var(--rg-bg-card) !important;
+        }
+
+        $gametypes: voc, normal, abra, noerror, marathon, chars, digits, sprint;
+        @each $type in $gametypes {
+          &:has(.gametype-#{$type}) {
+            background-color: var(--rg-gametype-#{$type}) !important;
+            border-color: var(--rg-gametype-#{$type}) !important;
+          }
+        }
+      }
+
       &.dragged-game {
         animation: tilt-n-move-shaking 0.3s ease 5;
       }
