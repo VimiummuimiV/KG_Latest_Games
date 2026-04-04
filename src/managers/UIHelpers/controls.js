@@ -65,18 +65,20 @@ export function createControls(main) {
 
   // Function to update the tooltip text based on button state
   const updateTooltip = (button, isEnabled, texts, delay) => {
-    // texts: { click, shift, ctrl, alt, shiftAlt }
+    // texts: { click, shift, ctrl, alt, shiftAlt, ctrlShift }
     const clickText = typeof texts.click === 'function' ? texts.click(isEnabled) : texts.click;
     const shiftText = typeof texts.shift === 'function' ? texts.shift(isEnabled) : texts.shift;
     const ctrlText = texts.ctrl ? (typeof texts.ctrl === 'function' ? texts.ctrl(isEnabled) : texts.ctrl) : '';
     const altText = texts.alt ? (typeof texts.alt === 'function' ? texts.alt(isEnabled) : texts.alt) : '';
     const shiftAltText = texts.shiftAlt ? (typeof texts.shiftAlt === 'function' ? texts.shiftAlt(isEnabled) : texts.shiftAlt) : '';
+    const ctrlShiftText = texts.ctrlShift ? (typeof texts.ctrlShift === 'function' ? texts.ctrlShift(isEnabled) : texts.ctrlShift) : '';
     createCustomTooltip(button, `
       [Клик] ${clickText}
       [Shift + Клик] ${shiftText}${delay ? ` (${delay} мс)` : ''}
       ${ctrlText ? `[Ctrl + Клик] ${ctrlText}` : ''}
       ${altText ? `[Alt + Клик] ${altText}` : ''}
       ${shiftAltText ? `[Shift + Alt + Клик] ${shiftAltText}` : ''}
+      ${ctrlShiftText ? `[Ctrl + Shift + Клик] ${ctrlShiftText}` : ''}
     `);
   };
 
@@ -554,7 +556,8 @@ export function createControls(main) {
         return `Обновить список допустимых словарей (всего: ${total}, доступно: ${available})`;
       },
       alt: () => `Предупреждение о недоступных словарях: ${main.showBlockedVocabAlert ? 'Включено' : 'Отключено'}`,
-      shiftAlt: () => `Исключение уже проигранных словарей: ${main.randomLocalExcludePlayed ? 'Включено' : 'Отключено'}`
+      shiftAlt: () => `Исключение уже проигранных словарей: ${main.randomLocalExcludePlayed ? 'Включено' : 'Отключено'}`,
+      ctrlShift: () => `Локальный выбор только из текущей группы: ${main.randomLocalByActiveGroup ? 'Включено' : 'Отключено'}`
     });
     // Reflect disabled state visually
     randomRaceBtn.classList.toggle('latest-games-disabled', !main.randomGameId);
@@ -570,6 +573,14 @@ export function createControls(main) {
 
   // Toggle random game selection setting when clicking the button
   randomRaceBtn.onclick = (e) => {
+    // Ctrl + Shift + Click: toggle local random scope to current group only
+    if (e.ctrlKey && e.shiftKey) {
+      main.randomLocalByActiveGroup = !main.randomLocalByActiveGroup;
+      main.settingsManager.saveSettings();
+      updateRandomTooltip();
+      return;
+    }
+
     // Ctrl + Click: update valid vocabularies list
     if (e.ctrlKey) {
       const url = 'https://raw.githubusercontent.com/VimiummuimiV/KG_Latest_Games/refs/heads/main/src/etc/valid_vocabularies.txt';

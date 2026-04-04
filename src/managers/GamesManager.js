@@ -405,7 +405,12 @@ export class GamesManager {
       return bannedSet.has(vocId) || (excludePlayed && playedSet.has(vocId));
     };
 
-    this.mainManager.groupsManager.groups.forEach(group => {
+    const currentGroup = this.mainManager.groupsManager.getCurrentGroup();
+    const groupsToSearch = this.mainManager.randomLocalByActiveGroup && currentGroup
+      ? [currentGroup]
+      : this.mainManager.groupsManager.groups;
+
+    groupsToSearch.forEach(group => {
       group.games.forEach(game => {
         const vocId = String(game.params.vocId || '');
         const isExcluded = shouldExcludeLocal(vocId);

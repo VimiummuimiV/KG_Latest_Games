@@ -90,10 +90,11 @@ export const DEFAULTS = {
     generator: true
   },
   showSearchBox: false,
+  randomLocalExcludePlayed: true,
+  randomLocalByActiveGroup: false,
   showButtonDescriptions: true,
   showHelpTooltips: true,
   showBlockedVocabAlert: true,
-  randomLocalExcludePlayed: true,
   qualificationEnabled: false,
   saveModeEnabled: true,
   showVocabularyData: true,
