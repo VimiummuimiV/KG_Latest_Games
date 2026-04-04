@@ -35,6 +35,7 @@ export class SettingsManager {
       this.main.showHelpTooltips = settings.showHelpTooltips ?? this.main.showHelpTooltips;
       this.main.randomGameId = settings.randomGameId ?? this.main.randomGameId;
       this.main.showBlockedVocabAlert = settings.showBlockedVocabAlert ?? this.main.showBlockedVocabAlert;
+      this.main.randomLocalExcludePlayed = settings.randomLocalExcludePlayed ?? this.main.randomLocalExcludePlayed;
       this.main.qualificationEnabled = settings.qualificationEnabled ?? this.main.qualificationEnabled;
       this.main.saveModeEnabled = settings.saveModeEnabled ?? this.main.saveModeEnabled;
       this.main.rankRange = settings.rankRange ?? this.main.rankRange;
@@ -252,6 +253,7 @@ export class SettingsManager {
         showButtonDescriptions: this.main.showButtonDescriptions,
         showHelpTooltips: this.main.showHelpTooltips,
         showBlockedVocabAlert: this.main.showBlockedVocabAlert,
+        randomLocalExcludePlayed: this.main.randomLocalExcludePlayed,
         qualificationEnabled: this.main.qualificationEnabled,
         saveModeEnabled: this.main.saveModeEnabled,
         showVocabularyData: this.main.showVocabularyData,

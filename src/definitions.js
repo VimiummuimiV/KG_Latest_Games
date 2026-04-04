@@ -93,6 +93,7 @@ export const DEFAULTS = {
   showButtonDescriptions: true,
   showHelpTooltips: true,
   showBlockedVocabAlert: true,
+  randomLocalExcludePlayed: true,
   qualificationEnabled: false,
   saveModeEnabled: true,
   showVocabularyData: true,

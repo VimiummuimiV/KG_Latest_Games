@@ -553,9 +553,8 @@ export function createControls(main) {
         let available = 0; for (const id of new Set(totalIds)) if (!excluded.has(id)) available++;
         return `Обновить список допустимых словарей (всего: ${total}, доступно: ${available})`;
       },
-      alt: () => main.showBlockedVocabAlert
-        ? 'Отключить предупреждение о недоступных словарях'
-        : 'Включить предупреждение о недоступных словарях'
+      alt: () => `Предупреждение о недоступных словарях: ${main.showBlockedVocabAlert ? 'Включено' : 'Отключено'}`,
+      shiftAlt: () => `Исключение уже проигранных словарей: ${main.randomLocalExcludePlayed ? 'Включено' : 'Отключено'}`
     });
     // Reflect disabled state visually
     randomRaceBtn.classList.toggle('latest-games-disabled', !main.randomGameId);
@@ -597,16 +596,19 @@ export function createControls(main) {
       return;
     }
 
+    // Shift + Alt + Click: toggle local random exclusion of already-played vocabularies
+    if (e.shiftKey && e.altKey) {
+      main.randomLocalExcludePlayed = !main.randomLocalExcludePlayed;
+      main.settingsManager.saveSettings();
+      updateRandomTooltip();
+      return;
+    }
+
     // Alt + Click: toggle showing the blocked-vocab alert
     if (e.altKey) {
       main.showBlockedVocabAlert = !main.showBlockedVocabAlert;
       main.settingsManager.saveSettings();
       updateRandomTooltip();
-      alert(
-        main.showBlockedVocabAlert
-          ? '✔️ Предупреждение о заблокированных словарях включено.'
-          : '❌ Предупреждение о заблокированных словарях отключено.'
-      );
       return;
     }
 

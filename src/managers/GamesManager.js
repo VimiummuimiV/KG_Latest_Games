@@ -335,15 +335,16 @@ export class GamesManager {
     }
 
     // Get banned and played vocabulary IDs (shared for both modes)
-    const excludedSet = new Set();
+    const bannedSet = new Set();
+    const playedSet = new Set();
     try {
       const bannedRaw = localStorage.getItem('bannedVocabularies');
       if (bannedRaw) {
         const banned = JSON.parse(bannedRaw);
         if (Array.isArray(banned)) {
           banned.forEach(item => {
-            const id = typeof item === 'string' ? item : (item.id || String(item));
-            excludedSet.add(String(id));
+            const id = String(typeof item === 'string' ? item : (item.id || String(item)));
+            bannedSet.add(id);
           });
         }
       }
@@ -352,8 +353,8 @@ export class GamesManager {
         const played = JSON.parse(playedRaw);
         if (Array.isArray(played)) {
           played.forEach(item => {
-            const id = typeof item === 'string' ? item : (item.id || String(item));
-            excludedSet.add(String(id));
+            const id = String(typeof item === 'string' ? item : (item.id || String(item)));
+            playedSet.add(id);
           });
         }
       }
@@ -371,7 +372,7 @@ export class GamesManager {
       // Collect IDs from allowed types only, excluding banned and played
       const allIds = allowedTypes
         .flatMap(type => this.mainManager.validVocabularies[type] || [])
-        .filter(id => id !== undefined && id !== null && !excludedSet.has(String(id)));
+        .filter(id => id !== undefined && id !== null && !bannedSet.has(String(id)) && !playedSet.has(String(id)));
 
       if (allIds.length === 0) {
         return null;
@@ -397,12 +398,17 @@ export class GamesManager {
       };
     }
 
-    // Local random: pick a saved game from allowed types (strict: require vocType match, no null fallback), excluding banned and played
     const all = [];
+    const excludePlayed = this.mainManager.randomLocalExcludePlayed !== false;
+    const shouldExcludeLocal = (vocId) => {
+      if (!vocId) return false;
+      return bannedSet.has(vocId) || (excludePlayed && playedSet.has(vocId));
+    };
+
     this.mainManager.groupsManager.groups.forEach(group => {
       group.games.forEach(game => {
         const vocId = String(game.params.vocId || '');
-        const isExcluded = vocId && excludedSet.has(vocId);
+        const isExcluded = shouldExcludeLocal(vocId);
         // Strict filter: require vocType to be set and match allowedTypes
         if (!isExcluded && game.params.vocType && allowedTypes.includes(game.params.vocType)) {
           all.push({ game, groupId: group.id });
