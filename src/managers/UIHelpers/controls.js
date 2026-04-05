@@ -67,14 +67,15 @@ export function createControls(main) {
   const updateTooltip = (button, isEnabled, texts, delay) => {
     // texts: { click, shift, ctrl, alt, shiftAlt, ctrlShift }
     const clickText = typeof texts.click === 'function' ? texts.click(isEnabled) : texts.click;
-    const shiftText = typeof texts.shift === 'function' ? texts.shift(isEnabled) : texts.shift;
+    const shiftText = texts.shift ? (typeof texts.shift === 'function' ? texts.shift(isEnabled) : texts.shift) : '';
     const ctrlText = texts.ctrl ? (typeof texts.ctrl === 'function' ? texts.ctrl(isEnabled) : texts.ctrl) : '';
     const altText = texts.alt ? (typeof texts.alt === 'function' ? texts.alt(isEnabled) : texts.alt) : '';
     const shiftAltText = texts.shiftAlt ? (typeof texts.shiftAlt === 'function' ? texts.shiftAlt(isEnabled) : texts.shiftAlt) : '';
     const ctrlShiftText = texts.ctrlShift ? (typeof texts.ctrlShift === 'function' ? texts.ctrlShift(isEnabled) : texts.ctrlShift) : '';
+
     createCustomTooltip(button, `
       [Клик] ${clickText}
-      [Shift + Клик] ${shiftText}${delay ? ` (${delay} мс)` : ''}
+      ${shiftText ? `[Shift + Клик] ${shiftText}${delay ? ` (${delay} мс)` : ''}` : ''}
       ${ctrlText ? `[Ctrl + Клик] ${ctrlText}` : ''}
       ${altText ? `[Alt + Клик] ${altText}` : ''}
       ${shiftAltText ? `[Shift + Alt + Клик] ${shiftAltText}` : ''}
@@ -530,35 +531,52 @@ export function createControls(main) {
     className: 'latest-games-random control-button' + (main.randomGameId ? '' : ' latest-games-disabled'),
     innerHTML: icons.random
   });
-  const updateRandomTooltip = () => {
-    updateTooltip(randomRaceBtn, !!main.randomGameId, {
-      click: (isEnabled) => {
-        const modeLabel = main.randomGameId === 'global' ? 'Глобальный' : main.randomGameId === 'local' ? 'Локальный' : 'Отключен';
-        return `Случайный выбор игры: ${modeLabel}`;
-      },
-      shift: () => 'Выбрать типы словарей',
-      ctrl: () => {
-        let totalIds = [];
-        try {
-          const raw = JSON.parse(localStorage.getItem('validVocabularies') || '{}');
-          if (raw && typeof raw === 'object') totalIds = Object.values(raw).flat().filter(Boolean).map(String);
-        } catch (_) { totalIds = []; }
-        const total = new Set(totalIds).size;
-        const excluded = (() => {
+  const getRandomTooltipTexts = () => {
+    const modeLabel = main.randomGameId === 'global' ? 'Глобальный' : main.randomGameId === 'local' ? 'Локальный' : 'Отключен';
+    const base = {
+      click: `Случайный выбор игры: ${modeLabel}`
+    };
+
+    if (main.randomGameId === 'global') {
+      return {
+        ...base,
+        shift: () => 'Выбрать типы словарей',
+        ctrl: () => {
+          let totalIds = [];
           try {
-            return new Set([
-              ...(JSON.parse(localStorage.getItem('bannedVocabularies')||'[]')||[]).map(x=>String(typeof x==='string'?x:x.id||x||'')),
-              ...(JSON.parse(localStorage.getItem('playedVocabularies')||'[]')||[]).map(x=>String(typeof x==='string'?x:x.id||x||''))
-            ].filter(Boolean));
-          } catch (_) { return new Set(); }
-        })();
-        let available = 0; for (const id of new Set(totalIds)) if (!excluded.has(id)) available++;
-        return `Обновить список допустимых словарей (всего: ${total}, доступно: ${available})`;
-      },
-      alt: () => `Включить стандартные режимы при локальном случайном выборе: ${main.randomLocalIncludeStandardModes ? 'Включено' : 'Отключено'}`,
-      shiftAlt: () => `Исключение уже проигранных словарей: ${main.randomLocalExcludePlayed ? 'Включено' : 'Отключено'}`,
-      ctrlShift: () => `Локальный выбор только из текущей группы: ${main.randomLocalByActiveGroup ? 'Включено' : 'Отключено'}`
-    });
+            const raw = JSON.parse(localStorage.getItem('validVocabularies') || '{}');
+            if (raw && typeof raw === 'object') totalIds = Object.values(raw).flat().filter(Boolean).map(String);
+          } catch (_) { totalIds = []; }
+          const total = new Set(totalIds).size;
+          const excluded = (() => {
+            try {
+              return new Set([
+                ...(JSON.parse(localStorage.getItem('bannedVocabularies')||'[]')||[]).map(x=>String(typeof x==='string'?x:x.id||x||'')),
+                ...(JSON.parse(localStorage.getItem('playedVocabularies')||'[]')||[]).map(x=>String(typeof x==='string'?x:x.id||x||''))
+              ].filter(Boolean));
+            } catch (_) { return new Set(); }
+          })();
+          let available = 0; for (const id of new Set(totalIds)) if (!excluded.has(id)) available++;
+          return `Обновить список допустимых словарей (всего: ${total}, доступно: ${available})`;
+        }
+      };
+    }
+
+    if (main.randomGameId === 'local') {
+      return {
+        ...base,
+        shift: () => 'Выбрать типы словарей',
+        alt: () => `Включить стандартные режимы при локальном случайном выборе: ${main.randomLocalIncludeStandardModes ? 'Включено' : 'Отключено'}`,
+        shiftAlt: () => `Исключение уже проигранных словарей: ${main.randomLocalExcludePlayed ? 'Включено' : 'Отключено'}`,
+        ctrlShift: () => `Локальный выбор только из текущей группы: ${main.randomLocalByActiveGroup ? 'Включено' : 'Отключено'}`
+      };
+    }
+
+    return base;
+  };
+
+  const updateRandomTooltip = () => {
+    updateTooltip(randomRaceBtn, !!main.randomGameId, getRandomTooltipTexts());
     // Reflect disabled state visually
     randomRaceBtn.classList.toggle('latest-games-disabled', !main.randomGameId);
     // Add mode-specific classes for styling: random-global or random-local
