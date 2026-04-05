@@ -413,9 +413,14 @@ export class GamesManager {
     groupsToSearch.forEach(group => {
       group.games.forEach(game => {
         const vocId = String(game.params.vocId || '');
-        const isExcluded = shouldExcludeLocal(vocId);
-        // Strict filter: require vocType to be set and match allowedTypes
-        if (!isExcluded && game.params.vocType && allowedTypes.includes(game.params.vocType)) {
+        // Exclude games without vocId or with vocId that is banned/played (if setting enabled)
+        if (shouldExcludeLocal(vocId)) return;
+
+        const vocType = game.params.vocType;
+        const isAllowedVoc = vocType && allowedTypes.includes(vocType);
+        const includeStandardMode = !vocType && this.mainManager.randomLocalIncludeStandardModes;
+
+        if (isAllowedVoc || includeStandardMode) {
           all.push({ game, groupId: group.id });
         }
       });

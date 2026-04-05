@@ -92,6 +92,7 @@ export const DEFAULTS = {
   showSearchBox: false,
   randomLocalExcludePlayed: true,
   randomLocalByActiveGroup: false,
+  randomLocalIncludeStandardModes: false,
   showButtonDescriptions: true,
   showHelpTooltips: true,
   qualificationEnabled: false,
