@@ -94,7 +94,6 @@ export const DEFAULTS = {
   randomLocalByActiveGroup: false,
   showButtonDescriptions: true,
   showHelpTooltips: true,
-  showBlockedVocabAlert: true,
   qualificationEnabled: false,
   saveModeEnabled: true,
   showVocabularyData: true,

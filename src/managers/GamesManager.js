@@ -468,14 +468,7 @@ export class GamesManager {
           return candidate;
         }
         if (resp.status === 403) {
-          try {
-            if (this.mainManager && this.mainManager.showBlockedVocabAlert) {
-              const u = `${location.protocol}//klavogonki.ru/vocs/${candidate.id}/`;
-              try { if (navigator?.clipboard?.writeText) await navigator.clipboard.writeText(u); } catch (__) { }
-              try { this.mainManager.lastTriedVocUrl = u; } catch (__) { }
-              alert(`Этот словарь не предназначен для открытых игр — создать игру нельзя. URL скопирован: ${u}`);
-            }
-          } catch (__) { }
+          // Skip blocked/unavailable vocabularies silently.
         }
       } catch (err) {
         // eslint-disable-next-line no-console

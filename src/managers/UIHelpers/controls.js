@@ -555,7 +555,6 @@ export function createControls(main) {
         let available = 0; for (const id of new Set(totalIds)) if (!excluded.has(id)) available++;
         return `Обновить список допустимых словарей (всего: ${total}, доступно: ${available})`;
       },
-      alt: () => `Предупреждение о недоступных словарях: ${main.showBlockedVocabAlert ? 'Включено' : 'Отключено'}`,
       shiftAlt: () => `Исключение уже проигранных словарей: ${main.randomLocalExcludePlayed ? 'Включено' : 'Отключено'}`,
       ctrlShift: () => `Локальный выбор только из текущей группы: ${main.randomLocalByActiveGroup ? 'Включено' : 'Отключено'}`
     });
@@ -610,14 +609,6 @@ export function createControls(main) {
     // Shift + Alt + Click: toggle local random exclusion of already-played vocabularies
     if (e.shiftKey && e.altKey) {
       main.randomLocalExcludePlayed = !main.randomLocalExcludePlayed;
-      main.settingsManager.saveSettings();
-      updateRandomTooltip();
-      return;
-    }
-
-    // Alt + Click: toggle showing the blocked-vocab alert
-    if (e.altKey) {
-      main.showBlockedVocabAlert = !main.showBlockedVocabAlert;
       main.settingsManager.saveSettings();
       updateRandomTooltip();
       return;

@@ -41,7 +41,6 @@
     "showSearchBox": false,
     "showButtonDescriptions": false,
     "showHelpTooltips": true,
-    "showBlockedVocabAlert": false,
     "qualificationEnabled": false,
     "saveModeEnabled": false,
     "showVocabularyData": false,

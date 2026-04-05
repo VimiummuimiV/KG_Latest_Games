@@ -34,7 +34,6 @@ export class SettingsManager {
       this.main.showButtonDescriptions = settings.showButtonDescriptions ?? this.main.showButtonDescriptions;
       this.main.showHelpTooltips = settings.showHelpTooltips ?? this.main.showHelpTooltips;
       this.main.randomGameId = settings.randomGameId ?? this.main.randomGameId;
-      this.main.showBlockedVocabAlert = settings.showBlockedVocabAlert ?? this.main.showBlockedVocabAlert;
       this.main.randomLocalExcludePlayed = settings.randomLocalExcludePlayed ?? this.main.randomLocalExcludePlayed;
       this.main.randomLocalByActiveGroup = settings.randomLocalByActiveGroup ?? this.main.randomLocalByActiveGroup;
       this.main.qualificationEnabled = settings.qualificationEnabled ?? this.main.qualificationEnabled;
@@ -253,7 +252,6 @@ export class SettingsManager {
         showSearchBox: this.main.showSearchBox,
         showButtonDescriptions: this.main.showButtonDescriptions,
         showHelpTooltips: this.main.showHelpTooltips,
-        showBlockedVocabAlert: this.main.showBlockedVocabAlert,
         randomLocalExcludePlayed: this.main.randomLocalExcludePlayed,
         randomLocalByActiveGroup: this.main.randomLocalByActiveGroup,
         qualificationEnabled: this.main.qualificationEnabled,
