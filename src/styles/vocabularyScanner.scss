@@ -176,6 +176,7 @@ $fw-bold:       700;  // titles, numeric counters, links
   padding-right: 4px;
   scrollbar-width: thin;
   scrollbar-color: var(--rg-border-hover) var(--rg-bg-primary);
+  user-select: none;
 }
 
 .rg-scanner-group-label {

@@ -34,6 +34,26 @@ function showGroupPicker(groups) {
     const list = el('div', 'rg-scanner-group-list');
     const checked = new Set();
 
+    // Drag-to-toggle: mousedown records the target state, mouseover while held applies it
+    let dragState = null; // null | true | false
+
+    list.addEventListener('mousedown', (e) => {
+      const cb = e.target.closest('input[type=checkbox]') || e.target.closest('label')?.querySelector('input[type=checkbox]');
+      if (!cb) return;
+      dragState = !cb.checked;
+    });
+
+    list.addEventListener('mouseover', (e) => {
+      if (dragState === null || e.buttons !== 1) { dragState = null; return; }
+      const cb = e.target.closest('input[type=checkbox]') || e.target.closest('label')?.querySelector('input[type=checkbox]');
+      if (!cb || cb.checked === dragState) return;
+      cb.checked = dragState;
+      dragState ? checked.add(cb.dataset.groupId) : checked.delete(cb.dataset.groupId);
+      scanBtn.disabled = checked.size === 0;
+    });
+
+    document.addEventListener('mouseup', () => { dragState = null; }, { capture: true });
+
     groupsWithVocs.forEach(group => {
       const vocCount = group.games.filter(g => g.params?.gametype === 'voc' && g.params?.vocId).length;
       const label = el('label', 'rg-scanner-group-label');
