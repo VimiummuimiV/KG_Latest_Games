@@ -71,23 +71,26 @@ export async function fetchVocabularyData(vocId) {
     const favCountElement = doc.querySelector('#fav_cnt');
     if (favCountElement) metadata.usersCount = favCountElement.textContent.trim();
     
-    // Author info
-    const authorElement = doc.querySelector('.user-content dl dd[style*="background"]');
-    if (authorElement) {
-      const authorLink = authorElement.querySelector('a');
+    // Author info — find the <dl> whose <dt> is 'Автор:' using direct children,
+    // then extract the profile link from its <dd> regardless of whether an avatar is present.
+    for (const dl of doc.querySelectorAll('.user-content dl')) {
+      const dt = dl.children[0]?.tagName === 'DT' ? dl.children[0] : null;
+      const dd = Array.from(dl.children).find(el => el.tagName === 'DD') ?? null;
+      if (!dt || !dd) continue;
+      if (dt.textContent.trim() !== 'Автор:') continue;
+
+      const authorLink = dd.querySelector('a[href^="/profile/"]');
       if (authorLink) {
         metadata.authorName = authorLink.textContent.trim();
         const hrefMatch = authorLink.getAttribute('href').match(/\/profile\/(\d+)/);
         if (hrefMatch) metadata.authorId = hrefMatch[1];
       }
-      
-      // Extract avatar from style or construct from ID
-      const styleAttr = authorElement.getAttribute('style');
-      if (styleAttr) {
-        const avatarMatch = styleAttr.match(/url\s*\(\s*['"&quot;]*([^'")\s]+)['"&quot;]*\s*\)/);
-        metadata.authorAvatar = avatarMatch ? avatarMatch[1].replace(/&quot;/g, '') : 
-          (metadata.authorId ? `/storage/avatars/${metadata.authorId}_big.png` : null);
-      }
+
+      // Avatar: only set when explicitly present as a background-image on the <dd>.
+      const styleAttr = dd.getAttribute('style') || '';
+      const avatarMatch = styleAttr.match(/url\s*\(\s*['"]?([^'")\s]+)['"]?\s*\)/);
+      metadata.authorAvatar = avatarMatch ? avatarMatch[1].replace(/&quot;/g, '') : null;
+      break;
     }
     
     // Other metadata
@@ -151,12 +154,11 @@ function createVocabularyTooltip(content, metadata) {
   if (actualMetadata) {
     html += '<div class="tooltip-header">';
     
-    // Author with avatar
-    if (actualMetadata.authorAvatar && actualMetadata.authorName) {
-      html += `<div class="tooltip-author">
-        <img src="${actualMetadata.authorAvatar}" alt="${actualMetadata.authorName}" class="tooltip-avatar">
-        <span class="tooltip-author-name">${actualMetadata.authorName}</span>
-      </div>`;
+    if (actualMetadata.authorName) {
+      html += '<div class="tooltip-author">';
+      if (actualMetadata.authorAvatar) html += `<img src="${actualMetadata.authorAvatar}" class="tooltip-avatar">`;
+      html += `<span class="tooltip-author-name">${actualMetadata.authorName}</span>`;
+      html += '</div>';
     }
     
     // Title
