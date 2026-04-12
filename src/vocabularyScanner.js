@@ -43,7 +43,7 @@ function showGroupPicker(groups) {
       cb.dataset.groupId = group.id;
       cb.addEventListener('change', () => {
         cb.checked ? checked.add(group.id) : checked.delete(group.id);
-        okBtn.disabled = checked.size === 0;
+        scanBtn.disabled = checked.size === 0;
       });
       label.append(cb, el('span', null, group.title), el('span', 'rg-scanner-group-label-count', `(${vocCount} словарей)`));
       list.appendChild(label);
@@ -52,18 +52,18 @@ function showGroupPicker(groups) {
     card.appendChild(list);
 
     const btnRow = el('div', 'rg-scanner-btn-row');
-    const allBtn = el('button', 'rg-scanner-btn', 'Выбрать все');
-    const deselectBtn = el('button', 'rg-scanner-btn', 'Снять все');
-    const cancelBtn = el('button', 'rg-scanner-btn', 'Отмена');
-    const okBtn = el('button', 'rg-scanner-btn rg-scanner-btn--primary', 'Сканировать');
-    okBtn.disabled = true;
+    const selectBtn   = el('button', 'rg-scanner-btn rg-scanner-btn--select',   'Выбрать все');
+    const deselectBtn = el('button', 'rg-scanner-btn rg-scanner-btn--deselect', 'Снять все');
+    const cancelBtn   = el('button', 'rg-scanner-btn rg-scanner-btn--cancel', 'Отмена');
+    const scanBtn     = el('button', 'rg-scanner-btn rg-scanner-btn--scan',   'Сканировать');
+    scanBtn.disabled = true;
 
-    allBtn.addEventListener('click', () => {
+    selectBtn.addEventListener('click', () => {
       list.querySelectorAll('input[type=checkbox]').forEach(cb => {
         cb.checked = true;
         checked.add(cb.dataset.groupId);
       });
-      okBtn.disabled = false;
+      scanBtn.disabled = false;
     });
 
     deselectBtn.addEventListener('click', () => {
@@ -71,16 +71,16 @@ function showGroupPicker(groups) {
         cb.checked = false;
         checked.delete(cb.dataset.groupId);
       });
-      okBtn.disabled = true;
+      scanBtn.disabled = true;
     });
 
     cancelBtn.addEventListener('click', () => { overlay.remove(); resolve(null); });
-    okBtn.addEventListener('click', () => {
+    scanBtn.addEventListener('click', () => {
       overlay.remove();
       resolve(groupsWithVocs.filter(g => checked.has(g.id)));
     });
 
-    btnRow.append(allBtn, deselectBtn, cancelBtn, okBtn);
+    btnRow.append(selectBtn, deselectBtn, cancelBtn, scanBtn);
     card.appendChild(btnRow);
     overlay.appendChild(card);
     document.body.appendChild(overlay);
@@ -115,9 +115,11 @@ function createProgressUI(total) {
   const pct = el('span', 'rg-scanner-progress-percent', '0%');
   barRow.append(barWrap, pct);
 
-  const cancelBtn = el('button', 'rg-scanner-cancel-btn', 'Отменить');
+  const cancelBtn = el('button', 'rg-scanner-btn rg-scanner-btn--cancel', 'Отменить');
+  const btnRow    = el('div', 'rg-scanner-btn-row');
+  btnRow.appendChild(cancelBtn);
 
-  card.append(meta, vocRow, barRow, cancelBtn);
+  card.append(meta, vocRow, barRow, btnRow);
   overlay.appendChild(card);
   document.body.appendChild(overlay);
 
@@ -205,9 +207,11 @@ function showResults(groupResults, totalScanned, wasCancelled) {
 
   card.appendChild(tree);
 
-  const closeBtn = el('button', 'rg-scanner-close-btn', 'Закрыть');
+  const btnRow   = el('div', 'rg-scanner-btn-row');
+  const closeBtn = el('button', 'rg-scanner-btn rg-scanner-btn--close', 'Закрыть');
   closeBtn.addEventListener('click', () => overlay.remove());
-  card.appendChild(closeBtn);
+  btnRow.appendChild(closeBtn);
+  card.appendChild(btnRow);
 
   overlay.appendChild(card);
   document.body.appendChild(overlay);

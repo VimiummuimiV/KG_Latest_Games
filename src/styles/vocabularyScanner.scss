@@ -13,7 +13,6 @@ $fs-numeric:    0.84em;  // tabular counters: voc-id, fraction, percent
 // Font weights
 // ─────────────────────────────────────────────────────────────────────────────
 
-$fw-regular:    400;
 $fw-semibold:   600;  // labels, badges, button text
 $fw-bold:       700;  // titles, numeric counters, links
 
@@ -43,7 +42,6 @@ $fw-bold:       700;  // titles, numeric counters, links
   &:hover {
     background: var(--rg-bg-hover);
     border-color: var(--rg-border-hover);
-    color: var(--rg-text-primary);
   }
 
   &:active {
@@ -120,11 +118,49 @@ $fw-bold:       700;  // titles, numeric counters, links
   background: var(--rg-bg-card);
   color: var(--rg-text-secondary);
   padding: 0.35em 0.9em;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 
-.rg-scanner-btn--primary {
-  font-weight: $fw-bold;
-  color: var(--rg-text-primary);
+// Color modifiers — same token pattern as vocabulariesManager
+
+.rg-scanner-btn--select {
+  color: hsl(var(--rg-popup-btn-sort));
+  border-color: hsla(var(--rg-popup-btn-sort) / 0.5);
+  &:hover { background: hsla(var(--rg-popup-btn-sort) / 0.15); border-color: hsl(var(--rg-popup-btn-sort)); }
+  &:active { background: hsla(var(--rg-popup-btn-sort) / 0.25); }
+}
+
+.rg-scanner-btn--deselect {
+  color: hsl(var(--rg-popup-btn-revert));
+  border-color: hsla(var(--rg-popup-btn-revert) / 0.5);
+  &:hover { background: hsla(var(--rg-popup-btn-revert) / 0.15); border-color: hsl(var(--rg-popup-btn-revert)); }
+  &:active { background: hsla(var(--rg-popup-btn-revert) / 0.25); }
+}
+
+.rg-scanner-btn--close {
+  color: hsl(var(--rg-popup-btn-revert));
+  border-color: hsla(var(--rg-popup-btn-revert) / 0.5);
+  &:hover { background: hsla(var(--rg-popup-btn-revert) / 0.15); border-color: hsl(var(--rg-popup-btn-revert)); }
+  &:active { background: hsla(var(--rg-popup-btn-revert) / 0.25); }
+}
+
+.rg-scanner-btn--cancel {
+  color: hsl(var(--rg-popup-btn-remove));
+  border-color: hsla(var(--rg-popup-btn-remove) / 0.5);
+  &:hover { background: hsla(var(--rg-popup-btn-remove) / 0.15); border-color: hsl(var(--rg-popup-btn-remove)); }
+  &:active { background: hsla(var(--rg-popup-btn-remove) / 0.25); }
+}
+
+.rg-scanner-btn--scan {
+  color: hsl(var(--rg-popup-btn-save));
+  border-color: hsla(var(--rg-popup-btn-save) / 0.5);
+  font-weight: $fw-semibold;
+  &:hover { background: hsla(var(--rg-popup-btn-save) / 0.15); border-color: hsl(var(--rg-popup-btn-save)); }
+  &:active { background: hsla(var(--rg-popup-btn-save) / 0.25); }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -231,14 +267,6 @@ $fw-bold:       700;  // titles, numeric counters, links
     flex-shrink: 0;
   }
 
-  .rg-scanner-cancel-btn {
-    @include scanner-btn-base;
-    align-self: flex-end;
-    background: transparent;
-    color: var(--rg-text-tertiary);
-    padding: 0.3em 0.9em;
-    margin-top: 0.1em;
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -409,18 +437,4 @@ $fw-bold:       700;  // titles, numeric counters, links
     }
   }
 
-  // ── Close button — neutral, panel-consistent ──────────────────────────────
-
-  .rg-scanner-close-btn {
-    @include scanner-btn-base;
-    align-self: flex-end;
-    background: var(--rg-bg-card);
-    color: var(--rg-text-secondary);
-    padding: 0.4em 1.1em;
-    margin-top: 0.2em;
-
-    &:active {
-      background: var(--rg-hover-control);
-    }
-  }
 }
