@@ -5,6 +5,7 @@
 @use "gamesDataContainer";
 @use "vocabularyContent";
 @use "vocabulariesManager";
+@use "vocabularyScanner";
 @use "mixins" as *;
 
 :root {
@@ -298,6 +299,17 @@
 
       &.dragged-game {
         animation: tilt-n-move-shaking 0.3s ease 5;
+      }
+
+      &.voc-private {
+        opacity: 0.5;
+        filter: saturate(0.3);
+        transition: opacity 0.15s ease, filter 0.15s ease;
+
+        &:hover {
+          opacity: 0.8;
+          filter: saturate(0.6);
+        }
       }
     }
   }

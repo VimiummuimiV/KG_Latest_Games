@@ -8,6 +8,7 @@ import { showMigrationPopup } from "../../vocabularyMigration.js";
 import { getSessionVocId } from "../../vocabularyContent.js";
 import { VocabulariesManager } from "../../vocabulariesManager.js";
 import { showVocabularyTypesPopup } from "../../vocabularyType.js";
+import { runVocScan } from "../../vocabularyScanner.js";
 
 export function createControls(main) {
   const controlsContainer = createElement('div', { className: 'latest-games-controls' });
@@ -135,49 +136,14 @@ export function createControls(main) {
 
   createCustomTooltip(refreshBtn, `
     [Клик] Сгенерировать новые уникальные ID для всех групп и игр
-    [Shift + Клик] Обновить типы словарей для всех игр (если отсутствуют)
+    [Shift + Клик] Получить актуальные данные для всех словарей (типы, публичность)
   `);
 
   refreshBtn.addEventListener('click', async (e) => {
     if (e.shiftKey) {
-      // Shift+Click: Update missing vocType for all games
-      if (!confirm('Вы уверены, что хотите обновить типы словарей для всех игр без них? Это может занять время.')) return;
-
-      const allGames = [];
-      main.groupsManager.groups.forEach(group => {
-        group.games.forEach(game => {
-          if (game.params && (game.params.vocType === null || game.params.vocType === undefined)) {
-            allGames.push({ group, game });
-          }
-        });
-      });
-
-      if (allGames.length === 0) {
-        alert('✔️ Все игры уже имеют типы словарей.');
-        return;
-      }
-
-      let updatedCount = 0;
-      const DELAY_MS = 500; // Optional delay between fetches (set to 0 for no rate limiting)
-
-      for (const { group, game } of allGames) {
-        const vocId = game.params.vocId;
-        if (vocId) {
-          const basic = await fetchVocabularyBasicData(vocId).catch(() => null);
-          if (basic && basic.vocabularyType) {
-            game.params.vocType = basic.vocabularyType;
-            updatedCount++;
-          }
-        }
-        // Optional rate limiting delay
-        if (DELAY_MS > 0) {
-          await new Promise(resolve => setTimeout(resolve, DELAY_MS));
-        }
-      }
-
-      main.gamesManager.saveGameData();
-      main.uiManager.refreshContainer();
-      alert(`✔️ Обновлено ${updatedCount} игр с типами словарей.`);
+      // Shift+Click: Full scan — fill in missing vocTypes AND update publicity/timeout
+      await runVocScan(main);
+      return;
     } else {
       // Original Click: Refresh IDs only
       if (!confirm('Вы уверены, что хотите сгенерировать новые уникальные ID для всех групп и игр? Это действие нельзя отменить.')) return;

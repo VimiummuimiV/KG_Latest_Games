@@ -4,7 +4,47 @@ import { createPopup } from "./menuPopup.js";
 import { hideTooltip } from "./vocabularyContent.js";
 import { typeMapping } from "./definitions.js";
 
-// Function to fetch basic vocabulary data (name, rating, fans, author, type) from the server
+// Extracts all relevant dl fields from .user-content section of a parsed voc page document
+function extractDlFields(doc) {
+  let vocabularyAuthor   = '';
+  let vocabularyType     = null;
+  let vocabularyIsPublic = null;
+  let createdDate        = null;
+  let versionDate        = null;
+
+  for (const dl of doc.querySelectorAll('.user-content dl')) {
+    const dt = dl.querySelector('dt');
+    const dd = dl.querySelector('dd');
+    if (!dt || !dd) continue;
+
+    const dtText = dt.textContent.trim();
+
+    if (dtText === 'Автор:') {
+      const authorLink = dd.querySelector('a[href^="/profile/"]');
+      if (authorLink) vocabularyAuthor = authorLink.textContent.trim();
+    }
+
+    if (dtText === 'Тип словаря:') {
+      const typeText = dd.childNodes[0]?.textContent?.trim();
+      if (typeText && typeMapping[typeText]) vocabularyType = typeMapping[typeText];
+    }
+
+    if (dtText === 'Публичный:') {
+      vocabularyIsPublic = dd.textContent.trim();
+    }
+
+    if (dtText === 'Создан:') {
+      const dateText = Array.from(dd.childNodes)
+        .find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
+      if (dateText) createdDate = dateText.textContent.trim();
+      const versionNote = dd.querySelector('.note');
+      if (versionNote) versionDate = versionNote.textContent.trim();
+    }
+  }
+
+  return { vocabularyAuthor, vocabularyType, vocabularyIsPublic, createdDate, versionDate };
+}
+
 export async function fetchVocabularyBasicData(vocId) {
   const controller = new AbortController();
   const signal = controller.signal;
@@ -20,9 +60,12 @@ export async function fetchVocabularyBasicData(vocId) {
     const decoder = new TextDecoder();
     let htmlChunk = '';
 
-    while (true) {
+    // Phase 1: stream until we find .user-title with name, rating, and fans count
+    let titleData = null;
+
+    while (!titleData) {
       const { done, value } = await reader.read();
-      if (done) break;
+      if (done) return null;
 
       htmlChunk += decoder.decode(value, { stream: true });
 
@@ -33,77 +76,41 @@ export async function fetchVocabularyBasicData(vocId) {
       const userTitle = doc.querySelector('.user-title');
       if (!userTitle) continue;
 
-      const titleCell = userTitle.querySelector('td.title');
-      if (!titleCell) continue;
+      const titleCell  = userTitle.querySelector('td.title');
+      const ratingSpan = titleCell?.querySelector('#rating_cnt');
+      const fansSpan = titleCell?.querySelector('#fav_cnt');
+      if (!titleCell || !ratingSpan || !fansSpan) continue;
 
-      const ratingSpan = titleCell.querySelector('#rating_cnt');
-      const fansSpan = titleCell.querySelector('#fav_cnt');
-      if (ratingSpan && fansSpan) {
-        // extract basic data
-        const vocabularyName = titleCell.childNodes[0].textContent.trim();
-        const ratingCount = parseInt(ratingSpan.textContent.trim(), 10);
-        const fansCount = parseInt(fansSpan.textContent.trim(), 10);
-
-        // extract additional data
-        let vocabularyAuthor = '';
-        let vocabularyType = null;
-        let vocabularyIsPublic = null;
-        let createdDate = null;
-        let versionDate = null;
-        
-        const dlElements = doc.querySelectorAll('.user-content dl');
-        for (const dl of dlElements) {
-          const dt = dl.querySelector('dt');
-          const dd = dl.querySelector('dd');
-          
-          if (!dt || !dd) continue;
-          
-          const dtText = dt.textContent.trim();
-          
-          // Get author
-          if (dtText === 'Автор:') {
-            const authorLink = dd.querySelector('a[href^="/profile/"]');
-            if (authorLink) {
-              vocabularyAuthor = authorLink.textContent.trim();
-            }
-          }
-          
-          // Get vocabulary type
-          if (dtText === 'Тип словаря:') {
-            const typeText = dd.childNodes[0]?.textContent?.trim();
-            if (typeText && typeMapping[typeText]) {
-              vocabularyType = typeMapping[typeText];
-            }
-          }
-
-          // Get public status
-          if (dtText === 'Публичный:') {
-            vocabularyIsPublic = dd.textContent.trim();
-          }
-
-          // Get created date
-          if (dtText === 'Создан:') {
-            const dateText = Array.from(dd.childNodes)
-              .find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
-            if (dateText) createdDate = dateText.textContent.trim();
-            const versionNote = dd.querySelector('.note');
-            if (versionNote) versionDate = versionNote.textContent.trim();
-          }
-        }
-
-        // abort the fetch (stops downloading the rest of the page)
-        controller.abort();
-
-        return { vocId, vocabularyName, ratingCount, fansCount, vocabularyAuthor, vocabularyType, vocabularyIsPublic, createdDate, versionDate };
-      }
+      titleData = {
+        vocId,
+        vocabularyName: titleCell.childNodes[0]?.textContent?.trim() ?? '',
+        ratingCount:    parseInt(ratingSpan.textContent.trim(), 10),
+        fansCount:      parseInt(fansSpan.textContent.trim(),   10),
+      };
     }
 
-    return null; // didn't find the data
+    // Phase 2: keep streaming until we have all dl fields from .user-content.
+    // 'Тип словаря:' is the last dl field we care about, so we use it as the completion signal.
+    // 'Публичный:' appears just before it and is the minimum we need, but waiting for
+    // 'Тип словаря:' ensures we don't cut off mid-section.
+    const dlCompleteSentinel = 'Тип словаря:';
+
+    while (!htmlChunk.includes(dlCompleteSentinel)) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      htmlChunk += decoder.decode(value, { stream: true });
+    }
+
+    const finalDoc = new DOMParser().parseFromString(htmlChunk, 'text/html');
+    const dlFields = extractDlFields(finalDoc);
+
+    controller.abort();
+
+    return { ...titleData, ...dlFields };
+
   } catch (err) {
-    if (err.name === 'AbortError') {
-      // Fetch was aborted because we already got our data — not really an error
-      return null;
-    }
+    if (err.name === 'AbortError') return null;
     console.error('Error fetching/parsing vocabulary basic data:', err);
     return null;
   }
@@ -145,14 +152,13 @@ export function addGameToGroup(group, vocId, vocName, vocType, groups, main) {
  * @param {Array} groups - Array of group objects.
  * @param {MouseEvent} event - The contextmenu event.
  * @param {string} vocId - The vocabulary ID to add.
- * @param {string} vocName - The vocabulary name from the link text.
+ * @param {string} vocName - The vocabulary name.
  * @param {string|null} vocType - The vocabulary type.
  * @param {object} main - The main manager instance.
  */
 export function showVocabularyCreationPopup(groups, event, vocId, vocName, vocType, main) {
-  hideTooltip(); // Hide any existing tooltip
+  hideTooltip();
 
-  // Create button configurations for each group
   const buttonConfigs = groups.map(group => {
     const alreadyExists = group.games.some(game => String(game.params?.vocId) === String(vocId));
     return {
@@ -169,39 +175,20 @@ export function showVocabularyCreationPopup(groups, event, vocId, vocName, vocTy
 }
 
 /**
- * Check if current page supports vocabulary creation
- * @returns {boolean} True if vocabulary creation is supported on current page
+ * Check if current page supports vocabulary creation.
+ * @returns {boolean}
  */
 export function isVocabularyCreationSupported() {
   return getContainerSelector() !== null;
 }
 
-/**
- * Extract vocabulary name from anchor element
- * @param {HTMLElement} anchor - The anchor element
- * @returns {string} The vocabulary name
- */
-function extractVocabularyName(anchor) {
-  return anchor.textContent.trim();
-}
-
-/**
- * Tracks which containers have had our listener attached
- */
 const attachedContainers = new WeakSet();
 
-/**
- * Attach event listener to a container if not already attached
- * @param {HTMLElement} container - The container element
- * @param {Array} groups - Array of group objects
- * @param {object} main - The main manager instance
- */
 function attachEventToContainer(container, groups, main) {
   if (attachedContainers.has(container)) return;
   attachedContainers.add(container);
 
-  // Helper function to fetch vocabulary data
-  async function getVocabularyData(vocId, href) {
+  async function getVocabularyData(vocId) {
     const basicData = await fetchVocabularyBasicData(vocId);
     if (basicData && basicData.vocabularyName) {
       return {
@@ -230,32 +217,31 @@ function attachEventToContainer(container, groups, main) {
 
     let latestGamesData = main.gamesManager.latestGamesData || {};
 
-    // Handle ctrl + contextmenu case FIRST
+    // Ctrl + right-click: add vocabulary directly to the last used group without showing the popup
     if (e.ctrlKey) {
       const previousGroupId = latestGamesData.latestGroupAddedGameId;
       if (previousGroupId) {
         const group = groups.find(g => g.id === previousGroupId);
         if (group) {
-          // Only prevent default if we're actually handling the event
           e.preventDefault();
           e.stopPropagation();
 
-          const data = await getVocabularyData(vocId, href);
-          if (!data.success) return; // Abort on fetch failure
+          const data = await getVocabularyData(vocId);
+          if (!data.success) return;
 
           addGameToGroup(group, vocId, data.vocName, data.vocType, groups, main);
-          return; // Exit early
+          return;
         }
       }
-      // If ctrl is held but no previous group found, let default context menu show
+      // No previous group found — let the browser's default context menu show
       return;
     }
 
     e.preventDefault();
     e.stopPropagation();
 
-    const data = await getVocabularyData(vocId, href);
-    if (!data.success) return; // Abort on fetch failure
+    const data = await getVocabularyData(vocId);
+    if (!data.success) return;
 
     showVocabularyCreationPopup(groups, e, vocId, data.vocName, data.vocType, main);
   });
@@ -275,8 +261,7 @@ function waitFor(selector, callback) {
             if (node.matches(selector)) {
               callback(node);
             }
-            const matchingDescendants = node.querySelectorAll(selector);
-            matchingDescendants.forEach((el) => callback(el));
+            node.querySelectorAll(selector).forEach((el) => callback(el));
           }
         });
       }
@@ -298,16 +283,13 @@ export function attachVocabularyCreation(groups, main) {
     return;
   }
 
-  // Handle multiple selectors (comma-separated)
   const selectors = containerSelector.split(',').map(s => s.trim());
 
   selectors.forEach(selector => {
-    // Immediately attach if container exists now
     const container = document.querySelector(selector);
     if (container) {
       attachEventToContainer(container, groups, main);
     }
-    // Also observe for future containers
     waitFor(selector, (el) => attachEventToContainer(el, groups, main));
   });
 }

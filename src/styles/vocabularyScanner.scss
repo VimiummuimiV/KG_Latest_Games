@@ -1,0 +1,426 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Typography scale
+// ─────────────────────────────────────────────────────────────────────────────
+
+$fs-title:      0.95em;  // card/section titles
+$fs-meta:       0.88em;  // meta row, group header
+$fs-body:       0.84em;  // general small body text (empty state, subtitle)
+$fs-item:       0.78em;  // tree items, badges, count pills
+$fs-btn:        0.82em;  // buttons (cancel / close)
+$fs-numeric:    0.84em;  // tabular counters: voc-id, fraction, percent
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Font weights
+// ─────────────────────────────────────────────────────────────────────────────
+
+$fw-regular:    400;
+$fw-semibold:   600;  // labels, badges, button text
+$fw-bold:       700;  // titles, numeric counters, links
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Numeric / tabular mixin  — used wherever numbers must column-align
+// ─────────────────────────────────────────────────────────────────────────────
+
+@mixin tabular-numeric($size: $fs-numeric, $weight: $fw-bold) {
+  font-size: $size;
+  font-weight: $weight;
+  font-variant-numeric: tabular-nums;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared button base  — all scanner buttons share this grammar
+// ─────────────────────────────────────────────────────────────────────────────
+
+@mixin scanner-btn-base {
+  border: 1px solid var(--rg-border-primary);
+  border-radius: 4px;
+  font-size: $fs-btn;
+  font-weight: $fw-semibold;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+  &:hover {
+    background: var(--rg-bg-hover);
+    border-color: var(--rg-border-hover);
+    color: var(--rg-text-primary);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared overlay backdrop
+// ─────────────────────────────────────────────────────────────────────────────
+
+.rg-scanner-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  font-family: "Montserrat", "Noto Color Emoji", sans-serif;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared card base — mirrors panel card aesthetics
+// ─────────────────────────────────────────────────────────────────────────────
+
+.rg-scanner-card {
+  background: var(--rg-bg-primary);
+  color: var(--rg-text-primary);
+  border: 1px solid var(--rg-border-primary);
+  border-radius: 8px;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
+  padding: 1.4em 1.6em 1.6em;
+  width: min(460px, 92vw);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9em;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared title — same style as panel headers
+// ─────────────────────────────────────────────────────────────────────────────
+
+.rg-scanner-title {
+  font-size: $fs-title;
+  font-weight: $fw-bold;
+  color: var(--rg-header-text);
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  flex-wrap: wrap;
+  padding-bottom: 0.7em;
+  border-bottom: 1px solid var(--rg-border-primary);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared button row — used in group picker and anywhere buttons sit in a row
+// ─────────────────────────────────────────────────────────────────────────────
+
+.rg-scanner-btn-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  justify-content: flex-end;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared scanner buttons — usable in any card
+// ─────────────────────────────────────────────────────────────────────────────
+
+.rg-scanner-btn {
+  @include scanner-btn-base;
+  background: var(--rg-bg-card);
+  color: var(--rg-text-secondary);
+  padding: 0.35em 0.9em;
+}
+
+.rg-scanner-btn--primary {
+  font-weight: $fw-bold;
+  color: var(--rg-text-primary);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Group picker card
+// ─────────────────────────────────────────────────────────────────────────────
+
+.rg-scanner-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rg-border-hover) var(--rg-bg-primary);
+}
+
+.rg-scanner-group-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: $fs-meta;
+  padding: 3px 0;
+}
+
+.rg-scanner-group-label-count {
+  opacity: 0.6;
+  font-size: $fs-item;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Progress card
+// ─────────────────────────────────────────────────────────────────────────────
+
+.rg-scanner-progress-card {
+  gap: 0.6em;
+
+  .rg-scanner-progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: $fs-meta;
+
+    .rg-scanner-progress-group {
+      font-weight: $fw-semibold;
+      color: var(--rg-text-primary);
+    }
+
+    .rg-scanner-progress-fraction {
+      @include tabular-numeric;
+      color: var(--rg-text-tertiary);
+    }
+  }
+
+  .rg-scanner-progress-voc {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    font-size: $fs-meta;
+    min-height: 1.2em;
+
+    .rg-scanner-progress-voc-id {
+      @include tabular-numeric;
+      color: var(--rg-text-secondary);
+      flex-shrink: 0;
+    }
+
+    .rg-scanner-progress-voc-name {
+      color: var(--rg-text-tertiary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .rg-scanner-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+  }
+
+  .rg-scanner-bar-wrap {
+    flex: 1;
+    height: 10px;
+    background: var(--rg-rank-slider-track-bg);
+    border: 1px solid var(--rg-rank-slider-border);
+    border-radius: 6px;
+    overflow: hidden;
+
+    .rg-scanner-bar-fill {
+      height: 100%;
+      background: var(--rg-border-pinned);
+      border-radius: 6px;
+      transition: width 0.2s ease;
+    }
+  }
+
+  .rg-scanner-progress-percent {
+    @include tabular-numeric;
+    color: var(--rg-text-tertiary);
+    min-width: 3em;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .rg-scanner-cancel-btn {
+    @include scanner-btn-base;
+    align-self: flex-end;
+    background: transparent;
+    color: var(--rg-text-tertiary);
+    padding: 0.3em 0.9em;
+    margin-top: 0.1em;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Results card
+// ─────────────────────────────────────────────────────────────────────────────
+
+.rg-scanner-results-card {
+  width: min(520px, 94vw);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+
+  .rg-scanner-results-badge {
+    display: inline-block;
+    background: var(--rg-bg-card);
+    color: var(--rg-text-secondary);
+    border: 1px solid var(--rg-border-primary);
+    border-radius: 20px;
+    padding: 0.15em 0.65em;
+    font-size: $fs-item;
+    font-weight: $fw-semibold;
+  }
+
+  .rg-scanner-results-subtitle {
+    font-size: $fs-body;
+    color: var(--rg-text-secondary);
+    line-height: 1.5;
+
+    strong {
+      color: var(--rg-text-primary);
+      font-weight: $fw-bold;
+    }
+  }
+
+  // ── Scrollable tree ───────────────────────────────────────────────────────
+
+  .rg-scanner-results-tree {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: calc(90vh - 210px);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4em;
+    padding-right: 2px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--rg-border-hover) var(--rg-bg-primary);
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: var(--rg-bg-primary);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: var(--rg-border-hover);
+      border-radius: 2px;
+
+      &:hover {
+        background-color: var(--rg-text-tertiary);
+      }
+    }
+  }
+
+  .rg-scanner-results-empty {
+    text-align: center;
+    color: var(--rg-text-tertiary);
+    font-style: italic;
+    padding: 1.5em 0;
+    font-size: $fs-body;
+  }
+
+  // ── Tree: group block ─────────────────────────────────────────────────────
+
+  .rg-scanner-tree-group {
+    border: 1px solid var(--rg-border-primary);
+    border-radius: 4px;
+  }
+
+  .rg-scanner-tree-group-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.45em 0.8em;
+    background: var(--rg-bg-secondary);
+    border-bottom: 1px solid var(--rg-border-primary);
+    font-size: $fs-meta;
+    font-weight: $fw-bold;
+
+    .rg-scanner-tree-group-icon {
+      font-size: $fs-title;
+      flex-shrink: 0;
+    }
+
+    .rg-scanner-tree-group-title {
+      flex: 1;
+      color: var(--rg-text-primary);
+    }
+
+    .rg-scanner-tree-group-count {
+      background: var(--rg-bg-card);
+      color: var(--rg-text-secondary);
+      border: 1px solid var(--rg-border-primary);
+      border-radius: 10px;
+      padding: 0.1em 0.5em;
+      font-size: $fs-item;
+      font-weight: $fw-semibold;
+    }
+  }
+
+  // ── Tree: items list ──────────────────────────────────────────────────────
+
+  .rg-scanner-tree-items {
+    list-style: none;
+    margin: 0;
+    padding: 0.2em 0;
+    background: var(--rg-bg-primary);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .rg-scanner-tree-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.35em 0.8em 0.35em 1.4em;
+    font-size: $fs-item;
+    border-bottom: 1px solid var(--rg-border-primary);
+    transition: background 0.12s;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background: var(--rg-bg-hover);
+    }
+
+    .rg-scanner-tree-item-icon {
+      flex-shrink: 0;
+      font-size: $fs-body;
+      opacity: 0.6;
+    }
+
+    .rg-scanner-tree-item-link {
+      font-weight: $fw-bold;
+      font-size: 1em;
+      color: var(--rg-text-secondary);
+      text-decoration: none;
+      flex-shrink: 0;
+
+      &:hover {
+        text-decoration: underline;
+        color: var(--rg-text-primary);
+      }
+    }
+
+    .rg-scanner-tree-item-name {
+      color: var(--rg-text-tertiary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  // ── Close button — neutral, panel-consistent ──────────────────────────────
+
+  .rg-scanner-close-btn {
+    @include scanner-btn-base;
+    align-self: flex-end;
+    background: var(--rg-bg-card);
+    color: var(--rg-text-secondary);
+    padding: 0.4em 1.1em;
+    margin-top: 0.2em;
+
+    &:active {
+      background: var(--rg-hover-control);
+    }
+  }
+}
