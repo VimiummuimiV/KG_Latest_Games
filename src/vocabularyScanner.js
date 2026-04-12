@@ -292,6 +292,11 @@ export async function runVocScan(main) {
         game.params.vocIsPublic =
           data.vocabularyIsPublic === 'Нет' ? false :
           data.vocabularyIsPublic === 'Да'  ? true  : null;
+
+        if (game.params.vocIsPublic === false) {
+          game.params.type    = 'practice';
+          game.params.timeout = 5;
+        }
       }
     }
 
