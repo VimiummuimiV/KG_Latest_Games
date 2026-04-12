@@ -106,6 +106,8 @@ export async function fetchVocabularyData(vocId) {
         if (versionNote) metadata.versionDate = versionNote.textContent.trim();
       } else if (dtText.includes('Тип словаря:')) {
         metadata.vocabularyType = dd.textContent.trim().split('\n')[0].trim();
+      } else if (dtText.includes('Публичный:')) {
+        metadata.isPublic = dd.textContent.trim();
       } else if (dtText.includes('Описание:')) {
         metadata.description = dd.textContent.trim();
       } else if (dtText.includes('Содержание:')) {
@@ -183,9 +185,17 @@ function createVocabularyTooltip(content, metadata) {
       html += `<div class="tooltip-users">Использует ${actualMetadata.usersCount} ${personForm}</div>`;
     }
     
-    // Type and description
+    // Type, public status and description
     if (actualMetadata.vocabularyType) {
-      html += `<div class="tooltip-type"><strong>Тип:</strong> ${actualMetadata.vocabularyType}</div>`;
+      html += `<div class="tooltip-meta tooltip-type">Тип: ${actualMetadata.vocabularyType}</div>`;
+    }
+    if (actualMetadata.isPublic !== undefined) {
+      html += `<div class="tooltip-meta tooltip-public">Публичный: ${actualMetadata.isPublic}</div>`;
+    }
+    if (actualMetadata.createdDate) {
+      let createdHtml = `Создан: ${actualMetadata.createdDate}`;
+      if (actualMetadata.versionDate) createdHtml += ` <span class="tooltip-version">${actualMetadata.versionDate}</span>`;
+      html += `<div class="tooltip-meta tooltip-created">${createdHtml}</div>`;
     }
     if (actualMetadata.description) {
       html += `<div class="tooltip-description">${actualMetadata.description}</div>`;

@@ -107,7 +107,7 @@ export const VocabulariesManager = {
   },
  
   async fetchAndCacheVocabData(vocabObj, forceRefetch = false) {
-    if (!forceRefetch && vocabObj.name && vocabObj.author && vocabObj.vocType) return vocabObj;
+    if (!forceRefetch && vocabObj.name && vocabObj.author && vocabObj.vocType && vocabObj.createdDate !== undefined) return vocabObj;
    
     const data = await fetchVocabularyBasicData(vocabObj.id);
     if (data) {
@@ -115,10 +115,13 @@ export const VocabulariesManager = {
         ...vocabObj,
         name: data.vocabularyName,
         author: data.vocabularyAuthor,
-        vocType: data.vocabularyType
+        vocType: data.vocabularyType,
+        isPublic: data.vocabularyIsPublic,
+        createdDate: data.createdDate,
+        versionDate: data.versionDate
       };
     }
-    return { ...vocabObj, name: null, author: null, vocType: null };
+    return { ...vocabObj, name: null, author: null, vocType: null, isPublic: null, createdDate: null, versionDate: null };
   },
 
   remove(id) { this.save(this.get().filter(v => v.id !== id)); this.refresh(); },
@@ -471,6 +474,17 @@ export const VocabulariesManager = {
       className: 'vocab-id',
       textContent: vocabObj.id
     });
+
+    if (vocabObj.createdDate || vocabObj.isPublic != null) {
+      const parts = [];
+      if (vocabObj.isPublic != null) parts.push(`[Публичный]${vocabObj.isPublic}`);
+      if (vocabObj.createdDate) {
+        let created = `[Создан]${vocabObj.createdDate}`;
+        if (vocabObj.versionDate) created += ` ${vocabObj.versionDate}`;
+        parts.push(created);
+      }
+      createCustomTooltip(idSpan, parts.join(''));
+    }
 
     leftSection.appendChild(playBtn);
     leftSection.appendChild(infoBtn);

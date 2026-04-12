@@ -559,6 +559,9 @@ export class GamesManager {
           name: name || basicData?.vocabularyName || null,
           author: basicData?.vocabularyAuthor || null,
           vocType: vocType || basicData?.vocabularyType || null,
+          isPublic: basicData?.vocabularyIsPublic || null,
+          createdDate: basicData?.createdDate || null,
+          versionDate: basicData?.versionDate || null,
           isNew: true,
           playedAt: new Date().toISOString(),
           playHistory: [{ date: todayStr, count: 1 }]

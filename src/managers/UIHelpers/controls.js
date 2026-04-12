@@ -821,6 +821,9 @@ export function createControls(main) {
         name: basicData?.vocabularyName || null,
         author: basicData?.vocabularyAuthor || null,
         vocType: basicData?.vocabularyType || null,
+        isPublic: basicData?.vocabularyIsPublic || null,
+        createdDate: basicData?.createdDate || null,
+        versionDate: basicData?.versionDate || null,
         isNew: true
       };
 

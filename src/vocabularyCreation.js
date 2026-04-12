@@ -39,17 +39,17 @@ export async function fetchVocabularyBasicData(vocId) {
       const ratingSpan = titleCell.querySelector('#rating_cnt');
       const fansSpan = titleCell.querySelector('#fav_cnt');
       if (ratingSpan && fansSpan) {
-        // abort the fetch (stops downloading the rest of the page)
-        controller.abort();
-
         // extract basic data
         const vocabularyName = titleCell.childNodes[0].textContent.trim();
         const ratingCount = parseInt(ratingSpan.textContent.trim(), 10);
         const fansCount = parseInt(fansSpan.textContent.trim(), 10);
 
-        // try to get author data and vocabulary type
+        // extract additional data
         let vocabularyAuthor = '';
         let vocabularyType = null;
+        let vocabularyIsPublic = null;
+        let createdDate = null;
+        let versionDate = null;
         
         const dlElements = doc.querySelectorAll('.user-content dl');
         for (const dl of dlElements) {
@@ -75,9 +75,26 @@ export async function fetchVocabularyBasicData(vocId) {
               vocabularyType = typeMapping[typeText];
             }
           }
+
+          // Get public status
+          if (dtText === 'Публичный:') {
+            vocabularyIsPublic = dd.textContent.trim();
+          }
+
+          // Get created date
+          if (dtText === 'Создан:') {
+            const dateText = Array.from(dd.childNodes)
+              .find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
+            if (dateText) createdDate = dateText.textContent.trim();
+            const versionNote = dd.querySelector('.note');
+            if (versionNote) versionDate = versionNote.textContent.trim();
+          }
         }
 
-        return { vocId, vocabularyName, ratingCount, fansCount, vocabularyAuthor, vocabularyType };
+        // abort the fetch (stops downloading the rest of the page)
+        controller.abort();
+
+        return { vocId, vocabularyName, ratingCount, fansCount, vocabularyAuthor, vocabularyType, vocabularyIsPublic, createdDate, versionDate };
       }
     }
 
