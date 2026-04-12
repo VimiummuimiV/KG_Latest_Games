@@ -136,7 +136,7 @@ export function createControls(main) {
 
   createCustomTooltip(refreshBtn, `
     [Клик] Сгенерировать новые уникальные ID для всех групп и игр
-    [Shift + Клик] Получить актуальные данные для всех словарей (типы, публичность)
+    [Shift + Клик] Получить актуальные данные для всех словарей (название, тип, публичность)
   `);
 
   refreshBtn.addEventListener('click', async (e) => {
