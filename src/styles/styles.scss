@@ -108,6 +108,19 @@
       display: inline-flex;
       max-width: 300px;
 
+      // Hover tint overlay — darkens on light theme, lightens on dark theme,
+      // without touching the card's own background color at all.
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 2px;
+        background-color: var(--rg-hover-mix-color);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s ease;
+      }
+
       &.pin-game {
         cursor: move;
 
@@ -145,9 +158,8 @@
         }
       }
 
-      &:hover {
-        border-color: var(--rg-border-hover);
-        background-color: var(--rg-bg-hover);
+      &:hover::after {
+        opacity: 1;
       }
 
       &.dragging {
@@ -301,14 +313,26 @@
         animation: tilt-n-move-shaking 0.3s ease 5;
       }
 
+      // Vocabulary is non-public (solo/friends-only). Uses the neutral-grey
+      // "digits" palette — clearly de-emphasised with no opacity/filter tricks.
       &.voc-private {
-        opacity: 0.5;
-        filter: saturate(0.3);
-        transition: opacity 0.15s ease, filter 0.15s ease;
+        border-color: var(--rg-border-pinned-digits) !important;
+        background-color: var(--rg-bg-card-pinned-digits) !important;
 
-        &:hover {
-          opacity: 0.8;
-          filter: saturate(0.6);
+        .latest-game-name {
+          color: var(--rg-gametype-digits) !important;
+        }
+      }
+
+      // Vocabulary was deleted/removed by its owner (HTTP 403 / "Словарь не найден").
+      // Uses the "marathon" red/pink palette — the most alarming colour in the theme —
+      // so it stands out immediately from both normal and voc-private cards.
+      &.voc-removed {
+        border-color: var(--rg-border-pinned-marathon) !important;
+        background-color: var(--rg-bg-card-pinned-marathon) !important;
+
+        .latest-game-name {
+          color: var(--rg-gametype-marathon) !important;
         }
       }
     }
