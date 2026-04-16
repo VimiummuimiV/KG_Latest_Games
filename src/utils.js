@@ -162,3 +162,18 @@ export function detectGameType() {
   // Default for other gametypes (abra, chars, etc.)
   return { category: 'default', subtype };
 }
+
+/**
+ * Returns true when a fetched vocabulary page signals the vocabulary no longer exists.
+ * The server returns HTTP 200 with "Словарь не найден." in the page body, or HTTP 403.
+ * Centralised here so vocabularyCreation.js, vocabularyContent.js and any future
+ * consumer can share the same detection without duplicating it.
+ *
+ * @param {Response} response - The fetch Response object (before reading body).
+ * @param {string} html - The already-read response body text.
+ * @returns {boolean}
+ */
+export function isVocabularyRemoved(response, html) {
+  if (response.status === 403) return true;
+  return html.includes('Словарь не найден');
+}

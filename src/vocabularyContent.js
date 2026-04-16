@@ -1,4 +1,4 @@
-import { getCurrentPage, detectGameType } from "./utils";
+import { getCurrentPage, detectGameType, isVocabularyRemoved } from "./utils";
 
 // Tooltip management
 let currentTooltip = null;
@@ -11,6 +11,9 @@ export async function fetchVocabularyData(vocId) {
   try {
     const response = await fetch(`https://klavogonki.ru/vocs/${vocId}/`);
     const htmlText = await response.text();
+    if (isVocabularyRemoved(response, htmlText)) {
+      return { removed: true, content: 'Словарь не найден', metadata: null };
+    }
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlText, 'text/html');
     

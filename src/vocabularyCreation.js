@@ -1,4 +1,4 @@
-import { generateUniqueId, getContainerSelector, extractVocabularyId } from "./utils.js";
+import { generateUniqueId, getContainerSelector, extractVocabularyId, isVocabularyRemoved } from "./utils.js";
 import { highlightExistingVocabularies } from "./vocabularyChecker.js";
 import { createPopup } from "./menuPopup.js";
 import { hideTooltip } from "./vocabularyContent.js";
@@ -52,6 +52,7 @@ export async function fetchVocabularyBasicData(vocId) {
   try {
     const response = await fetch(`https://klavogonki.ru/vocs/${vocId}/`, { signal });
     if (!response.ok) {
+      if (response.status === 403) return { removed: true };
       console.error('Failed to fetch vocabulary content for vocId:', vocId);
       return null;
     }
@@ -73,6 +74,7 @@ export async function fetchVocabularyBasicData(vocId) {
       if (!htmlChunk.includes('</td>')) continue;
 
       const doc = new DOMParser().parseFromString(htmlChunk, 'text/html');
+      if (isVocabularyRemoved(response, htmlChunk)) { controller.abort(); return { removed: true }; }
       const userTitle = doc.querySelector('.user-title');
       if (!userTitle) continue;
 

@@ -169,30 +169,36 @@ function createProgressUI(total) {
 // Results UI
 // ─────────────────────────────────────────────────────────────────────────────
 
-function showResults(groupResults, totalScanned, wasCancelled) {
+function showResults(groupResults, removedResults, totalScanned, wasCancelled) {
   const overlay        = el('div', 'rg-scanner-overlay');
   const card           = el('div', 'rg-scanner-card rg-scanner-results-card');
   const nonPublicCount = groupResults.reduce((s, gr) => s + gr.items.length, 0);
+  const removedCount   = removedResults.reduce((s, gr) => s + gr.items.length, 0);
 
   const titleEl = el('div', 'rg-scanner-title');
   titleEl.append(
     document.createTextNode(wasCancelled ? '⚠️ Сканирование прервано ' : '✅ Сканирование завершено '),
-    el('span', 'rg-scanner-results-badge', `${nonPublicCount} непубличных`)
+    el('span', 'rg-scanner-results-badge', `${nonPublicCount} непубличных`),
+    ...(removedCount > 0 ? [
+      document.createTextNode(' '),
+      el('span', 'rg-scanner-results-badge rg-scanner-results-badge--removed', `${removedCount} удалённых`)
+    ] : [])
   );
   card.appendChild(titleEl);
 
   const sub = el('div', 'rg-scanner-results-subtitle');
-  sub.innerHTML = nonPublicCount === 0
-    ? `Проверено <strong>${totalScanned}</strong> словарей. Непубличных не найдено.`
-    : `Проверено <strong>${totalScanned}</strong> словарей. Найдено <strong>${nonPublicCount}</strong> непубличных.`;
+  const parts = [`Проверено <strong>${totalScanned}</strong> словарей.`];
+  if (nonPublicCount > 0) parts.push(`Непубличных: <strong>${nonPublicCount}</strong>.`);
+  if (removedCount > 0)   parts.push(`Удалённых: <strong>${removedCount}</strong>.`);
+  sub.innerHTML = parts.join(' ');
   card.appendChild(sub);
 
   const tree = el('div', 'rg-scanner-results-tree');
 
-  if (nonPublicCount === 0) {
+  if (nonPublicCount === 0 && removedCount === 0) {
     tree.appendChild(el('div', 'rg-scanner-results-empty', 'Все словари публичные 🎉'));
   } else {
-    groupResults.forEach(({ groupTitle, items }) => {
+    const renderGroup = ({ groupTitle, items }, icon) => {
       if (items.length === 0) return;
 
       const groupBlock  = el('div', 'rg-scanner-tree-group');
@@ -213,7 +219,7 @@ function showResults(groupResults, totalScanned, wasCancelled) {
         link.href        = `https://klavogonki.ru/vocs/${vocId}/`;
         link.target      = '_blank';
         item.append(
-          el('span', 'rg-scanner-tree-item-icon', '🔒'),
+          el('span', 'rg-scanner-tree-item-icon', icon),
           link,
           el('span', 'rg-scanner-tree-item-name', vocName || '—')
         );
@@ -222,7 +228,16 @@ function showResults(groupResults, totalScanned, wasCancelled) {
 
       groupBlock.appendChild(itemsList);
       tree.appendChild(groupBlock);
-    });
+    };
+
+    if (nonPublicCount > 0) {
+      tree.appendChild(el('div', 'rg-scanner-results-section-title', '🔒 Непубличные словари'));
+      groupResults.forEach(gr => renderGroup(gr, '🔒'));
+    }
+    if (removedCount > 0) {
+      tree.appendChild(el('div', 'rg-scanner-results-section-title', '🗑️ Удалённые словари'));
+      removedResults.forEach(gr => renderGroup(gr, '🗑️'));
+    }
   }
 
   card.appendChild(tree);
@@ -286,6 +301,11 @@ export async function runVocScan(main) {
 
     for (const { game, data } of results) {
       if (!data) continue;
+      if (data.removed) {
+        game.params.vocIsRemoved = true;
+        continue;
+      }
+      game.params.vocIsRemoved = false;
       if (data.vocabularyType     !== undefined) game.params.vocType     = data.vocabularyType    ?? game.params.vocType;
       if (data.vocabularyName     !== undefined) game.params.vocName     = data.vocabularyName    || game.params.vocName;
       if (data.vocabularyIsPublic !== undefined) {
@@ -321,6 +341,14 @@ export async function runVocScan(main) {
     groupMap.get(group.id).items.push({ vocId, vocName: game.params?.vocName || null });
   }
 
+  // Build results tree from removed findings
+  const removedMap = new Map();
+  for (const { group, vocId, game, data } of allResults) {
+    if (!data?.removed) continue;
+    if (!removedMap.has(group.id)) removedMap.set(group.id, { groupTitle: group.title, items: [] });
+    removedMap.get(group.id).items.push({ vocId, vocName: game.params?.vocName || null });
+  }
+
   ui.remove();
-  showResults([...groupMap.values()], totalScanned, wasCancelled);
+  showResults([...groupMap.values()], [...removedMap.values()], totalScanned, wasCancelled);
 }

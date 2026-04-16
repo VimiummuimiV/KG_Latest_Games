@@ -12,6 +12,7 @@ export function createGameElement(main, game, id) {
   const gametypeClass = game.params && game.params.gametype ? `pin-gametype-${game.params.gametype}` : '';
   const previousClass = id === previousGameId ? 'previous-game' : '';
   const privateClass = game.params?.vocIsPublic === false ? 'voc-private' : '';
+  const removedClass = game.params?.vocIsRemoved === true  ? 'voc-removed' : '';
 
   // Determine state icon for previous game
   let stateIcon = '';
@@ -20,7 +21,7 @@ export function createGameElement(main, game, id) {
   }
 
   const li = createElement('li', {
-    className: `latest-game ${pinGame} ${gametypeClass} ${previousClass} ${privateClass}`.trim(),
+    className: `latest-game ${pinGame} ${gametypeClass} ${previousClass} ${privateClass} ${removedClass}`.trim(),
     id: `latest-game-${id}`
   });
 
