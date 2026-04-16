@@ -334,11 +334,11 @@ export async function runVocScan(main) {
   }
 
   // Build results tree from all non-public findings
-  const groupMap = new Map();
+  const privateMap = new Map();
   for (const { group, vocId, game, data } of allResults) {
     if (data?.vocabularyIsPublic !== 'Нет') continue;
-    if (!groupMap.has(group.id)) groupMap.set(group.id, { groupTitle: group.title, items: [] });
-    groupMap.get(group.id).items.push({ vocId, vocName: game.params?.vocName || null });
+    if (!privateMap.has(group.id)) privateMap.set(group.id, { groupTitle: group.title, items: [] });
+    privateMap.get(group.id).items.push({ vocId, vocName: game.params?.vocName || null });
   }
 
   // Build results tree from removed findings
@@ -350,5 +350,5 @@ export async function runVocScan(main) {
   }
 
   ui.remove();
-  showResults([...groupMap.values()], [...removedMap.values()], totalScanned, wasCancelled);
+  showResults([...privateMap.values()], [...removedMap.values()], totalScanned, wasCancelled);
 }
