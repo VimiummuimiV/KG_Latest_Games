@@ -335,6 +335,33 @@
           color: var(--rg-gametype-marathon) !important;
         }
       }
+
+      // ── Combined-state overrides ─────────────────────────────────────────────
+      // MUST stay at the very end of .latest-game so they win on both
+      // specificity (3 classes vs 2) AND cascade order over the individual
+      // voc-private / voc-removed rules above, even when all use !important.
+
+      // voc-private + previous-game → solid "digits" fill, inverted text
+      &.voc-private.previous-game {
+        background-color: var(--rg-gametype-digits) !important;
+        border-color: var(--rg-gametype-digits) !important;
+
+        .latest-game-name,
+        .latest-game-description {
+          color: var(--rg-bg-card) !important;
+        }
+      }
+
+      // voc-removed + previous-game → solid "marathon" fill, inverted text
+      &.voc-removed.previous-game {
+        background-color: var(--rg-gametype-marathon) !important;
+        border-color: var(--rg-gametype-marathon) !important;
+
+        .latest-game-name,
+        .latest-game-description {
+          color: var(--rg-bg-card) !important;
+        }
+      }
     }
   }
 
