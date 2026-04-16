@@ -699,6 +699,16 @@
     font-weight: 500 !important;
     color: lightblue !important;
   }
+
+  .tooltip-state--on {
+    color: #4caf50;
+    font-weight: 600;
+  }
+
+  .tooltip-state--off {
+    color: #f44336;
+    font-weight: 600;
+  }
 }
 
 .latest-games-disabled {

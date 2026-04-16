@@ -179,6 +179,24 @@ export function refreshTooltipSettings() {
   cachedSettings = null;
 }
 
+const STATE_WORDS = [
+  { words: ['Включено', 'Включен', 'Активно', 'Активен'], className: 'tooltip-state--on' },
+  { words: ['Отключено', 'Отключен', 'Неактивно', 'Неактивен'], className: 'tooltip-state--off' },
+];
+
+function highlightStateWords(text) {
+  let result = text;
+  STATE_WORDS.forEach(({ words, className }) => {
+    words.forEach(word => {
+      // \b doesn't work reliably with Cyrillic, so use Unicode-aware boundary via lookbehind/lookahead
+      const regex = new RegExp(`(?<![а-яёА-ЯЁa-zA-Z])${word}(?![а-яёА-ЯЁa-zA-Z])`, 'g');
+      const emoji = className === 'tooltip-state--on' ? '🟢' : '🔴';
+      result = result.replace(regex, `<span class="${className}">${emoji} ${word}</span>`);
+    });
+  });
+  return result;
+}
+
 function highlightTooltipActions(str) {
   let result = '';
   const headerRegex = /(## [^[]*)/g;          // Matches headers like "## Header"
@@ -205,14 +223,14 @@ function highlightTooltipActions(str) {
           result += `
             <div class="tooltip-item">
               <span class="tooltip-action">${action}&nbsp;</span>
-              <span class="tooltip-message">${message}</span>
+              <span class="tooltip-message">${highlightStateWords(message)}</span>
             </div>`;
         });
       } else if (part.trim()) {
         // No pairs: emit the raw text as a single message
         result += `
           <div class="tooltip-item">
-            <span class="tooltip-message">${part.trim()}</span>
+            <span class="tooltip-message">${highlightStateWords(part.trim())}</span>
           </div>`;
       }
     }
