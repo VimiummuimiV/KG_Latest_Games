@@ -205,79 +205,62 @@ function createVocabularyTooltip(content, metadata) {
     return 'человек';
   };
   
-  let html = '';
-  
-  if (actualMetadata) {
-    html += '<div class="tooltip-header">';
-    
-    if (actualMetadata.authorName) {
-      html += '<div class="tooltip-author">';
-      if (actualMetadata.authorAvatar) html += `<img src="${actualMetadata.authorAvatar}" class="tooltip-avatar">`;
-      html += actualMetadata.authorId
-        ? `<a class="tooltip-author-name" href="/profile/${actualMetadata.authorId}" target="_blank" rel="noopener">${actualMetadata.authorName}</a>`
-        : `<span class="tooltip-author-name">${actualMetadata.authorName}</span>`;
-      html += '</div>';
-    }
-    
-    // Title
-    if (actualMetadata.title) {
-      html += `<div class="tooltip-title">${actualMetadata.title}</div>`;
-    }
-    
-    // Rating (convert from 10-point to 5-star scale)
-    if (actualMetadata.rating !== undefined) {
-      const rating = actualMetadata.rating / 2;
-      const percentage = (rating / 5) * 100;
-      
-      html += `<div class="tooltip-rating">
-        <div class="stars-container">
-          <div class="stars-bg">⭐️⭐️⭐️⭐️⭐️</div>
-          <div class="stars-filled" style="width: ${percentage}%">⭐️⭐️⭐️⭐️⭐️</div>
-        </div>`;
-      if (actualMetadata.ratingCount) html += ` <span class="rating-count">(${actualMetadata.ratingCount})</span>`;
-      html += '</div>';
-    }
-    
-    // Users count with correct plural form
-    if (actualMetadata.usersCount) {
-      const count = parseInt(actualMetadata.usersCount);
-      const personForm = getPersonForm(count);
-      html += `<div class="tooltip-users">Использует ${actualMetadata.usersCount} ${personForm}</div>`;
-    }
-    
-    // Type, public status and description
-    if (actualMetadata.vocabularyType) {
-      html += `<div class="tooltip-meta tooltip-type">Тип: ${actualMetadata.vocabularyType}</div>`;
-    }
-    if (actualMetadata.isPublic !== undefined) {
-      html += `<div class="tooltip-meta tooltip-public">Публичный: ${actualMetadata.isPublic}</div>`;
-    }
-    if (actualMetadata.createdDate) {
-      let createdHtml = `Создан: ${actualMetadata.createdDate}`;
-      if (actualMetadata.versionDate) createdHtml += ` <span class="tooltip-version">${actualMetadata.versionDate}</span>`;
-      html += `<div class="tooltip-meta tooltip-created">${createdHtml}</div>`;
-    }
-    if (actualMetadata.description) {
-      html += `<div class="tooltip-description">${actualMetadata.description}</div>`;
-    }
-    
-    html += '</div><div class="tooltip-divider"></div>';
-  }
-  
-  // Content with numbered lines
-  html += '<div class="tooltip-content">';
-  html += actualContent.replace(/^(\d+)\.\s/gm, '<span class="tooltip-number">$1.</span> ');
-  html += '</div>';
-  
+  const s = str => str.replace(/>\s+</g, '><').trim();
+
   const comments = actualMetadata?.comments ?? [];
 
+  const headerBody = actualMetadata ? s(
+    (actualMetadata.authorName
+      ? `<div class="tooltip-author">` +
+        (actualMetadata.authorAvatar ? `<img src="${actualMetadata.authorAvatar}" class="tooltip-avatar">` : '') +
+        (actualMetadata.authorId
+          ? `<a class="tooltip-author-name" href="/profile/${actualMetadata.authorId}" target="_blank" rel="noopener">${actualMetadata.authorName}</a>`
+          : `<span class="tooltip-author-name">${actualMetadata.authorName}</span>`) +
+        `</div>`
+      : '') +
+    (actualMetadata.title
+      ? `<div class="tooltip-title">${actualMetadata.title}</div>`
+      : '') +
+    (actualMetadata.rating !== undefined
+      ? `<div class="tooltip-rating">` +
+        `<div class="stars-container">` +
+        `<div class="stars-bg">⭐️⭐️⭐️⭐️⭐️</div>` +
+        `<div class="stars-filled" style="width: ${(actualMetadata.rating / 2 / 5) * 100}%">⭐️⭐️⭐️⭐️⭐️</div>` +
+        `</div>` +
+        (actualMetadata.ratingCount ? `<span class="rating-count">(${actualMetadata.ratingCount})</span>` : '') +
+        `</div>`
+      : '') +
+    (actualMetadata.usersCount
+      ? `<div class="tooltip-users">Использует ${actualMetadata.usersCount} ${getPersonForm(parseInt(actualMetadata.usersCount))}</div>`
+      : '') +
+    (actualMetadata.vocabularyType
+      ? `<div class="tooltip-meta tooltip-type">Тип: ${actualMetadata.vocabularyType}</div>`
+      : '') +
+    (actualMetadata.isPublic !== undefined
+      ? `<div class="tooltip-meta tooltip-public">Публичный: ${actualMetadata.isPublic}</div>`
+      : '') +
+    (actualMetadata.createdDate
+      ? `<div class="tooltip-meta tooltip-created">Создан: ${actualMetadata.createdDate}` +
+        (actualMetadata.versionDate ? `<span class="tooltip-version">${actualMetadata.versionDate}</span>` : '') +
+        `</div>`
+      : '') +
+    (actualMetadata.description
+      ? `<div class="tooltip-description">${actualMetadata.description}</div>`
+      : '')
+  ) : '';
+
+  const contentBody = s(
+    (headerBody ? `<div class="tooltip-header">${headerBody}</div><div class="tooltip-divider"></div>` : '') +
+    `<div class="tooltip-content">` +
+    actualContent.replace(/^(\d+)\.\s/gm, '<span class="tooltip-number">$1.</span> ') +
+    `</div>`
+  );
+
   if (!comments.length) {
-    tooltip.innerHTML = html;
+    tooltip.innerHTML = contentBody;
     document.body.appendChild(tooltip);
     return tooltip;
   }
-
-  const s = str => str.replace(/>\s+</g, '><').trim();
 
   const commentsBody = comments.map(c => s(
     `<div class="tooltip-comment">` +
@@ -300,7 +283,7 @@ function createVocabularyTooltip(content, metadata) {
     `<button class="tooltip-tab" data-tab="comments">Комментарии${comments.length ? `<span class="tooltip-tab-count">${comments.length}</span>` : ''}</button>` +
     `</div>` +
     `<div class="tooltip-body">` +
-    `<div class="tooltip-pane tooltip-pane--content">${html}</div>` +
+    `<div class="tooltip-pane tooltip-pane--content">${contentBody}</div>` +
     `<div class="tooltip-pane tooltip-pane--comments">` +
     `<div class="tooltip-comments-list">${commentsBody}</div>` +
     allCommentsLink +
