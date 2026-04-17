@@ -121,6 +121,59 @@ export async function fetchVocabularyData(vocId) {
       }
     }
     
+    metadata.vocId = vocId;
+
+    // Sanitize a single DOM node to safe HTML, preserving images, links and formatting
+    const INLINE_TAGS = new Set(['B', 'I', 'EM', 'STRONG', 'U', 'S']);
+    const sanitizeNode = n => {
+      if (n.nodeType === Node.TEXT_NODE) return n.textContent;
+      if (n.nodeName === 'BR') return '<br>';
+      if (n.nodeName === 'IMG') return `<img src="${n.getAttribute('src') || ''}" class="tooltip-comment-img">`;
+      if (n.nodeName === 'A') {
+        const href = n.getAttribute('href') || '';
+        return `<a href="${href}" target="_blank" rel="noopener">${n.textContent}</a>`;
+      }
+      if (INLINE_TAGS.has(n.nodeName)) {
+        const tag = n.nodeName.toLowerCase();
+        return `<${tag}>${Array.from(n.childNodes).map(sanitizeNode).join('')}</${tag}>`;
+      }
+      if (n.classList?.contains('hidemain')) {
+        const cont = n.querySelector('.hidecont');
+        const inner = cont ? Array.from(cont.childNodes).map(sanitizeNode).join('') : '';
+        return `<details class="tooltip-spoiler"><summary>Скрытый текст</summary><div class="tooltip-spoiler-body">${inner}</div></details>`;
+      }
+      if (n.classList?.contains('hidetop')) return '';
+      if (n.classList?.contains('quotetop')) {
+        return `<div class="tooltip-quote-label">${n.textContent.trim()}</div>`;
+      }
+      if (n.classList?.contains('quotemain')) {
+        return `<div class="tooltip-quote">${Array.from(n.childNodes).map(sanitizeNode).join('')}</div>`;
+      }
+      return Array.from(n.childNodes).map(sanitizeNode).join('');
+    };
+
+    // Extract comments
+    metadata.comments = Array.from(doc.querySelectorAll('.comment')).reduce((acc, el) => {
+      const infoEl = el.querySelector('.info');
+      const authorEl = infoEl?.querySelector('.author .name');
+      const text = Array.from(el.childNodes)
+        .filter(n => n !== infoEl)
+        .map(sanitizeNode)
+        .join('')
+        .replace(/(<br>\s*){2,}/gi, '<br>')
+        .trim();
+      if (!text) return acc;
+      const avatarMatch = (infoEl?.getAttribute('style') || '').match(/url\s*\(\s*['"]?([^'")\s]+)['"]?\s*\)/);
+      acc.push({
+        author:   authorEl?.textContent.trim() ?? null,
+        authorId: authorEl?.getAttribute('href')?.match(/\/profile\/(\d+)/)?.[1] ?? null,
+        avatar:   avatarMatch ? avatarMatch[1].replace(/&quot;/g, '') : null,
+        date:     infoEl?.querySelector('.date')?.textContent.trim() ?? null,
+        text,
+      });
+      return acc;
+    }, []);
+
     return { content, metadata };
   } catch (error) {
     console.error(`Error fetching vocabulary data for vocId ${vocId}:`, error);
@@ -160,7 +213,9 @@ function createVocabularyTooltip(content, metadata) {
     if (actualMetadata.authorName) {
       html += '<div class="tooltip-author">';
       if (actualMetadata.authorAvatar) html += `<img src="${actualMetadata.authorAvatar}" class="tooltip-avatar">`;
-      html += `<span class="tooltip-author-name">${actualMetadata.authorName}</span>`;
+      html += actualMetadata.authorId
+        ? `<a class="tooltip-author-name" href="/profile/${actualMetadata.authorId}" target="_blank" rel="noopener">${actualMetadata.authorName}</a>`
+        : `<span class="tooltip-author-name">${actualMetadata.authorName}</span>`;
       html += '</div>';
     }
     
@@ -214,7 +269,52 @@ function createVocabularyTooltip(content, metadata) {
   html += actualContent.replace(/^(\d+)\.\s/gm, '<span class="tooltip-number">$1.</span> ');
   html += '</div>';
   
-  tooltip.innerHTML = html;
+  const comments = actualMetadata?.comments ?? [];
+
+  if (!comments.length) {
+    tooltip.innerHTML = html;
+    document.body.appendChild(tooltip);
+    return tooltip;
+  }
+
+  const s = str => str.replace(/>\s+</g, '><').trim();
+
+  const commentsBody = comments.map(c => s(
+    `<div class="tooltip-comment">` +
+    `<div class="tooltip-comment-meta">` +
+    (c.avatar ? `<img src="${c.avatar}" class="tooltip-avatar tooltip-comment-avatar">` : '') +
+    (c.author ? `<a class="tooltip-comment-author" href="/profile/${c.authorId ?? ''}" target="_blank">${c.author}</a>` : '') +
+    (c.date   ? `<span class="tooltip-comment-date">${c.date}</span>` : '') +
+    `</div>` +
+    `<div class="tooltip-comment-text">${c.text}</div>` +
+    `</div>`
+  )).join('');
+
+  const allCommentsLink = actualMetadata?.vocId
+    ? `<a class="tooltip-comments-all" href="https://klavogonki.ru/vocs/${actualMetadata.vocId}/comments/" target="_blank">Все комментарии</a>`
+    : '';
+
+  tooltip.innerHTML = s(
+    `<div class="tooltip-tabs">` +
+    `<button class="tooltip-tab active" data-tab="content">Содержание</button>` +
+    `<button class="tooltip-tab" data-tab="comments">Комментарии${comments.length ? `<span class="tooltip-tab-count">${comments.length}</span>` : ''}</button>` +
+    `</div>` +
+    `<div class="tooltip-body">` +
+    `<div class="tooltip-pane tooltip-pane--content">${html}</div>` +
+    `<div class="tooltip-pane tooltip-pane--comments">` +
+    `<div class="tooltip-comments-list">${commentsBody}</div>` +
+    allCommentsLink +
+    `</div></div>`
+  );
+
+  tooltip.querySelectorAll('.tooltip-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      tooltip.querySelectorAll('.tooltip-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      tooltip.dataset.activeTab = btn.dataset.tab;
+    });
+  });
+
   document.body.appendChild(tooltip);
   return tooltip;
 }
