@@ -1,3 +1,5 @@
+@use 'mixins' as *;
+
 .vocabularies-manager-popup {
   position: fixed;
   background: var(--rg-bg-primary);
@@ -13,10 +15,7 @@
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3) !important;
   min-width: 300px;
   max-width: 500px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: var(--rg-border-hover) var(--rg-bg-primary);
+  overflow: hidden;
 
   .popup-header {
     font-weight: 600 !important;
@@ -238,6 +237,7 @@
     max-height: 60vh;
     overflow-y: auto;
     overflow-x: hidden;
+    @include thin-scrollbar();
 
     .vocab-labels-container {
       padding: 0.5em 0.7em;
@@ -407,40 +407,5 @@
     color: var(--rg-text-tertiary);
     font-style: italic;
     padding: 1em 0;
-  }
-
-// WebKit browsers (Chrome, Safari, Edge)
-  &::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: var(--rg-bg-primary) !important;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background-color: var(--rg-border-hover) !important;
-
-    &:hover {
-      background-color: var(--rg-text-secondary) !important;
-    }
-  }
-
-  .vocab-list::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  .vocab-list::-webkit-scrollbar-track {
-    background: var(--rg-bg-card) !important;
-  }
-
-  .vocab-list::-webkit-scrollbar-thumb {
-    background-color: var(--rg-border-hover) !important;
-    border-radius: 3px;
-
-    &:hover {
-      background-color: var(--rg-text-secondary) !important;
-    }
   }
 }

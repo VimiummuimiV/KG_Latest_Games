@@ -1,3 +1,5 @@
+@use 'mixins' as *;
+
 .vocabulary-tooltip-popup {
   font: 500 14px "Montserrat", sans-serif;
   position: fixed;
@@ -14,27 +16,9 @@
   max-width: 700px;
   width: auto;
   max-height: 80vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: var(--rg-text-tertiary) var(--rg-bg-primary);
+  overflow: hidden;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  
-  // WebKit browsers (Chrome, Safari, Edge)
-  &::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  &::-webkit-scrollbar-track {
-    background: var(--rg-bg-primary) !important;
-  }
-  &::-webkit-scrollbar-thumb {
-    background-color: var(--rg-text-tertiary) !important;
-    &:hover {
-      background-color: var(--rg-text-secondary) !important;
-    }
-  }
 
   .tooltip-header {
     padding: 12px 16px;
@@ -199,12 +183,7 @@
     .tooltip-pane {
       overflow-y: auto;
       overflow-x: hidden;
-      scrollbar-width: thin;
-      scrollbar-color: var(--rg-text-tertiary) var(--rg-bg-primary);
-
-      &::-webkit-scrollbar       { width: 6px; }
-      &::-webkit-scrollbar-track { background: var(--rg-bg-primary); }
-      &::-webkit-scrollbar-thumb { background-color: var(--rg-text-tertiary); }
+      @include thin-scrollbar();
 
       &--content  { flex: 1 1 auto; min-width: 0; }
       &--comments {

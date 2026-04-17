@@ -4,6 +4,22 @@
   }
 }
 
+// Scrollbar mixin for both Firefox (scrollbar-width/color) and WebKit browsers.
+// $width: scrollbar width in px (default 8)
+@mixin thin-scrollbar($width: 8px) {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(0, 0%, 35%) transparent;
+
+  &::-webkit-scrollbar { width: $width; height: $width; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background-color: hsl(0, 0%, 35%);
+    border-radius: 3px;
+    &:hover  { background-color: hsl(0, 0%, 55%); }
+    &:active { background-color: hsl(0, 0%, 65%); }
+  }
+}
+
 @mixin tab() {
   display: inline-flex;
   padding: 5px 15px;
