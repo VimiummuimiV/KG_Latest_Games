@@ -158,7 +158,7 @@ export class UIManager {
     if (countDisplay) {
       countDisplay.textContent = this.main.maxGameCount.toString();
       countDisplay.classList.toggle('latest-games-disabled', this.main.shouldAutoSave === false);
-      createCustomTooltip(countDisplay, this.main.shouldAutoSave ? 'Автосохранение включено' : 'Автосохранение отключено');
+      createCustomTooltip(countDisplay, this.main.shouldAutoSave ? 'Автосохранение: Включено' : 'Автосохранение: Отключено');
     }
   }
 

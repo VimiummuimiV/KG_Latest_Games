@@ -41,8 +41,8 @@ export function createControls(main) {
   });
   createCustomTooltip(countDisplay,
     main.shouldAutoSave
-      ? 'Автосохранение включено'
-      : 'Автосохранение отключено'
+      ? 'Автосохранение: Включено'
+      : 'Автосохранение: Отключено'
   );
 
   countDisplay.addEventListener('click', () => {
