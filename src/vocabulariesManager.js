@@ -549,7 +549,10 @@ export const VocabulariesManager = {
     const header = document.createElement('div');
     header.className = 'popup-header';
     const config = this.getConfig();
-    header.textContent = this.hasUnsavedChanges ? `${config.title} *` : config.title;
+    const headerTitle = document.createElement('span');
+    headerTitle.className = 'popup-header-title';
+    headerTitle.textContent = this.hasUnsavedChanges ? `${config.title} *` : config.title;
+    header.appendChild(headerTitle);
     header.style.cursor = 'move';
     header.addEventListener('mousedown', (e) => this.startDrag(e));
     container.appendChild(header);

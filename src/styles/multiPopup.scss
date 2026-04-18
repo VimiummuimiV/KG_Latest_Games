@@ -14,7 +14,6 @@
   border-radius: 8px !important;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
   max-height: 50vh;
-  min-width: 350px;
   overflow-y: auto;
   scrollbar-width: none;
   z-index: 2000;
@@ -29,6 +28,7 @@
     &-title {
       font: 600 14px "Montserrat", sans-serif;
       color: var(--rg-header-text);
+      min-width: 80px;
     }
 
     &-badge {

@@ -19,10 +19,12 @@ export function createPopup(buttonConfigs, event, className = 'popup', header, p
 
   // Add header if provided
   if (header) {
-    const headerElem = createElement('div', {
-      className: 'popup-header',
+    const headerElem = createElement('div', { className: 'popup-header' });
+    const headerTitle = createElement('span', {
+      className: 'popup-header-title',
       textContent: header
     });
+    headerElem.appendChild(headerTitle);
     popup.appendChild(headerElem);
   }
 
