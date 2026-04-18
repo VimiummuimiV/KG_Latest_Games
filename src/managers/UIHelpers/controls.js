@@ -398,8 +398,8 @@ export function createControls(main) {
   createCustomTooltip(
     dragToggleBtn,
     main.enableDragging
-      ? 'Перетаскивание включено'
-      : 'Перетаскивание отключено'
+      ? 'Перетаскивание: Включено'
+      : 'Перетаскивание: Отключено'
   );
   dragToggleBtn.classList.toggle('latest-games-disabled', !main.enableDragging);
   dragToggleBtn.onclick = () => {
@@ -409,8 +409,8 @@ export function createControls(main) {
     createCustomTooltip(
       dragToggleBtn,
       main.enableDragging
-        ? 'Перетаскивание включено'
-        : 'Перетаскивание отключено'
+        ? 'Перетаскивание: Включено'
+        : 'Перетаскивание: Отключено'
     );
     dragToggleBtn.classList.toggle('latest-games-disabled', !main.enableDragging);
   };

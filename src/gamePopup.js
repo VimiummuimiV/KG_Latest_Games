@@ -141,13 +141,13 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
 
   const updateQualUI = () => {
     qualification.classList.toggle('latest-games-disabled', !qualificationEnabled);
-    createCustomTooltip(qualification, `Квалификация ${qualificationEnabled ? 'включена' : 'отключена'}`);
+    createCustomTooltip(qualification, `Квалификация: ${qualificationEnabled ? 'Включена' : 'Отключена'}`);
   };
 
   const updateSaveModeUI = () => {
     save.classList.toggle('latest-games-disabled', !saveModeEnabled);
     headerTitle.textContent = saveModeEnabled ? 'Сохранить' : 'Создать';
-    createCustomTooltip(save, `Сохранение ${saveModeEnabled ? 'включено' : 'отключено'}`);
+    createCustomTooltip(save, `Сохранение: ${saveModeEnabled ? 'Включено' : 'Отключено'}`);
     updateBadge(game.params.type, game.params.timeout, game.params.idletime);
   };
 
