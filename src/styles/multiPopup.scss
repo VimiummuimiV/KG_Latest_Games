@@ -14,7 +14,7 @@
   border-radius: 8px !important;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
   max-height: 50vh;
-  max-width: 400px;
+  min-width: 350px;
   overflow-y: auto;
   scrollbar-width: none;
   z-index: 2000;
@@ -36,6 +36,7 @@
       align-items: center;
       gap: 5px;
       padding: 3px 8px;
+      margin: 0 8px;
       border-radius: 4px !important;
       border: 1.5px solid var(--rg-border-primary);
       background: var(--rg-bg-card);
@@ -64,6 +65,20 @@
         font: 500 10px "Montserrat", sans-serif;
         color: inherit;
         opacity: 0.85;
+
+        &--private {
+          background: var(--rg-bg-card-pinned-digits);
+          border: 1px solid var(--rg-border-pinned-digits);
+          color: var(--rg-gametype-digits);
+          opacity: 1;
+        }
+
+        &--removed {
+          background: var(--rg-bg-card-pinned-marathon);
+          border: 1px solid var(--rg-border-pinned-marathon);
+          color: var(--rg-gametype-marathon);
+          opacity: 1;
+        }
       }
     }
 
@@ -114,6 +129,7 @@
   .timeouts-container,
   .idle-times-container {
     display: flex;
+    width: 320px;
     flex-direction: row;
     flex-wrap: wrap;
     gap: 5px;

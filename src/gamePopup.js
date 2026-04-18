@@ -102,14 +102,19 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
     // Remove old param chips
     headerBadge.querySelectorAll('.popup-header-badge-chip').forEach(c => c.remove());
 
-    const addChip = (text) => {
-      const chip = createElement('span', { className: 'popup-header-badge-chip', textContent: text });
+    const addChip = (text, extraClass = '') => {
+      const chip = createElement('span', { className: ('popup-header-badge-chip' + (extraClass ? ' ' + extraClass : '')), textContent: text });
       headerBadge.appendChild(chip);
     };
 
     addChip(visLabel);
     addChip(`TM ${currentTimeout}`);
     if (currentIdleTime > 0) addChip(`AFK ${currentIdleTime}`);
+    if (game.params.vocIsRemoved === true) {
+      addChip('удалён', 'popup-header-badge-chip--removed');
+    } else if (game.params.vocIsPublic === false) {
+      addChip('непубличный', 'popup-header-badge-chip--private');
+    }
   };
 
   const performSave = () => {
