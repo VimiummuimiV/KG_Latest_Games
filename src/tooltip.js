@@ -55,7 +55,7 @@ export function hideTooltipElement() {
     setTimeout(() => {
       if (!tooltipIsVisible && tooltipEl) {
         tooltipEl.style.display = 'none';
-        tooltipEl.textContent = ''; // Clear tooltip content
+        tooltipEl.textContent = '';
         document.removeEventListener('mousemove', tooltipTrackMouse);
       }
     }, 50);
@@ -117,6 +117,7 @@ export function createCustomTooltip(element, tooltipContent, type = 'info') {
       document.addEventListener('mousemove', tooltipTrackMouse);
 
       const inExcludedContainer = !!element.closest('.latest-game') && !element.closest('.latest-game-buttons');
+
       if (tooltipIsShown && !inExcludedContainer) {
         // Already visible from a previous button — swap content instantly
         tooltipEl.style.opacity = '1';
@@ -162,9 +163,11 @@ export function updateTooltipContent(element, newContent, type = 'info') {
   // If this element is currently being hovered (even if tooltip isn't fully shown yet)
   if (tooltipCurrentTarget === element && tooltipIsVisible && tooltipEl) {
     tooltipEl.innerHTML = highlightTooltipActions(newContent);
-    
-    // If tooltip is not yet shown, show it immediately
-    if (!tooltipIsShown) {
+
+    // Only force-show immediately for deliberate user actions (e.g. stats on Ctrl+hover).
+    // For 'info' type, the show timer set by mouseenter is already running — let it fire
+    // naturally so the configured delay (e.g. 1200ms) is always respected.
+    if (!tooltipIsShown && type === 'stats') {
       clearTimeout(tooltipShowTimer);
       tooltipEl.style.opacity = '1';
       tooltipIsShown = true;
