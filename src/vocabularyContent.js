@@ -362,7 +362,7 @@ export function getSessionVocId() {
       if (m && m[1]) return String(m[1]);
     }
 
-    const raw = sessionStorage.getItem('latestGames_showVocTooltip');
+    const raw = sessionStorage.getItem('latestGames_pendingVocId');
     if (!raw) return null;
     const parsed = JSON.parse(raw) || {};
     return parsed.vocId || null;

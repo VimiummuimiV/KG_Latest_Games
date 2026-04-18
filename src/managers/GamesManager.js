@@ -279,6 +279,25 @@ export class GamesManager {
     return null;
   }
 
+  /**
+   * Find all game objects across all groups whose vocId matches the given value.
+   * A vocabulary can exist in multiple groups, so this always returns an array.
+   * @param {string|number} vocId
+   * @returns {Array} Array of matching game objects (may be empty).
+   */
+  findGamesByVocId(vocId) {
+    const needle = String(vocId);
+    const results = [];
+    for (const group of this.mainManager.groupsManager.groups) {
+      for (const game of group.games) {
+        if (game.params?.gametype === 'voc' && String(game.params?.vocId) === needle) {
+          results.push(game);
+        }
+      }
+    }
+    return results;
+  }
+
   deleteGame(id) {
     const result = this.findGameIndex(id);
     if (!result) return null;
@@ -494,7 +513,7 @@ export class GamesManager {
     try {
       const idStr = String(vocId);
       if (!idStr) return false;
-      sessionStorage.setItem('latestGames_showVocTooltip', JSON.stringify({ vocId: idStr, vocName: vocName || null, vocType: vocType || null }));
+      sessionStorage.setItem('latestGames_pendingVocId', JSON.stringify({ vocId: idStr, vocName: vocName || null, vocType: vocType || null }));
       return true;
     } catch (err) {
       return false;

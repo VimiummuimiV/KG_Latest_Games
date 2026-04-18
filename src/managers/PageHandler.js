@@ -21,6 +21,22 @@ export class PageHandler {
 
   handlePageSpecificLogic() {
     const { href } = location;
+
+    if (/https?:\/\/klavogonki\.ru\/create\//.test(href)) {
+      const checkVocError = () => {
+        const msg = document.querySelector('#content p[align="center"]');
+        if (!msg) return false;
+        this.handleVocabularyError(msg.innerText || '');
+        return true;
+      };
+      if (!checkVocError()) {
+        const errorObserver = new MutationObserver(() => {
+          if (checkVocError()) errorObserver.disconnect();
+        });
+        errorObserver.observe(document.body, { childList: true, subtree: true });
+      }
+    }
+
     if (/https?:\/\/klavogonki\.ru\/g\/\?gmid=/.test(href)) {
       // Create the games data container with indicators
       this.gamesDataContainer.createGamesDataContainer();
@@ -68,6 +84,56 @@ export class PageHandler {
       highlightExistingVocabularies(this.main.groupsManager.groups);
       attachVocabularyCreation(this.main.groupsManager.groups, this.main);
       attachVocabularyParser();
+    }
+  }
+
+  // Handles vocabulary error messages shown on the game page instead of a game room.
+  // Detects non-public and removed states, updates saved games and notifies the user.
+  handleVocabularyError(msgText) {
+    const isNonPublic = msgText.includes('Открытые заезды можно создавать только по публичным словарям');
+    const isRemoved   = msgText.includes('Словарь не найден');
+    if (!isNonPublic && !isRemoved) return;
+
+    let vocId = null;
+    try { vocId = JSON.parse(sessionStorage.getItem('latestGames_pendingVocId'))?.vocId || null; } catch (_) {}
+
+    if (!vocId) return;
+
+    const games = this.main.gamesManager.findGamesByVocId(vocId);
+    if (!games.length) return;
+
+    const vocName = games[0].params.vocName || `#${vocId}`;
+
+    if (isRemoved) {
+      if (games.every(g => g.params.vocIsRemoved === true)) return;
+      games.forEach(g => { g.params.vocIsRemoved = true; });
+      this.main.gamesManager.saveGameData();
+      this.main.uiManager.refreshContainer();
+      alert(`🗑️ Словарь «${vocName}» недоступен.\n\nСловарь был удалён модераторами. Все игры с этим словарём помечены как удалённые.`);
+      return;
+    }
+
+    // isNonPublic: only normal-type games are affected — practice and private can
+    // still be created with a non-public vocabulary.
+    const hasUnhandledNormal = games.some(g => g.params.type === 'normal');
+    if (!hasUnhandledNormal && games.every(g => g.params.vocIsPublic === false)) return;
+
+    games.forEach(g => {
+      g.params.vocIsPublic = false;
+      if (g.params.type === 'normal') { g.params.type = 'practice'; g.params.timeout = 5; }
+    });
+    this.main.gamesManager.saveGameData();
+    this.main.uiManager.refreshContainer();
+
+    if (confirm(
+      `🔒 Словарь «${vocName}» стал непубличным.\n\n` +
+      `Параметры открытых игр с этим словарём были автоматически обновлены:\n` +
+      `• Режим изменён с «Обычного» на «Одиночный» (practice)\n` +
+      `• Таймаут изменён на 5 секунд\n` +
+      `Одиночные и дружеские игры оставлены без изменений.\n\n` +
+      `Хотите запустить одиночную игру по этому словарю прямо сейчас?`
+    )) {
+      window.location.href = this.main.gamesManager.generateGameLink(games[0]);
     }
   }
 
