@@ -1,6 +1,6 @@
 import { createCustomTooltip, hideTooltipElement } from './tooltip.js';
 import { createElement } from './utils.js';
-import { visibilities, timeouts, idleTimes, ranks } from './definitions.js';
+import { visibilities, timeouts, idleTimes, ranks, gameTypes } from './definitions.js';
 import { icons } from './icons.js';
 import { setupPopupDrag } from './drag/popupDrag.js';
 
@@ -18,6 +18,7 @@ const AUTO_SAVE_DEBOUNCE_MS = 500;
 const DRAGGABLE_SELECTORS = [
   '.popup-header',
   '.popup-header-title',
+  '.popup-header-badge',
   '.popup-subheader',
   '.rank-slider-display',
   '.idle-times-container',
@@ -50,10 +51,14 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
 
   const popup = createElement('div', { className });
   const header = createElement('div', { className: 'popup-header' });
+
   const headerTitle = createElement('div', {
     className: 'popup-header-title',
     textContent: main.saveModeEnabled ? 'Сохранить' : 'Создать'
   });
+
+  // Badge showing current game type + timeout + AFK
+  const headerBadge = createElement('div', { className: 'popup-header-badge' });
 
   const headerControls = createElement('div', {
     className: 'popup-header-controls'
@@ -87,6 +92,26 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
   let selectedIdleTime = saveModeEnabled ? (game.params.idletime || 0) : 0;
   const buttonRefs = [];
 
+  const gametypeKey = game.params.gametype || 'normal';
+  const updateBadge = (currentType, currentTimeout, currentIdleTime) => {
+    const typeLabel = gameTypes[gametypeKey] || gametypeKey;
+    const visLabel = visibilities[currentType] || currentType;
+    headerBadge.className = `popup-header-badge popup-header-badge--${gametypeKey}`;
+    headerBadge.textContent = typeLabel;
+
+    // Remove old param chips
+    headerBadge.querySelectorAll('.popup-header-badge-chip').forEach(c => c.remove());
+
+    const addChip = (text) => {
+      const chip = createElement('span', { className: 'popup-header-badge-chip', textContent: text });
+      headerBadge.appendChild(chip);
+    };
+
+    addChip(visLabel);
+    addChip(`TM ${currentTimeout}`);
+    if (currentIdleTime > 0) addChip(`AFK ${currentIdleTime}`);
+  };
+
   const performSave = () => {
     game.params.level_from = minRank;
     game.params.level_to = maxRank;
@@ -95,6 +120,8 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
 
     main.gamesManager.saveGameData();
     main.uiManager?.refreshContainer?.();
+
+    updateBadge(game.params.type, game.params.timeout, game.params.idletime);
 
     save.classList.remove('rg-rotate');
     void save.offsetWidth;
@@ -116,6 +143,7 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
     save.classList.toggle('latest-games-disabled', !saveModeEnabled);
     headerTitle.textContent = saveModeEnabled ? 'Сохранить' : 'Создать';
     createCustomTooltip(save, `Сохранение ${saveModeEnabled ? 'включено' : 'отключено'}`);
+    updateBadge(game.params.type, game.params.timeout, game.params.idletime);
   };
 
   updateQualUI();
@@ -211,6 +239,15 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
           game.params.level_to = maxRank;
           game.params.qual = qualificationEnabled ? 1 : 0;
           game.params.idletime = selectedIdleTime;
+          // Switching to normal type: clear the non-public flag and enforce minimum timeout
+          if (type === 'normal') {
+            if (game.params.vocIsPublic === false) {
+              game.params.vocIsPublic = true;
+            }
+            if (game.params.timeout < 10) {
+              game.params.timeout = 10;
+            }
+          }
           performSave();
         } else {
           // Just navigate to create game, don't change any settings
@@ -257,7 +294,7 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
   });
 
   headerControls.append(qualification, save);
-  header.append(headerTitle, headerControls);
+  header.append(headerTitle, headerBadge, headerControls);
   popup.appendChild(header);
 
   sliderTrack.addEventListener('click', (e) => {
@@ -348,6 +385,7 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
       // Add active class to selected button
       idleTimeBtn.classList.add('active');
       selectedIdleTime = idleTime;
+      updateBadge(game.params.type, game.params.timeout, selectedIdleTime);
       updateButtonLinks();
       triggerAutoSave();
     };

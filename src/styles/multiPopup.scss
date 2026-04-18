@@ -22,11 +22,50 @@
 
   .popup-header {
     display: inline-flex;
-    font: 600 14px "Montserrat", sans-serif;
-    color: var(--rg-header-text);
     padding: 6px;
     justify-content: space-between;
     align-items: center;
+
+    &-title {
+      font: 600 14px "Montserrat", sans-serif;
+      color: var(--rg-header-text);
+    }
+
+    &-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 4px !important;
+      border: 1.5px solid var(--rg-border-primary);
+      background: var(--rg-bg-card);
+      font: 600 11px "Montserrat", sans-serif;
+      white-space: nowrap;
+      color: var(--rg-text-secondary);
+      user-select: none;
+      flex-shrink: 0;
+
+      // Gametype-coloured variants — mirrors the pinned card palette
+      $gametypes: voc, normal, abra, noerror, marathon, chars, digits, sprint;
+      @each $type in $gametypes {
+        &--#{$type} {
+          color: var(--rg-gametype-#{$type});
+          background: var(--rg-bg-card-pinned-#{$type});
+          border-color: var(--rg-border-pinned-#{$type});
+        }
+      }
+
+      &-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 1px 5px;
+        border-radius: 3px !important;
+        background: var(--rg-hover-mix-color);
+        font: 500 10px "Montserrat", sans-serif;
+        color: inherit;
+        opacity: 0.85;
+      }
+    }
 
     &-controls {
       display: flex;
