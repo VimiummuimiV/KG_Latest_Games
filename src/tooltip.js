@@ -180,18 +180,17 @@ export function refreshTooltipSettings() {
 }
 
 const STATE_WORDS = [
-  { words: ['Включено', 'Включен', 'Активно', 'Активен'], className: 'tooltip-state--on' },
-  { words: ['Отключено', 'Отключен', 'Неактивно', 'Неактивен'], className: 'tooltip-state--off' },
+  { prefixes: ['Включен', 'Активн'], className: 'tooltip-state--on' },
+  { prefixes: ['Отключен', 'Неактивн'], className: 'tooltip-state--off' },
 ];
 
 function highlightStateWords(text) {
   let result = text;
-  STATE_WORDS.forEach(({ words, className }) => {
-    words.forEach(word => {
-      // \b doesn't work reliably with Cyrillic, so use Unicode-aware boundary via lookbehind/lookahead
-      const regex = new RegExp(`(?<![а-яёА-ЯЁa-zA-Z])${word}(?![а-яёА-ЯЁa-zA-Z])`, 'g');
+  STATE_WORDS.forEach(({ prefixes, className }) => {
+    prefixes.forEach(prefix => {
+      const regex = new RegExp(`(?<![а-яёА-ЯЁa-zA-Z])${prefix}[а-яёА-ЯЁ]*`, 'g');
       const emoji = className === 'tooltip-state--on' ? '🟢' : '🔴';
-      result = result.replace(regex, `<span class="${className}">${emoji} ${word}</span>`);
+      result = result.replace(regex, match => `<span class="${className}">${emoji} ${match}</span>`);
     });
   });
   return result;
