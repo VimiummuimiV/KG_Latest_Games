@@ -192,7 +192,7 @@ export class GamesDataContainer {
 
     // Click cancels the countdown
     indicator.addEventListener('click', () => {
-      indicator.classList.add('sleep-indicator-cancelled');
+      indicator.classList.add('sleep-indicator-dismissing');
       setTimeout(() => { if (onCancel) onCancel(); }, 300);
     }, { once: true });
 
@@ -244,20 +244,21 @@ export class GamesDataContainer {
         cancelAnimationFrame(this[timerProp]);
         this[timerProp] = null;
       }
-      if (!indicator) return;
+      if (!indicator) return Promise.resolve();
       this[indicatorProp] = null;
-      if (animated && !indicator.classList.contains('sleep-indicator-cancelled')) {
-        indicator.classList.add('sleep-indicator-cancelled');
-        setTimeout(() => indicator.remove(), 300);
-      } else {
-        indicator.remove();
-      }
+
+      const isDismissing = indicator.classList.contains('sleep-indicator-dismissing');
+      if (animated && !isDismissing) indicator.classList.add('sleep-indicator-dismissing');
+      if (animated || isDismissing) return new Promise(resolve => setTimeout(() => { indicator.remove(); resolve(); }, 300));
+      indicator.remove();
+      return Promise.resolve();
     };
 
     if (type === 'start') {
-      doRemove(this.startIndicator, 'startTimer', 'startIndicator');
+      return doRemove(this.startIndicator, 'startTimer', 'startIndicator');
     } else if (type === 'replay') {
-      doRemove(this.replayIndicator, 'replayTimer', 'replayIndicator');
+      return doRemove(this.replayIndicator, 'replayTimer', 'replayIndicator');
     }
+    return Promise.resolve();
   }
 }

@@ -230,7 +230,7 @@ export class PageHandler {
           this.startSleep = sleep(this.main.startDelay);
           this.gamesDataContainer.createSleepIndicator('start', this.main.startDelay, this.startSleep, () => this.cancelStart());
           this.startSleep.then(() => {
-            this.gamesDataContainer.removeSleepIndicator('start');
+            this.gamesDataContainer.removeSleepIndicator('start', true);
             game.hostStart();
           }).catch(() => {
             this.gamesDataContainer.removeSleepIndicator('start');
@@ -346,31 +346,31 @@ export class PageHandler {
             this.replaySleep = sleep(this.main.replayDelay);
             this.gamesDataContainer.createSleepIndicator('replay', this.main.replayDelay, this.replaySleep, () => this.cancelReplay());
             this.replaySleep.then(() => {
-              this.gamesDataContainer.removeSleepIndicator('replay');
-
-              // "replay more" repeat-count logic
-              if (this.main.shouldReplayMore) {
-                if (this.main.remainingReplayCount > 1) {
-                  this.main.remainingReplayCount--;
-                  this.main.settingsManager.saveSettings();
-                  window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
+              this.gamesDataContainer.removeSleepIndicator('replay', true).then(() => {
+                // "replay more" repeat-count logic
+                if (this.main.shouldReplayMore) {
+                  if (this.main.remainingReplayCount > 1) {
+                    this.main.remainingReplayCount--;
+                    this.main.settingsManager.saveSettings();
+                    window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
+                  } else {
+                    this.main.remainingReplayCount = this.main.replayNextGameCount;
+                    this.main.settingsManager.saveSettings();
+                    if (this.main.replayNextGame) {
+                      this.replayNextGame();
+                    } else {
+                      window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
+                    }
+                  }
                 } else {
-                  this.main.remainingReplayCount = this.main.replayNextGameCount;
-                  this.main.settingsManager.saveSettings();
+                  // Default behavior: either replay next game or same
                   if (this.main.replayNextGame) {
                     this.replayNextGame();
                   } else {
                     window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
                   }
                 }
-              } else {
-                // Default behavior: either replay next game or same
-                if (this.main.replayNextGame) {
-                  this.replayNextGame();
-                } else {
-                  window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
-                }
-              }
+              });
             }).catch(() => {
               this.gamesDataContainer.removeSleepIndicator('replay');
               this.replaySleep = null;

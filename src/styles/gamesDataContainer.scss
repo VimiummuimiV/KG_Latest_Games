@@ -87,8 +87,8 @@
     50%      { opacity: 0.35; }
   }
 
-  // Cancelled state — bounce out and fade away
-  .sleep-indicator-cancelled {
+  // Cancelled (user action) or expired (natural timeout) — bounce out and fade away
+  .sleep-indicator-dismissing {
     animation: bounceOut 0.3s ease forwards !important;
   }
 
