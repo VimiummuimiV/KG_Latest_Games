@@ -20,7 +20,13 @@ export function generateUniqueId(groups) {
 
 export function sleep(ms) {
   let timeoutId;
+  let startTime = Date.now();
+  let remainingMs = ms;
+  let isPaused = false;
+  let resolveFn;
+
   const promise = new Promise(resolve => {
+    resolveFn = resolve;
     timeoutId = setTimeout(resolve, ms);
   });
 
@@ -29,6 +35,28 @@ export function sleep(ms) {
       clearTimeout(timeoutId);
       timeoutId = null;
     }
+  };
+
+  promise.pause = () => {
+    if (isPaused || !timeoutId) return;
+    isPaused = true;
+    clearTimeout(timeoutId);
+    timeoutId = null;
+    // Snapshot how much time is left
+    remainingMs = Math.max(0, remainingMs - (Date.now() - startTime));
+  };
+
+  promise.resume = () => {
+    if (!isPaused) return;
+    isPaused = false;
+    startTime = Date.now();
+    timeoutId = setTimeout(resolveFn, remainingMs);
+  };
+
+  // Expose remaining ms for the visual timer to read
+  promise.getRemainingMs = () => {
+    if (isPaused) return remainingMs;
+    return Math.max(0, remainingMs - (Date.now() - startTime));
   };
 
   return promise;

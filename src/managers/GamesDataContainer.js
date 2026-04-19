@@ -178,59 +178,86 @@ export class GamesDataContainer {
   // Dynamic Timer Indicators
   // ============================================================================
 
-  createSleepIndicator(type, totalMs) {
+  createSleepIndicator(type, totalMs, sleepPromise = null, onCancel = null) {
     this.ensureContainer();
-    
+
     const indicator = document.createElement('div');
     indicator.className = `indicator ${type === 'start' ? 'sleep-start-indicator' : 'sleep-replay-indicator'}`;
     this.container.insertBefore(indicator, this.container.firstChild);
 
-    const tooltipText = type === 'start' 
-      ? 'Таймер автоматического старта игры'
-      : 'Таймер автоматического повтора игры';
+    const tooltipText = type === 'start'
+      ? '[Наведение] Заморозить таймер  [Клик] Отменить автоматический старт игры'
+      : '[Наведение] Заморозить таймер  [Клик] Отменить автоматический повтор игры';
     createCustomTooltip(indicator, tooltipText);
-    
+
+    // Click cancels the countdown
+    indicator.addEventListener('click', () => {
+      indicator.classList.add('sleep-indicator-cancelled');
+      setTimeout(() => { if (onCancel) onCancel(); }, 300);
+    }, { once: true });
+
     type === 'start' ? this.startIndicator = indicator : this.replayIndicator = indicator;
-    
-    let remainingMs = totalMs;
-    const startTime = Date.now();
-    
-    const updateTimer = () => {
-      const elapsed = Date.now() - startTime;
-      remainingMs = Math.max(0, totalMs - elapsed);
-      
-      const seconds = Math.floor(remainingMs / 1000);
-      const milliseconds = Math.floor((remainingMs % 1000) / 10);
-      indicator.textContent = `${seconds.toString().padStart(2, '0')}:${milliseconds.toString().padStart(2, '0')}`;
-      
-      if (remainingMs > 0) {
-        const timerId = requestAnimationFrame(updateTimer);
-        type === 'start' ? this.startTimer = timerId : this.replayTimer = timerId;
+
+    // Visual countdown — reads remaining time from the sleep promise
+    let rafId = null;
+    let frozen = false;
+
+    const formatTime = ms => {
+      const seconds      = Math.floor(ms / 1000);
+      const centiseconds = Math.floor((ms % 1000) / 10);
+      return `${seconds.toString().padStart(2, '0')}:${centiseconds.toString().padStart(2, '0')}`;
+    };
+
+    const tick = () => {
+      if (frozen) return;
+      const ms = sleepPromise?.getRemainingMs?.() ?? 0;
+      indicator.textContent = formatTime(ms);
+      if (ms > 0) {
+        rafId = requestAnimationFrame(tick);
+        type === 'start' ? this.startTimer = rafId : this.replayTimer = rafId;
       }
     };
-    
-    updateTimer();
+
+    // Hover: pause sleep + freeze visual display
+    indicator.addEventListener('mouseenter', () => {
+      frozen = true;
+      cancelAnimationFrame(rafId);
+      rafId = null;
+      sleepPromise?.pause?.();
+      indicator.classList.add('sleep-indicator-paused');
+    });
+
+    // Leave: resume sleep + restart visual loop
+    indicator.addEventListener('mouseleave', () => {
+      frozen = false;
+      indicator.classList.remove('sleep-indicator-paused');
+      sleepPromise?.resume?.();
+      tick();
+    });
+
+    tick();
   }
 
-  removeSleepIndicator(type) {
+  removeSleepIndicator(type, animated = false) {
+    const doRemove = (indicator, timerProp, indicatorProp) => {
+      if (this[timerProp]) {
+        cancelAnimationFrame(this[timerProp]);
+        this[timerProp] = null;
+      }
+      if (!indicator) return;
+      this[indicatorProp] = null;
+      if (animated && !indicator.classList.contains('sleep-indicator-cancelled')) {
+        indicator.classList.add('sleep-indicator-cancelled');
+        setTimeout(() => indicator.remove(), 300);
+      } else {
+        indicator.remove();
+      }
+    };
+
     if (type === 'start') {
-      if (this.startTimer) {
-        cancelAnimationFrame(this.startTimer);
-        this.startTimer = null;
-      }
-      if (this.startIndicator) {
-        this.startIndicator.remove();
-        this.startIndicator = null;
-      }
+      doRemove(this.startIndicator, 'startTimer', 'startIndicator');
     } else if (type === 'replay') {
-      if (this.replayTimer) {
-        cancelAnimationFrame(this.replayTimer);
-        this.replayTimer = null;
-      }
-      if (this.replayIndicator) {
-        this.replayIndicator.remove();
-        this.replayIndicator = null;
-      }
+      doRemove(this.replayIndicator, 'replayTimer', 'replayIndicator');
     }
   }
 }

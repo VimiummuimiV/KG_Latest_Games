@@ -144,9 +144,7 @@ export class PageHandler {
         this.isHoveringLatestGames = true;
         // ONLY cancel replay sleep when hovering - start should be unaffected
         if (this.replaySleep && typeof this.replaySleep.cancel === 'function') {
-          this.replaySleep.cancel();
-          this.replaySleep = null;
-          this.gamesDataContainer.removeSleepIndicator('replay');
+          this.cancelReplay(true);
         }
       });
 
@@ -201,6 +199,22 @@ export class PageHandler {
     this.main.gamesManager.saveGameData();
   }
 
+  cancelStart() {
+    if (this.startSleep) {
+      this.startSleep.cancel();
+      this.startSleep = null;
+    }
+    this.gamesDataContainer.removeSleepIndicator('start');
+  }
+
+  cancelReplay(animated = false) {
+    if (this.replaySleep) {
+      this.replaySleep.cancel();
+      this.replaySleep = null;
+    }
+    this.gamesDataContainer.removeSleepIndicator('replay', animated);
+  }
+
   handleStartAction() {
     // Handle auto-start - NEVER affected by hover state
     if (this.main.shouldStart) {
@@ -208,10 +222,10 @@ export class PageHandler {
       if (pausedElement && pausedElement.style.display !== 'none') {
         if (typeof game !== 'undefined' && game.hostStart) {
           // Remove existing start indicator if any
-          this.gamesDataContainer.removeSleepIndicator('start');
+          this.cancelStart();
 
-          this.gamesDataContainer.createSleepIndicator('start', this.main.startDelay);
           this.startSleep = sleep(this.main.startDelay);
+          this.gamesDataContainer.createSleepIndicator('start', this.main.startDelay, this.startSleep, () => this.cancelStart());
           this.startSleep.then(() => {
             this.gamesDataContainer.removeSleepIndicator('start');
             game.hostStart();
@@ -324,10 +338,10 @@ export class PageHandler {
           // Only start replay timer if not hovering over latest games container
           if (!this.isHoveringLatestGames) {
             // Remove existing replay indicator if any
-            this.gamesDataContainer.removeSleepIndicator('replay');
+            this.cancelReplay();
 
-            this.gamesDataContainer.createSleepIndicator('replay', this.main.replayDelay);
             this.replaySleep = sleep(this.main.replayDelay);
+            this.gamesDataContainer.createSleepIndicator('replay', this.main.replayDelay, this.replaySleep, () => this.cancelReplay());
             this.replaySleep.then(() => {
               this.gamesDataContainer.removeSleepIndicator('replay');
 
