@@ -174,6 +174,12 @@ export class GamesDataContainer {
     );
   }
 
+  updateRemainingCountIndicator() {
+    if (!this.container) return;
+    const indicator = this.container.querySelector('.remaining-count-indicator');
+    if (indicator) indicator.textContent = `${this.main.remainingReplayCount}`;
+  }
+
   // ============================================================================
   // Dynamic Timer Indicators
   // ============================================================================

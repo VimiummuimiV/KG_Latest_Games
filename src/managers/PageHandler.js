@@ -323,12 +323,10 @@ export class PageHandler {
   }
 
   handleReplayAction() {
-    // Do not auto-replay for competition or qualification games
+    // Competition and qualification games are never auto-replayed
     if (['competition', 'qualification'].includes(detectGameType().category)) return;
 
-    // Handle auto-replay - affected by hover state
     if (this.main.shouldReplay) {
-      // Check the appropriate element based on replayWithoutWaiting setting
       const elementToCheck = this.main.replayWithoutWaiting
         ? document.querySelector('#typeblock #bookinfo')
         : document.querySelector('#status-inner #finished');
@@ -338,40 +336,47 @@ export class PageHandler {
         if (gameIdMatch) {
           const gameId = gameIdMatch[1];
 
-          // Only start replay timer if not hovering over latest games container
+          // Replay is suppressed while the user is hovering the latest games container
           if (!this.isHoveringLatestGames) {
-            // Remove existing replay indicator if any
+            // Cancel any existing replay timer that may still be running (e.g. from a previous game)
             this.cancelReplay();
 
+            // Decrement the counter as soon as the game ends so the indicator reflects
+            // the upcoming replay, not the one that just finished. Saved immediately so
+            // a page reload mid-countdown doesn't lose the updated value.
+            if (this.main.shouldReplayMore) {
+              this.main.remainingReplayCount--;
+              this.gamesDataContainer.updateRemainingCountIndicator();
+              this.main.settingsManager.saveSettings();
+            }
+
+            // Start the countdown timer and show the visual indicator
             this.replaySleep = sleep(this.main.replayDelay);
             this.gamesDataContainer.createSleepIndicator('replay', this.main.replayDelay, this.replaySleep, () => this.cancelReplay());
+
             this.replaySleep.then(() => {
+              // Countdown finished naturally — play the bounceOut animation, then navigate
               this.gamesDataContainer.removeSleepIndicator('replay', true).then(() => {
-                // "replay more" repeat-count logic
-                if (this.main.shouldReplayMore) {
-                  if (this.main.remainingReplayCount > 1) {
-                    this.main.remainingReplayCount--;
-                    this.main.settingsManager.saveSettings();
-                    window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
-                  } else {
-                    this.main.remainingReplayCount = this.main.replayNextGameCount;
-                    this.main.settingsManager.saveSettings();
-                    if (this.main.replayNextGame) {
-                      this.replayNextGame();
-                    } else {
-                      window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
-                    }
-                  }
-                } else {
-                  // Default behavior: either replay next game or same
+                if (this.main.shouldReplayMore && this.main.remainingReplayCount <= 0) {
+                  // All repeats of this game are done — reset the counter and move to the next game
+                  this.main.remainingReplayCount = this.main.replayNextGameCount;
+                  this.main.settingsManager.saveSettings();
                   if (this.main.replayNextGame) {
                     this.replayNextGame();
                   } else {
+                    // replayNextGame is off — replay the same game instead
                     window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
                   }
+                } else if (!this.main.shouldReplayMore && this.main.replayNextGame) {
+                  // shouldReplayMore is off — move to the next game
+                  this.replayNextGame();
+                } else {
+                  // Repeats still remaining — replay the current game
+                  window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
                 }
               });
             }).catch(() => {
+              // Countdown was cancelled (user clicked or hovered away) — clean up without navigating
               this.gamesDataContainer.removeSleepIndicator('replay');
               this.replaySleep = null;
             });
