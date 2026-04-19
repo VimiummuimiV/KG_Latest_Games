@@ -358,15 +358,10 @@ export class PageHandler {
               // Countdown finished naturally — play the bounceOut animation, then navigate
               this.gamesDataContainer.removeSleepIndicator('replay', true).then(() => {
                 if (this.main.shouldReplayMore && this.main.remainingReplayCount <= 0) {
-                  // All repeats of this game are done — reset the counter and move to the next game
+                  // All repeats of this game are done — reset the counter and always move to the next game
                   this.main.remainingReplayCount = this.main.replayNextGameCount;
                   this.main.settingsManager.saveSettings();
-                  if (this.main.replayNextGame) {
-                    this.replayNextGame();
-                  } else {
-                    // replayNextGame is off — replay the same game instead
-                    window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
-                  }
+                  this.replayNextGame();
                 } else if (!this.main.shouldReplayMore && this.main.replayNextGame) {
                   // shouldReplayMore is off — move to the next game
                   this.replayNextGame();
