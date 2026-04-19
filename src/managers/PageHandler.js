@@ -140,8 +140,10 @@ export class PageHandler {
   setupHoverListeners() {
     const latestGamesContainer = document.querySelector('#latest-games-container');
     if (latestGamesContainer) {
+      let leaveTimer = null;
       latestGamesContainer.addEventListener('mouseenter', () => {
         this.isHoveringLatestGames = true;
+        clearTimeout(leaveTimer);
         // ONLY cancel replay sleep when hovering - start should be unaffected
         if (this.replaySleep && typeof this.replaySleep.cancel === 'function') {
           this.cancelReplay(true);
@@ -150,8 +152,9 @@ export class PageHandler {
 
       latestGamesContainer.addEventListener('mouseleave', () => {
         this.isHoveringLatestGames = false;
-        // If not hovering, re-check and handle replay action
-        this.handleReplayAction();
+        /* If not hovering, re-check and handle replay action after a short delay
+           to prevent immediate triggering when moving the mouse in and out quickly */
+        leaveTimer = setTimeout(() => this.handleReplayAction(), 350);
       });
     }
   }
