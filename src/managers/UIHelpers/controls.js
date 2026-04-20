@@ -957,12 +957,12 @@ export function createControls(main) {
   // Start latest played or random game when pressing Shift+Enter
   // or add current vocabulary to banned list when pressing Alt+Enter
   document.addEventListener('keydown', e => {
-    // Ctrl+F: toggle search box when panel is hovered or search is already focused
+    // Ctrl + F: toggle search box when the panel is visible
     if (e.ctrlKey && e.code === 'KeyF') {
-      const searchInput = document.getElementById('latest-games-search-input');
-      const panelHovered = main.isHovered;
-      const searchFocused = document.activeElement === searchInput;
-      if (panelHovered || searchFocused) {
+      const container = document.getElementById('latest-games-container');
+      const panelVisible = container && container.classList.contains('visible');
+
+      if (panelVisible) {
         e.preventDefault();
         toggleSearchBox(main);
         updateSearchTooltip();
