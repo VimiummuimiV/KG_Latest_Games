@@ -243,7 +243,7 @@ export function createControls(main) {
     innerHTML: getReplayIcon()
   });
   setupControlButton(replayBtn, main, 'shouldReplay', 'replayDelay', {
-    click: (isEnabled) => `Автоповтор игры: ${isEnabled ? 'Включено' : 'Отключено'}`,
+    click: (isEnabled) => `Автосоздание игры: ${isEnabled ? 'Включено' : 'Отключено'}`,
     shift: () => 'Изменить задержку автосоздания в миллисекундах:',
     ctrl: () => `Создание игры: ${main.replayNextGame ? 'Следующей' : 'Текущей'}`,
     alt: () => `Ожидание игроков: ${main.replayWithoutWaiting ? 'Отключено' : 'Включено'}`,
