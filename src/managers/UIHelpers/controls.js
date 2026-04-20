@@ -481,8 +481,8 @@ export function createControls(main) {
     createCustomTooltip(
       searchBtn,
       main.showSearchBox
-        ? 'Скрыть строку поиска'
-        : 'Показать строку поиска'
+        ? '[Ctrl + F] Скрыть поисковую строку'
+        : '[Ctrl + F] Показать поисковую строку'
     );
     searchBtn.classList.toggle('latest-games-disabled', !main.showSearchBox);
   };
@@ -957,6 +957,18 @@ export function createControls(main) {
   // Start latest played or random game when pressing Shift+Enter
   // or add current vocabulary to banned list when pressing Alt+Enter
   document.addEventListener('keydown', e => {
+    // Ctrl+F: toggle search box when panel is hovered or search is already focused
+    if (e.ctrlKey && e.code === 'KeyF') {
+      const searchInput = document.getElementById('latest-games-search-input');
+      const panelHovered = main.isHovered;
+      const searchFocused = document.activeElement === searchInput;
+      if (panelHovered || searchFocused) {
+        e.preventDefault();
+        toggleSearchBox(main);
+        updateSearchTooltip();
+        return;
+      }
+    }
     // Alt+Shift+Enter: add current vocabulary to Избранные (higher priority)
     if (e.altKey && e.shiftKey && e.code === 'Enter') {
       e.preventDefault();
@@ -1017,7 +1029,7 @@ export function createControls(main) {
   // Frequently used buttons that should always be visible
   const alwaysVisible = [playBtn, replayBtn, replayMoreBtn, randomRaceBtn, startRaceBtn, bannedVocabulariesBtn, playedVocabulariesBtn];
 
-  // Rarerly used buttons grouped under 'More' panel
+  // Rarely used buttons grouped under 'More' panel
   const moreGroup = [
     main.themeManager.createThemeToggle(),
     main.viewManager.createDisplayModeToggle(),
