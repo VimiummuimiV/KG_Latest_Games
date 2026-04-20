@@ -230,8 +230,8 @@ export function createControls(main) {
   });
   setupControlButton(playBtn, main, 'shouldStart', 'startDelay', {
     click: (isEnabled) => `Автозапуск игры: ${isEnabled ? 'Включено' : 'Отключено'}`,
-    shift: () => 'Изменить задержку запуска в миллисекундах',
-    delayErrorText: 'Пожалуйста, введите корректное значение задержки запуска.'
+    shift: () => 'Изменить задержку автозапуска',
+    delayErrorText: 'Пожалуйста, введите корректное значение задержки автозапуска.'
   });
 
   // Add button to toggle replay in game
@@ -244,10 +244,10 @@ export function createControls(main) {
   });
   setupControlButton(replayBtn, main, 'shouldReplay', 'replayDelay', {
     click: (isEnabled) => `Автосоздание игры: ${isEnabled ? 'Включено' : 'Отключено'}`,
-    shift: () => 'Изменить задержку автосоздания в миллисекундах:',
-    ctrl: () => `Создание игры: ${main.replayNextGame ? 'Следующей' : 'Текущей'}`,
+    shift: () => 'Изменить задержку автосоздания',
+    ctrl: () => `Режим автосоздания: ${main.replayNextGame ? 'Следующая️' : 'Текущая'}`,
     alt: () => `Ожидание игроков: ${main.replayWithoutWaiting ? 'Отключено' : 'Включено'}`,
-    delayErrorText: 'Пожалуйста, введите корректное значение задержки автоповтора.'
+    delayErrorText: 'Пожалуйста, введите корректное значение задержки автосоздания.'
   });
 
   // Add button to toggle replay more functionality with count setting
