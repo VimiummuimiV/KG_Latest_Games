@@ -1,5 +1,6 @@
 import { createCustomTooltip } from "../tooltip.js";
 import { getActivePlaylistSession, PlaylistsManager } from "../playlistsManager.js";
+import { icons } from "../icons.js";
 
 export class GamesDataContainer {
   constructor(main) {
@@ -199,66 +200,72 @@ export class GamesDataContainer {
     if (textNode) textNode.textContent = `${uniqueVocabs}/${totalGames}`;
   }
 
-  createPlaylistIndicator() {
+  // ============================================================================
+  // Playlist Indicator Helpers
+  // ============================================================================
+
+  // Shared data-fetch logic for both createPlaylistIndicator and updatePlaylistIndicator.
+  // Returns { session, playlist, pos, total, reps } or null if no active playlist.
+  _getPlaylistIndicatorData() {
     const session = getActivePlaylistSession();
-    if (!session) return;
+    if (!session) return null;
     try {
       const playlists = JSON.parse(localStorage.getItem('latestGamesPlaylists') || '[]');
       const playlist  = playlists.find(p => p.id === session.playlistId);
-      if (!playlist) return;
-      const total = playlist.entries.length;
-      const pos   = session.entryIndex + 1;
-      const reps  = session.remainingRepeats;
-      const tip   = `[Плейлист] ${playlist.title}[Позиция] ${pos} из ${total}[Осталось повторов] ${reps}`;
+      if (!playlist) return null;
+      return {
+        session,
+        playlist,
+        total: playlist.entries.length,
+        pos:   session.entryIndex + 1,
+        reps:  session.remainingRepeats
+      };
+    } catch { return null; }
+  }
 
-      this.ensureContainer();
-      const indicator = document.createElement('div');
-      indicator.className = 'indicator playlist-progress-indicator';
-      indicator.innerHTML = this._playlistIndicatorHTML(pos, total, reps);
-      createCustomTooltip(indicator, tip);
+  createPlaylistIndicator() {
+    const data = this._getPlaylistIndicatorData();
+    if (!data) return;
+    const { playlist, pos, total, reps } = data;
+    const tip = `[Плейлист] ${playlist.title}[Позиция] ${pos} из ${total}[Осталось повторов] ${reps}`;
 
-      // Click opens/toggles the PlaylistsManager panel
-      indicator.style.cursor = 'pointer';
-      indicator.addEventListener('click', () => {
+    this.ensureContainer();
+    const indicator = document.createElement('div');
+    indicator.className = 'indicator playlist-progress-indicator';
+    indicator.innerHTML = this._playlistIndicatorHTML(pos, total, reps);
+    createCustomTooltip(indicator, tip);
+
+    // Click opens/toggles the PlaylistsManager panel
+    indicator.addEventListener('click', () => {
+      const rect = indicator.getBoundingClientRect();
+      PlaylistsManager.toggle(rect.left, rect.bottom);
+    });
+
+    this.container.appendChild(indicator);
+
+    // If auto-open is enabled, open the panel immediately on page load
+    if (this.main.playlistPanelAutoOpen && !PlaylistsManager.popup) {
+      requestAnimationFrame(() => {
         const rect = indicator.getBoundingClientRect();
-        PlaylistsManager.toggle(rect.left, rect.bottom);
+        PlaylistsManager.show(rect.left, rect.bottom);
       });
-
-      this.container.appendChild(indicator);
-
-      // If auto-open is enabled, open the panel immediately on page load
-      if (this.main.playlistPanelAutoOpen && !PlaylistsManager.popup) {
-        requestAnimationFrame(() => {
-          const rect = indicator.getBoundingClientRect();
-          PlaylistsManager.show(rect.left, rect.bottom);
-        });
-      }
-    } catch { }
+    }
   }
 
   _playlistIndicatorHTML(pos, total, reps) {
-    // Inline the playing SVG at a size that doesn't inflate indicator height
-    const svgIcon = `<svg viewBox="0 0 24 24" fill="currentColor" style="width:1em;height:1em;vertical-align:middle;flex-shrink:0"><path d="M19.376 12.416L8.777 19.482C8.548 19.635 8.237 19.573 8.084 19.343C8.029 19.261 8 19.165 8 19.066V4.934C8 4.658 8.224 4.434 8.5 4.434C8.599 4.434 8.695 4.464 8.777 4.518L19.376 11.584C19.606 11.737 19.668 12.048 19.515 12.277C19.478 12.332 19.431 12.38 19.376 12.416Z"/></svg>`;
-    return `${svgIcon}<span style="font-variant-numeric:tabular-nums">${pos}/${total} ×${reps}</span>`;
+    return `<span class="playlist-hud-icon">${icons.playing}</span><span>${pos}/${total} ×${reps}</span>`;
   }
 
   updatePlaylistIndicator() {
     if (!this.container) return;
     const indicator = this.container.querySelector('.playlist-progress-indicator');
     if (!indicator) return;
-    const session = getActivePlaylistSession();
-    if (!session) { indicator.remove(); return; }
-    try {
-      const playlists = JSON.parse(localStorage.getItem('latestGamesPlaylists') || '[]');
-      const playlist  = playlists.find(p => p.id === session.playlistId);
-      if (!playlist) { indicator.remove(); return; }
-      const total = playlist.entries.length;
-      const pos   = session.entryIndex + 1;
-      const reps  = session.remainingRepeats;
-      indicator.innerHTML = this._playlistIndicatorHTML(pos, total, reps);
-      createCustomTooltip(indicator,
-        `[Плейлист] ${playlist.title}[Позиция] ${pos} из ${total}[Осталось повторов] ${reps}`);
-    } catch { }
+    const data = this._getPlaylistIndicatorData();
+    if (!data) { indicator.remove(); return; }
+    const { playlist, pos, total, reps } = data;
+    indicator.innerHTML = this._playlistIndicatorHTML(pos, total, reps);
+    createCustomTooltip(indicator,
+      `[Плейлист] ${playlist.title}[Позиция] ${pos} из ${total}[Осталось повторов] ${reps}`);
   }
 
   // ============================================================================

@@ -31,7 +31,7 @@ export function createControls(main) {
   const decreaseBtn = createElement('span', {
     id: 'latest-games-count-dec',
     className: 'control-button',
-    innerHTML: icons.decrease
+    innerHTML: icons.chevronLeft
   });
   createCustomTooltip(decreaseBtn, 'Уменьшить количество сохраняемых игр');
 
@@ -56,7 +56,7 @@ export function createControls(main) {
   const increaseBtn = createElement('span', {
     id: 'latest-games-count-inc',
     className: 'control-button',
-    innerHTML: icons.increase
+    innerHTML: icons.chevronRight
   });
   createCustomTooltip(increaseBtn, 'Увеличить количество сохраняемых игр');
 
@@ -398,7 +398,7 @@ export function createControls(main) {
   // Add drag toggle button
   const dragToggleBtn = createElement('span', {
     className: 'latest-games-drag-toggle control-button',
-    innerHTML: icons.dragToggle
+    innerHTML: icons.drag
   });
   createCustomTooltip(
     dragToggleBtn,

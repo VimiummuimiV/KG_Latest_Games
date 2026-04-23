@@ -147,6 +147,23 @@
     border: 1px solid hsl(135, 45%, 40%);
     cursor: pointer;
     animation: bounceIn 0.3s ease forwards;
+    gap: 5px;
+
+    .playlist-hud-icon {
+      display: inline-flex;
+      align-items: center;
+      flex-shrink: 0;
+
+      svg {
+        width: 1em;
+        height: 1em;
+        vertical-align: middle;
+      }
+    }
+
+    .playlist-hud-counter {
+      font-variant-numeric: tabular-nums;
+    }
   }
 
   // Period indicators (week, month, year) - falling animation from day indicator

@@ -1,6 +1,7 @@
 import { createCustomTooltip } from './tooltip.js';
 import { icons } from './icons.js';
 import { gameTypes, visibilities } from './definitions.js';
+import { generateRandomString } from './utils.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Storage / session keys
@@ -51,6 +52,9 @@ export function advancePlaylist(main) {
   const session = getActivePlaylistSession();
   if (!session) return false;
 
+  // If the playlist is paused, don't advance — PageHandler will fall through to normal replay
+  if (session.paused) return false;
+
   const playlists = PlaylistsManager.load();
   const playlist  = playlists.find(p => p.id === session.playlistId);
   if (!playlist || !playlist.entries.length) {
@@ -75,7 +79,7 @@ export function advancePlaylist(main) {
 
   const updated = getActivePlaylistSession();
   const entry   = playlist.entries[updated.entryIndex];
-  const game    = _findGameById(main, entry.gameId);
+  const game    = main.gamesManager.findGameById(entry.gameId);
   if (!game) return advancePlaylist(main); // skip deleted games
 
   window.location.href = main.gamesManager.generateGameLink(game);
@@ -89,13 +93,6 @@ function _finishPlaylist(main, playlist) {
   setTimeout(() => alert(`✅ Плейлист «${name}» завершён!`), 300);
 }
 
-function _findGameById(main, gameId) {
-  for (const group of main.groupsManager.groups) {
-    const g = group.games.find(g => g.id === gameId);
-    if (g) return g;
-  }
-  return null;
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PlaylistsManager singleton
@@ -127,7 +124,7 @@ export const PlaylistsManager = {
       while (playlists.some(p => p.title === `Плейлист-${n}`)) n++;
       name = `Плейлист-${n}`;
     }
-    const playlist = { id: _uid(), title: name, entries: [] };
+    const playlist = { id: generateRandomString(), title: name, entries: [] };
     playlists.push(playlist);
     this.save(playlists);
     return playlist;
@@ -149,7 +146,7 @@ export const PlaylistsManager = {
     const p = playlists.find(p => p.id === playlistId);
     if (!p) return;
     if (p.entries.some(e => e.gameId === gameId)) return;
-    p.entries.push({ id: _uid(), gameId, repeatCount: Math.max(1, repeatCount) });
+    p.entries.push({ id: generateRandomString(), gameId, repeatCount: Math.max(1, repeatCount) });
     this.save(playlists);
   },
 
@@ -218,31 +215,18 @@ export const PlaylistsManager = {
       return;
     }
 
-    // If another playlist is active, ask first
+    // If another playlist is active, ask first with both playlist names
     const existing = getActivePlaylistSession();
     if (existing && existing.playlistId !== playlistId) {
-      if (!confirm('Уже идёт другой плейлист. Остановить его и запустить этот?')) return;
+      const existingPlaylist = playlists.find(p => p.id === existing.playlistId);
+      const existingName = existingPlaylist?.title || 'Неизвестный плейлист';
+      if (!confirm(`Запущен плейлист «${existingName}». Остановить его и запустить «${playlist.title}»?`)) return;
     }
 
-    // Save current auto-start/replay settings so we can restore them after
-    try {
-      sessionStorage.setItem('latestGames_prePlaylistSettings', JSON.stringify({
-        shouldStart:         this.main.shouldStart,
-        shouldReplay:        this.main.shouldReplay,
-        replayNextGame:      this.main.replayNextGame,
-        replayWithoutWaiting: this.main.replayWithoutWaiting
-      }));
-    } catch { }
-
-    // Force auto-start + auto-replay-next-game on, no waiting for players
-    this.main.shouldStart          = true;
-    this.main.shouldReplay         = true;
-    this.main.replayNextGame       = true;
-    this.main.replayWithoutWaiting = true;
-    this.main.settingsManager.saveSettings();
+    this._activatePlaylistSettings();
 
     const firstEntry = playlist.entries[0];
-    const game = _findGameById(this.main, firstEntry.gameId);
+    const game = this.main.gamesManager.findGameById(firstEntry.gameId);
     if (!game) { alert('⚠️ Первая игра плейлиста не найдена.'); return; }
 
     setActivePlaylistSession({ playlistId, entryIndex: 0, remainingRepeats: firstEntry.repeatCount });
@@ -264,20 +248,7 @@ export const PlaylistsManager = {
     this._constrain();
     // Scroll active playlist block + active entry into view (centered)
     if (session) {
-      requestAnimationFrame(() => {
-        const list = this.popup?.querySelector('.playlists-list');
-        const activeEntry = this.popup?.querySelector('.playlist-entry-row--active');
-        const activeBlock = this.popup?.querySelector(`.playlist-block[data-playlist-id="${session.playlistId}"]`);
-        if (activeEntry && list) {
-          // Scroll so the active entry is centered in the list viewport
-          const listRect  = list.getBoundingClientRect();
-          const entryRect = activeEntry.getBoundingClientRect();
-          const offset = entryRect.top - listRect.top - (listRect.height / 2) + (entryRect.height / 2);
-          list.scrollBy({ top: offset, behavior: 'smooth' });
-        } else if (activeBlock && list) {
-          activeBlock.scrollIntoView({ block: 'center', behavior: 'smooth' });
-        }
-      });
+      requestAnimationFrame(() => this._scrollToActiveEntry());
     }
     setTimeout(() => {
       document.addEventListener('click', this._outside);
@@ -320,16 +291,7 @@ export const PlaylistsManager = {
     // Scroll active entry to center
     const session = getActivePlaylistSession();
     if (session) {
-      requestAnimationFrame(() => {
-        const list       = this.popup?.querySelector('.playlists-list');
-        const activeEntry = this.popup?.querySelector('.playlist-entry-row--active');
-        if (activeEntry && list) {
-          const listRect  = list.getBoundingClientRect();
-          const entryRect = activeEntry.getBoundingClientRect();
-          const offset = entryRect.top - listRect.top - (listRect.height / 2) + (entryRect.height / 2);
-          list.scrollBy({ top: offset, behavior: 'smooth' });
-        }
-      });
+      requestAnimationFrame(() => this._scrollToActiveEntry());
     }
   },
 
@@ -381,6 +343,42 @@ export const PlaylistsManager = {
     if (r.top  > mT) this.popup.style.top  = mT + 'px';
   },
 
+  // Scroll the active entry row to the center of the list viewport.
+  // Used by both show() and refresh() to avoid duplicating the logic.
+  _scrollToActiveEntry() {
+    const session = getActivePlaylistSession();
+    if (!session || !this.popup) return;
+    const list        = this.popup.querySelector('.playlists-list');
+    const activeEntry = this.popup.querySelector('.playlist-entry-row--active');
+    const activeBlock = this.popup.querySelector(`.playlist-block[data-playlist-id="${session.playlistId}"]`);
+    if (activeEntry && list) {
+      const listRect  = list.getBoundingClientRect();
+      const entryRect = activeEntry.getBoundingClientRect();
+      const offset = entryRect.top - listRect.top - (listRect.height / 2) + (entryRect.height / 2);
+      list.scrollBy({ top: offset, behavior: 'smooth' });
+    } else if (activeBlock && list) {
+      activeBlock.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  },
+
+  // Save current auto-start/replay settings and force all of them on for playlist playback.
+  // Called before starting any playlist (from startPlaylist and per-entry play button).
+  _activatePlaylistSettings() {
+    try {
+      sessionStorage.setItem('latestGames_prePlaylistSettings', JSON.stringify({
+        shouldStart:          this.main.shouldStart,
+        shouldReplay:         this.main.shouldReplay,
+        replayNextGame:       this.main.replayNextGame,
+        replayWithoutWaiting: this.main.replayWithoutWaiting
+      }));
+    } catch { }
+    this.main.shouldStart          = true;
+    this.main.shouldReplay         = true;
+    this.main.replayNextGame       = true;
+    this.main.replayWithoutWaiting = true;
+    this.main.settingsManager.saveSettings();
+  },
+
   // ── DOM builder ────────────────────────────────────────────────────────────
   _buildPanel() {
     const playlists = this.load();
@@ -395,7 +393,7 @@ export const PlaylistsManager = {
     const titleSpan = _el('span', 'popup-header-title', 'Плейлисты');
 
     const addBtn = _el('button', 'playlists-add-btn');
-    addBtn.innerHTML = `${icons.addGroup}<span>Новый</span>`;
+    addBtn.innerHTML = `${icons.plus}<span>Новый</span>`;
     createCustomTooltip(addBtn, 'Создать новый плейлист');
     addBtn.addEventListener('click', e => {
       e.stopPropagation();
@@ -432,10 +430,24 @@ export const PlaylistsManager = {
     const row = _el('div', `playlist-header-row${isActive ? ' playlist-header-row--active' : ''}`);
 
     if (isActive) {
-      // Active: stop button on the LEFT replaces play, badge + rename/del on right
+      // Active: pause + stop buttons on the LEFT, badge + title on right
+      const pauseBtn = _el('button', 'playlist-pause-btn');
+      pauseBtn.innerHTML = icons.pause;
+      const isPaused = !!(session && session.paused);
+      createCustomTooltip(pauseBtn, isPaused
+        ? `Возобновить плейлист «${playlist.title}»`
+        : `Приостановить плейлист «${playlist.title}»`);
+      pauseBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        const current = getActivePlaylistSession();
+        if (!current) return;
+        setActivePlaylistSession({ ...current, paused: !current.paused });
+        this.refresh();
+      });
+
       const stopBtn = _el('button', 'playlist-cancel-btn');
       stopBtn.innerHTML = icons.stop;
-      createCustomTooltip(stopBtn, 'Остановить плейлист');
+      createCustomTooltip(stopBtn, `Остановить плейлист «${playlist.title}»`);
       stopBtn.addEventListener('click', e => {
         e.stopPropagation();
         cancelActivePlaylist();
@@ -452,7 +464,7 @@ export const PlaylistsManager = {
         titleSpan.appendChild(badge);
       }
 
-      row.append(stopBtn, titleSpan);
+      row.append(pauseBtn, stopBtn, titleSpan);
     } else {
       // Inactive: play button on left, rename + delete on right
       const playBtn = _el('button', 'playlist-play-btn');
@@ -463,7 +475,7 @@ export const PlaylistsManager = {
       const titleSpan = _el('span', 'playlist-title', playlist.title);
 
       const renameBtn = _el('button', 'playlist-rename-btn');
-      renameBtn.innerHTML = icons.renameGroup;
+      renameBtn.innerHTML = icons.rename;
       createCustomTooltip(renameBtn, 'Переименовать');
       renameBtn.addEventListener('click', e => {
         e.stopPropagation();
@@ -520,7 +532,7 @@ export const PlaylistsManager = {
   },
 
   _buildEntryRow(playlist, entry, session, isCurrentEntry, entryIndex) {
-    const game = _findGameById(this.main, entry.gameId);
+    const game = this.main?.gamesManager?.findGameById(entry.gameId) ?? null;
     const row  = _el('div', `playlist-entry-row${isCurrentEntry ? ' playlist-entry-row--active' : ''}`);
     row.dataset.entryId    = entry.id;
     row.dataset.entryIndex = entryIndex;
@@ -535,7 +547,7 @@ export const PlaylistsManager = {
 
     // Drag handle
     const handle = _el('span', 'playlist-entry-drag-handle');
-    handle.innerHTML = icons.dragToggle;
+    handle.innerHTML = icons.drag;
 
     // Game label
     const label = _el('span', 'playlist-entry-label');
@@ -560,10 +572,10 @@ export const PlaylistsManager = {
     // Stepper
     const stepper  = _el('div', 'playlist-entry-stepper');
     const decBtn   = _el('button', 'playlist-entry-stepper-btn');
-    decBtn.innerHTML = icons.decrease;
+    decBtn.innerHTML = icons.chevronLeft;
     const countSpan = _el('span', 'playlist-entry-stepper-count', String(entry.repeatCount));
     const incBtn   = _el('button', 'playlist-entry-stepper-btn');
-    incBtn.innerHTML = icons.increase;
+    incBtn.innerHTML = icons.chevronRight;
     createCustomTooltip(stepper, 'Количество повторов этой игры');
 
     decBtn.addEventListener('click', e => {
@@ -612,22 +624,9 @@ export const PlaylistsManager = {
       const p = playlists.find(pl => pl.id === playlist.id);
       if (!p || entryIndex >= p.entries.length) return;
       const targetEntry = p.entries[entryIndex];
-      const game = _findGameById(this.main, targetEntry.gameId);
+      const game = this.main.gamesManager.findGameById(targetEntry.gameId);
       if (!game) { alert('⚠️ Игра не найдена.'); return; }
-      // Save pre-playlist settings
-      try {
-        sessionStorage.setItem('latestGames_prePlaylistSettings', JSON.stringify({
-          shouldStart: this.main.shouldStart,
-          shouldReplay: this.main.shouldReplay,
-          replayNextGame: this.main.replayNextGame,
-          replayWithoutWaiting: this.main.replayWithoutWaiting
-        }));
-      } catch { }
-      this.main.shouldStart          = true;
-      this.main.shouldReplay         = true;
-      this.main.replayNextGame       = true;
-      this.main.replayWithoutWaiting = true;
-      this.main.settingsManager.saveSettings();
+      this._activatePlaylistSettings();
       setActivePlaylistSession({ playlistId: playlist.id, entryIndex, remainingRepeats: targetEntry.repeatCount });
       window.location.href = this.main.gamesManager.generateGameLink(game);
     });
@@ -638,6 +637,10 @@ export const PlaylistsManager = {
 
   // ── Vertical drag-to-reorder for entry rows ─────────────────────────────
   _attachEntryDrag(entryList, playlistId) {
+    // Guard against stacking multiple listeners when entries are live-injected
+    if (entryList.dataset.dragAttached) return;
+    entryList.dataset.dragAttached = '1';
+
     let dragEl = null, placeholder = null, startY = 0, startIdx = 0;
 
     const getRows = () => Array.from(entryList.querySelectorAll('.playlist-entry-row'));
@@ -707,14 +710,14 @@ export const PlaylistsManager = {
   _buildGamePicker(playlist) {
     const picker    = _el('div', 'playlist-game-picker');
     const toggleBtn = _el('button', 'playlist-picker-toggle');
-    toggleBtn.innerHTML = `${icons.addGroup}<span>Добавить игры</span>`;
+    toggleBtn.innerHTML = `${icons.plus}<span>Добавить игры</span>`;
 
     const body = _el('div', 'playlist-picker-body playlist-picker-body--hidden');
 
     const setToggleState = hidden => {
       toggleBtn.innerHTML = hidden
-        ? `${icons.addGroup}<span>Добавить игры</span>`
-        : `${icons.decrease}<span>Свернуть</span>`;
+        ? `${icons.plus}<span>Добавить игры</span>`
+        : `${icons.chevronLeft}<span>Свернуть</span>`;
     };
 
     toggleBtn.addEventListener('click', e => {
@@ -760,7 +763,7 @@ export const PlaylistsManager = {
         const descSpan = _el('span', 'playlist-picker-game-desc', `${visLabel} · TM ${game.params.timeout}`);
 
         const addBtn = _el('button', 'playlist-picker-add-btn');
-        addBtn.innerHTML = alreadyAdded ? icons.checkmark : icons.addGroup;
+        addBtn.innerHTML = alreadyAdded ? icons.checkmark : icons.plus;
         createCustomTooltip(addBtn, alreadyAdded ? 'Уже в плейлисте' : 'Добавить в плейлист');
 
         if (!alreadyAdded) {
@@ -832,8 +835,7 @@ function _updatePlaylistHud() {
     const total = playlist.entries.length;
     const pos   = session.entryIndex + 1;
     const reps  = session.remainingRepeats;
-    // Use SVG inline for the icon in the HUD
-    indicator.innerHTML = `<span class="playlist-hud-icon">${icons.start}</span>${pos}/${total} ×${reps}`;
+    indicator.innerHTML = `<span class="playlist-hud-icon">${icons.playing}</span>${pos}/${total} ×${reps}</span>`;
   } catch { }
 }
 
@@ -848,7 +850,10 @@ function _updateEntryProgress(row, entry, session, isCurrentEntry) {
   const fresh = getActivePlaylistSession();
   const remaining = fresh ? fresh.remainingRepeats : session.remainingRepeats;
   const played = entry.repeatCount - remaining;
-  const pct = Math.max(0, Math.min(100, Math.round((played / entry.repeatCount) * 100)));
+  // Use a minimum of 1% so the ::before element stays in the DOM layout even at the start
+  const pct = played <= 0
+    ? 1
+    : Math.min(100, Math.round((played / entry.repeatCount) * 100));
   row.classList.add('playlist-entry-row--progress');
   row.style.setProperty('--playlist-progress', `${pct}%`);
 }
@@ -857,10 +862,4 @@ function _el(tag, className, text) {
   if (className) n.className = className;
   if (text !== undefined) n.textContent = text;
   return n;
-}
-
-function _uid() {
-  return Array.from(crypto.getRandomValues(new Uint8Array(16)))
-    .map(b => (b % 36).toString(36))
-    .join('');
 }

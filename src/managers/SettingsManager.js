@@ -290,6 +290,7 @@ export class SettingsManager {
           if (data.playedVocabularies) localStorage.setItem('playedVocabularies', JSON.stringify(data.playedVocabularies));
           if (data.latestGamesSettings) localStorage.setItem('latestGamesSettings', JSON.stringify(data.latestGamesSettings));
           if (data.latestGamesData) localStorage.setItem('latestGamesData', JSON.stringify(data.latestGamesData));
+          if (data.latestGamesPlaylists) localStorage.setItem('latestGamesPlaylists', JSON.stringify(data.latestGamesPlaylists));
           main.settingsManager.loadSettings();
           main.gamesManager.loadGameData();
           main.uiManager.refreshContainer();
@@ -310,6 +311,7 @@ export class SettingsManager {
     const all = {
       latestGamesSettings: JSON.parse(localStorage.getItem('latestGamesSettings') || '{}'),
       latestGamesData: { groups: main.groupsManager.groups, currentGroupId: main.groupsManager.currentGroupId },
+      latestGamesPlaylists: JSON.parse(localStorage.getItem('latestGamesPlaylists') || '[]'),
       validVocabularies: JSON.parse(localStorage.getItem('validVocabularies') || '[]'),
       bannedVocabularies: JSON.parse(localStorage.getItem('bannedVocabularies') || '[]'),
       playedVocabularies: JSON.parse(localStorage.getItem('playedVocabularies') || '[]')

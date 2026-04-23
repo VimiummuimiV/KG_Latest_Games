@@ -176,14 +176,14 @@ export class GroupsManager {
 
     const addButton = createElement('span', {
       className: 'add-group control-button',
-      innerHTML: icons.addGroup
+      innerHTML: icons.plus
     });
     createCustomTooltip(addButton, 'Добавить группу');
     addButton.addEventListener('click', () => this.addGroup());
 
     const renameButton = createElement('span', {
       className: 'rename-group control-button',
-      innerHTML: icons.renameGroup
+      innerHTML: icons.rename
     });
     createCustomTooltip(renameButton, 'Переименовать группу');
     renameButton.addEventListener('click', () => this.renameActiveGroup());
@@ -202,7 +202,7 @@ export class GroupsManager {
 
     const moveLeftButton = createElement('span', {
       className: 'move-group-left control-button',
-      innerHTML: icons.decrease
+      innerHTML: icons.chevronLeft
     });
     createCustomTooltip(moveLeftButton, 'Переместить вкладку назад');
     moveLeftButton.addEventListener('click', () => {
@@ -213,7 +213,7 @@ export class GroupsManager {
 
     const moveRightButton = createElement('span', {
       className: 'move-group-right control-button',
-      innerHTML: icons.increase
+      innerHTML: icons.chevronRight
     });
     createCustomTooltip(moveRightButton, 'Переместить вкладку вперёд');
     moveRightButton.addEventListener('click', () => {

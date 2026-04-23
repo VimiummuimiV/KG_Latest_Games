@@ -99,7 +99,7 @@ export const DEFAULTS = {
   saveModeEnabled: true,
   showVocabularyData: true,
   rankRange: [1, 9],
-  playlistPanelAutoOpen: false,
+  playlistPanelAutoOpen: true,
   panelYPosition: {
     main: 0,
     gamelist: 0,

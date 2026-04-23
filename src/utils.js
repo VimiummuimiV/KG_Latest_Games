@@ -1,6 +1,6 @@
 import { gameTypes } from "./definitions.js";
 
-function generateRandomString() {
+export function generateRandomString() {
   return Array.from(crypto.getRandomValues(new Uint8Array(32)))
     .map(b => (b % 36).toString(36))
     .join('');

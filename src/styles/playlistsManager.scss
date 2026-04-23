@@ -1,5 +1,17 @@
 @use 'mixins' as *;
 
+// Shared gametype color rules — used by both .playlist-entry-label and .playlist-picker-game-name
+%gametype-colors {
+  &.gametype-voc      { color: var(--rg-gametype-voc) !important; }
+  &.gametype-normal   { color: var(--rg-gametype-normal) !important; }
+  &.gametype-abra     { color: var(--rg-gametype-abra) !important; }
+  &.gametype-noerror  { color: var(--rg-gametype-noerror) !important; }
+  &.gametype-marathon { color: var(--rg-gametype-marathon) !important; }
+  &.gametype-chars    { color: var(--rg-gametype-chars) !important; }
+  &.gametype-digits   { color: var(--rg-gametype-digits) !important; }
+  &.gametype-sprint   { color: var(--rg-gametype-sprint) !important; }
+}
+
 .playlists-manager-popup {
   position: fixed;
   background: var(--rg-bg-primary);
@@ -139,6 +151,7 @@
 
     // Icon buttons on the header row
     .playlist-play-btn,
+    .playlist-pause-btn,
     .playlist-rename-btn,
     .playlist-delete-btn,
     .playlist-cancel-btn {
@@ -291,14 +304,7 @@
       text-overflow: ellipsis;
       color: var(--rg-text-secondary);
 
-      &.gametype-voc      { color: var(--rg-gametype-voc) !important; }
-      &.gametype-normal   { color: var(--rg-gametype-normal) !important; }
-      &.gametype-abra     { color: var(--rg-gametype-abra) !important; }
-      &.gametype-noerror  { color: var(--rg-gametype-noerror) !important; }
-      &.gametype-marathon { color: var(--rg-gametype-marathon) !important; }
-      &.gametype-chars    { color: var(--rg-gametype-chars) !important; }
-      &.gametype-digits   { color: var(--rg-gametype-digits) !important; }
-      &.gametype-sprint   { color: var(--rg-gametype-sprint) !important; }
+      @extend %gametype-colors;
       &.playlist-entry-missing { color: var(--rg-text-tertiary) !important; font-style: italic; }
     }
 
@@ -484,14 +490,7 @@
       text-overflow: ellipsis;
       color: var(--rg-text-secondary);
 
-      &.gametype-voc      { color: var(--rg-gametype-voc) !important; }
-      &.gametype-normal   { color: var(--rg-gametype-normal) !important; }
-      &.gametype-abra     { color: var(--rg-gametype-abra) !important; }
-      &.gametype-noerror  { color: var(--rg-gametype-noerror) !important; }
-      &.gametype-marathon { color: var(--rg-gametype-marathon) !important; }
-      &.gametype-chars    { color: var(--rg-gametype-chars) !important; }
-      &.gametype-digits   { color: var(--rg-gametype-digits) !important; }
-      &.gametype-sprint   { color: var(--rg-gametype-sprint) !important; }
+      @extend %gametype-colors;
     }
 
     .playlist-picker-game-desc {
