@@ -140,6 +140,15 @@
     border: 1px solid hsl(200, 45%, 40%);
   }
 
+  // Active playlist progress indicator
+  .playlist-progress-indicator {
+    color: hsl(135, 45%, 65%);
+    background-color: hsl(135, 45%, 20%);
+    border: 1px solid hsl(135, 45%, 40%);
+    cursor: pointer;
+    animation: bounceIn 0.3s ease forwards;
+  }
+
   // Period indicators (week, month, year) - falling animation from day indicator
   .period-indicator:not(.show) {
     display: none !important;

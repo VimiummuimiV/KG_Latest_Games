@@ -7,6 +7,7 @@ import { addGameToGroup, fetchVocabularyBasicData } from "../../vocabularyCreati
 import { showMigrationPopup } from "../../vocabularyMigration.js";
 import { getSessionVocId } from "../../vocabularyContent.js";
 import { VocabulariesManager } from "../../vocabulariesManager.js";
+import { PlaylistsManager, cancelActivePlaylist } from "../../playlistsManager.js";
 import { showVocabularyTypesPopup } from "../../vocabularyType.js";
 import { runVocScan } from "../../vocabularyScanner.js";
 
@@ -120,6 +121,10 @@ export function createControls(main) {
           }
         }
       } else {
+        // Block toggling shouldStart / shouldReplay while a playlist is running —
+        // the playlist forced these on and will restore them when it ends.
+        const activeSession = (() => { try { const r = sessionStorage.getItem('latestGames_activePlaylist'); return r ? JSON.parse(r) : null; } catch { return null; } })();
+        if (activeSession && (property === 'shouldStart' || property === 'shouldReplay')) return;
         context[property] = !context[property];
         main.settingsManager.saveSettings();
         button.classList.toggle('latest-games-disabled', !context[property]);
@@ -654,6 +659,13 @@ export function createControls(main) {
   // Start race action function
   // Choose id (random or previous), switch group if needed, save and navigate
   const startRaceAction = (qual = false) => {
+    // If a playlist is in progress, ask before cancelling it
+    const activeSession = (() => { try { const r = sessionStorage.getItem('latestGames_activePlaylist'); return r ? JSON.parse(r) : null; } catch { return null; } })();
+    if (activeSession) {
+      if (!confirm('Плейлист ещё не завершён. Отменить плейлист и запустить игру обычным способом?')) return;
+    }
+    // Starting a game manually cancels any running playlist
+    cancelActivePlaylist();
     // If qualification requested, force local mode — do not randomize
     const randomMode = qual ? false : main.randomGameId;
     let res = null;
@@ -1026,8 +1038,34 @@ export function createControls(main) {
     main.uiManager.refreshContainer();
   });
 
+  // Add playlists manager button
+  PlaylistsManager.main = main;
+  const playlistsBtn = createElement('span', {
+    className: 'latest-games-playlists control-button',
+    innerHTML: icons.playlists
+  });
+
+  const updatePlaylistsBtnTooltip = () => {
+    createCustomTooltip(playlistsBtn,
+      `[Клик] Открыть плейлисты
+       [Ctrl + Клик] Автооткрытие при активном плейлисте: ${main.playlistPanelAutoOpen ? 'Включено' : 'Отключено'}`
+    );
+  };
+  updatePlaylistsBtnTooltip();
+
+  playlistsBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    if (e.ctrlKey) {
+      main.playlistPanelAutoOpen = !main.playlistPanelAutoOpen;
+      main.settingsManager.saveSettings();
+      updatePlaylistsBtnTooltip();
+      return;
+    }
+    PlaylistsManager.toggle(e.clientX, e.clientY);
+  });
+
   // Frequently used buttons that should always be visible
-  const alwaysVisible = [playBtn, replayBtn, replayMoreBtn, randomRaceBtn, startRaceBtn, bannedVocabulariesBtn, playedVocabulariesBtn];
+  const alwaysVisible = [playBtn, replayBtn, replayMoreBtn, randomRaceBtn, startRaceBtn, bannedVocabulariesBtn, playedVocabulariesBtn, playlistsBtn];
 
   // Rarely used buttons grouped under 'More' panel
   const moreGroup = [

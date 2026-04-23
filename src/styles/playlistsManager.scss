@@ -1,0 +1,532 @@
+@use 'mixins' as *;
+
+.playlists-manager-popup {
+  position: fixed;
+  background: var(--rg-bg-primary);
+  color: var(--rg-text-primary);
+  padding: 1em;
+  z-index: 1200;
+  font-size: 0.9em;
+  font-family: "Montserrat", "Noto Color Emoji", sans-serif !important;
+  pointer-events: auto;
+  white-space: nowrap;
+  border: 1px solid var(--rg-border-primary) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3) !important;
+  min-width: 300px;
+  max-width: 500px;
+  overflow: hidden;
+
+  // ── Header ─────────────────────────────────────────────────────────────────
+  .popup-header {
+    font-weight: 600 !important;
+    color: var(--rg-text-primary) !important;
+    margin-bottom: 0.8em !important;
+    padding-bottom: 0.5em;
+    border-bottom: 1px solid var(--rg-border-primary);
+    font-size: 1.1em;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .popup-header-title {
+      color: var(--rg-header-text);
+    }
+
+    .playlists-add-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--rg-bg-card);
+      color: hsl(var(--rg-popup-btn-save));
+      border: 1px solid hsla(var(--rg-popup-btn-save) / 0.5);
+      border-radius: 3px !important;
+      padding: 0.4em 0.8em;
+      font-size: calc(0.85em / 1.1); // cancel header's 1.1em scale
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      svg {
+        width: 12px;
+        height: 12px;
+        flex-shrink: 0;
+        pointer-events: none;
+      }
+
+      &:hover { background: hsla(var(--rg-popup-btn-save) / 0.15); border-color: hsl(var(--rg-popup-btn-save)); }
+      &:active { background: hsla(var(--rg-popup-btn-save) / 0.25); }
+    }
+  }
+
+  // ── Empty state ─────────────────────────────────────────────────────────────
+  .playlists-empty {
+    text-align: center;
+    color: var(--rg-text-tertiary);
+    font-style: italic;
+    padding: 1em 0;
+  }
+
+  // ── Scrollable list — same as .vocab-list but taller (80vh scroll area) ────
+  .playlists-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3em;
+    max-height: 80vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    @include thin-scrollbar();
+  }
+
+  // ── Playlist block ──────────────────────────────────────────────────────────
+  .playlist-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  // Playlist header row — .vocab-labels-container style
+  // Inactive: gray tone  Active: orange/amber tone to clearly distinguish
+  .playlist-header-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.5em 0.7em;
+    margin: 0.6em 0 0;
+    background: var(--rg-border-hover); // neutral gray for inactive playlists
+    border-radius: 2px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    cursor: pointer;
+    user-select: none;
+
+    &:first-child { margin-top: 0; }
+
+    // Active playlist — amber/orange accent (same brightness range as the green)
+    &--active {
+      background: hsl(var(--rg-popup-item-new)); // keep green for active
+    }
+
+    .playlist-title {
+      flex: 1;
+      font-weight: 600;
+      font-size: 0.85em;
+      color: var(--rg-bg-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5em;
+    }
+
+    .playlist-active-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 6px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px !important;
+      font-size: 0.82em;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--rg-bg-primary);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    // Icon buttons on the header row
+    .playlist-play-btn,
+    .playlist-rename-btn,
+    .playlist-delete-btn,
+    .playlist-cancel-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      flex-shrink: 0;
+      background: transparent;
+      border: none;
+      outline: none;
+      appearance: none;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background 0.15s ease;
+      color: var(--rg-bg-primary);
+
+      svg {
+        width: 16px;
+        height: 16px;
+        pointer-events: none;
+      }
+
+      &:hover { background: rgba(0, 0, 0, 0.15); }
+    }
+
+    .playlist-delete-btn:hover,
+    .playlist-cancel-btn:hover { background: rgba(200, 40, 40, 0.25); }
+  }
+
+  // ── Collapsible body ────────────────────────────────────────────────────────
+  .playlist-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  // ── Entry list ──────────────────────────────────────────────────────────────
+  .playlist-entries {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .playlist-entries-empty {
+    padding: 0.4em 0.6em;
+    background: var(--rg-bg-card);
+    border: 1px solid var(--rg-border-primary);
+    border-radius: 3px !important;
+    color: var(--rg-text-tertiary);
+    font-style: italic;
+    font-size: 0.8em;
+    margin-top: 0.3em;
+  }
+
+  // Entry row — mirrors .vocab-item exactly
+  .playlist-entry-row {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4em 0.6em;
+    background: var(--rg-bg-card);
+    border: 1px solid var(--rg-border-primary);
+    border-radius: 3px !important;
+    transition: background 0.2s ease, border-color 0.2s ease;
+    gap: 0.8em;
+    margin-top: 0.3em;
+    overflow: hidden;
+
+    &:hover { background: var(--rg-bg-hover); border-color: var(--rg-border-hover); }
+
+    &--active {
+      background: hsla(var(--rg-popup-item-new) / 0.15) !important;
+      border: 1px solid hsla(var(--rg-popup-item-new) / 0.6) !important;
+      &:hover {
+        background: hsla(var(--rg-popup-item-new) / 0.25) !important;
+        border-color: hsl(var(--rg-popup-item-new)) !important;
+      }
+    }
+
+    &--progress::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      width: var(--playlist-progress, 0%);
+      background: hsla(var(--rg-popup-item-new) / 0.18);
+      pointer-events: none;
+      // Bouncy transition — cubic-bezier overshoots slightly then settles
+      transition: width 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    // Per-entry play button — vertically aligned with header play/stop
+    .playlist-entry-play-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      padding: 0;
+      flex-shrink: 0;
+      background: transparent;
+      border: none;
+      outline: none;
+      appearance: none;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: background 0.15s ease;
+      color: var(--rg-text-tertiary);
+      position: relative;
+
+      svg { width: 14px; height: 14px; pointer-events: none; }
+
+      &:hover {
+        background: hsla(var(--rg-popup-item-new) / 0.2);
+        color: hsl(var(--rg-popup-item-new));
+      }
+    }
+
+    // Drag handle
+    .playlist-entry-drag-handle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      cursor: grab;
+      color: var(--rg-text-tertiary);
+      opacity: 0.5;
+      transition: opacity 0.15s;
+      position: relative;
+
+      svg { width: 12px; height: 12px; pointer-events: none; }
+
+      &:hover { opacity: 1; }
+      &:active { cursor: grabbing; }
+    }
+
+    // Game name label
+    .playlist-entry-label {
+      position: relative;
+      flex: 1;
+      font-size: 0.85em;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--rg-text-secondary);
+
+      &.gametype-voc      { color: var(--rg-gametype-voc) !important; }
+      &.gametype-normal   { color: var(--rg-gametype-normal) !important; }
+      &.gametype-abra     { color: var(--rg-gametype-abra) !important; }
+      &.gametype-noerror  { color: var(--rg-gametype-noerror) !important; }
+      &.gametype-marathon { color: var(--rg-gametype-marathon) !important; }
+      &.gametype-chars    { color: var(--rg-gametype-chars) !important; }
+      &.gametype-digits   { color: var(--rg-gametype-digits) !important; }
+      &.gametype-sprint   { color: var(--rg-gametype-sprint) !important; }
+      &.playlist-entry-missing { color: var(--rg-text-tertiary) !important; font-style: italic; }
+    }
+
+    // Stepper
+    .playlist-entry-stepper {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+      position: relative;
+
+      .playlist-entry-stepper-btn {
+        width: 20px;
+        height: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        background: var(--rg-bg-card);
+        color: var(--rg-text-secondary);
+        border: 1px solid var(--rg-border-primary);
+        border-radius: 3px !important;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        svg { width: 12px; height: 12px; pointer-events: none; }
+
+        &:hover { background: var(--rg-bg-hover); border-color: var(--rg-border-hover); color: var(--rg-text-primary); }
+        &:active { background: var(--rg-bg-secondary); transform: translateY(1px); }
+      }
+
+      .playlist-entry-stepper-count {
+        min-width: 20px;
+        height: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8em;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        color: var(--rg-text-primary);
+      }
+    }
+
+    // Remove button — same 20×20 as stepper buttons
+    .playlist-entry-remove {
+      position: relative;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      padding: 0;
+      background: transparent;
+      color: hsl(var(--rg-popup-btn-remove));
+      border: 1px solid hsla(var(--rg-popup-btn-remove) / 0.5);
+      border-radius: 3px !important;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      svg { width: 12px; height: 12px; pointer-events: none; }
+
+      &:hover { background: hsla(var(--rg-popup-btn-remove) / 0.15); border-color: hsl(var(--rg-popup-btn-remove)); }
+      &:active { background: hsla(var(--rg-popup-btn-remove) / 0.25); }
+    }
+
+    // Dragging state
+    &.playlist-entry-dragging {
+      position: relative;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+      opacity: 0.85;
+    }
+  }
+
+  .playlist-entry-placeholder {
+    border: 1px dashed var(--rg-border-hover);
+    border-radius: 3px !important;
+    background: var(--rg-bg-hover);
+    margin-top: 0.3em;
+  }
+
+  // ── Game picker ─────────────────────────────────────────────────────────────
+  .playlist-game-picker { margin-top: 0.5em; }
+
+  .playlist-picker-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0.35em 0.7em;
+    font-size: 0.8em;
+    font-weight: 500;
+    font-family: inherit;
+    color: hsl(var(--rg-popup-btn-sort));
+    background: var(--rg-bg-card);
+    border: 1px solid hsla(var(--rg-popup-btn-sort) / 0.5);
+    border-radius: 3px !important;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+
+    svg { width: 13px; height: 13px; flex-shrink: 0; pointer-events: none; }
+
+    &:hover { background: hsla(var(--rg-popup-btn-sort) / 0.15); border-color: hsl(var(--rg-popup-btn-sort)); }
+    &:active { background: hsla(var(--rg-popup-btn-sort) / 0.25); transform: translateY(1px); }
+  }
+
+  .playlist-picker-body {
+    margin-top: 0.3em;
+    max-height: 40vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    @include thin-scrollbar();
+    // No outer border — individual rows carry their own border like vocab-item
+    &--hidden { display: none; }
+  }
+
+  // Search inside picker — same padding as vocab manager search
+  .playlist-picker-search-wrap {
+    padding: 0.5em 0;
+    position: sticky;
+    top: 0;
+    background: var(--rg-bg-primary);
+    z-index: 3;
+
+    .playlist-search-input {
+      width: 100%;
+      box-sizing: border-box;
+      background: var(--rg-bg-card);
+      color: var(--rg-text-primary) !important;
+      border: 1px solid var(--rg-border-primary) !important;
+      border-radius: 3px !important;
+      padding: 0.5em 0.7em;
+      font-size: 0.82em;
+      font-family: inherit;
+      transition: all 0.2s ease;
+
+      &:focus { outline: none; border-color: var(--rg-border-hover) !important; background: var(--rg-bg-hover); }
+      &::placeholder { color: var(--rg-text-tertiary); font-style: italic; }
+    }
+  }
+
+  // Group header — matches .vocab-labels-container exactly
+  .playlist-picker-group-header {
+    padding: 0.5em 0.7em;
+    margin: 0.6em 0 0.3em 0;
+    font-weight: 600;
+    font-size: 0.85em;
+    color: var(--rg-bg-primary);
+    background: hsl(var(--rg-popup-item-new));
+    border-radius: 2px;
+    position: sticky;
+    top: var(--picker-search-height, 34px);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    font-family: "Montserrat", "Noto Color Emoji", sans-serif;
+  }
+
+  // Each game row in picker — mirrors .vocab-item exactly
+  .playlist-picker-game-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4em 0.6em;
+    background: var(--rg-bg-card);
+    border: 1px solid var(--rg-border-primary);
+    border-radius: 3px !important;
+    gap: 0.8em;
+    transition: all 0.2s ease;
+    margin-top: 0.3em;
+
+    &:hover { background: var(--rg-bg-hover); border-color: var(--rg-border-hover); }
+    &.already-added { opacity: 0.45; }
+
+    .playlist-picker-game-name {
+      flex: 1;
+      font-size: 0.85em;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--rg-text-secondary);
+
+      &.gametype-voc      { color: var(--rg-gametype-voc) !important; }
+      &.gametype-normal   { color: var(--rg-gametype-normal) !important; }
+      &.gametype-abra     { color: var(--rg-gametype-abra) !important; }
+      &.gametype-noerror  { color: var(--rg-gametype-noerror) !important; }
+      &.gametype-marathon { color: var(--rg-gametype-marathon) !important; }
+      &.gametype-chars    { color: var(--rg-gametype-chars) !important; }
+      &.gametype-digits   { color: var(--rg-gametype-digits) !important; }
+      &.gametype-sprint   { color: var(--rg-gametype-sprint) !important; }
+    }
+
+    .playlist-picker-game-desc {
+      font-size: 0.75em;
+      color: var(--rg-text-tertiary);
+      flex-shrink: 0;
+    }
+
+    .playlist-picker-add-btn {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      padding: 0;
+      background: transparent;
+      color: hsl(var(--rg-popup-btn-save));
+      border: 1px solid hsla(var(--rg-popup-btn-save) / 0.5);
+      border-radius: 3px !important;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      svg { width: 12px; height: 12px; pointer-events: none; }
+
+      &:hover:not(:disabled) { background: hsla(var(--rg-popup-btn-save) / 0.15); border-color: hsl(var(--rg-popup-btn-save)); }
+      &:active:not(:disabled) { background: hsla(var(--rg-popup-btn-save) / 0.25); }
+      &:disabled { cursor: default; opacity: 0.5; }
+    }
+  }
+
+  .playlist-picker-empty {
+    padding: 0.5em 0.6em;
+    color: var(--rg-text-tertiary);
+    font-style: italic;
+    font-size: 0.8em;
+  }
+}

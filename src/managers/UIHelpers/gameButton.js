@@ -5,6 +5,7 @@ import { icons } from '../../icons.js';
 import { gameStatsApi } from '../../gameStatsApi.js';
 import { createGameInfoPopup } from '../../gameInfo.js';
 import { fetchVocabularyData, showTooltip, hideTooltip, startHideTimeout } from '../../vocabularyContent.js';
+import { cancelActivePlaylist } from '../../playlistsManager.js';
 
 export function createGameElement(main, game, id) {
   const previousGameId = main.gamesManager.getPreviousGameId();
@@ -103,6 +104,16 @@ export function createGameElement(main, game, id) {
       e.preventDefault();
       main.wasDragging = false;
     }
+    // If a playlist is in progress, confirm before cancelling it
+    const activeSession = (() => { try { const r = sessionStorage.getItem('latestGames_activePlaylist'); return r ? JSON.parse(r) : null; } catch { return null; } })();
+    if (activeSession) {
+      if (!confirm('Плейлист ещё не завершён. Отменить плейлист и запустить эту игру?')) {
+        e.preventDefault();
+        return;
+      }
+    }
+    // Clicking any game from the panel cancels an active playlist
+    cancelActivePlaylist();
     try {
       const li = link.closest('li');
       if (li && li.id && li.id.startsWith('latest-game-')) {

@@ -159,8 +159,8 @@
     .search-input {
       width: 100%;
       background: var(--rg-bg-card);
-      color: var(--rg-text-primary);
-      border: 1px solid var(--rg-border-primary);
+      color: var(--rg-text-primary) !important;
+      border: 1px solid var(--rg-border-primary) !important;
       border-radius: 3px !important;
       padding: 0.5em 0.7em;
       font-size: 0.85em;

@@ -5,6 +5,7 @@ import { sleep, generateUniqueId } from "../utils.js";
 import { isVocabularyCreationSupported } from "../vocabularyCreation.js";
 import { detectGameType } from "../utils.js";
 import { GamesDataContainer } from "./GamesDataContainer.js";
+import { advancePlaylist, getActivePlaylistSession } from "../playlistsManager.js";
 
 export class PageHandler {
   constructor(main) {
@@ -69,10 +70,20 @@ export class PageHandler {
                 // Only mark as played when the current page indicates a vocabulary game
                 if (detectGameType().category === 'vocabulary') {
                   try { this.main.gamesManager.markVocabAsPlayed(pending); } catch (__) { }
+                  // Update today count indicator in realtime
+                  try { this.gamesDataContainer.updateTodayIndicator(); } catch (__) { }
                 }
               } catch (__) { }
             }
           } catch (__) { }
+          // If a playlist is active, let it take over navigation instead
+          if (getActivePlaylistSession()) {
+            const advanced = advancePlaylist(this.main);
+            // Update the HUD indicator after advancing (new session values are now in storage)
+            try { this.gamesDataContainer.updatePlaylistIndicator(); } catch { }
+            if (advanced) return;
+          }
+          // No active playlist or failed to advance — proceed with normal replay handling
           this.handleReplayAction();
         });
         finishObserver.observe(elementToObserve, { attributes: true });

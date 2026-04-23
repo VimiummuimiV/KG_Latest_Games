@@ -41,6 +41,7 @@ export class SettingsManager {
       this.main.saveModeEnabled = settings.saveModeEnabled ?? this.main.saveModeEnabled;
       this.main.rankRange = settings.rankRange ?? this.main.rankRange;
       this.main.showVocabularyData = settings.showVocabularyData ?? this.main.showVocabularyData;
+      this.main.playlistPanelAutoOpen = settings.playlistPanelAutoOpen ?? this.main.playlistPanelAutoOpen;
 
       // Load persisted validVocabularies into runtime state
       this.loadValidVocabularies();
@@ -262,7 +263,8 @@ export class SettingsManager {
         rankRange: this.main.rankRange,
         randomGameId: this.main.randomGameId,
         randomVocabulariesType: this.main.randomVocabulariesType,
-        alwaysVisiblePanel: this.main.alwaysVisiblePanel
+        alwaysVisiblePanel: this.main.alwaysVisiblePanel,
+        playlistPanelAutoOpen: this.main.playlistPanelAutoOpen
       };
 
       localStorage.setItem('latestGamesSettings', JSON.stringify(settings));

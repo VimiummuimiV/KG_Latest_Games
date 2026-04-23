@@ -1,4 +1,5 @@
 import { createCustomTooltip } from "../tooltip.js";
+import { getActivePlaylistSession, PlaylistsManager } from "../playlistsManager.js";
 
 export class GamesDataContainer {
   constructor(main) {
@@ -103,6 +104,7 @@ export class GamesDataContainer {
     this.ensureContainer();
     this.createPlayCountIndicators();
     this.createRemainingCountIndicator();
+    this.createPlaylistIndicator();
   }
 
   // ============================================================================
@@ -166,7 +168,8 @@ export class GamesDataContainer {
   }
 
   createRemainingCountIndicator() {
-    if (!this.main.shouldReplayMore) return;
+    // Only show replay-more indicator if we're in replay-more mode and not in a playlist session (which has its own indicator)
+    if (!this.main.shouldReplayMore || getActivePlaylistSession()) return;
     this.createIndicator(
       'remaining-count-indicator',
       `${this.main.remainingReplayCount}`,
@@ -176,8 +179,86 @@ export class GamesDataContainer {
 
   updateRemainingCountIndicator() {
     if (!this.container) return;
+    // If we're in a playlist session, the remaining count is managed by the playlist indicator, so remove any standalone indicator if it exists
+    if (getActivePlaylistSession()) {
+      const rep = this.container.querySelector('.remaining-count-indicator');
+      if (rep) rep.remove();
+      return;
+    }
     const indicator = this.container.querySelector('.remaining-count-indicator');
     if (indicator) indicator.textContent = `${this.main.remainingReplayCount}`;
+  }
+
+  // Update today play count indicator in realtime (called after marking a vocab as played)
+  updateTodayIndicator() {
+    const indicator = this.playCountIndicators['day'];
+    if (!indicator) return;
+    const { uniqueVocabs, totalGames } = this.getPlayCount('day');
+    // The indicator's text node is the last child (after the descSpan)
+    const textNode = Array.from(indicator.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
+    if (textNode) textNode.textContent = `${uniqueVocabs}/${totalGames}`;
+  }
+
+  createPlaylistIndicator() {
+    const session = getActivePlaylistSession();
+    if (!session) return;
+    try {
+      const playlists = JSON.parse(localStorage.getItem('latestGamesPlaylists') || '[]');
+      const playlist  = playlists.find(p => p.id === session.playlistId);
+      if (!playlist) return;
+      const total = playlist.entries.length;
+      const pos   = session.entryIndex + 1;
+      const reps  = session.remainingRepeats;
+      const tip   = `[Плейлист] ${playlist.title}[Позиция] ${pos} из ${total}[Осталось повторов] ${reps}`;
+
+      this.ensureContainer();
+      const indicator = document.createElement('div');
+      indicator.className = 'indicator playlist-progress-indicator';
+      indicator.innerHTML = this._playlistIndicatorHTML(pos, total, reps);
+      createCustomTooltip(indicator, tip);
+
+      // Click opens/toggles the PlaylistsManager panel
+      indicator.style.cursor = 'pointer';
+      indicator.addEventListener('click', () => {
+        const rect = indicator.getBoundingClientRect();
+        PlaylistsManager.toggle(rect.left, rect.bottom);
+      });
+
+      this.container.appendChild(indicator);
+
+      // If auto-open is enabled, open the panel immediately on page load
+      if (this.main.playlistPanelAutoOpen && !PlaylistsManager.popup) {
+        requestAnimationFrame(() => {
+          const rect = indicator.getBoundingClientRect();
+          PlaylistsManager.show(rect.left, rect.bottom);
+        });
+      }
+    } catch { }
+  }
+
+  _playlistIndicatorHTML(pos, total, reps) {
+    // Inline the playing SVG at a size that doesn't inflate indicator height
+    const svgIcon = `<svg viewBox="0 0 24 24" fill="currentColor" style="width:1em;height:1em;vertical-align:middle;flex-shrink:0"><path d="M19.376 12.416L8.777 19.482C8.548 19.635 8.237 19.573 8.084 19.343C8.029 19.261 8 19.165 8 19.066V4.934C8 4.658 8.224 4.434 8.5 4.434C8.599 4.434 8.695 4.464 8.777 4.518L19.376 11.584C19.606 11.737 19.668 12.048 19.515 12.277C19.478 12.332 19.431 12.38 19.376 12.416Z"/></svg>`;
+    return `${svgIcon}<span style="font-variant-numeric:tabular-nums">${pos}/${total} ×${reps}</span>`;
+  }
+
+  updatePlaylistIndicator() {
+    if (!this.container) return;
+    const indicator = this.container.querySelector('.playlist-progress-indicator');
+    if (!indicator) return;
+    const session = getActivePlaylistSession();
+    if (!session) { indicator.remove(); return; }
+    try {
+      const playlists = JSON.parse(localStorage.getItem('latestGamesPlaylists') || '[]');
+      const playlist  = playlists.find(p => p.id === session.playlistId);
+      if (!playlist) { indicator.remove(); return; }
+      const total = playlist.entries.length;
+      const pos   = session.entryIndex + 1;
+      const reps  = session.remainingRepeats;
+      indicator.innerHTML = this._playlistIndicatorHTML(pos, total, reps);
+      createCustomTooltip(indicator,
+        `[Плейлист] ${playlist.title}[Позиция] ${pos} из ${total}[Осталось повторов] ${reps}`);
+    } catch { }
   }
 
   // ============================================================================

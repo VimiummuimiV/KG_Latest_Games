@@ -75,11 +75,11 @@ export const DEFAULTS = {
   startDelay: 1000,
   shouldReplay: false,
   replayDelay: 1000,
-  replayNextGame: false,
+  replayNextGame: true,
   shouldReplayMore: false,
   replayNextGameCount: 1,
   remainingReplayCount: null,
-  replayWithoutWaiting: false,
+  replayWithoutWaiting: true,
   // randomGameId: false | 'local' | 'global' - mode for random selection
   randomGameId: false,
   randomVocabulariesType: {
@@ -99,6 +99,7 @@ export const DEFAULTS = {
   saveModeEnabled: true,
   showVocabularyData: true,
   rankRange: [1, 9],
+  playlistPanelAutoOpen: false,
   panelYPosition: {
     main: 0,
     gamelist: 0,
