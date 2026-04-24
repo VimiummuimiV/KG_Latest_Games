@@ -78,12 +78,21 @@ export class PageHandler {
           } catch (__) { }
           // If a playlist is active, let it take over navigation instead
           if (getActivePlaylistSession()) {
-            const advanced = advancePlaylist(this.main);
+            const result = advancePlaylist(this.main);
             // Update the HUD indicator after advancing (new session values are now in storage)
             try { this.gamesDataContainer.updatePlaylistIndicator(); } catch { }
-            if (advanced) return;
+            if (result === 'paused') {
+              // Playlist is paused — user navigated away manually, do nothing
+              return;
+            }
+            if (result && result.url) {
+              // Playlist has a next game — respect replayDelay before navigating
+              this.handlePlaylistReplay(result.url);
+              return;
+            }
+            // result === false: playlist finished — fall through to normal replay
           }
-          // No active playlist or failed to advance — proceed with normal replay handling
+          // No active playlist or playlist just finished — proceed with normal replay handling
           this.handleReplayAction();
         });
         finishObserver.observe(elementToObserve, { attributes: true });
@@ -333,6 +342,35 @@ export class PageHandler {
     window.location.href = nextUrl;
   }
 
+  // Shared sleep+indicator machinery for all replay navigation.
+  // getNextUrl is called after the countdown resolves — return a URL string to navigate,
+  // or nothing if navigation is handled via side-effects (e.g. replayNextGame()).
+  _startReplaySleep(getNextUrl) {
+    if (this.isHoveringLatestGames) return;
+
+    this.cancelReplay();
+
+    this.replaySleep = sleep(this.main.replayDelay);
+    this.gamesDataContainer.createSleepIndicator('replay', this.main.replayDelay, this.replaySleep, () => this.cancelReplay());
+
+    this.replaySleep.then(() => {
+      // Countdown finished naturally — play the bounceOut animation, then navigate
+      this.gamesDataContainer.removeSleepIndicator('replay', true).then(() => {
+        const url = getNextUrl();
+        if (url) window.location.href = url;
+      });
+    }).catch(() => {
+      // Countdown was cancelled (user clicked or hovered away) — clean up without navigating
+      this.gamesDataContainer.removeSleepIndicator('replay');
+      this.replaySleep = null;
+    });
+  }
+
+  // Navigate to the next playlist game after replayDelay.
+  handlePlaylistReplay(url) {
+    this._startReplaySleep(() => url);
+  }
+
   handleReplayAction() {
     // Competition and qualification games are never auto-replayed
     if (['competition', 'qualification'].includes(detectGameType().category)) return;
@@ -349,9 +387,6 @@ export class PageHandler {
 
           // Replay is suppressed while the user is hovering the latest games container
           if (!this.isHoveringLatestGames) {
-            // Cancel any existing replay timer that may still be running (e.g. from a previous game)
-            this.cancelReplay();
-
             // Decrement the counter as soon as the game ends so the indicator reflects
             // the upcoming replay, not the one that just finished. Saved immediately so
             // a page reload mid-countdown doesn't lose the updated value.
@@ -361,30 +396,19 @@ export class PageHandler {
               this.main.settingsManager.saveSettings();
             }
 
-            // Start the countdown timer and show the visual indicator
-            this.replaySleep = sleep(this.main.replayDelay);
-            this.gamesDataContainer.createSleepIndicator('replay', this.main.replayDelay, this.replaySleep, () => this.cancelReplay());
-
-            this.replaySleep.then(() => {
-              // Countdown finished naturally — play the bounceOut animation, then navigate
-              this.gamesDataContainer.removeSleepIndicator('replay', true).then(() => {
-                if (this.main.shouldReplayMore && this.main.remainingReplayCount <= 0) {
-                  // All repeats of this game are done — reset the counter and always move to the next game
-                  this.main.remainingReplayCount = this.main.replayNextGameCount;
-                  this.main.settingsManager.saveSettings();
-                  this.replayNextGame();
-                } else if (!this.main.shouldReplayMore && this.main.replayNextGame) {
-                  // shouldReplayMore is off — move to the next game
-                  this.replayNextGame();
-                } else {
-                  // Repeats still remaining — replay the current game
-                  window.location.href = `https://klavogonki.ru/g/${gameId}.replay`;
-                }
-              });
-            }).catch(() => {
-              // Countdown was cancelled (user clicked or hovered away) — clean up without navigating
-              this.gamesDataContainer.removeSleepIndicator('replay');
-              this.replaySleep = null;
+            this._startReplaySleep(() => {
+              if (this.main.shouldReplayMore && this.main.remainingReplayCount <= 0) {
+                // All repeats done — reset counter and move to the next game
+                this.main.remainingReplayCount = this.main.replayNextGameCount;
+                this.main.settingsManager.saveSettings();
+                this.replayNextGame();
+              } else if (!this.main.shouldReplayMore && this.main.replayNextGame) {
+                // shouldReplayMore is off — move to the next game
+                this.replayNextGame();
+              } else {
+                // Repeats still remaining — replay the current game
+                return `https://klavogonki.ru/g/${gameId}.replay`;
+              }
             });
           }
         }

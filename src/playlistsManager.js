@@ -48,12 +48,16 @@ export function cancelActivePlaylist() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Advance to the next step and navigate. Returns true if navigation triggered.
 // ─────────────────────────────────────────────────────────────────────────────
+// advancePlaylist computes the next destination and returns one of:
+//   { url: string }  — ready to navigate (caller applies replayDelay)
+//   'paused'         — playlist is paused, caller must do nothing (no decrement, no replay)
+//   false            — no active playlist, playlist finished, or game not found
 export function advancePlaylist(main) {
   const session = getActivePlaylistSession();
   if (!session) return false;
 
-  // If the playlist is paused, don't advance — PageHandler will fall through to normal replay
-  if (session.paused) return false;
+  // Paused: the game was not finished intentionally — do not decrement, do not navigate
+  if (session.paused) return 'paused';
 
   const playlists = PlaylistsManager.load();
   const playlist  = playlists.find(p => p.id === session.playlistId);
@@ -80,10 +84,10 @@ export function advancePlaylist(main) {
   const updated = getActivePlaylistSession();
   const entry   = playlist.entries[updated.entryIndex];
   const game    = main.gamesManager.findGameById(entry.gameId);
-  if (!game) return advancePlaylist(main); // skip deleted games
+  // Skip deleted/missing games by recursing
+  if (!game) return advancePlaylist(main);
 
-  window.location.href = main.gamesManager.generateGameLink(game);
-  return true;
+  return { url: main.gamesManager.generateGameLink(game) };
 }
 
 function _finishPlaylist(main, playlist) {
@@ -299,18 +303,23 @@ export const PlaylistsManager = {
   _outside: e => {
     if (!PlaylistsManager.popup) return;
     if (PlaylistsManager.popup.contains(e.target)) return;
+    // State 2 = pinned — outside clicks never close the panel
+    if (PlaylistsManager.main?.playlistPanelAutoOpen === 2) return;
     // Don't close if the click was on a button anywhere in the document
-    // (could be a confirm dialog button or similar)
     if (e.target.closest('button, input, select, textarea')) return;
     PlaylistsManager.hide();
   },
 
   _keydown: e => {
+    // State 2 = pinned — Escape does not close the panel
+    if (PlaylistsManager.main?.playlistPanelAutoOpen === 2) return;
     if (e.key === 'Escape') PlaylistsManager.hide();
   },
 
   _startDrag(e) {
     if (e.button !== 0) return;
+    // State 2 = pinned — panel stays in place
+    if (this.main?.playlistPanelAutoOpen === 2) return;
     this.isDragging = true;
     const rect = this.popup.getBoundingClientRect();
     this.offsetX = e.clientX - rect.left;
@@ -387,7 +396,7 @@ export const PlaylistsManager = {
 
     // Header (draggable)
     const header = _el('div', 'popup-header');
-    header.style.cursor = 'move';
+    if (this.main?.playlistPanelAutoOpen !== 2) header.style.cursor = 'move';
     header.addEventListener('mousedown', e => this._startDrag(e));
 
     const titleSpan = _el('span', 'popup-header-title', 'Плейлисты');
@@ -431,9 +440,9 @@ export const PlaylistsManager = {
 
     if (isActive) {
       // Active: pause + stop buttons on the LEFT, badge + title on right
-      const pauseBtn = _el('button', 'playlist-pause-btn');
-      pauseBtn.innerHTML = icons.pause;
       const isPaused = !!(session && session.paused);
+      const pauseBtn = _el('button', 'playlist-pause-btn');
+      pauseBtn.innerHTML = isPaused ? icons.start : icons.pause;
       createCustomTooltip(pauseBtn, isPaused
         ? `Возобновить плейлист «${playlist.title}»`
         : `Приостановить плейлист «${playlist.title}»`);
@@ -441,8 +450,23 @@ export const PlaylistsManager = {
         e.stopPropagation();
         const current = getActivePlaylistSession();
         if (!current) return;
-        setActivePlaylistSession({ ...current, paused: !current.paused });
-        this.refresh();
+        if (current.paused) {
+          // Resuming: clear paused flag, then re-create the same game (no decrement)
+          setActivePlaylistSession({ ...current, paused: false });
+          const playlists = this.load();
+          const pl = playlists.find(p => p.id === current.playlistId);
+          const entry = pl?.entries[current.entryIndex];
+          const game = entry ? this.main.gamesManager.findGameById(entry.gameId) : null;
+          if (game) {
+            window.location.href = this.main.gamesManager.generateGameLink(game);
+          } else {
+            this.refresh();
+          }
+        } else {
+          // Pausing: just set the flag, user can now navigate away freely
+          setActivePlaylistSession({ ...current, paused: true });
+          this.refresh();
+        }
       });
 
       const stopBtn = _el('button', 'playlist-cancel-btn');
@@ -835,7 +859,7 @@ function _updatePlaylistHud() {
     const total = playlist.entries.length;
     const pos   = session.entryIndex + 1;
     const reps  = session.remainingRepeats;
-    indicator.innerHTML = `<span class="playlist-hud-icon">${icons.playing}</span>${pos}/${total} ×${reps}</span>`;
+    indicator.innerHTML = `<span class="playlist-hud-icon">${icons.playing}</span><span class="playlist-hud-counter">${pos}/${total} ×${reps}</span>`;
   } catch { }
 }
 

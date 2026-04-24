@@ -235,16 +235,20 @@ export class GamesDataContainer {
     indicator.innerHTML = this._playlistIndicatorHTML(pos, total, reps);
     createCustomTooltip(indicator, tip);
 
-    // Click opens/toggles the PlaylistsManager panel
+    // State 2 (pinned): clicking the HUD indicator opens but never closes the panel
     indicator.addEventListener('click', () => {
       const rect = indicator.getBoundingClientRect();
-      PlaylistsManager.toggle(rect.left, rect.bottom);
+      if (this.main.playlistPanelAutoOpen === 2) {
+        if (!PlaylistsManager.popup) PlaylistsManager.show(rect.left, rect.bottom);
+      } else {
+        PlaylistsManager.toggle(rect.left, rect.bottom);
+      }
     });
 
     this.container.appendChild(indicator);
 
-    // If auto-open is enabled, open the panel immediately on page load
-    if (this.main.playlistPanelAutoOpen && !PlaylistsManager.popup) {
+    // Auto-open on page load for states 1 and 2
+    if (this.main.playlistPanelAutoOpen >= 1 && !PlaylistsManager.popup) {
       requestAnimationFrame(() => {
         const rect = indicator.getBoundingClientRect();
         PlaylistsManager.show(rect.left, rect.bottom);
@@ -253,7 +257,7 @@ export class GamesDataContainer {
   }
 
   _playlistIndicatorHTML(pos, total, reps) {
-    return `<span class="playlist-hud-icon">${icons.playing}</span><span>${pos}/${total} ×${reps}</span>`;
+    return `<span class="playlist-hud-icon">${icons.playing}</span><span class="playlist-hud-counter">${pos}/${total} ×${reps}</span>`;
   }
 
   updatePlaylistIndicator() {

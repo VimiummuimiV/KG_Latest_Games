@@ -1046,9 +1046,14 @@ export function createControls(main) {
   });
 
   const updatePlaylistsBtnTooltip = () => {
+    const stateLabel = main.playlistPanelAutoOpen === 2
+      ? 'Закреплено'
+      : main.playlistPanelAutoOpen === 1
+        ? 'Автооткрытие'
+        : 'Отключено';
     createCustomTooltip(playlistsBtn,
       `[Клик] Открыть плейлисты
-       [Ctrl + Клик] Автооткрытие при активном плейлисте: ${main.playlistPanelAutoOpen ? 'Включено' : 'Отключено'}`
+       [Ctrl + Клик] Панель при активном плейлисте: ${stateLabel}`
     );
   };
   updatePlaylistsBtnTooltip();
@@ -1056,7 +1061,8 @@ export function createControls(main) {
   playlistsBtn.addEventListener('click', e => {
     e.stopPropagation();
     if (e.ctrlKey) {
-      main.playlistPanelAutoOpen = !main.playlistPanelAutoOpen;
+      // Cycle: 0 → 1 → 2 → 0
+      main.playlistPanelAutoOpen = (main.playlistPanelAutoOpen + 1) % 3;
       main.settingsManager.saveSettings();
       updatePlaylistsBtnTooltip();
       return;
