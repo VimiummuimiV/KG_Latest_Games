@@ -395,6 +395,11 @@ export class PageHandler {
   }
 
   handleReplayAction() {
+    // Don't start a new replay countdown while the active playlist is paused.
+    // This prevents setupHoverListeners' onLeave timer from re-triggering replay
+    // after the user moves their cursor away from the playlist popup post-pause.
+    if (getActivePlaylistSession()?.paused) return;
+
     // Competition and qualification games are never auto-replayed
     if (['competition', 'qualification'].includes(detectGameType().category)) return;
 

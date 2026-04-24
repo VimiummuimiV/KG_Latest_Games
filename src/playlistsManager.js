@@ -501,7 +501,9 @@ export const PlaylistsManager = {
         const current = getActivePlaylistSession();
         if (!current) return;
         if (current.paused) {
-          // Resuming: clear paused flag, then re-create the same game (no decrement)
+          // Resuming: clear paused flag, then navigate to the already-queued game.
+          // (advancePlaylist already decremented/advanced the session when the game
+          //  finished, so current.entryIndex is already the correct next destination.)
           setActivePlaylistSession({ ...current, paused: false });
           const playlists = this.load();
           const pl = playlists.find(p => p.id === current.playlistId);
@@ -513,8 +515,10 @@ export const PlaylistsManager = {
             this.refresh();
           }
         } else {
-          // Pausing: just set the flag, user can now navigate away freely
+          // Pausing: set the flag AND cancel any active replay countdown so
+          // the timer does not fire and navigate while the playlist is paused.
           setActivePlaylistSession({ ...current, paused: true });
+          try { this.main.pageHandler?.cancelReplay(true); } catch (_) {}
           this.refresh();
         }
       });
