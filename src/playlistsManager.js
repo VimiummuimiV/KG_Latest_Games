@@ -120,6 +120,8 @@ export const PlaylistsManager = {
   offsetY: 0,
   main: null,
   expandedPlaylistId: null,
+  _intendedX: null,
+  _intendedY: null,
 
   // ── Persistence ────────────────────────────────────────────────────────────
   load() {
@@ -271,8 +273,10 @@ export const PlaylistsManager = {
     }
     this.popup = this._buildPanel();
     document.body.appendChild(this.popup);
-    this.popup.style.left = (x + 20) + 'px';
-    this.popup.style.top  = (y + 20) + 'px';
+    this._intendedX = x + 20;
+    this._intendedY = y + 20;
+    this.popup.style.left = this._intendedX + 'px';
+    this.popup.style.top  = this._intendedY + 'px';
     this._constrain();
     // Scroll active playlist block + active entry into view (centered)
     if (session) {
@@ -282,6 +286,7 @@ export const PlaylistsManager = {
       document.addEventListener('click', this._outside);
       document.addEventListener('keydown', this._keydown);
     }, 100);
+    window.addEventListener('resize', this._onResize);
   },
 
   hide() {
@@ -293,6 +298,7 @@ export const PlaylistsManager = {
       document.removeEventListener('keydown', this._keydown);
       document.removeEventListener('mousemove', this._drag);
       document.removeEventListener('mouseup', this._stopDrag);
+      window.removeEventListener('resize', this._onResize);
     }
   },
 
@@ -303,12 +309,15 @@ export const PlaylistsManager = {
 
   refresh() {
     if (!this.popup) return;
-    const rect = this.popup.getBoundingClientRect();
     const newPopup = this._buildPanel();
-    newPopup.style.left = rect.left + 'px';
-    newPopup.style.top  = rect.top  + 'px';
+    // Restore intended position (may differ from displayed if viewport shrank)
+    const left = this._intendedX !== null ? this._intendedX : this.popup.getBoundingClientRect().left;
+    const top  = this._intendedY !== null ? this._intendedY : this.popup.getBoundingClientRect().top;
+    newPopup.style.left = left + 'px';
+    newPopup.style.top  = top  + 'px';
     this.popup.parentNode.replaceChild(newPopup, this.popup);
     this.popup = newPopup;
+    this._constrain();
     // Re-register outside click after rebuild
     document.removeEventListener('click', this._outside);
     document.removeEventListener('keydown', this._keydown);
@@ -357,8 +366,12 @@ export const PlaylistsManager = {
 
   _drag: e => {
     if (!PlaylistsManager.isDragging || !PlaylistsManager.popup) return;
-    PlaylistsManager.popup.style.left = (e.clientX - PlaylistsManager.offsetX) + 'px';
-    PlaylistsManager.popup.style.top  = (e.clientY - PlaylistsManager.offsetY) + 'px';
+    const x = e.clientX - PlaylistsManager.offsetX;
+    const y = e.clientY - PlaylistsManager.offsetY;
+    PlaylistsManager._intendedX = x;
+    PlaylistsManager._intendedY = y;
+    PlaylistsManager.popup.style.left = x + 'px';
+    PlaylistsManager.popup.style.top  = y + 'px';
     PlaylistsManager._constrain();
   },
 
@@ -377,6 +390,16 @@ export const PlaylistsManager = {
     if (r.top  < 0)  this.popup.style.top  = '0px';
     if (r.left > mL) this.popup.style.left = mL + 'px';
     if (r.top  > mT) this.popup.style.top  = mT + 'px';
+  },
+
+  // On resize: clamp display to viewport but preserve intended coords so
+  // expanding the viewport back restores the panel to its original position.
+  _onResize: () => {
+    if (!PlaylistsManager.popup) return;
+    // Restore intended position first, then clamp to current viewport
+    if (PlaylistsManager._intendedX !== null) PlaylistsManager.popup.style.left = PlaylistsManager._intendedX + 'px';
+    if (PlaylistsManager._intendedY !== null) PlaylistsManager.popup.style.top  = PlaylistsManager._intendedY + 'px';
+    PlaylistsManager._constrain();
   },
 
   // Scroll the active entry row to the center of the list viewport.

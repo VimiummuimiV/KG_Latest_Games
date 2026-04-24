@@ -12,6 +12,8 @@ export const VocabulariesManager = {
   offsetY: 0,
   hasUnsavedChanges: false,
   currentListType: 'bannedVocabularies',
+  _intendedX: null,
+  _intendedY: null,
 
   listConfigs: {
     bannedVocabularies: {
@@ -860,11 +862,14 @@ export const VocabulariesManager = {
     if (this.popup) {
       const newPopup = await this.createElements();
       const parent = this.popup.parentNode;
-      const rect = this.popup.getBoundingClientRect();
+      // Restore intended position (may differ from displayed if viewport shrank)
+      const left = this._intendedX !== null ? this._intendedX : this.popup.getBoundingClientRect().left;
+      const top  = this._intendedY !== null ? this._intendedY : this.popup.getBoundingClientRect().top;
       parent.replaceChild(newPopup, this.popup);
       this.popup = newPopup;
-      this.popup.style.left = rect.left + 'px';
-      this.popup.style.top = rect.top + 'px';
+      this.popup.style.left = left + 'px';
+      this.popup.style.top  = top  + 'px';
+      this.constrainToScreen();
       this.scheduleScrollToBottom();
     }
   },
@@ -873,8 +878,10 @@ export const VocabulariesManager = {
     this.hide();
     this.popup = await this.createElements();
     document.body.appendChild(this.popup);
-    this.popup.style.left = (x + offsetX) + 'px';
-    this.popup.style.top = (y + offsetY) + 'px';
+    this._intendedX = x + offsetX;
+    this._intendedY = y + offsetY;
+    this.popup.style.left = this._intendedX + 'px';
+    this.popup.style.top  = this._intendedY + 'px';
     this.constrainToScreen();
 
     this.scheduleScrollToBottom();
@@ -883,6 +890,7 @@ export const VocabulariesManager = {
       document.addEventListener('click', this.outside);
       document.addEventListener('keydown', this.keydown);
     }, 100);
+    window.addEventListener('resize', this._onResize);
   },
 
   hide() {
@@ -894,6 +902,7 @@ export const VocabulariesManager = {
       document.removeEventListener('keydown', this.keydown);
       document.removeEventListener('mousemove', this.drag);
       document.removeEventListener('mouseup', this.stopDrag);
+      window.removeEventListener('resize', this._onResize);
     }
   },
 
@@ -945,8 +954,12 @@ export const VocabulariesManager = {
 
   drag: (e) => {
     if (!VocabulariesManager.isDragging || !VocabulariesManager.popup) return;
-    VocabulariesManager.popup.style.left = (e.clientX - VocabulariesManager.offsetX) + 'px';
-    VocabulariesManager.popup.style.top = (e.clientY - VocabulariesManager.offsetY) + 'px';
+    const x = e.clientX - VocabulariesManager.offsetX;
+    const y = e.clientY - VocabulariesManager.offsetY;
+    VocabulariesManager._intendedX = x;
+    VocabulariesManager._intendedY = y;
+    VocabulariesManager.popup.style.left = x + 'px';
+    VocabulariesManager.popup.style.top  = y + 'px';
     VocabulariesManager.constrainToScreen();
   },
 
@@ -965,5 +978,14 @@ export const VocabulariesManager = {
     if (rect.top < 0) this.popup.style.top = '0px';
     if (rect.left > maxLeft) this.popup.style.left = maxLeft + 'px';
     if (rect.top > maxTop) this.popup.style.top = maxTop + 'px';
+  },
+
+  // On resize: clamp display to viewport but preserve intended coords so
+  // expanding the viewport back restores the panel to its original position.
+  _onResize: () => {
+    if (!VocabulariesManager.popup) return;
+    if (VocabulariesManager._intendedX !== null) VocabulariesManager.popup.style.left = VocabulariesManager._intendedX + 'px';
+    if (VocabulariesManager._intendedY !== null) VocabulariesManager.popup.style.top  = VocabulariesManager._intendedY + 'px';
+    VocabulariesManager.constrainToScreen();
   }
 };
