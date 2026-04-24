@@ -1,7 +1,7 @@
 import { createCustomTooltip } from './tooltip.js';
 import { icons } from './icons.js';
 import { gameTypes, visibilities } from './definitions.js';
-import { generateRandomString } from './utils.js';
+import { generateRandomString, getCurrentPage } from './utils.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Storage / session keys
@@ -300,26 +300,29 @@ export const PlaylistsManager = {
   },
 
   // Only close on click that is truly outside the popup and not a prompt/confirm dialog
+  // Returns true only when state 2 is active AND we are on the game page.
+  // On all other pages the panel always behaves normally regardless of state.
+  _isPinned() {
+    return PlaylistsManager.main?.playlistPanelAutoOpen === 2 && getCurrentPage() === 'game';
+  },
+
   _outside: e => {
     if (!PlaylistsManager.popup) return;
     if (PlaylistsManager.popup.contains(e.target)) return;
-    // State 2 = pinned — outside clicks never close the panel
-    if (PlaylistsManager.main?.playlistPanelAutoOpen === 2) return;
+    if (PlaylistsManager._isPinned()) return;
     // Don't close if the click was on a button anywhere in the document
     if (e.target.closest('button, input, select, textarea')) return;
     PlaylistsManager.hide();
   },
 
   _keydown: e => {
-    // State 2 = pinned — Escape does not close the panel
-    if (PlaylistsManager.main?.playlistPanelAutoOpen === 2) return;
+    if (PlaylistsManager._isPinned()) return;
     if (e.key === 'Escape') PlaylistsManager.hide();
   },
 
   _startDrag(e) {
     if (e.button !== 0) return;
-    // State 2 = pinned — panel stays in place
-    if (this.main?.playlistPanelAutoOpen === 2) return;
+    if (this._isPinned()) return;
     this.isDragging = true;
     const rect = this.popup.getBoundingClientRect();
     this.offsetX = e.clientX - rect.left;
@@ -396,7 +399,7 @@ export const PlaylistsManager = {
 
     // Header (draggable)
     const header = _el('div', 'popup-header');
-    if (this.main?.playlistPanelAutoOpen !== 2) header.style.cursor = 'move';
+    if (!this._isPinned()) header.style.cursor = 'move';
     header.addEventListener('mousedown', e => this._startDrag(e));
 
     const titleSpan = _el('span', 'popup-header-title', 'Плейлисты');

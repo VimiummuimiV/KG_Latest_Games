@@ -1,6 +1,7 @@
 import { createCustomTooltip } from "../tooltip.js";
 import { getActivePlaylistSession, PlaylistsManager } from "../playlistsManager.js";
 import { icons } from "../icons.js";
+import { getCurrentPage } from "../utils.js";
 
 export class GamesDataContainer {
   constructor(main) {
@@ -235,10 +236,10 @@ export class GamesDataContainer {
     indicator.innerHTML = this._playlistIndicatorHTML(pos, total, reps);
     createCustomTooltip(indicator, tip);
 
-    // State 2 (pinned): clicking the HUD indicator opens but never closes the panel
+    // State 2 on game page = pinned — clicking the HUD indicator opens but never closes the panel
     indicator.addEventListener('click', () => {
       const rect = indicator.getBoundingClientRect();
-      if (this.main.playlistPanelAutoOpen === 2) {
+      if (this.main.playlistPanelAutoOpen === 2 && getCurrentPage() === 'game') {
         if (!PlaylistsManager.popup) PlaylistsManager.show(rect.left, rect.bottom);
       } else {
         PlaylistsManager.toggle(rect.left, rect.bottom);
