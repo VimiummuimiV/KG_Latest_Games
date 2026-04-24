@@ -1047,10 +1047,10 @@ export function createControls(main) {
 
   const updatePlaylistsBtnTooltip = () => {
     const stateLabel = main.playlistPanelAutoOpen === 2
-      ? 'Закреплено'
+      ? 'Закреплена'
       : main.playlistPanelAutoOpen === 1
         ? 'Автооткрытие'
-        : 'Отключено';
+        : 'Отключена';
     createCustomTooltip(playlistsBtn,
       `[Клик] Открыть плейлисты
        [Ctrl + Клик] Панель при активном плейлисте: ${stateLabel}`
