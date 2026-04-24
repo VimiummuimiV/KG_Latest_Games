@@ -5,7 +5,7 @@ import { sleep, generateUniqueId } from "../utils.js";
 import { isVocabularyCreationSupported } from "../vocabularyCreation.js";
 import { detectGameType } from "../utils.js";
 import { GamesDataContainer } from "./GamesDataContainer.js";
-import { advancePlaylist, getActivePlaylistSession } from "../playlistsManager.js";
+import { advancePlaylist, getActivePlaylistSession, getActivePlaylistUrl } from "../playlistsManager.js";
 
 export class PageHandler {
   constructor(main) {
@@ -15,8 +15,8 @@ export class PageHandler {
     // Initialize sleep indicators and timers
     this.replaySleep = null;
     this.startSleep = null;
-    // Flag to track if hovering over latest games container
-    this.isHoveringLatestGames = false;
+    // Flag to track if the cursor is over any interactive panel (container) that should suppress the replay timer
+    this.isHoveringInteractivePanel = false;
     this.remainingReplayCount = this.main.replayNextGameCount;
   }
 
@@ -158,25 +158,50 @@ export class PageHandler {
   }
 
   setupHoverListeners() {
-    const latestGamesContainer = document.querySelector('#latest-games-container');
-    if (latestGamesContainer) {
-      let leaveTimer = null;
-      latestGamesContainer.addEventListener('mouseenter', () => {
-        this.isHoveringLatestGames = true;
-        clearTimeout(leaveTimer);
-        // ONLY cancel replay sleep when hovering - start should be unaffected
-        if (this.replaySleep && typeof this.replaySleep.cancel === 'function') {
-          this.cancelReplay(true);
-        }
-      });
+    // Selectors that suppress the replay timer while the cursor is inside them.
+    const INTERACTIVE_SELECTORS = [
+      // Main containers
+      '#latest-games-container',
+      '.playlists-manager-popup',
+      // KG's related containers
+      '#errors_text', 
+      '#params',
+      // KG_WebTypeStats
+      '#wts-side-panel',
+      '#wts-draggable-window'
+    ];
 
-      latestGamesContainer.addEventListener('mouseleave', () => {
-        this.isHoveringLatestGames = false;
-        /* If not hovering, re-check and handle replay action after a short delay
-           to prevent immediate triggering when moving the mouse in and out quickly */
-        leaveTimer = setTimeout(() => this.handleReplayAction(), 350);
-      });
-    }
+    const isOverInteractivePanel = target =>
+      INTERACTIVE_SELECTORS.some(sel => target.closest(sel));
+
+    let leaveTimer = null;
+
+    const onEnter = e => {
+      if (!isOverInteractivePanel(e.target)) return;
+      // Only act on the first enter (when we weren't already hovering)
+      if (this.isHoveringInteractivePanel) return;
+      this.isHoveringInteractivePanel = true;
+      clearTimeout(leaveTimer);
+      // ONLY cancel replay sleep when hovering - start should be unaffected
+      if (this.replaySleep && typeof this.replaySleep.cancel === 'function') {
+        this.cancelReplay(true);
+      }
+    };
+
+    const onLeave = e => {
+      if (!this.isHoveringInteractivePanel) return;
+      // relatedTarget is where the mouse is going; if it's still inside one of
+      // our panels we don't want to treat this as a leave
+      const dest = e.relatedTarget;
+      if (dest && isOverInteractivePanel(dest)) return;
+      this.isHoveringInteractivePanel = false;
+      /* Re-check and handle replay action after a short delay to prevent immediate
+         triggering when the mouse moves quickly between panels or in/out of edges */
+      leaveTimer = setTimeout(() => this.handleReplayAction(), 350);
+    };
+
+    document.addEventListener('mouseover', onEnter);
+    document.addEventListener('mouseout', onLeave);
   }
 
   saveCurrentGameParams() {
@@ -346,8 +371,6 @@ export class PageHandler {
   // getNextUrl is called after the countdown resolves — return a URL string to navigate,
   // or nothing if navigation is handled via side-effects (e.g. replayNextGame()).
   _startReplaySleep(getNextUrl) {
-    if (this.isHoveringLatestGames) return;
-
     this.cancelReplay();
 
     this.replaySleep = sleep(this.main.replayDelay);
@@ -381,12 +404,17 @@ export class PageHandler {
         : document.querySelector('#status-inner #finished');
 
       if (elementToCheck && elementToCheck.style.display !== 'none') {
+        // If a playlist is active the session was already advanced by finishObserver —
+        // re-derive the URL from it instead of picking a sequential game from the main panel.
+        const playlistUrl = getActivePlaylistUrl(this.main);
+        if (playlistUrl) { this._startReplaySleep(() => playlistUrl); return; }
+
         const gameIdMatch = location.href.match(/gmid=(\d+)/);
         if (gameIdMatch) {
           const gameId = gameIdMatch[1];
 
-          // Replay is suppressed while the user is hovering the latest games container
-          if (!this.isHoveringLatestGames) {
+          // Replay is suppressed while the user is hovering any interactive panel
+          if (!this.isHoveringInteractivePanel) {
             // Decrement the counter as soon as the game ends so the indicator reflects
             // the upcoming replay, not the one that just finished. Saved immediately so
             // a page reload mid-countdown doesn't lose the updated value.

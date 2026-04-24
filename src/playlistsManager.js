@@ -45,6 +45,18 @@ export function cancelActivePlaylist() {
   setActivePlaylistSession(null);
 }
 
+// Returns the URL for the current active playlist entry, or null if none.
+export function getActivePlaylistUrl(main) {
+  const session = getActivePlaylistSession();
+  if (!session) return null;
+  try {
+    const playlist = PlaylistsManager.load().find(p => p.id === session.playlistId);
+    const entry = playlist?.entries[session.entryIndex];
+    const game = entry && main.gamesManager.findGameById(entry.gameId);
+    return game ? main.gamesManager.generateGameLink(game) : null;
+  } catch { return null; }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Advance to the next step and navigate. Returns true if navigation triggered.
 // ─────────────────────────────────────────────────────────────────────────────
