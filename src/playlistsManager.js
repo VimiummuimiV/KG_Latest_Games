@@ -821,6 +821,14 @@ export const PlaylistsManager = {
       e.stopPropagation();
       const hidden = body.classList.toggle('playlist-picker-body--hidden');
       setToggleState(hidden);
+      requestAnimationFrame(() => {
+        // If the panel is currently constrained by the viewport edges, keep it there after expanding the picker
+        if (hidden && PlaylistsManager.popup) {
+          if (PlaylistsManager._intendedX !== null) PlaylistsManager.popup.style.left = PlaylistsManager._intendedX + 'px';
+          if (PlaylistsManager._intendedY !== null) PlaylistsManager.popup.style.top  = PlaylistsManager._intendedY + 'px';
+        }
+        PlaylistsManager._constrain();
+      });
     });
 
     if (!this.main) { picker.append(toggleBtn, body); return picker; }
