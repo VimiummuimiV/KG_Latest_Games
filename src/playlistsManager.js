@@ -162,6 +162,18 @@ export const PlaylistsManager = {
     this.save(playlists);
   },
 
+  duplicateEntry(playlistId, entryId) {
+    const playlists = this.load();
+    const p = playlists.find(p => p.id === playlistId);
+    if (!p) return null;
+    const source = p.entries.find(e => e.id === entryId);
+    if (!source) return null;
+    const copy = { id: generateRandomString(), gameId: source.gameId, repeatCount: source.repeatCount };
+    p.entries.push(copy);
+    this.save(playlists);
+    return copy;
+  },
+
   setRepeat(playlistId, entryId, count) {
     const playlists = this.load();
     const p = playlists.find(p => p.id === playlistId);
@@ -574,7 +586,7 @@ export const PlaylistsManager = {
 
     // Drag handle
     const handle = _el('span', 'playlist-entry-drag-handle');
-    handle.innerHTML = icons.drag;
+    handle.innerHTML = icons.dragable;
 
     // Game label
     const label = _el('span', 'playlist-entry-label');
@@ -640,6 +652,25 @@ export const PlaylistsManager = {
       }
     });
 
+    // Duplicate — appends a copy of this entry to the end of the playlist
+    const dupBtn = _el('button', 'playlist-entry-duplicate-btn');
+    dupBtn.innerHTML = icons.copy;
+    createCustomTooltip(dupBtn, 'Дублировать в конец плейлиста');
+    dupBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const copy = this.duplicateEntry(playlist.id, entry.id);
+      if (!copy) return;
+      const fresh = this.load().find(p => p.id === playlist.id);
+      if (!fresh) return;
+      const entryList = row.closest('.playlist-entries');
+      if (!entryList) return;
+      // Remove empty-state placeholder if present
+      const empty = entryList.querySelector('.playlist-entries-empty');
+      if (empty) empty.remove();
+      const newRow = this._buildEntryRow(fresh, copy, null, false, fresh.entries.length - 1);
+      entryList.appendChild(newRow);
+    });
+
     // Per-entry play button — starts the playlist from this entry
     const entryPlayBtn = _el('button', 'playlist-entry-play-btn');
     entryPlayBtn.innerHTML = icons.start;
@@ -658,7 +689,7 @@ export const PlaylistsManager = {
       window.location.href = this.main.gamesManager.generateGameLink(game);
     });
 
-    row.append(entryPlayBtn, handle, label, stepper, removeBtn);
+    row.append(entryPlayBtn, handle, dupBtn, label, stepper, removeBtn);
     return row;
   },
 

@@ -293,6 +293,28 @@
       &:active { cursor: grabbing; }
     }
 
+    // Duplicate playlist entry row button (at the end of the list of entries) — same size as stepper buttons
+    .playlist-entry-duplicate-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      padding: 0;
+      background: transparent;
+      color: hsl(var(--rg-popup-btn-copy));
+      border: none;
+      outline: none;
+      cursor: pointer;
+      border-radius: 3px !important;
+      transition: all 0.2s ease;
+
+      svg { width: 12px; height: 12px; pointer-events: none; }
+
+      &:hover { background: hsla(var(--rg-popup-btn-copy) / 0.15); border-color: hsl(var(--rg-popup-btn-copy)); }
+      &:active { background: hsla(var(--rg-popup-btn-copy) / 0.25); }
+    }
+
     // Game name label
     .playlist-entry-label {
       position: relative;
