@@ -26,6 +26,17 @@ export function setActivePlaylistSession(data) {
   } catch { }
 }
 
+// Auto-pause: if a non-paused playlist session exists and we are not on the
+// game page, the user navigated away manually — mark it paused immediately.
+// Runs once at module load; is a no-op on all subsequent pages because the
+// session will already be paused.
+{
+  const session = getActivePlaylistSession();
+  if (session && !session.paused && getCurrentPage() !== 'game') {
+    setActivePlaylistSession({ ...session, paused: true });
+  }
+}
+
 /** Cancel the active playlist. */
 export function cancelActivePlaylist() {
   const session = getActivePlaylistSession();
