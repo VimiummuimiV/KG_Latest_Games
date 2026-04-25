@@ -259,11 +259,10 @@ export class GamesDataContainer {
     indicator.classList.toggle('playlist-progress-indicator--paused', isPaused);
     indicator.innerHTML = this._playlistIndicatorHTML(pos, total, reps, isPaused);
 
-    const tip = `[Плейлист] ${playlist.title}[Позиция] ${pos} из ${total}[Осталось повторов] ${reps}`;
-    createCustomTooltip(indicator, tip);
-
     // Counter zone — click opens/toggles the panel
     const counter = indicator.querySelector('.playlist-hud-counter');
+    const tip = `[Плейлист] ${playlist.title}[Позиция] ${pos} из ${total}[Осталось повторов] ${reps}`;
+    createCustomTooltip(counter, tip);
     counter.addEventListener('click', () => {
       const rect = indicator.getBoundingClientRect();
       if (this.main.playlistPanelAutoOpen === 2 && getCurrentPage() === 'game') {
