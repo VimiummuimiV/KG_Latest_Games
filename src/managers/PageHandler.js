@@ -5,7 +5,7 @@ import { sleep, generateUniqueId } from "../utils.js";
 import { isVocabularyCreationSupported } from "../vocabularyCreation.js";
 import { detectGameType } from "../utils.js";
 import { GamesDataContainer } from "./GamesDataContainer.js";
-import { advancePlaylist, getActivePlaylistSession, getActivePlaylistUrl } from "../playlistsManager.js";
+import { advancePlaylist, getActivePlaylistSession, getActivePlaylistUrl, PlaylistsManager } from "../playlistsManager.js";
 
 export class PageHandler {
   constructor(main) {
@@ -81,6 +81,7 @@ export class PageHandler {
             const result = advancePlaylist(this.main);
             // Update the HUD indicator after advancing (new session values are now in storage)
             try { this.gamesDataContainer.updatePlaylistIndicator(); } catch { }
+            try { PlaylistsManager.updateActiveEntryProgress(); } catch { }
             if (result === 'paused') {
               // Playlist is paused — user navigated away manually, do nothing
               return;

@@ -551,6 +551,36 @@ export const PlaylistsManager = {
     PlaylistsManager._constrain();
   },
 
+  // Update the ::before progress bar on the active entry row in the open panel
+  // without rebuilding anything. Called from PageHandler after advancePlaylist.
+  updateActiveEntryProgress() {
+    if (!this.popup) return;
+    const session = getActivePlaylistSession();
+    if (!session) return;
+    const row = this.popup.querySelector('.playlist-entry-row--active');
+    if (!row) return;
+    try {
+      const playlists = this.load();
+      const playlist  = playlists.find(p => p.id === session.playlistId);
+      if (!playlist) return;
+      const entry = playlist.entries[session.entryIndex];
+      if (!entry || entry.repeatCount <= 1) {
+        row.style.removeProperty('--playlist-progress');
+        row.classList.remove('playlist-entry-row--progress');
+        return;
+      }
+      const played = entry.repeatCount - session.remainingRepeats;
+      if (played <= 0) {
+        row.style.removeProperty('--playlist-progress');
+        row.classList.remove('playlist-entry-row--progress');
+        return;
+      }
+      const pct = Math.min(100, Math.round((played / entry.repeatCount) * 100));
+      row.classList.add('playlist-entry-row--progress');
+      row.style.setProperty('--playlist-progress', `${pct}%`);
+    } catch { }
+  },
+
   // Scroll the active entry row to the center of the list viewport.
   // Used by both show() and refresh() to avoid duplicating the logic.
   _scrollToActiveEntry() {
