@@ -1,5 +1,5 @@
 import { createCustomTooltip } from "../tooltip.js";
-import { getActivePlaylistSession, setActivePlaylistSession, cancelActivePlaylist, PlaylistsManager } from "../playlistsManager.js";
+import { getActivePlaylistSession, setActivePlaylistSession, cancelActivePlaylist, getActivePlaylistUrl, PlaylistsManager } from "../playlistsManager.js";
 import { icons } from "../icons.js";
 import { getCurrentPage } from "../utils.js";
 
@@ -297,11 +297,8 @@ export class GamesDataContainer {
         const current = getActivePlaylistSession();
         if (!current) return;
         setActivePlaylistSession({ ...current, paused: false });
-        const playlists = PlaylistsManager.load();
-        const pl = playlists.find(p => p.id === current.playlistId);
-        const entry = pl?.entries[current.entryIndex];
-        const game = entry ? this.main.gamesManager.findGameById(entry.gameId) : null;
-        if (game) window.location.href = this.main.gamesManager.generateGameLink(game);
+        const url = getActivePlaylistUrl(this.main);
+        if (url) window.location.href = url;
         else this.updatePlaylistIndicator();
       });
     }
