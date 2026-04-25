@@ -118,6 +118,56 @@ function _hasEntryParamOverrides(params) {
   return !!(params && ('type' in params || 'timeout' in params || 'idletime' in params));
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Button tooltip registry
+// Top-level key: button name. Second-level key: state (or 'default' if only one).
+// Each state maps modifier keys → action strings.
+// Supported modifiers: click, ctrl, shift, alt, ctrlShift, shiftAlt
+// buildBtnTooltip(button, state?) assembles them into [Modifier + Клик] format.
+// ─────────────────────────────────────────────────────────────────────────────
+const BTN_TOOLTIPS = {
+  paramsBtn: {
+    default: {
+      click: 'Переопределить параметры (режим, TM, AFK)',
+    },
+    override: {
+      click: 'Изменить переопределённые параметры',
+      ctrl:  'Сбросить все переопределения',
+    },
+  },
+};
+
+function buildBtnTooltip(button, state = 'default') {
+  const t = BTN_TOOLTIPS[button]?.[state];
+  if (!t) return '';
+  const lines = [];
+  if (t.click)     lines.push(`[Клик] ${t.click}`);
+  if (t.shift)     lines.push(`[Shift + Клик] ${t.shift}`);
+  if (t.ctrl)      lines.push(`[Ctrl + Клик] ${t.ctrl}`);
+  if (t.alt)       lines.push(`[Alt + Клик] ${t.alt}`);
+  if (t.shiftAlt)  lines.push(`[Shift + Alt + Клик] ${t.shiftAlt}`);
+  if (t.ctrlShift) lines.push(`[Ctrl + Shift + Клик] ${t.ctrlShift}`);
+  return lines.join(' ');
+}
+
+/** Sync has-overrides class + tooltip on the params button from current entry.params. */
+function _syncParamsBtnState(paramsBtn, params) {
+  const hasOv = _hasEntryParamOverrides(params);
+  paramsBtn.classList.toggle('has-overrides', hasOv);
+  createCustomTooltip(paramsBtn, buildBtnTooltip('paramsBtn', hasOv ? 'override' : 'default'));
+}
+
+/** Rebuild the entry label tooltip to reflect current ep overrides vs game defaults. */
+function _refreshEntryLabelTooltip(label, game, ep) {
+  const visLabel = visibilities[ep.type ?? game.params.type] || (ep.type ?? game.params.type);
+  const tmVal    = ep.timeout  ?? game.params.timeout;
+  const afkVal   = ep.idletime ?? game.params.idletime;
+  let tip = `[Режим] ${visLabel}[TM] ${tmVal}`;
+  if (afkVal) tip += `[AFK] ${afkVal}`;
+  if (_hasEntryParamOverrides(ep)) tip += `[Параметры] переопределены`;
+  createCustomTooltip(label, tip);
+}
+
 /**
  * Generate a game link for a playlist entry, merging any entry-level param
  * overrides (type / timeout / idletime) on top of the saved game params.
@@ -172,26 +222,12 @@ function _buildParamsSection(playlist, entry, paramsBtn) {
   function _persistAndRefresh() {
     PlaylistsManager.setEntryParams(playlist.id, entry.id, ep);
     syncConstraints();
-    const hasOv = _hasEntryParamOverrides(ep);
-    paramsBtn.classList.toggle('has-overrides', hasOv);
-    createCustomTooltip(paramsBtn, hasOv
-      ? '[Клик] Изменить переопределённые параметры [Ctrl + Клик] Сбросить все переопределения'
-      : '[Клик] Переопределить параметры (режим, TM, AFK)');
-
-    // Also refresh the entry label tooltip so it reflects the latest overrides
+    _syncParamsBtnState(paramsBtn, ep);
     const row = paramsBtn.closest('.playlist-entry-row');
     if (row) {
       const label = row.querySelector('.playlist-entry-label');
       const game = PlaylistsManager.main?.gamesManager?.findGameById(entry.gameId);
-      if (label && game) {
-        const visLabel = visibilities[ep.type ?? game.params.type] || (ep.type ?? game.params.type);
-        const tmVal    = ep.timeout  ?? game.params.timeout;
-        const afkVal   = ep.idletime ?? game.params.idletime;
-        let tip = `[Режим] ${visLabel}[TM] ${tmVal}`;
-        if (afkVal) tip += `[AFK] ${afkVal}`;
-        if (hasOv) tip += `[Параметры] переопределены`;
-        createCustomTooltip(label, tip);
-      }
+      if (label && game) _refreshEntryLabelTooltip(label, game, ep);
     }
   }
 
@@ -920,17 +956,9 @@ export const PlaylistsManager = {
     });
 
     // Params override button — toggles the inline param picker
-    const hasOv = _hasEntryParamOverrides(entry.params);
-    const paramsBtn = _el('button', `playlist-entry-params-btn${hasOv ? ' has-overrides' : ''}`);
+    const paramsBtn = _el('button', 'playlist-entry-params-btn');
     paramsBtn.innerHTML = icons.parameters;
-
-    const _refreshParamsBtnTooltip = () => {
-      const ov = _hasEntryParamOverrides(entry.params);
-      createCustomTooltip(paramsBtn, ov
-        ? '[Клик] Изменить переопределённые параметры [Ctrl + Клик] Сбросить все переопределения'
-        : '[Клик] Переопределить параметры (режим, TM, AFK)');
-    };
-    _refreshParamsBtnTooltip();
+    _syncParamsBtnState(paramsBtn, entry.params);
 
     paramsBtn.addEventListener('click', e => {
       e.stopPropagation();
@@ -940,8 +968,7 @@ export const PlaylistsManager = {
         if (!_hasEntryParamOverrides(entry.params)) return;
         entry.params = {};
         PlaylistsManager.setEntryParams(playlist.id, entry.id, {});
-        paramsBtn.classList.remove('has-overrides');
-        _refreshParamsBtnTooltip();
+        _syncParamsBtnState(paramsBtn, entry.params);
         // Close the params panel if it's open for this row
         const openSection = row.nextElementSibling?.classList.contains('playlist-entry-params')
           ? row.nextElementSibling : null;
@@ -953,12 +980,7 @@ export const PlaylistsManager = {
         const game = PlaylistsManager.main?.gamesManager?.findGameById(entry.gameId);
         if (game) {
           const label = row.querySelector('.playlist-entry-label');
-          if (label) {
-            const visLabel = visibilities[game.params.type] || game.params.type;
-            let tip = `[Режим] ${visLabel}[TM] ${game.params.timeout}`;
-            if (game.params.idletime) tip += `[AFK] ${game.params.idletime}`;
-            createCustomTooltip(label, tip);
-          }
+          if (label) _refreshEntryLabelTooltip(label, game, entry.params);
         }
         return;
       }
