@@ -14,15 +14,15 @@ const SESSION_KEY = 'latestGames_activePlaylist';
 // ─────────────────────────────────────────────────────────────────────────────
 export function getActivePlaylistSession() {
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
+    const raw = localStorage.getItem(SESSION_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch { return null; }
 }
 
 export function setActivePlaylistSession(data) {
   try {
-    if (data) sessionStorage.setItem(SESSION_KEY, JSON.stringify(data));
-    else sessionStorage.removeItem(SESSION_KEY);
+    if (data) localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+    else localStorage.removeItem(SESSION_KEY);
   } catch { }
 }
 
@@ -43,7 +43,7 @@ export function cancelActivePlaylist() {
   if (!session) return;
   // Restore shouldStart / shouldReplay / replayNextGame / replayWithoutWaiting to pre-playlist values if we had overridden them
   try {
-    const saved = JSON.parse(sessionStorage.getItem('latestGames_prePlaylistSettings') || 'null');
+    const saved = JSON.parse(localStorage.getItem('latestGames_prePlaylistSettings') || 'null');
     if (saved && PlaylistsManager.main) {
       PlaylistsManager.main.shouldStart    = saved.shouldStart;
       PlaylistsManager.main.shouldReplay   = saved.shouldReplay;
@@ -52,7 +52,7 @@ export function cancelActivePlaylist() {
       PlaylistsManager.main.settingsManager.saveSettings();
     }
   } catch { }
-  sessionStorage.removeItem('latestGames_prePlaylistSettings');
+  localStorage.removeItem('latestGames_prePlaylistSettings');
   setActivePlaylistSession(null);
 }
 
@@ -652,12 +652,17 @@ export const PlaylistsManager = {
   // Called before starting any playlist (from startPlaylist and per-entry play button).
   _activatePlaylistSettings() {
     try {
-      sessionStorage.setItem('latestGames_prePlaylistSettings', JSON.stringify({
-        shouldStart:          this.main.shouldStart,
-        shouldReplay:         this.main.shouldReplay,
-        replayNextGame:       this.main.replayNextGame,
-        replayWithoutWaiting: this.main.replayWithoutWaiting
-      }));
+      // Only write the backup if one doesn't exist yet — subsequent navigations
+      // during an active playlist must not overwrite the original user settings
+      // with the already-forced playlist values.
+      if (!localStorage.getItem('latestGames_prePlaylistSettings')) {
+        localStorage.setItem('latestGames_prePlaylistSettings', JSON.stringify({
+          shouldStart:          this.main.shouldStart,
+          shouldReplay:         this.main.shouldReplay,
+          replayNextGame:       this.main.replayNextGame,
+          replayWithoutWaiting: this.main.replayWithoutWaiting
+        }));
+      }
     } catch { }
     this.main.shouldStart          = true;
     this.main.shouldReplay         = true;
