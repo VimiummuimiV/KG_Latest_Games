@@ -162,9 +162,10 @@ function _refreshEntryLabelTooltip(label, game, ep) {
   const visLabel = visibilities[ep.type ?? game.params.type] || (ep.type ?? game.params.type);
   const tmVal    = ep.timeout  ?? game.params.timeout;
   const afkVal   = ep.idletime ?? game.params.idletime;
-  let tip = `[Режим] ${visLabel}[TM] ${tmVal}`;
-  if (afkVal) tip += `[AFK] ${afkVal}`;
+  let tip = '';
   if (_hasEntryParamOverrides(ep)) tip += `[Параметры] переопределены`;
+  tip += `[Режим] ${visLabel}[TM] ${tmVal}`;
+  if (afkVal) tip += `[AFK] ${afkVal}`;
   createCustomTooltip(label, tip);
 }
 
