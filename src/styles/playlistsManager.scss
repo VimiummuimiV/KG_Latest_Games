@@ -382,27 +382,22 @@
       opacity: 0.85;
     }
 
-    // When the params panel is open — square the bottom corners and adopt the
-    // params border colour so the two blocks read as one unified container.
+    // When the params panel is open — square the bottom corners, unify the
+    // background with the panel below using the params accent tint.
+    // Applied to both inactive and active rows — the params-color bg replaces
+    // both the default card bg and the active-entry green tint, so the row and
+    // panel read as a single container. Active border/highlight is preserved.
     &.playlist-entry-row--params-open {
       border-bottom-left-radius: 0 !important;
       border-bottom-right-radius: 0 !important;
       border-bottom: none !important;
-      border-color: hsla(var(--rg-playlist-params-color) / 0.6) !important;
-      // Suppress normal hover so the colour stays stable while editing
-      &:hover {
-        background: var(--rg-bg-card) !important;
+      border-color: hsla(var(--rg-playlist-params-color) / 0.55) !important;
+      background: hsla(var(--rg-playlist-params-color) / 0.07) !important;
+      // Suppress hover bg change so the unified tint stays stable while editing
+      &:hover, &.playlist-entry-row--active:hover {
+        background: hsla(var(--rg-playlist-params-color) / 0.07) !important;
         border-bottom: none !important;
-        border-color: hsla(var(--rg-playlist-params-color) / 0.6) !important;
-      }
-      // Active-entry variant: keep the green tint but override border
-      &.playlist-entry-row--active {
-        border-bottom: none !important;
-        border-color: hsla(var(--rg-popup-item-new) / 0.5) !important;
-        &:hover {
-          border-bottom: none !important;
-          border-color: hsla(var(--rg-popup-item-new) / 0.5) !important;
-        }
+        border-color: hsla(var(--rg-playlist-params-color) / 0.55) !important;
       }
     }
 
@@ -432,31 +427,10 @@
     gap: 0.35em;
     padding: 0.5em 0.7em;
     margin-top: 0;
-    background: var(--rg-bg-secondary);
-    border: 1px solid hsla(var(--rg-playlist-params-color) / 0.6);
+    background: hsla(var(--rg-playlist-params-color) / 0.07);
+    border: 1px solid hsla(var(--rg-playlist-params-color) / 0.55);
     border-top: none;
     border-radius: 0 0 3px 3px !important;
-
-    // Fix 3: when the owner row is active (green), the params panel matches that accent
-    &--active-entry {
-      background: hsla(var(--rg-popup-item-new) / 0.08);
-      border-color: hsla(var(--rg-popup-item-new) / 0.5);
-
-      .playlist-entry-params-label {
-        color: hsl(var(--rg-popup-item-new));
-      }
-
-      .playlist-entry-params-option {
-        &.active {
-          color: hsl(var(--rg-popup-item-new)) !important;
-          background: hsla(var(--rg-popup-item-new) / 0.15) !important;
-          border-color: hsla(var(--rg-popup-item-new) / 0.7) !important;
-        }
-        &:hover {
-          border-color: hsla(var(--rg-popup-item-new) / 0.5);
-        }
-      }
-    }
 
     .playlist-entry-params-group {
       display: flex;

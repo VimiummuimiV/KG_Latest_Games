@@ -907,10 +907,6 @@ export const PlaylistsManager = {
       }
       if (!entry.params) entry.params = {};
       const section = _buildParamsSection(playlist, entry, paramsBtn);
-      // Mirror the active-entry green accent into the params panel
-      if (row.classList.contains('playlist-entry-row--active')) {
-        section.classList.add('playlist-entry-params--active-entry');
-      }
       row.parentNode.insertBefore(section, row.nextSibling);
       row.classList.add('playlist-entry-row--params-open');
     });
