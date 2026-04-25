@@ -140,31 +140,35 @@
     border: 1px solid hsl(200, 45%, 40%);
   }
 
+  // Mixin: all HSL-derived colour rules for one playlist-indicator theme.
+  // Structural rules (layout, dimensions, transitions) live outside so they
+  // are written exactly once. Only colour values belong here.
+  @mixin pl-indicator-theme($h, $s) {
+    color:            hsl($h, $s, 65%);
+    background-color: hsl($h, $s, 20%);
+    border-color:     hsl($h, $s, 40%);
+
+    .playlist-hud-btn {
+      color: hsl($h, $s, 65%);
+      &:hover  { background-color: hsl($h, $s, 30%); }
+      &:active { background-color: hsl($h, $s, 35%); }
+    }
+  }
+
   // Active playlist progress indicator
   .playlist-progress-indicator {
-    $pl-h: 135;  // hue — single source of truth for both active and paused tints
-    $pl-s: 45%;
-
-    color: hsl($pl-h, $pl-s, 65%);
-    background-color: hsl($pl-h, $pl-s, 20%);
-    border: 1px solid hsl($pl-h, $pl-s, 40%);
+    border: 1px solid;  // width + style once; border-color comes from the mixin below
+    @include pl-indicator-theme(135, 45%);  // green — active
     animation: bounceIn 0.3s ease forwards;
     padding: 0;
     gap: 0;
     overflow: hidden;
     cursor: default;
 
-    // Paused — same hue family, slightly desaturated + pulse
+    // Paused — amber/orange tint + pulse
     &--paused {
-      color: hsl($pl-h, $pl-s * 0.7, 60%);
-      background-color: hsl($pl-h, $pl-s * 0.7, 17%);
-      border-color: hsl($pl-h, $pl-s * 0.7, 35%);
+      @include pl-indicator-theme(40, 60%);  // amber — paused
       animation: bounceIn 0.3s ease forwards, hudPause 2s ease-in-out 0.3s infinite;
-
-      .playlist-hud-btn {
-        color: hsl($pl-h, $pl-s * 0.7, 60%);
-        &:hover { background-color: hsl($pl-h, $pl-s * 0.7, 30%); }
-      }
     }
 
     @keyframes hudPause {
@@ -172,7 +176,7 @@
       50%       { opacity: 0.55; }
     }
 
-    // Full-height action buttons — always visible, no reveal animation
+    // Full-height action buttons — structure only, colour via mixin above
     .playlist-hud-btn {
       display: inline-flex;
       align-items: center;
@@ -181,7 +185,6 @@
       padding: 0 7px;
       flex-shrink: 0;
       background: transparent;
-      color: hsl($pl-h, $pl-s, 65%);
       border: none;
       outline: none;
       cursor: pointer;
@@ -193,9 +196,6 @@
         pointer-events: none;
         flex-shrink: 0;
       }
-
-      &:hover { background-color: hsl($pl-h, $pl-s, 30%); }
-      &:active { background-color: hsl($pl-h, $pl-s, 35%); }
     }
 
     // Counter — padded text zone, pointer signals panel toggle
