@@ -808,6 +808,15 @@ export const PlaylistsManager = {
     incBtn.innerHTML = icons.chevronRight;
     createCustomTooltip(stepper, 'Количество повторов этой игры');
 
+    // Snapshot how many plays have already happened for this entry at build time.
+    // We keep this fixed so that stepper changes (which shift remainingRepeats by
+    // the same delta) don't corrupt the played count — only actual game advancement
+    // changes remainingRepeats independently of repeatCount.
+    const sessionAtBuild = isCurrentEntry && session ? getActivePlaylistSession() : null;
+    let playedCount = (isCurrentEntry && sessionAtBuild)
+      ? Math.max(0, entry.repeatCount - sessionAtBuild.remainingRepeats)
+      : 0;
+
     decBtn.addEventListener('click', e => {
       e.stopPropagation();
       const next = Math.max(1, entry.repeatCount - 1);
@@ -815,7 +824,7 @@ export const PlaylistsManager = {
       countSpan.textContent = String(next);
       entry.repeatCount = next;
       _updatePlaylistHud();
-      _updateEntryProgress(row, entry, session, isCurrentEntry);
+      _updateEntryProgress(row, entry, playedCount, isCurrentEntry);
     });
     incBtn.addEventListener('click', e => {
       e.stopPropagation();
@@ -824,7 +833,7 @@ export const PlaylistsManager = {
       countSpan.textContent = String(next);
       entry.repeatCount = next;
       _updatePlaylistHud();
-      _updateEntryProgress(row, entry, session, isCurrentEntry);
+      _updateEntryProgress(row, entry, playedCount, isCurrentEntry);
     });
     stepper.append(decBtn, countSpan, incBtn);
 
@@ -1127,21 +1136,17 @@ function _updatePlaylistHud() {
   } catch { }
 }
 
-// Update the progress fill on the active entry row in real-time
-function _updateEntryProgress(row, entry, session, isCurrentEntry) {
-  if (!isCurrentEntry || !session || entry.repeatCount <= 1) {
+// Update the progress fill on the active entry row in real-time.
+// playedCount is passed explicitly by the stepper to avoid re-deriving it from
+// session.remainingRepeats, which shifts in sync with repeatCount on stepper
+// changes and would always produce played=0 after an increment from 1.
+function _updateEntryProgress(row, entry, playedCount, isCurrentEntry) {
+  if (!isCurrentEntry || entry.repeatCount <= 1 || playedCount <= 0) {
     row.style.removeProperty('--playlist-progress');
     row.classList.remove('playlist-entry-row--progress');
     return;
   }
-  // Read latest remainingRepeats from session (setRepeat may have updated it)
-  const fresh = getActivePlaylistSession();
-  const remaining = fresh ? fresh.remainingRepeats : session.remainingRepeats;
-  const played = entry.repeatCount - remaining;
-  // Use a minimum of 1% so the ::before element stays in the DOM layout even at the start
-  const pct = played <= 0
-    ? 1
-    : Math.min(100, Math.round((played / entry.repeatCount) * 100));
+  const pct = Math.min(100, Math.round((playedCount / entry.repeatCount) * 100));
   row.classList.add('playlist-entry-row--progress');
   row.style.setProperty('--playlist-progress', `${pct}%`);
 }
