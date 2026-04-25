@@ -1,5 +1,5 @@
 import { createCustomTooltip } from "../tooltip.js";
-import { getActivePlaylistSession, PlaylistsManager } from "../playlistsManager.js";
+import { getActivePlaylistSession, setActivePlaylistSession, cancelActivePlaylist, PlaylistsManager } from "../playlistsManager.js";
 import { icons } from "../icons.js";
 import { getCurrentPage } from "../utils.js";
 
@@ -106,6 +106,14 @@ export class GamesDataContainer {
     this.ensureContainer();
     this.createPlayCountIndicators();
     this.createRemainingCountIndicator();
+    this.createPlaylistIndicator();
+  }
+
+  // Called on non-game pages — only shows the playlist indicator when paused.
+  createPausedPlaylistIndicator() {
+    const session = getActivePlaylistSession();
+    if (!session?.paused) return;
+    this.ensureContainer();
     this.createPlaylistIndicator();
   }
 
@@ -227,24 +235,12 @@ export class GamesDataContainer {
   createPlaylistIndicator() {
     const data = this._getPlaylistIndicatorData();
     if (!data) return;
-    const { playlist, pos, total, reps } = data;
-    const tip = `[Плейлист] ${playlist.title}[Позиция] ${pos} из ${total}[Осталось повторов] ${reps}`;
+    const { playlist, pos, total, reps, session } = data;
 
     this.ensureContainer();
     const indicator = document.createElement('div');
     indicator.className = 'indicator playlist-progress-indicator';
-    indicator.innerHTML = this._playlistIndicatorHTML(pos, total, reps);
-    createCustomTooltip(indicator, tip);
-
-    // State 2 on game page = pinned — clicking the HUD indicator opens but never closes the panel
-    indicator.addEventListener('click', () => {
-      const rect = indicator.getBoundingClientRect();
-      if (this.main.playlistPanelAutoOpen === 2 && getCurrentPage() === 'game') {
-        if (!PlaylistsManager.popup) PlaylistsManager.show(rect.left, rect.bottom);
-      } else {
-        PlaylistsManager.toggle(rect.left, rect.bottom);
-      }
-    });
+    this._renderPlaylistIndicator(indicator, playlist, pos, total, reps, session);
 
     this.container.appendChild(indicator);
 
@@ -257,8 +253,81 @@ export class GamesDataContainer {
     }
   }
 
-  _playlistIndicatorHTML(pos, total, reps) {
-    return `<span class="playlist-hud-icon">${icons.playing}</span><span class="playlist-hud-counter">${pos}/${total} ×${reps}</span>`;
+  // Build/rebuild the full indicator DOM — used by both create and update.
+  _renderPlaylistIndicator(indicator, playlist, pos, total, reps, session) {
+    const isPaused = !!(session?.paused);
+    indicator.classList.toggle('playlist-progress-indicator--paused', isPaused);
+    indicator.innerHTML = this._playlistIndicatorHTML(pos, total, reps, isPaused);
+
+    const tip = `[Плейлист] ${playlist.title}[Позиция] ${pos} из ${total}[Осталось повторов] ${reps}`;
+    createCustomTooltip(indicator, tip);
+
+    // Counter zone — click opens/toggles the panel
+    const counter = indicator.querySelector('.playlist-hud-counter');
+    counter.addEventListener('click', () => {
+      const rect = indicator.getBoundingClientRect();
+      if (this.main.playlistPanelAutoOpen === 2 && getCurrentPage() === 'game') {
+        if (!PlaylistsManager.popup) PlaylistsManager.show(rect.left, rect.bottom);
+      } else {
+        PlaylistsManager.toggle(rect.left, rect.bottom);
+      }
+    });
+
+    // Pause button — present when active (not paused)
+    const pauseBtn = indicator.querySelector('.playlist-hud-pause');
+    if (pauseBtn) {
+      createCustomTooltip(pauseBtn, `Приостановить плейлист «${playlist.title}»`);
+      pauseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const current = getActivePlaylistSession();
+        if (!current) return;
+        setActivePlaylistSession({ ...current, paused: true });
+        try { this.main.pageHandler?.cancelReplay(true); } catch (_) {}
+        this.updatePlaylistIndicator();
+        PlaylistsManager.refresh();
+      });
+    }
+
+    // Resume button — present when paused
+    const resumeBtn = indicator.querySelector('.playlist-hud-resume');
+    if (resumeBtn) {
+      createCustomTooltip(resumeBtn, `Возобновить плейлист «${playlist.title}»`);
+      resumeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const current = getActivePlaylistSession();
+        if (!current) return;
+        setActivePlaylistSession({ ...current, paused: false });
+        const playlists = PlaylistsManager.load();
+        const pl = playlists.find(p => p.id === current.playlistId);
+        const entry = pl?.entries[current.entryIndex];
+        const game = entry ? this.main.gamesManager.findGameById(entry.gameId) : null;
+        if (game) window.location.href = this.main.gamesManager.generateGameLink(game);
+        else this.updatePlaylistIndicator();
+      });
+    }
+
+    // Stop button — always present
+    const stopBtn = indicator.querySelector('.playlist-hud-stop');
+    if (stopBtn) {
+      createCustomTooltip(stopBtn, `Остановить плейлист «${playlist.title}»`);
+      stopBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        cancelActivePlaylist();
+        indicator.remove();
+        PlaylistsManager.refresh();
+      });
+    }
+  }
+
+  _playlistIndicatorHTML(pos, total, reps, isPaused = false) {
+    const leftBtn = isPaused
+      ? `<button class="playlist-hud-btn playlist-hud-resume">${icons.start}</button>`
+      : `<button class="playlist-hud-btn playlist-hud-pause">${icons.pause}</button>`;
+    return `
+      ${leftBtn}
+      <span class="playlist-hud-counter">${pos}/${total} ×${reps}</span>
+      <button class="playlist-hud-btn playlist-hud-stop">${icons.stop}</button>
+    `;
   }
 
   updatePlaylistIndicator() {
@@ -267,10 +336,8 @@ export class GamesDataContainer {
     if (!indicator) return;
     const data = this._getPlaylistIndicatorData();
     if (!data) { indicator.remove(); return; }
-    const { playlist, pos, total, reps } = data;
-    indicator.innerHTML = this._playlistIndicatorHTML(pos, total, reps);
-    createCustomTooltip(indicator,
-      `[Плейлист] ${playlist.title}[Позиция] ${pos} из ${total}[Осталось повторов] ${reps}`);
+    const { playlist, pos, total, reps, session } = data;
+    this._renderPlaylistIndicator(indicator, playlist, pos, total, reps, session);
   }
 
   // ============================================================================

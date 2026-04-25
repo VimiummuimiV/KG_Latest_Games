@@ -142,27 +142,67 @@
 
   // Active playlist progress indicator
   .playlist-progress-indicator {
-    color: hsl(135, 45%, 65%);
-    background-color: hsl(135, 45%, 20%);
-    border: 1px solid hsl(135, 45%, 40%);
-    cursor: pointer;
+    $pl-h: 135;  // hue — single source of truth for both active and paused tints
+    $pl-s: 45%;
+
+    color: hsl($pl-h, $pl-s, 65%);
+    background-color: hsl($pl-h, $pl-s, 20%);
+    border: 1px solid hsl($pl-h, $pl-s, 40%);
     animation: bounceIn 0.3s ease forwards;
-    gap: 5px;
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
+    cursor: default;
 
-    .playlist-hud-icon {
-      display: inline-flex;
-      align-items: center;
-      flex-shrink: 0;
+    // Paused — same hue family, slightly desaturated + pulse
+    &--paused {
+      color: hsl($pl-h, $pl-s * 0.7, 60%);
+      background-color: hsl($pl-h, $pl-s * 0.7, 17%);
+      border-color: hsl($pl-h, $pl-s * 0.7, 35%);
+      animation: bounceIn 0.3s ease forwards, hudPause 2s ease-in-out 0.3s infinite;
 
-      svg {
-        width: 1em;
-        height: 1em;
-        vertical-align: middle;
+      .playlist-hud-btn {
+        color: hsl($pl-h, $pl-s * 0.7, 60%);
+        &:hover { background-color: hsl($pl-h, $pl-s * 0.7, 30%); }
       }
     }
 
+    @keyframes hudPause {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.55; }
+    }
+
+    // Full-height action buttons — always visible, no reveal animation
+    .playlist-hud-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      align-self: stretch;   // fills full height of the flex row
+      padding: 0 7px;
+      flex-shrink: 0;
+      background: transparent;
+      color: hsl($pl-h, $pl-s, 65%);
+      border: none;
+      outline: none;
+      cursor: pointer;
+      transition: background 0.15s ease;
+
+      svg {
+        width: 16px;
+        height: 16px;
+        pointer-events: none;
+        flex-shrink: 0;
+      }
+
+      &:hover { background-color: hsl($pl-h, $pl-s, 30%); }
+      &:active { background-color: hsl($pl-h, $pl-s, 35%); }
+    }
+
+    // Counter — padded text zone, pointer signals panel toggle
     .playlist-hud-counter {
       font-variant-numeric: tabular-nums;
+      padding: 8px 6px;
+      cursor: pointer;
     }
   }
 

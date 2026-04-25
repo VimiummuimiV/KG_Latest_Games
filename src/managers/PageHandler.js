@@ -38,6 +38,11 @@ export class PageHandler {
       }
     }
 
+    // On non-game pages show the playlist indicator if the playlist is paused
+    if (!/https?:\/\/klavogonki\.ru\/g\/\?gmid=/.test(href)) {
+      this.gamesDataContainer.createPausedPlaylistIndicator();
+    }
+
     if (/https?:\/\/klavogonki\.ru\/g\/\?gmid=/.test(href)) {
       // Create the games data container with indicators
       this.gamesDataContainer.createGamesDataContainer();

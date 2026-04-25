@@ -1219,18 +1219,8 @@ export const PlaylistsManager = {
 // Update the HUD playlist indicator text in-place (called on stepper change)
 // ─────────────────────────────────────────────────────────────────────────────
 function _updatePlaylistHud() {
-  const session = getActivePlaylistSession();
-  if (!session) return;
   try {
-    const playlists = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    const playlist  = playlists.find(p => p.id === session.playlistId);
-    if (!playlist) return;
-    const indicator = document.querySelector('.playlist-progress-indicator');
-    if (!indicator) return;
-    const total = playlist.entries.length;
-    const pos   = session.entryIndex + 1;
-    const reps  = session.remainingRepeats;
-    indicator.innerHTML = `<span class="playlist-hud-icon">${icons.playing}</span><span class="playlist-hud-counter">${pos}/${total} ×${reps}</span>`;
+    PlaylistsManager.main?.pageHandler?.gamesDataContainer?.updatePlaylistIndicator();
   } catch { }
 }
 
