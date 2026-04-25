@@ -158,7 +158,7 @@ function _syncParamsBtnState(paramsBtn, params) {
 }
 
 /** Rebuild the entry label tooltip to reflect current ep overrides vs game defaults. */
-function _refreshEntryLabelTooltip(label, game, ep) {
+function _refreshEntryLabelTooltip(label, game, ep, sessionInfo = null) {
   const visLabel = visibilities[ep.type ?? game.params.type] || (ep.type ?? game.params.type);
   const tmVal    = ep.timeout  ?? game.params.timeout;
   const afkVal   = ep.idletime ?? game.params.idletime;
@@ -166,6 +166,7 @@ function _refreshEntryLabelTooltip(label, game, ep) {
   if (_hasEntryParamOverrides(ep)) tip += `[Параметры] переопределены`;
   tip += `[Режим] ${visLabel}[TM] ${tmVal}`;
   if (afkVal) tip += `[AFK] ${afkVal}`;
+  if (sessionInfo) tip += `[Пройдено] ${sessionInfo.played} из ${sessionInfo.total}`;
   createCustomTooltip(label, tip);
 }
 
@@ -850,17 +851,10 @@ export const PlaylistsManager = {
       const name  = game.params.vocName ? `«${game.params.vocName}»` : gtype;
       label.textContent = name;
       label.classList.add(`gametype-${game.params.gametype}`);
-      const visLabel = visibilities[entry.params?.type ?? game.params.type] || (entry.params?.type ?? game.params.type);
-      const tmVal    = entry.params?.timeout  ?? game.params.timeout;
-      const afkVal   = entry.params?.idletime ?? game.params.idletime;
-      let tip = `[Режим] ${visLabel}[TM] ${tmVal}`;
-      if (afkVal) tip += `[AFK] ${afkVal}`;
-      if (_hasEntryParamOverrides(entry.params)) tip += `[Параметры] переопределены`;
-      if (isCurrentEntry && session) {
-        const played = entry.repeatCount - session.remainingRepeats;
-        tip += `[Пройдено] ${played} из ${entry.repeatCount}`;
-      }
-      createCustomTooltip(label, tip);
+      const sessionInfo = (isCurrentEntry && session)
+        ? { played: entry.repeatCount - session.remainingRepeats, total: entry.repeatCount }
+        : null;
+      _refreshEntryLabelTooltip(label, game, entry.params ?? {}, sessionInfo);
     } else {
       label.textContent = `#${entry.gameId} (удалена)`;
       label.classList.add('playlist-entry-missing');
