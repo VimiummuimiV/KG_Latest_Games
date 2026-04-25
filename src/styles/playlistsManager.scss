@@ -1,5 +1,80 @@
 @use 'mixins' as *;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Button mixins — eliminate repeated patterns across playlist buttons
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Small icon-only button (20×20). $color: an HSL custom property name (without var()).
+// $bordered: whether it has a visible default border (default false = transparent border).
+@mixin playlist-icon-btn($color, $size: 20px, $icon-size: 12px, $bordered: false) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: $size;
+  height: $size;
+  padding: 0;
+  flex-shrink: 0;
+  background: transparent;
+  color: hsl(var(#{$color}));
+  border: 1px solid if($bordered, hsla(var(#{$color}) / 0.5), transparent);
+  border-radius: 3px !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  appearance: none;
+
+  svg { width: $icon-size; height: $icon-size; pointer-events: none; }
+
+  &:hover {
+    background: hsla(var(#{$color}) / 0.15);
+    border-color: hsl(var(#{$color}));
+  }
+  &:active { background: hsla(var(#{$color}) / 0.25); }
+}
+
+// Header-row icon button (28×28, inherits color from parent, neutral hover).
+@mixin playlist-header-icon-btn($icon-size: 16px) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.15s ease;
+  color: var(--rg-bg-primary);
+
+  svg { width: $icon-size; height: $icon-size; pointer-events: none; }
+
+  &:hover { background: rgba(0, 0, 0, 0.15); }
+}
+
+// Labeled inline button (text + optional icon, card background, color accent).
+@mixin playlist-labeled-btn($color, $icon-size: 13px) {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--rg-bg-card);
+  color: hsl(var(#{$color}));
+  border: 1px solid hsla(var(#{$color}) / 0.5);
+  border-radius: 3px !important;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+  transition: all 0.2s ease;
+
+  svg { width: $icon-size; height: $icon-size; flex-shrink: 0; pointer-events: none; }
+
+  &:hover { background: hsla(var(#{$color}) / 0.15); border-color: hsl(var(#{$color})); }
+  &:active { background: hsla(var(#{$color}) / 0.25); }
+}
+
 // Shared gametype color rules — used by both .playlist-entry-label and .playlist-picker-game-name
 %gametype-colors {
   &.gametype-voc      { color: var(--rg-gametype-voc) !important; }
@@ -47,29 +122,9 @@
     }
 
     .playlists-add-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: var(--rg-bg-card);
-      color: hsl(var(--rg-popup-btn-save));
-      border: 1px solid hsla(var(--rg-popup-btn-save) / 0.5);
-      border-radius: 3px !important;
+      @include playlist-labeled-btn('--rg-popup-btn-save', 12px);
       padding: 0.4em 0.8em;
       font-size: calc(0.85em / 1.1); // cancel header's 1.1em scale
-      font-weight: 500;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all 0.2s ease;
-
-      svg {
-        width: 12px;
-        height: 12px;
-        flex-shrink: 0;
-        pointer-events: none;
-      }
-
-      &:hover { background: hsla(var(--rg-popup-btn-save) / 0.15); border-color: hsl(var(--rg-popup-btn-save)); }
-      &:active { background: hsla(var(--rg-popup-btn-save) / 0.25); }
     }
   }
 
@@ -155,29 +210,7 @@
     .playlist-rename-btn,
     .playlist-delete-btn,
     .playlist-cancel-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 28px;
-      height: 28px;
-      padding: 0;
-      flex-shrink: 0;
-      background: transparent;
-      border: none;
-      outline: none;
-      appearance: none;
-      cursor: pointer;
-      border-radius: 4px;
-      transition: background 0.15s ease;
-      color: var(--rg-bg-primary);
-
-      svg {
-        width: 16px;
-        height: 16px;
-        pointer-events: none;
-      }
-
-      &:hover { background: rgba(0, 0, 0, 0.15); }
+      @include playlist-header-icon-btn(16px);
     }
 
     .playlist-delete-btn:hover,
@@ -248,29 +281,9 @@
 
     // Per-entry play button — vertically aligned with header play/stop
     .playlist-entry-play-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 20px;
-      height: 20px;
-      padding: 0;
-      flex-shrink: 0;
-      background: transparent;
-      border: none;
-      outline: none;
-      appearance: none;
-      cursor: pointer;
-      border-radius: 3px;
-      transition: background 0.15s ease;
-      color: var(--rg-text-tertiary);
-      position: relative;
-
-      svg { width: 14px; height: 14px; pointer-events: none; }
-
-      &:hover {
-        background: hsla(var(--rg-popup-item-new) / 0.2);
-        color: hsl(var(--rg-popup-item-new));
-      }
+      @include playlist-icon-btn('--rg-popup-item-new', 20px, 14px);
+      color: var(--rg-text-tertiary); // dimmed by default, brightens on hover via mixin
+      border-color: transparent;
     }
 
     // Drag handle
@@ -293,26 +306,9 @@
       &:active { cursor: grabbing; }
     }
 
-    // Duplicate playlist entry row button (at the end of the list of entries) — same size as stepper buttons
+    // Duplicate playlist entry row button
     .playlist-entry-duplicate-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 20px;
-      height: 20px;
-      padding: 0;
-      background: transparent;
-      color: hsl(var(--rg-popup-btn-copy));
-      border: none;
-      outline: none;
-      cursor: pointer;
-      border-radius: 3px !important;
-      transition: all 0.2s ease;
-
-      svg { width: 12px; height: 12px; pointer-events: none; }
-
-      &:hover { background: hsla(var(--rg-popup-btn-copy) / 0.15); border-color: hsl(var(--rg-popup-btn-copy)); }
-      &:active { background: hsla(var(--rg-popup-btn-copy) / 0.25); }
+      @include playlist-icon-btn('--rg-popup-btn-copy', 20px, 12px);
     }
 
     // Game name label
@@ -373,25 +369,9 @@
 
     // Remove button — same 20×20 as stepper buttons
     .playlist-entry-remove {
+      @include playlist-icon-btn('--rg-popup-btn-remove', 20px, 12px, true);
       position: relative;
       flex-shrink: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 20px;
-      height: 20px;
-      padding: 0;
-      background: transparent;
-      color: hsl(var(--rg-popup-btn-remove));
-      border: 1px solid hsla(var(--rg-popup-btn-remove) / 0.5);
-      border-radius: 3px !important;
-      cursor: pointer;
-      transition: all 0.2s ease;
-
-      svg { width: 12px; height: 12px; pointer-events: none; }
-
-      &:hover { background: hsla(var(--rg-popup-btn-remove) / 0.15); border-color: hsl(var(--rg-popup-btn-remove)); }
-      &:active { background: hsla(var(--rg-popup-btn-remove) / 0.25); }
     }
 
     // Dragging state
@@ -418,37 +398,19 @@
       // Active-entry variant: keep the green tint but override border
       &.playlist-entry-row--active {
         border-bottom: none !important;
-        border-color: hsla(var(--rg-playlist-params-color) / 0.6) !important;
+        border-color: hsla(var(--rg-popup-item-new) / 0.5) !important;
         &:hover {
           border-bottom: none !important;
-          border-color: hsla(var(--rg-playlist-params-color) / 0.6) !important;
+          border-color: hsla(var(--rg-popup-item-new) / 0.5) !important;
         }
       }
     }
 
     // Params override button
     .playlist-entry-params-btn {
+      @include playlist-icon-btn('--rg-playlist-params-color', 20px, 12px);
       flex-shrink: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 20px;
-      height: 20px;
-      padding: 0;
-      background: transparent;
-      color: var(--rg-text-tertiary);
-      border: 1px solid transparent;
-      border-radius: 3px !important;
-      cursor: pointer;
-      transition: all 0.2s ease;
-
-      svg { width: 12px; height: 12px; pointer-events: none; }
-
-      &:hover {
-        background: hsla(var(--rg-playlist-params-color) / 0.15);
-        color: hsl(var(--rg-playlist-params-color));
-        border-color: hsla(var(--rg-playlist-params-color) / 0.5);
-      }
+      color: var(--rg-text-tertiary); // dimmed until hovered or has-overrides
 
       &.has-overrides {
         color: hsl(var(--rg-playlist-params-color));
@@ -474,6 +436,27 @@
     border: 1px solid hsla(var(--rg-playlist-params-color) / 0.6);
     border-top: none;
     border-radius: 0 0 3px 3px !important;
+
+    // Fix 3: when the owner row is active (green), the params panel matches that accent
+    &--active-entry {
+      background: hsla(var(--rg-popup-item-new) / 0.08);
+      border-color: hsla(var(--rg-popup-item-new) / 0.5);
+
+      .playlist-entry-params-label {
+        color: hsl(var(--rg-popup-item-new));
+      }
+
+      .playlist-entry-params-option {
+        &.active {
+          color: hsl(var(--rg-popup-item-new)) !important;
+          background: hsla(var(--rg-popup-item-new) / 0.15) !important;
+          border-color: hsla(var(--rg-popup-item-new) / 0.7) !important;
+        }
+        &:hover {
+          border-color: hsla(var(--rg-popup-item-new) / 0.5);
+        }
+      }
+    }
 
     .playlist-entry-params-group {
       display: flex;
@@ -539,25 +522,10 @@
   .playlist-game-picker { margin-top: 0.5em; }
 
   .playlist-picker-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
+    @include playlist-labeled-btn('--rg-popup-btn-sort', 13px);
     padding: 0.35em 0.7em;
     font-size: 0.8em;
-    font-weight: 500;
-    font-family: inherit;
-    color: hsl(var(--rg-popup-btn-sort));
-    background: var(--rg-bg-card);
-    border: 1px solid hsla(var(--rg-popup-btn-sort) / 0.5);
-    border-radius: 3px !important;
-    cursor: pointer;
     user-select: none;
-    transition: all 0.2s ease;
-
-    svg { width: 13px; height: 13px; flex-shrink: 0; pointer-events: none; }
-
-    &:hover { background: hsla(var(--rg-popup-btn-sort) / 0.15); border-color: hsl(var(--rg-popup-btn-sort)); }
-    &:active { background: hsla(var(--rg-popup-btn-sort) / 0.25); transform: translateY(1px); }
   }
 
   .playlist-picker-body {
@@ -647,21 +615,8 @@
     }
 
     .playlist-picker-add-btn {
+      @include playlist-icon-btn('--rg-popup-btn-save', 20px, 12px, true);
       flex-shrink: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 20px;
-      height: 20px;
-      padding: 0;
-      background: transparent;
-      color: hsl(var(--rg-popup-btn-save));
-      border: 1px solid hsla(var(--rg-popup-btn-save) / 0.5);
-      border-radius: 3px !important;
-      cursor: pointer;
-      transition: all 0.2s ease;
-
-      svg { width: 12px; height: 12px; pointer-events: none; }
 
       &:hover:not(:disabled) { background: hsla(var(--rg-popup-btn-save) / 0.15); border-color: hsl(var(--rg-popup-btn-save)); }
       &:active:not(:disabled) { background: hsla(var(--rg-popup-btn-save) / 0.25); }

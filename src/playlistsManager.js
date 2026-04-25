@@ -177,6 +177,22 @@ function _buildParamsSection(playlist, entry, paramsBtn) {
     createCustomTooltip(paramsBtn, hasOv
       ? 'Параметры переопределены · Клик для изменения'
       : 'Переопределить параметры (режим, TM, AFK)');
+
+    // Also refresh the entry label tooltip so it reflects the latest overrides
+    const row = paramsBtn.closest('.playlist-entry-row');
+    if (row) {
+      const label = row.querySelector('.playlist-entry-label');
+      const game = PlaylistsManager.main?.gamesManager?.findGameById(entry.gameId);
+      if (label && game) {
+        const visLabel = visibilities[ep.type ?? game.params.type] || (ep.type ?? game.params.type);
+        const tmVal    = ep.timeout  ?? game.params.timeout;
+        const afkVal   = ep.idletime ?? game.params.idletime;
+        let tip = `[Режим] ${visLabel}[TM] ${tmVal}`;
+        if (afkVal) tip += `[AFK] ${afkVal}`;
+        if (hasOv) tip += `[Параметры] переопределены`;
+        createCustomTooltip(label, tip);
+      }
+    }
   }
 
   function makeGroup(labelText, groupKey, options, getCurrentVal, setVal) {
@@ -880,8 +896,21 @@ export const PlaylistsManager = {
         row.classList.remove('playlist-entry-row--params-open');
         return;
       }
+      // Collapse any other open params panel in this entries list
+      const entryList = row.closest('.playlist-entries');
+      if (entryList) {
+        entryList.querySelectorAll('.playlist-entry-params').forEach(openSection => {
+          const prevRow = openSection.previousElementSibling;
+          if (prevRow) prevRow.classList.remove('playlist-entry-row--params-open');
+          openSection.remove();
+        });
+      }
       if (!entry.params) entry.params = {};
       const section = _buildParamsSection(playlist, entry, paramsBtn);
+      // Mirror the active-entry green accent into the params panel
+      if (row.classList.contains('playlist-entry-row--active')) {
+        section.classList.add('playlist-entry-params--active-entry');
+      }
       row.parentNode.insertBefore(section, row.nextSibling);
       row.classList.add('playlist-entry-row--params-open');
     });
