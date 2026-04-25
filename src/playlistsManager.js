@@ -175,8 +175,8 @@ function _buildParamsSection(playlist, entry, paramsBtn) {
     const hasOv = _hasEntryParamOverrides(ep);
     paramsBtn.classList.toggle('has-overrides', hasOv);
     createCustomTooltip(paramsBtn, hasOv
-      ? 'Параметры переопределены · Клик для изменения'
-      : 'Переопределить параметры (режим, TM, AFK)');
+      ? '[Клик] Изменить переопределённые параметры [Ctrl + Клик] Сбросить все переопределения'
+      : '[Клик] Переопределить параметры (режим, TM, AFK)');
 
     // Also refresh the entry label tooltip so it reflects the latest overrides
     const row = paramsBtn.closest('.playlist-entry-row');
@@ -923,11 +923,46 @@ export const PlaylistsManager = {
     const hasOv = _hasEntryParamOverrides(entry.params);
     const paramsBtn = _el('button', `playlist-entry-params-btn${hasOv ? ' has-overrides' : ''}`);
     paramsBtn.innerHTML = icons.parameters;
-    createCustomTooltip(paramsBtn, hasOv
-      ? 'Параметры переопределены · Клик для изменения'
-      : 'Переопределить параметры (режим, TM, AFK)');
+
+    const _refreshParamsBtnTooltip = () => {
+      const ov = _hasEntryParamOverrides(entry.params);
+      createCustomTooltip(paramsBtn, ov
+        ? '[Клик] Изменить переопределённые параметры [Ctrl + Клик] Сбросить все переопределения'
+        : '[Клик] Переопределить параметры (режим, TM, AFK)');
+    };
+    _refreshParamsBtnTooltip();
+
     paramsBtn.addEventListener('click', e => {
       e.stopPropagation();
+
+      // Ctrl+Click: clear all overrides immediately
+      if (e.ctrlKey) {
+        if (!_hasEntryParamOverrides(entry.params)) return;
+        entry.params = {};
+        PlaylistsManager.setEntryParams(playlist.id, entry.id, {});
+        paramsBtn.classList.remove('has-overrides');
+        _refreshParamsBtnTooltip();
+        // Close the params panel if it's open for this row
+        const openSection = row.nextElementSibling?.classList.contains('playlist-entry-params')
+          ? row.nextElementSibling : null;
+        if (openSection) {
+          openSection.remove();
+          row.classList.remove('playlist-entry-row--params-open');
+        }
+        // Refresh the label tooltip to reflect cleared overrides
+        const game = PlaylistsManager.main?.gamesManager?.findGameById(entry.gameId);
+        if (game) {
+          const label = row.querySelector('.playlist-entry-label');
+          if (label) {
+            const visLabel = visibilities[game.params.type] || game.params.type;
+            let tip = `[Режим] ${visLabel}[TM] ${game.params.timeout}`;
+            if (game.params.idletime) tip += `[AFK] ${game.params.idletime}`;
+            createCustomTooltip(label, tip);
+          }
+        }
+        return;
+      }
+
       const existing = row.nextElementSibling?.classList.contains('playlist-entry-params')
         ? row.nextElementSibling : null;
       if (existing) {
