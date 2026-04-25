@@ -401,6 +401,131 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
       opacity: 0.85;
     }
+
+    // When the params panel is open — square the bottom corners and adopt the
+    // params border colour so the two blocks read as one unified container.
+    &.playlist-entry-row--params-open {
+      border-bottom-left-radius: 0 !important;
+      border-bottom-right-radius: 0 !important;
+      border-bottom: none !important;
+      border-color: hsla(var(--rg-playlist-params-color) / 0.6) !important;
+      // Suppress normal hover so the colour stays stable while editing
+      &:hover {
+        background: var(--rg-bg-card) !important;
+        border-bottom: none !important;
+        border-color: hsla(var(--rg-playlist-params-color) / 0.6) !important;
+      }
+      // Active-entry variant: keep the green tint but override border
+      &.playlist-entry-row--active {
+        border-bottom: none !important;
+        border-color: hsla(var(--rg-playlist-params-color) / 0.6) !important;
+        &:hover {
+          border-bottom: none !important;
+          border-color: hsla(var(--rg-playlist-params-color) / 0.6) !important;
+        }
+      }
+    }
+
+    // Params override button
+    .playlist-entry-params-btn {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      padding: 0;
+      background: transparent;
+      color: var(--rg-text-tertiary);
+      border: 1px solid transparent;
+      border-radius: 3px !important;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      svg { width: 12px; height: 12px; pointer-events: none; }
+
+      &:hover {
+        background: hsla(var(--rg-playlist-params-color) / 0.15);
+        color: hsl(var(--rg-playlist-params-color));
+        border-color: hsla(var(--rg-playlist-params-color) / 0.5);
+      }
+
+      &.has-overrides {
+        color: hsl(var(--rg-playlist-params-color));
+        border-color: hsla(var(--rg-playlist-params-color) / 0.6);
+        background: hsla(var(--rg-playlist-params-color) / 0.12);
+
+        &:hover {
+          background: hsla(var(--rg-playlist-params-color) / 0.25);
+          border-color: hsl(var(--rg-playlist-params-color));
+        }
+      }
+    }
+  }
+
+  // ── Per-entry params section (rendered as a sibling row) ────────────────────
+  .playlist-entry-params {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35em;
+    padding: 0.5em 0.7em;
+    margin-top: 0;
+    background: var(--rg-bg-secondary);
+    border: 1px solid hsla(var(--rg-playlist-params-color) / 0.6);
+    border-top: none;
+    border-radius: 0 0 3px 3px !important;
+
+    .playlist-entry-params-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.3em;
+    }
+
+    .playlist-entry-params-label {
+      font-size: 0.72em;
+      font-weight: 600;
+      color: hsl(var(--rg-playlist-params-color));
+      min-width: 2.5em;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      flex-shrink: 0;
+    }
+
+    .playlist-entry-params-option {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 7px;
+      font-size: 0.75em;
+      font-weight: 500;
+      font-family: inherit;
+      background: var(--rg-bg-card);
+      color: var(--rg-text-secondary);
+      border: 1px solid var(--rg-border-primary);
+      border-radius: 3px !important;
+      cursor: pointer;
+      transition: all 0.15s ease;
+
+      &:hover {
+        background: var(--rg-bg-hover);
+        border-color: var(--rg-border-hover);
+        color: var(--rg-text-primary);
+      }
+
+      &.active {
+        color: hsl(var(--rg-playlist-params-color)) !important;
+        background: hsla(var(--rg-playlist-params-color) / 0.15) !important;
+        border-color: hsla(var(--rg-playlist-params-color) / 0.7) !important;
+        font-weight: 600;
+      }
+
+      &.playlist-entry-params-option--disabled,
+      &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+    }
   }
 
   .playlist-entry-placeholder {

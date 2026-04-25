@@ -1,6 +1,6 @@
 import { createCustomTooltip } from './tooltip.js';
 import { icons } from './icons.js';
-import { gameTypes, visibilities } from './definitions.js';
+import { gameTypes, visibilities, timeouts, idleTimes } from './definitions.js';
 import { generateRandomString, getCurrentPage } from './utils.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -53,7 +53,7 @@ export function getActivePlaylistUrl(main) {
     const playlist = PlaylistsManager.load().find(p => p.id === session.playlistId);
     const entry = playlist?.entries[session.entryIndex];
     const game = entry && main.gamesManager.findGameById(entry.gameId);
-    return game ? main.gamesManager.generateGameLink(game) : null;
+    return game ? _generatePlaylistEntryLink(main, game, entry) : null;
   } catch { return null; }
 }
 
@@ -99,7 +99,7 @@ export function advancePlaylist(main) {
   // Skip deleted/missing games by recursing
   if (!game) return advancePlaylist(main);
 
-  return { url: main.gamesManager.generateGameLink(game) };
+  return { url: _generatePlaylistEntryLink(main, game, entry) };
 }
 
 function _finishPlaylist(main, playlist) {
@@ -107,6 +107,129 @@ function _finishPlaylist(main, playlist) {
   const name = playlist?.title || 'Плейлист';
   // Friendly completion alert
   setTimeout(() => alert(`✅ Плейлист «${name}» завершён!`), 300);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Per-entry param override helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Returns true when the entry has at least one param override set. */
+function _hasEntryParamOverrides(params) {
+  return !!(params && ('type' in params || 'timeout' in params || 'idletime' in params));
+}
+
+/**
+ * Generate a game link for a playlist entry, merging any entry-level param
+ * overrides (type / timeout / idletime) on top of the saved game params.
+ */
+function _generatePlaylistEntryLink(main, game, entry) {
+  const ep = entry?.params;
+  const mergedParams = {
+    ...game.params,
+    ...(_hasEntryParamOverrides(ep) ? {
+      ...('type'     in ep ? { type:     ep.type     } : {}),
+      ...('timeout'  in ep ? { timeout:  ep.timeout  } : {}),
+      ...('idletime' in ep ? { idletime: ep.idletime } : {})
+    } : {})
+  };
+  // Safety: открытый (normal) cannot have timeout 5 — clamp to 10
+  if (mergedParams.type === 'normal' && mergedParams.timeout === 5) mergedParams.timeout = 10;
+  // If there are no overrides, generate a normal link without the redundant params in the URL.
+  if (!_hasEntryParamOverrides(ep)) return main.gamesManager.generateGameLink(game);
+  // Otherwise, generate a link with the merged params so that the playlist entry plays with the intended settings
+  // even if the original game params have changed since the entry was added to the playlist.
+  return main.gamesManager.generateGameLink({ ...game, params: mergedParams });
+}
+
+/**
+ * Build the collapsible per-entry params section that lets the user override
+ * type (visibility), timeout and idletime for this specific playlist entry.
+ */
+function _buildParamsSection(playlist, entry, paramsBtn) {
+  if (!entry.params) entry.params = {};
+  const ep = entry.params;
+
+  const section = _el('div', 'playlist-entry-params');
+
+  // Enforce: открытый (normal) cannot have timeout 5 — bump to 10 automatically.
+  function syncConstraints() {
+    const isNormal = (ep.type ?? null) === 'normal';
+    section.querySelectorAll('.playlist-entry-params-option[data-group="timeout"]').forEach(btn => {
+      const isBlocked = isNormal && Number(btn.dataset.val) === 5;
+      btn.disabled = isBlocked;
+      btn.classList.toggle('playlist-entry-params-option--disabled', isBlocked);
+    });
+    // Auto-bump: if normal is now active and timeout override is 5, switch to 10
+    if (isNormal && ep.timeout === 5) {
+      ep.timeout = 10;
+      section.querySelectorAll('.playlist-entry-params-option[data-group="timeout"]').forEach(btn => {
+        btn.classList.toggle('active', Number(btn.dataset.val) === ep.timeout);
+      });
+      PlaylistsManager.setEntryParams(playlist.id, entry.id, ep);
+    }
+  }
+
+  function _persistAndRefresh() {
+    PlaylistsManager.setEntryParams(playlist.id, entry.id, ep);
+    syncConstraints();
+    const hasOv = _hasEntryParamOverrides(ep);
+    paramsBtn.classList.toggle('has-overrides', hasOv);
+    createCustomTooltip(paramsBtn, hasOv
+      ? 'Параметры переопределены · Клик для изменения'
+      : 'Переопределить параметры (режим, TM, AFK)');
+  }
+
+  function makeGroup(labelText, groupKey, options, getCurrentVal, setVal) {
+    const group = _el('div', 'playlist-entry-params-group');
+    group.append(_el('span', 'playlist-entry-params-label', labelText));
+
+    options.forEach(([val, text]) => {
+      const btn = _el('button', 'playlist-entry-params-option');
+      btn.textContent = text;
+      btn.dataset.val   = val;
+      btn.dataset.group = groupKey;
+      if (getCurrentVal() === val) btn.classList.add('active');
+
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (btn.disabled) return;
+        const wasActive = getCurrentVal() === val;
+        setVal(wasActive ? null : val);
+        group.querySelectorAll('.playlist-entry-params-option').forEach(b => b.classList.remove('active'));
+        if (!wasActive) btn.classList.add('active');
+        _persistAndRefresh();
+      });
+
+      group.append(btn);
+    });
+    return group;
+  }
+
+  section.append(
+    makeGroup(
+      'Вид', 'type',
+      Object.entries(visibilities),
+      () => ep.type ?? null,
+      val => { if (val == null) delete ep.type;     else ep.type     = val; }
+    ),
+    makeGroup(
+      'TM', 'timeout',
+      timeouts.map(t => [t, t]),
+      () => ep.timeout ?? null,
+      val => { if (val == null) delete ep.timeout;  else ep.timeout  = val; }
+    ),
+    makeGroup(
+      'AFK', 'idletime',
+      idleTimes.map(t => [t, t]),
+      () => ep.idletime ?? null,
+      val => { if (val == null) delete ep.idletime; else ep.idletime = val; }
+    )
+  );
+
+  // Apply initial constraint state (e.g. params loaded from storage)
+  syncConstraints();
+
+  return section;
 }
 
 
@@ -164,7 +287,7 @@ export const PlaylistsManager = {
     const p = playlists.find(p => p.id === playlistId);
     if (!p) return;
     if (p.entries.some(e => e.gameId === gameId)) return;
-    p.entries.push({ id: generateRandomString(), gameId, repeatCount: Math.max(1, repeatCount) });
+    p.entries.push({ id: generateRandomString(), gameId, repeatCount: Math.max(1, repeatCount), params: {} });
     this.save(playlists);
   },
 
@@ -182,7 +305,7 @@ export const PlaylistsManager = {
     if (!p) return null;
     const source = p.entries.find(e => e.id === entryId);
     if (!source) return null;
-    const copy = { id: generateRandomString(), gameId: source.gameId, repeatCount: source.repeatCount };
+    const copy = { id: generateRandomString(), gameId: source.gameId, repeatCount: source.repeatCount, params: source.params ? { ...source.params } : {} };
     p.entries.push(copy);
     this.save(playlists);
     return copy;
@@ -214,6 +337,16 @@ export const PlaylistsManager = {
         }
       }
     }
+  },
+
+  setEntryParams(playlistId, entryId, params) {
+    const playlists = this.load();
+    const p = playlists.find(p => p.id === playlistId);
+    if (!p) return;
+    const e = p.entries.find(e => e.id === entryId);
+    if (!e) return;
+    e.params = { ...params };
+    this.save(playlists);
   },
 
   reorderEntries(playlistId, fromIndex, toIndex) {
@@ -260,7 +393,7 @@ export const PlaylistsManager = {
     if (!game) { alert('⚠️ Первая игра плейлиста не найдена.'); return; }
 
     setActivePlaylistSession({ playlistId, entryIndex: 0, remainingRepeats: firstEntry.repeatCount });
-    window.location.href = this.main.gamesManager.generateGameLink(game);
+    window.location.href = _generatePlaylistEntryLink(this.main, game, firstEntry);
   },
 
   // ── Panel lifecycle ────────────────────────────────────────────────────────
@@ -634,9 +767,12 @@ export const PlaylistsManager = {
       const name  = game.params.vocName ? `«${game.params.vocName}»` : gtype;
       label.textContent = name;
       label.classList.add(`gametype-${game.params.gametype}`);
-      const visLabel = visibilities[game.params.type] || game.params.type;
-      let tip = `[Режим] ${visLabel}[TM] ${game.params.timeout}`;
-      if (game.params.idletime) tip += `[AFK] ${game.params.idletime}`;
+      const visLabel = visibilities[entry.params?.type ?? game.params.type] || (entry.params?.type ?? game.params.type);
+      const tmVal    = entry.params?.timeout  ?? game.params.timeout;
+      const afkVal   = entry.params?.idletime ?? game.params.idletime;
+      let tip = `[Режим] ${visLabel}[TM] ${tmVal}`;
+      if (afkVal) tip += `[AFK] ${afkVal}`;
+      if (_hasEntryParamOverrides(entry.params)) tip += `[Параметры] переопределены`;
       if (isCurrentEntry && session) {
         const played = entry.repeatCount - session.remainingRepeats;
         tip += `[Пройдено] ${played} из ${entry.repeatCount}`;
@@ -725,10 +861,32 @@ export const PlaylistsManager = {
       if (!game) { alert('⚠️ Игра не найдена.'); return; }
       this._activatePlaylistSettings();
       setActivePlaylistSession({ playlistId: playlist.id, entryIndex, remainingRepeats: targetEntry.repeatCount });
-      window.location.href = this.main.gamesManager.generateGameLink(game);
+      window.location.href = _generatePlaylistEntryLink(this.main, game, targetEntry);
     });
 
-    row.append(entryPlayBtn, handle, dupBtn, label, stepper, removeBtn);
+    // Params override button — toggles the inline param picker
+    const hasOv = _hasEntryParamOverrides(entry.params);
+    const paramsBtn = _el('button', `playlist-entry-params-btn${hasOv ? ' has-overrides' : ''}`);
+    paramsBtn.innerHTML = icons.parameters;
+    createCustomTooltip(paramsBtn, hasOv
+      ? 'Параметры переопределены · Клик для изменения'
+      : 'Переопределить параметры (режим, TM, AFK)');
+    paramsBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const existing = row.nextElementSibling?.classList.contains('playlist-entry-params')
+        ? row.nextElementSibling : null;
+      if (existing) {
+        existing.remove();
+        row.classList.remove('playlist-entry-row--params-open');
+        return;
+      }
+      if (!entry.params) entry.params = {};
+      const section = _buildParamsSection(playlist, entry, paramsBtn);
+      row.parentNode.insertBefore(section, row.nextSibling);
+      row.classList.add('playlist-entry-row--params-open');
+    });
+
+    row.append(entryPlayBtn, handle, dupBtn, label, stepper, paramsBtn, removeBtn);
     return row;
   },
 
