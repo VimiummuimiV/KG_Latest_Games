@@ -7,7 +7,7 @@ import { addGameToGroup, fetchVocabularyBasicData } from "../../vocabularyCreati
 import { showMigrationPopup } from "../../vocabularyMigration.js";
 import { getSessionVocId } from "../../vocabularyContent.js";
 import { VocabulariesManager } from "../../vocabulariesManager.js";
-import { PlaylistsManager, cancelActivePlaylist } from "../../playlistsManager.js";
+import { PlaylistsManager, cancelActivePlaylist, advancePlaylist, getActivePlaylistUrl, getActivePlaylistSession, setActivePlaylistSession } from "../../playlistsManager.js";
 import { showVocabularyTypesPopup } from "../../vocabularyType.js";
 import { runVocScan } from "../../vocabularyScanner.js";
 
@@ -638,8 +638,8 @@ export function createControls(main) {
   });
   createCustomTooltip(
     startRaceBtn, `
+    [Shift + Enter | Клик] Начать игру (последняя) или (следующая: на странице игры)||В режиме плейлиста: следующая игра (повтор) или возобновить (если на паузе)
     [Ctrl + Enter | Ctrl + Клик] Запустить (если Автозапуск выкл.) / Повторить текущую игру
-    [Shift + Enter | Клик] Начать игру (последняя) или (следующая: работает только на странице игры)
     [Ctrl + Shift + Enter | Ctrl + Shift + Клик] Пройти квалификацию по словарю
     [Alt + Shift + Enter | Alt + Shift + Клик] Добавить текущий словарь в Избранные
     `
@@ -904,6 +904,23 @@ export function createControls(main) {
     window.location.href = `https://klavogonki.ru/g/${gmid}.replay`;
   }
 
+  // Advance the active playlist (or unpause and navigate if paused). Returns true if handled.
+  const advancePlaylistOrStart = () => {
+    const session = getActivePlaylistSession();
+    if (!session) return false;
+    // If paused, just unpause and navigate to the same entry (or repeat).
+    if (session.paused) {
+      setActivePlaylistSession({ ...session, paused: false });
+      const url = getActivePlaylistUrl(main);
+      if (url) window.location.href = url;
+    // If not paused, advance to the next entry (or repeat) and navigate.
+    } else {
+      const result = advancePlaylist(main);
+      if (result?.url) window.location.href = result.url;
+    }
+    return true;
+  };
+
   startRaceBtn.onclick = (e) => {
     // Ctrl+Click: replay current game
     if (e.ctrlKey && !e.shiftKey && !e.altKey) {
@@ -923,8 +940,8 @@ export function createControls(main) {
       startRaceAction(true);
       return;
     }
-    // Regular click: start race in normal mode
-    startRaceAction();
+    // Regular click: advance playlist (or unpause), or start latest/next game normally
+    if (!advancePlaylistOrStart()) startRaceAction();
   };
 
   const bannedVocabulariesBtn = createElement('span', {
@@ -999,9 +1016,9 @@ export function createControls(main) {
       replayCurrentGame();
       return;
     }
-    // Shift+Enter: start race in normal mode
+    // Shift+Enter: advance playlist (or unpause), or start latest/next game normally
     if (e.shiftKey && e.code === 'Enter') {
-      startRaceAction();
+      if (!advancePlaylistOrStart()) startRaceAction();
       return;
     }
     // Alt+Enter: ban current vocabulary

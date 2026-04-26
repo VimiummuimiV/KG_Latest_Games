@@ -201,8 +201,8 @@ function highlightStateWords(text) {
 
 function highlightTooltipActions(str) {
   let result = '';
-  const headerRegex = /(## [^[]*)/g;          // Matches headers like "## Header"
-  const actionRegex = /\[([^\]]+)\]([^\[]*)/g; // Matches [Action]Message pairs
+  const headerRegex = /(## [^[]*)/g; // Matches headers like "## Header"
+  const actionRegex = /\[([^\]]+)\]([^\[]*)(?:\[\]([^\[]*))?/g; // Matches [Action]Message pairs with optional []subline
 
   // Split on headers, keep headers in the array
   const parts = str.split(headerRegex);
@@ -221,12 +221,13 @@ function highlightTooltipActions(str) {
         // Emit each pair
         matches.forEach(match => {
           const action = match[1];
-          const message = match[2].trim();
+          const [message, ...subLines] = match[2].trim().split('||').map(s => s.trim());
           result += `
             <div class="tooltip-item">
               <span class="tooltip-action">${action}&nbsp;</span>
               <span class="tooltip-message">${highlightStateWords(message)}</span>
-            </div>`;
+            </div>
+            ${subLines.map(l => `<div>${highlightStateWords(l)}</div>`).join('')}`;
         });
       } else if (part.trim()) {
         // No pairs: emit the raw text as a single message
