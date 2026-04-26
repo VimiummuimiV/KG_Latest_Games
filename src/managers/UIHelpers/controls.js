@@ -658,13 +658,15 @@ export function createControls(main) {
   const startRaceAction = (qual = false) => {
     const activeSession = getActivePlaylistSession();
 
-    // If a playlist is active and running (not paused), qualification should use
+    // If a playlist is active (running or already paused), qualification should use
     // the current playlist game — not the last manually played one from the panel.
-    if (qual && activeSession && !activeSession.paused) {
+    if (qual && activeSession) {
       const qualUrl = getActivePlaylistUrl(main);
       if (qualUrl) {
-        setActivePlaylistSession({ ...activeSession, paused: true });
-        try { main.pageHandler?.cancelReplay(true); } catch (_) {}
+        if (!activeSession.paused) {
+          setActivePlaylistSession({ ...activeSession, paused: true });
+          try { main.pageHandler?.cancelReplay(true); } catch (_) {}
+        }
         location.href = addQualParam(qualUrl);
         return;
       }
