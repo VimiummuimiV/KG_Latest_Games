@@ -738,6 +738,7 @@ export const PlaylistsManager = {
           // (advancePlaylist already decremented/advanced the session when the game
           //  finished, so current.entryIndex is already the correct next destination.)
           setActivePlaylistSession({ ...current, paused: false });
+          _updatePlaylistHud();
           const playlists = this.load();
           const pl = playlists.find(p => p.id === current.playlistId);
           const entry = pl?.entries[current.entryIndex];
@@ -752,6 +753,7 @@ export const PlaylistsManager = {
           // the timer does not fire and navigate while the playlist is paused.
           setActivePlaylistSession({ ...current, paused: true });
           try { this.main.pageHandler?.cancelReplay(true); } catch (_) {}
+          _updatePlaylistHud();
           this.refresh();
         }
       });
@@ -762,6 +764,7 @@ export const PlaylistsManager = {
       stopBtn.addEventListener('click', e => {
         e.stopPropagation();
         cancelActivePlaylist();
+        _updatePlaylistHud();
         this.refresh();
       });
 
