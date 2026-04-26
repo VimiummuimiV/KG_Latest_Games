@@ -68,42 +68,46 @@ export class PageHandler {
       if (elementToObserve) {
         const finishObserver = new MutationObserver(() => {
           finishObserver.disconnect();
+          const gameFailed = this._isGameFailed();
           // noerror fail or AFK: game ended but was not completed — do not
-          // advance playlist, decrement counters, or trigger any replay.
-          if (this._isGameFailed()) return;
-          // Mark any pending played vocabulary after the game finishes
-          try {
-            const pending = getSessionVocId();
-            if (pending) {
-              try {
-                // Only mark as played when the current page indicates a vocabulary game
-                if (detectGameType().category === 'vocabulary') {
-                  try { this.main.gamesManager.markVocabAsPlayed(pending); } catch (__) { }
-                  // Update today count indicator in realtime
-                  try { this.gamesDataContainer.updateTodayIndicator(); } catch (__) { }
-                }
-              } catch (__) { }
+          // mark vocab as played, advance playlist, or decrement counters.
+          // Replay indicator is still shown so the user can retry the same game.
+          if (!gameFailed) {
+            // Mark any pending played vocabulary after the game finishes
+            try {
+              const pending = getSessionVocId();
+              if (pending) {
+                try {
+                  // Only mark as played when the current page indicates a vocabulary game
+                  if (detectGameType().category === 'vocabulary') {
+                    try { this.main.gamesManager.markVocabAsPlayed(pending); } catch (__) { }
+                    // Update today count indicator in realtime
+                    try { this.gamesDataContainer.updateTodayIndicator(); } catch (__) { }
+                  }
+                } catch (__) { }
+              }
+            } catch (__) { }
+            // If a playlist is active and running (not paused), let it take over.
+            // Paused means the user played from the main panel — fall through to normal replay.
+            if (getActivePlaylistSession() && !getActivePlaylistSession().paused) {
+              const result = advancePlaylist(this.main);
+              // Update the HUD indicator after advancing (new session values are now in storage)
+              try { this.gamesDataContainer.updatePlaylistIndicator(); } catch { }
+              try { PlaylistsManager.updateActiveEntryProgress(); } catch { }
+              if (result === 'paused') {
+                // Playlist is paused — user navigated away manually, do nothing
+                return;
+              }
+              if (result && result.url) {
+                // Playlist has a next game — respect replayDelay before navigating
+                this.handlePlaylistReplay(result.url);
+                return;
+              }
+              // result === false: playlist finished — fall through to normal replay
             }
-          } catch (__) { }
-          // If a playlist is active and running (not paused), let it take over.
-          // Paused means the user played from the main panel — fall through to normal replay.
-          if (getActivePlaylistSession() && !getActivePlaylistSession().paused) {
-            const result = advancePlaylist(this.main);
-            // Update the HUD indicator after advancing (new session values are now in storage)
-            try { this.gamesDataContainer.updatePlaylistIndicator(); } catch { }
-            try { PlaylistsManager.updateActiveEntryProgress(); } catch { }
-            if (result === 'paused') {
-              // Playlist is paused — user navigated away manually, do nothing
-              return;
-            }
-            if (result && result.url) {
-              // Playlist has a next game — respect replayDelay before navigating
-              this.handlePlaylistReplay(result.url);
-              return;
-            }
-            // result === false: playlist finished — fall through to normal replay
           }
-          // No active playlist or playlist just finished — proceed with normal replay handling
+          // No active playlist or playlist just finished — proceed with normal replay handling.
+          // Also reached on fail (noerror or AFK): shows the replay indicator so the user can retry.
           this.handleReplayAction();
         });
         finishObserver.observe(elementToObserve, { attributes: true });
