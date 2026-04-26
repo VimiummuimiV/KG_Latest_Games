@@ -255,7 +255,12 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
           }
           performSave();
         } else {
-          // Just navigate to create game, don't change any settings
+          // Mark this game as the previous game so .previous-game is applied on reload
+          try {
+            const data = JSON.parse(localStorage.getItem('latestGamesData')) || {};
+            data.previousGameId = game.id;
+            localStorage.setItem('latestGamesData', JSON.stringify(data));
+          } catch (_) {}
           window.location.href = link;
         }
       };
