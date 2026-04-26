@@ -41,18 +41,6 @@ export function setActivePlaylistSession(data) {
 export function cancelActivePlaylist() {
   const session = getActivePlaylistSession();
   if (!session) return;
-  // Restore shouldStart / shouldReplay / replayNextGame / replayWithoutWaiting to pre-playlist values if we had overridden them
-  try {
-    const saved = JSON.parse(localStorage.getItem('latestGames_prePlaylistSettings') || 'null');
-    if (saved && PlaylistsManager.main) {
-      PlaylistsManager.main.shouldStart    = saved.shouldStart;
-      PlaylistsManager.main.shouldReplay   = saved.shouldReplay;
-      PlaylistsManager.main.replayNextGame = saved.replayNextGame;
-      PlaylistsManager.main.replayWithoutWaiting = saved.replayWithoutWaiting;
-      PlaylistsManager.main.settingsManager.saveSettings();
-    }
-  } catch { }
-  localStorage.removeItem('latestGames_prePlaylistSettings');
   setActivePlaylistSession(null);
 }
 
@@ -451,8 +439,6 @@ export const PlaylistsManager = {
       if (!confirm(`Запущен плейлист «${existingName}». Остановить его и запустить «${playlist.title}»?`)) return;
     }
 
-    this._activatePlaylistSettings();
-
     const firstEntry = playlist.entries[0];
     const game = this.main.gamesManager.findGameById(firstEntry.gameId);
     if (!game) { alert('⚠️ Первая игра плейлиста не найдена.'); return; }
@@ -646,29 +632,6 @@ export const PlaylistsManager = {
     } else if (activeBlock && list) {
       activeBlock.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }
-  },
-
-  // Save current auto-start/replay settings and force all of them on for playlist playback.
-  // Called before starting any playlist (from startPlaylist and per-entry play button).
-  _activatePlaylistSettings() {
-    try {
-      // Only write the backup if one doesn't exist yet — subsequent navigations
-      // during an active playlist must not overwrite the original user settings
-      // with the already-forced playlist values.
-      if (!localStorage.getItem('latestGames_prePlaylistSettings')) {
-        localStorage.setItem('latestGames_prePlaylistSettings', JSON.stringify({
-          shouldStart:          this.main.shouldStart,
-          shouldReplay:         this.main.shouldReplay,
-          replayNextGame:       this.main.replayNextGame,
-          replayWithoutWaiting: this.main.replayWithoutWaiting
-        }));
-      }
-    } catch { }
-    this.main.shouldStart          = true;
-    this.main.shouldReplay         = true;
-    this.main.replayNextGame       = true;
-    this.main.replayWithoutWaiting = true;
-    this.main.settingsManager.saveSettings();
   },
 
   // ── DOM builder ────────────────────────────────────────────────────────────
@@ -964,7 +927,6 @@ export const PlaylistsManager = {
       const targetEntry = p.entries[entryIndex];
       const game = this.main.gamesManager.findGameById(targetEntry.gameId);
       if (!game) { alert('⚠️ Игра не найдена.'); return; }
-      this._activatePlaylistSettings();
       setActivePlaylistSession({ playlistId: playlist.id, entryIndex, remainingRepeats: targetEntry.repeatCount });
       window.location.href = _generatePlaylistEntryLink(this.main, game, targetEntry);
     });
