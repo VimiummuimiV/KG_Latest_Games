@@ -395,8 +395,10 @@ export class PageHandler {
     });
   }
 
-  // Navigate to the next playlist game after replayDelay.
+  // Navigate to the next playlist game.
+  // Respects shouldReplay: if off, do nothing; if on, show countdown then navigate.
   handlePlaylistReplay(url) {
+    if (!this.main.shouldReplay) return; // Replay disabled — do nothing
     this._startReplaySleep(() => url);
   }
 
