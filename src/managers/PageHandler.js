@@ -82,8 +82,9 @@ export class PageHandler {
               } catch (__) { }
             }
           } catch (__) { }
-          // If a playlist is active, let it take over navigation instead
-          if (getActivePlaylistSession()) {
+          // If a playlist is active and running (not paused), let it take over.
+          // Paused means the user played from the main panel — fall through to normal replay.
+          if (getActivePlaylistSession() && !getActivePlaylistSession().paused) {
             const result = advancePlaylist(this.main);
             // Update the HUD indicator after advancing (new session values are now in storage)
             try { this.gamesDataContainer.updatePlaylistIndicator(); } catch { }
@@ -404,11 +405,6 @@ export class PageHandler {
   }
 
   handleReplayAction() {
-    // Don't start a new replay countdown while the active playlist is paused.
-    // This prevents setupHoverListeners' onLeave timer from re-triggering replay
-    // after the user moves their cursor away from the playlist popup post-pause.
-    if (getActivePlaylistSession()?.paused) return;
-
     // Competition and qualification games are never auto-replayed
     if (['competition', 'qualification'].includes(detectGameType().category)) return;
 
@@ -418,9 +414,9 @@ export class PageHandler {
         : document.querySelector(gameSelectors.finish.normal);
 
       if (elementToCheck && elementToCheck.style.display !== 'none') {
-        // If a playlist is active the session was already advanced by finishObserver —
-        // re-derive the URL from it instead of picking a sequential game from the main panel.
-        const playlistUrl = getActivePlaylistUrl(this.main);
+        // Only follow the playlist URL when the session is actively running.
+        // A paused session means the user is on the main panel flow.
+        const playlistUrl = !getActivePlaylistSession()?.paused && getActivePlaylistUrl(this.main);
         if (playlistUrl) { this._startReplaySleep(() => playlistUrl); return; }
 
         const gameIdMatch = location.href.match(/gmid=(\d+)/);

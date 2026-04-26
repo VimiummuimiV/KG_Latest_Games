@@ -178,8 +178,8 @@ export class GamesDataContainer {
   }
 
   createRemainingCountIndicator() {
-    // Only show replay-more indicator if we're in replay-more mode and not in a playlist session (which has its own indicator)
-    if (!this.main.shouldReplayMore || getActivePlaylistSession()) return;
+    // Show when in replay-more mode and no actively running playlist (paused is fine).
+    if (!this.main.shouldReplayMore || (getActivePlaylistSession() && !getActivePlaylistSession().paused)) return;
     this.createIndicator(
       'remaining-count-indicator',
       `${this.main.remainingReplayCount}`,
