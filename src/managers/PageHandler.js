@@ -68,6 +68,9 @@ export class PageHandler {
       if (elementToObserve) {
         const finishObserver = new MutationObserver(() => {
           finishObserver.disconnect();
+          // noerror fail or AFK: game ended but was not completed — do not
+          // advance playlist, decrement counters, or trigger any replay.
+          if (this._isGameFailed()) return;
           // Mark any pending played vocabulary after the game finishes
           try {
             const pending = getSessionVocId();
@@ -269,6 +272,15 @@ export class PageHandler {
       this.replaySleep = null;
     }
     this.gamesDataContainer.removeSleepIndicator('replay', animated);
+  }
+
+  // Returns true when the local player has failed a noerror game or went AFK.
+  // The img.noerror-fail element is always in the DOM — visibility signals the fail.
+  _isGameFailed() {
+    const img = document.querySelector(gameSelectors.fail.noError);
+    if (!img) return false;
+    const s = getComputedStyle(img);
+    return s.display !== 'none' && s.visibility !== 'hidden' && img.offsetParent !== null;
   }
 
   handleStartAction() {
