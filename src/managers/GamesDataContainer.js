@@ -189,8 +189,9 @@ export class GamesDataContainer {
 
   updateRemainingCountIndicator() {
     if (!this.container) return;
-    // If we're in a playlist session, the remaining count is managed by the playlist indicator, so remove any standalone indicator if it exists
-    if (getActivePlaylistSession()) {
+    // Only defer to the playlist indicator when the session is actively running.
+    // A paused session means the user is on the main panel flow — keep the indicator.
+    if (getActivePlaylistSession() && !getActivePlaylistSession().paused) {
       const rep = this.container.querySelector('.remaining-count-indicator');
       if (rep) rep.remove();
       return;
