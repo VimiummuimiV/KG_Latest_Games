@@ -58,6 +58,10 @@ export const gameSelectors = {
   finish: {
     immediate: '#typeblock #bookinfo',
     normal:    '#status-inner #finished'
+  },
+  // For noerror games or AFK players, the "fail" state is indicated by a specific image element.
+  fail: {
+    noError: '.player.you img.noerror-fail'
   }
 };
 
