@@ -7,7 +7,7 @@ import { addGameToGroup, fetchVocabularyBasicData } from "../../vocabularyCreati
 import { showMigrationPopup } from "../../vocabularyMigration.js";
 import { getSessionVocId } from "../../vocabularyContent.js";
 import { VocabulariesManager } from "../../vocabulariesManager.js";
-import { PlaylistsManager, cancelActivePlaylist, advancePlaylist, getActivePlaylistUrl, getActivePlaylistSession, setActivePlaylistSession } from "../../playlistsManager.js";
+import { PlaylistsManager, advancePlaylist, getActivePlaylistUrl, getActivePlaylistSession, setActivePlaylistSession } from "../../playlistsManager.js";
 import { gameSelectors } from "../../definitions.js";
 import { showVocabularyTypesPopup } from "../../vocabularyType.js";
 import { runVocScan } from "../../vocabularyScanner.js";
@@ -656,13 +656,12 @@ export function createControls(main) {
   // Start race action function
   // Choose id (random or previous), switch group if needed, save and navigate
   const startRaceAction = (qual = false) => {
-    // If a playlist is in progress, ask before cancelling it
-    const activeSession = (() => { try { const r = sessionStorage.getItem('latestGames_activePlaylist'); return r ? JSON.parse(r) : null; } catch { return null; } })();
-    if (activeSession) {
-      if (!confirm('Плейлист ещё не завершён. Отменить плейлист и запустить игру обычным способом?')) return;
+    // If a playlist is active, pause it rather than cancelling — user can resume later
+    const activeSession = getActivePlaylistSession();
+    if (activeSession && !activeSession.paused) {
+      setActivePlaylistSession({ ...activeSession, paused: true });
+      try { main.pageHandler?.cancelReplay(true); } catch (_) {}
     }
-    // Starting a game manually cancels any running playlist
-    cancelActivePlaylist();
     // If qualification requested, force local mode — do not randomize
     const randomMode = qual ? false : main.randomGameId;
     let res = null;
