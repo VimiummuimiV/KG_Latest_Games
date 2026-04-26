@@ -91,25 +91,6 @@ export function createControls(main) {
     updateTooltip(button, isInitiallyEnabled, texts, context[delayProperty]);
 
     button.onclick = (e) => {
-      // Block toggling shouldStart / shouldReplay while a playlist is running
-      const activeSession = (() => { 
-          try { 
-              const r = localStorage.getItem('latestGames_activePlaylist'); 
-              return r ? JSON.parse(r) : null; 
-          } catch { 
-              return null; 
-          } 
-      })();
-
-      if (activeSession && (property === 'shouldStart' || property === 'shouldReplay')) {
-          if (property === 'shouldStart') {
-              alert('⚠️ Невозможно изменить автозапуск во время активного плейлиста.\n\n Игры в плейлисте всегда запускаются автоматически.');
-          } else { // shouldReplay
-              alert('⚠️ Невозможно изменить автосоздание во время активного плейлиста.\n\n Управление автосозданием для плейлиста доступно в панели управления плейлистами.');
-          }
-          return;
-      }
-
       if (e.ctrlKey && button === replayBtn) {
         main.replayNextGame = !main.replayNextGame;
         main.settingsManager.saveSettings();
