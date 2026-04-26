@@ -51,6 +51,16 @@ export const ranksMap = {
   'кибергонщиков': 8, 'экстракиберов': 9
 };
 
+// Selectors for KG game page elements, grouped by purpose.
+export const gameSelectors = {
+  // replayWithoutWaiting=true watches #bookinfo (appears when typing block loads, before others join).
+  // replayWithoutWaiting=false watches #finished (appears only after the game is fully over).
+  finish: {
+    immediate: '#typeblock #bookinfo',
+    normal:    '#status-inner #finished'
+  }
+};
+
 export const timeouts = [5, 10, 20, 30, 45, 60];
 
 export const idleTimes = [0, 5, 10, 15, 20, 30, 45, 60, 120, 180, 300];

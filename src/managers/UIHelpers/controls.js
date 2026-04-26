@@ -8,6 +8,7 @@ import { showMigrationPopup } from "../../vocabularyMigration.js";
 import { getSessionVocId } from "../../vocabularyContent.js";
 import { VocabulariesManager } from "../../vocabulariesManager.js";
 import { PlaylistsManager, cancelActivePlaylist, advancePlaylist, getActivePlaylistUrl, getActivePlaylistSession, setActivePlaylistSession } from "../../playlistsManager.js";
+import { gameSelectors } from "../../definitions.js";
 import { showVocabularyTypesPopup } from "../../vocabularyType.js";
 import { runVocScan } from "../../vocabularyScanner.js";
 
@@ -909,10 +910,24 @@ export function createControls(main) {
       setActivePlaylistSession({ ...session, paused: false });
       const url = getActivePlaylistUrl(main);
       if (url) window.location.href = url;
-    // If not paused, advance to the next entry (or repeat) and navigate.
     } else {
-      const result = advancePlaylist(main);
-      if (result?.url) window.location.href = result.url;
+      // Check if the game is already finished — the finish observer already advanced
+      // the session in that case, so we must NOT call advancePlaylist again (double-advance).
+      // We detect "finished" using the same element the finish observer watches.
+      const finishEl = main.replayWithoutWaiting
+        ? document.querySelector(gameSelectors.finish.immediate)
+        : document.querySelector(gameSelectors.finish.normal);
+      const gameAlreadyFinished = finishEl && finishEl.style.display !== 'none';
+
+      if (gameAlreadyFinished) {
+        // Session already advanced — just navigate to wherever the session now points.
+        const url = getActivePlaylistUrl(main);
+        if (url) window.location.href = url;
+      } else {
+        // Game still in progress — skip this repeat/entry by advancing now.
+        const result = advancePlaylist(main);
+        if (result?.url) window.location.href = result.url;
+      }
     }
     return true;
   };

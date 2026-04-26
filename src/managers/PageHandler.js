@@ -6,6 +6,7 @@ import { isVocabularyCreationSupported } from "../vocabularyCreation.js";
 import { detectGameType } from "../utils.js";
 import { GamesDataContainer } from "./GamesDataContainer.js";
 import { advancePlaylist, getActivePlaylistSession, getActivePlaylistUrl, PlaylistsManager } from "../playlistsManager.js";
+import { gameSelectors } from "../definitions.js";
 
 export class PageHandler {
   constructor(main) {
@@ -61,8 +62,8 @@ export class PageHandler {
 
       // Choose which element to observe based on replayWithoutWaiting setting
       const elementToObserve = this.main.replayWithoutWaiting
-        ? document.querySelector('#typeblock #bookinfo')
-        : document.querySelector('#status-inner #finished');
+        ? document.querySelector(gameSelectors.finish.immediate)
+        : document.querySelector(gameSelectors.finish.normal);
 
       if (elementToObserve) {
         const finishObserver = new MutationObserver(() => {
@@ -413,8 +414,8 @@ export class PageHandler {
 
     if (this.main.shouldReplay) {
       const elementToCheck = this.main.replayWithoutWaiting
-        ? document.querySelector('#typeblock #bookinfo')
-        : document.querySelector('#status-inner #finished');
+        ? document.querySelector(gameSelectors.finish.immediate)
+        : document.querySelector(gameSelectors.finish.normal);
 
       if (elementToCheck && elementToCheck.style.display !== 'none') {
         // If a playlist is active the session was already advanced by finishObserver —
