@@ -652,11 +652,15 @@ export const PlaylistsManager = {
     createCustomTooltip(addBtn, 'Создать новый плейлист');
     addBtn.addEventListener('click', e => {
       e.stopPropagation();
-      const t = prompt('Название плейлиста:');
-      if (t === null) return; // cancelled
-      const created = this.createPlaylist(t);
-      this.expandedPlaylistId = created.id;
-      this.refresh();
+      const existing = panel.querySelector('.playlists-create-form');
+      if (existing) { existing.remove(); return; }
+      const form = this._buildCreateForm(() => {
+        panel.querySelector('.playlists-create-form')?.remove();
+        this.refresh();
+      });
+      // Insert after header
+      header.insertAdjacentElement('afterend', form);
+      form.querySelector('.playlists-create-input')?.focus();
     });
 
     header.append(titleSpan, addBtn);
@@ -1059,6 +1063,105 @@ export const PlaylistsManager = {
     };
   },
 
+  _buildCreateForm(onDone) {
+    const form = _el('div', 'playlists-create-form');
+
+    // ── Name row ──────────────────────────────────────────────────────────────
+    const nameRow = _el('div', 'playlists-create-name-row');
+    const input   = _el('input', 'playlists-create-input');
+    input.type        = 'text';
+    input.placeholder = 'Название плейлиста...';
+
+    const doCreate = () => {
+      const name = input.value.trim();
+      const created = this.createPlaylist(name); // handles empty name with auto-numbering
+      this.expandedPlaylistId = created.id;
+      onDone();
+    };
+
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') doCreate(); });
+
+    nameRow.append(input);
+    form.appendChild(nameRow);
+
+    // ── Group shortcuts ────────────────────────────────────────────────────────
+    if (this.main) {
+      const groups = this.main.groupsManager.groups.filter(g => g.games.length > 0);
+      if (groups.length) {
+        const groupsToggle = _el('button', 'playlists-create-groups-toggle');
+        groupsToggle.innerHTML = `${icons.plus}<span>Из группы</span>`;
+        form.appendChild(groupsToggle);
+
+        const groupsRow = _el('div', 'playlists-create-groups-row latest-games-hidden');
+
+        const checkExactMatch = (group) => {
+          const gameIds   = group.games.map(g => g.id);
+          const playlists = this.load();
+          const sameName  = playlists.find(p => p.title === group.title);
+          if (!sameName) return false;
+          const existingIds = new Set(sameName.entries.map(en => en.gameId));
+          return existingIds.size === gameIds.length && gameIds.every(id => existingIds.has(id));
+        };
+
+        groups.forEach(group => {
+          const btn = _el('button', 'playlists-create-group-btn');
+          btn.textContent = group.title;
+
+          const isAlready = checkExactMatch(group);
+          if (isAlready) btn.classList.add('playlists-create-group-btn--done');
+          createCustomTooltip(btn, isAlready
+            ? `Плейлист «${group.title}» уже создан из этой группы`
+            : `Создать плейлист «${group.title}» из ${group.games.length} игр группы`);
+
+          btn.addEventListener('click', e => {
+            e.stopPropagation();
+
+            const gameIds   = group.games.map(g => g.id);
+            const playlists = this.load();
+            const sameName  = playlists.find(p => p.title === group.title);
+
+            if (sameName) {
+              const existingIds  = new Set(sameName.entries.map(en => en.gameId));
+              const isExactMatch =
+                existingIds.size === gameIds.length &&
+                gameIds.every(id => existingIds.has(id));
+
+              if (isExactMatch) {
+                alert(`Плейлист «${group.title}» уже существует и содержит те же самые игры. Новый плейлист не создан.`);
+                return;
+              }
+
+              if (!confirm(`Плейлист «${group.title}» уже существует, но содержит другие игры. Создать новый?`)) return;
+            }
+
+            const created = this.createPlaylist(group.title);
+            gameIds.forEach(id => this.addEntry(created.id, id, 1));
+            this.expandedPlaylistId = created.id;
+
+            btn.classList.add('playlists-create-group-btn--done');
+            createCustomTooltip(btn, `Плейлист «${group.title}» уже создан из этой группы`);
+
+            onDone();
+          });
+
+          groupsRow.appendChild(btn);
+        });
+
+        groupsToggle.addEventListener('click', e => {
+          e.stopPropagation();
+          const hidden = groupsRow.classList.toggle('latest-games-hidden');
+          groupsToggle.innerHTML = hidden
+            ? `${icons.plus}<span>Из группы</span>`
+            : `${icons.chevronLeft}<span>Свернуть</span>`;
+        });
+
+        form.appendChild(groupsRow);
+      }
+    }
+
+    return form;
+  },
+
   _buildGamePicker(playlist) {
     const picker    = _el('div', 'playlist-game-picker');
     const toggleBtn = _el('button', 'playlist-picker-toggle');
@@ -1109,6 +1212,7 @@ export const PlaylistsManager = {
     const allRows = [];
     this.main.groupsManager.groups.forEach(group => {
       if (!group.games.length) return;
+
       const groupHeader = _el('div', 'playlist-picker-group-header', group.title);
       body.appendChild(groupHeader);
 

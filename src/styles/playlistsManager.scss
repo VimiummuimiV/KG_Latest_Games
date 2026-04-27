@@ -33,12 +33,12 @@
 }
 
 // Header-row icon button (28×28, inherits color from parent, neutral hover).
-@mixin playlist-header-icon-btn($icon-size: 16px) {
+@mixin playlist-header-icon-btn($icon-size: 16px, $size: 28px) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: $size;
+  height: $size;
   padding: 0;
   flex-shrink: 0;
   background: transparent;
@@ -73,6 +73,30 @@
 
   &:hover { background: hsla(var(#{$color}) / 0.15); border-color: hsl(var(#{$color})); }
   &:active { background: hsla(var(#{$color}) / 0.25); }
+}
+
+// Text input used in the picker search and the create form.
+// $focus-bg: optional background override on focus (e.g. var(--rg-bg-hover)).
+@mixin playlist-text-input($focus-bg: null, $height: 24px) {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--rg-bg-card);
+  color: var(--rg-text-primary) !important;
+  border: 1px solid var(--rg-border-primary) !important;
+  border-radius: 3px !important;
+  height: $height;
+  line-height: $height;
+  padding: 0 0.6em;
+  font-size: 0.82em;
+  font-family: inherit;
+  transition: border-color 0.2s ease, background 0.2s ease;
+  outline: none;
+
+  &:focus {
+    border-color: var(--rg-border-hover) !important;
+    @if $focus-bg { background: $focus-bg; }
+  }
+  &::placeholder { color: var(--rg-text-tertiary); font-style: italic; }
 }
 
 // Shared gametype color rules — used by both .playlist-entry-label and .playlist-picker-game-name
@@ -125,6 +149,62 @@
       @include playlist-labeled-btn('--rg-popup-btn-save', 12px);
       padding: 0.4em 0.8em;
       font-size: calc(0.85em / 1.1); // cancel header's 1.1em scale
+    }
+  }
+
+  // ── Inline create form (shown below header on Новый click) ────────────────
+  .playlists-create-form {
+    padding: 0.5em 0;
+    border-bottom: 1px solid var(--rg-border-primary);
+    margin-bottom: 0.5em;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4em;
+  }
+
+  .playlists-create-name-row {
+    display: flex;
+    gap: 0.4em;
+    align-items: center;
+    width: 100%;
+
+    .playlists-create-input {
+      @include playlist-text-input();
+      flex: 1;
+    }
+
+  }
+
+  .playlists-create-groups-toggle {
+    @include playlist-labeled-btn('--rg-popup-btn-sort', 13px);
+    padding: 0.35em 0.7em;
+    font-size: 0.8em;
+    user-select: none;
+  }
+
+  .playlists-create-groups-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3em;
+
+    .playlists-create-group-btn {
+      @include playlist-labeled-btn('--rg-popup-btn-sort', 0px);
+      padding: 0.2em 0.6em;
+      font-size: 0.78em;
+      font-family: inherit;
+      white-space: nowrap;
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: filter 0.2s ease, opacity 0.2s ease;
+
+      &--done {
+        filter: grayscale(1);
+        opacity: 0.55;
+        cursor: default;
+        pointer-events: none;
+      }
     }
   }
 
@@ -525,19 +605,7 @@
     z-index: 3;
 
     .playlist-search-input {
-      width: 100%;
-      box-sizing: border-box;
-      background: var(--rg-bg-card);
-      color: var(--rg-text-primary) !important;
-      border: 1px solid var(--rg-border-primary) !important;
-      border-radius: 3px !important;
-      padding: 0.5em 0.7em;
-      font-size: 0.82em;
-      font-family: inherit;
-      transition: all 0.2s ease;
-
-      &:focus { outline: none; border-color: var(--rg-border-hover) !important; background: var(--rg-bg-hover); }
-      &::placeholder { color: var(--rg-text-tertiary); font-style: italic; }
+      @include playlist-text-input(var(--rg-bg-hover));
     }
   }
 
