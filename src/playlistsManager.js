@@ -1116,21 +1116,16 @@ export const PlaylistsManager = {
           btn.addEventListener('click', e => {
             e.stopPropagation();
 
+            if (checkExactMatch(group)) {
+              alert(`Плейлист «${group.title}» уже существует и содержит те же самые игры. Новый плейлист не создан.`);
+              return;
+            }
+
             const gameIds   = group.games.map(g => g.id);
             const playlists = this.load();
             const sameName  = playlists.find(p => p.title === group.title);
 
             if (sameName) {
-              const existingIds  = new Set(sameName.entries.map(en => en.gameId));
-              const isExactMatch =
-                existingIds.size === gameIds.length &&
-                gameIds.every(id => existingIds.has(id));
-
-              if (isExactMatch) {
-                alert(`Плейлист «${group.title}» уже существует и содержит те же самые игры. Новый плейлист не создан.`);
-                return;
-              }
-
               if (!confirm(`Плейлист «${group.title}» уже существует, но содержит другие игры. Создать новый?`)) return;
             }
 
