@@ -282,18 +282,9 @@ export class PageHandler {
   // The img.noerror-fail element is always in the DOM — visibility signals the fail.
   _isGameFailed() {
     const img = document.querySelector(gameSelectors.fail.noError);
-    if (!img) {
-      console.log('[PageHandler] _isGameFailed: element not found in DOM —', gameSelectors.fail.noError);
-      return false;
-    }
+    if (!img) return false;
     const s = getComputedStyle(img);
-    const failed = s.display !== 'none' && s.visibility !== 'hidden' && img.offsetParent !== null;
-    if (failed) {
-      console.log('[PageHandler] _isGameFailed: FAIL detected — display:', s.display, '| visibility:', s.visibility, '| offsetParent:', img.offsetParent);
-    } else {
-      console.log('[PageHandler] _isGameFailed: no fail — display:', s.display, '| visibility:', s.visibility, '| offsetParent:', img.offsetParent);
-    }
-    return failed;
+    return s.display !== 'none' && s.visibility !== 'hidden';
   }
 
   handleStartAction() {
