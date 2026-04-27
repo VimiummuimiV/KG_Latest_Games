@@ -85,12 +85,22 @@ export function advancePlaylist(main) {
     setActivePlaylistSession({ ...session, remainingRepeats });
   } else {
     entryIndex++;
+    // If the current entry's repeats are done, advance to the next entry
     if (entryIndex >= playlist.entries.length) {
-      _finishPlaylist(main, playlist);
-      return false;
+      // End of entries — check if playlist-level cycles remain
+      const remainingCycles = (session.remainingCycles ?? 1) - 1;
+      if (remainingCycles > 0) {
+        // Start the next cycle from the beginning
+        const firstEntry = playlist.entries[0];
+        setActivePlaylistSession({ ...session, entryIndex: 0, remainingRepeats: firstEntry.repeatCount, remainingCycles });
+      } else {
+        _finishPlaylist(main, playlist);
+        return false;
+      }
+    } else {
+      const nextEntry = playlist.entries[entryIndex];
+      setActivePlaylistSession({ ...session, entryIndex, remainingRepeats: nextEntry.repeatCount });
     }
-    const nextEntry = playlist.entries[entryIndex];
-    setActivePlaylistSession({ playlistId: session.playlistId, entryIndex, remainingRepeats: nextEntry.repeatCount });
   }
 
   const updated = getActivePlaylistSession();
@@ -809,10 +819,14 @@ export const PlaylistsManager = {
       const titleSpan = _el('span', 'playlist-title', playlist.title);
       const entry = playlist.entries[session.entryIndex];
       if (entry) {
+        const totalCycles     = playlist.repeatCount ?? 1;
+        const remainingCycles = session.remainingCycles ?? 1;
+        const cycleText       = totalCycles > 1 ? ` · ↻${totalCycles - remainingCycles + 1}/${totalCycles}` : '';
         const badge = _el('span', 'playlist-active-badge',
-          `${session.entryIndex + 1}/${playlist.entries.length} · ×${session.remainingRepeats}`);
-        createCustomTooltip(badge,
-          `[Плейлист] ${playlist.title}[Позиция] ${session.entryIndex + 1} из ${playlist.entries.length}[Осталось повторов] ${session.remainingRepeats}`);
+          `${session.entryIndex + 1}/${playlist.entries.length} · ×${session.remainingRepeats}${cycleText}`);
+        let tip = `[Плейлист] ${playlist.title}[Позиция] ${session.entryIndex + 1} из ${playlist.entries.length}[Осталось повторов] ${session.remainingRepeats}`;
+        if (totalCycles > 1) tip += `[Цикл] ${totalCycles - remainingCycles + 1} из ${totalCycles}`;
+        createCustomTooltip(badge, tip);
         titleSpan.appendChild(badge);
       }
 
@@ -1031,7 +1045,7 @@ export const PlaylistsManager = {
       const targetEntry = p.entries[entryIndex];
       const game = this.main.gamesManager.findGameById(targetEntry.gameId);
       if (!game) { alert('⚠️ Игра не найдена.'); return; }
-      setActivePlaylistSession({ playlistId: playlist.id, entryIndex, remainingRepeats: targetEntry.repeatCount });
+      setActivePlaylistSession({ playlistId: playlist.id, entryIndex, remainingRepeats: targetEntry.repeatCount, remainingCycles: p.repeatCount ?? 1 });
       window.location.href = _generatePlaylistEntryLink(this.main, game, targetEntry);
     });
 
