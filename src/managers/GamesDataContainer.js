@@ -263,12 +263,12 @@ export class GamesDataContainer {
     indicator.classList.toggle('playlist-progress-indicator--paused', isPaused);
     indicator.innerHTML = this._playlistIndicatorHTML(pos, total, reps, isPaused, totalCycles, remainingCycles);
 
-    // Counter zone — click opens/toggles the panel
-    const counter = indicator.querySelector('.playlist-hud-counter');
+    // Hud data zone — click opens/toggles the panel
+    const hudData = indicator.querySelector('.playlist-hud-data');
     let tip = `[Плейлист] ${playlist.title}[Позиция] ${pos} из ${total}[Осталось повторов] ${reps}`;
     if (totalCycles > 1) tip += `[Цикл] ${totalCycles - remainingCycles + 1} из ${totalCycles}`;
-    createCustomTooltip(counter, tip);
-    counter.addEventListener('click', () => {
+    createCustomTooltip(hudData, tip);
+    hudData.addEventListener('click', () => {
       const rect = indicator.getBoundingClientRect();
       if (this.main.playlistPanelAutoOpen === 2 && getCurrentPage() === 'game') {
         if (!PlaylistsManager.popup) PlaylistsManager.show(rect.left, rect.bottom);
@@ -329,8 +329,10 @@ export class GamesDataContainer {
       : '';
     return `
       ${leftBtn}
+      <div class="playlist-hud-data">
       <span class="playlist-hud-counter">${pos}/${total} ${icons.x}${reps}</span>
       ${cycleChip}
+      </div>
       <button class="playlist-hud-btn playlist-hud-stop">${icons.stop}</button>
     `;
   }
