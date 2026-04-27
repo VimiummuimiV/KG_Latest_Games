@@ -33,7 +33,9 @@
 }
 
 // Header-row icon button (28×28, inherits color from parent, neutral hover).
-@mixin playlist-header-icon-btn($icon-size: 16px, $size: 28px) {
+// $color:    icon/text color (defaults to --rg-bg-primary for use on colored rows)
+// $hover-bg: background on hover (defaults to a neutral dark tint)
+@mixin playlist-header-icon-btn($icon-size: 16px, $size: 28px, $color: var(--rg-bg-primary), $hover-bg: rgba(0, 0, 0, 0.15)) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -47,12 +49,12 @@
   appearance: none;
   cursor: pointer;
   border-radius: 4px;
-  transition: background 0.15s ease;
-  color: var(--rg-bg-primary);
+  transition: background 0.15s ease, color 0.15s ease;
+  color: $color;
 
   svg { width: $icon-size; height: $icon-size; pointer-events: none; }
 
-  &:hover { background: rgba(0, 0, 0, 0.15); }
+  &:hover { background: $hover-bg; }
 }
 
 // Labeled inline button (text + optional icon, card background, color accent).
@@ -75,7 +77,65 @@
   &:active { background: hsla(var(#{$color}) / 0.25); }
 }
 
-// Text input used in the picker search and the create form.
+// Stepper (< N >) used for both per-entry repeat count and playlist-level cycle count.
+// $btn-color:    CSS color value for the button icon/border (e.g. var(--rg-text-secondary))
+// $btn-bg:       button resting background
+// $btn-bg-hover: button hover background
+// $btn-border:   button resting border color
+// $btn-border-hover: button hover border color
+// $count-color:  color of the number in the middle
+@mixin playlist-stepper(
+  $btn-color,
+  $btn-bg,
+  $btn-bg-hover,
+  $btn-border,
+  $btn-border-hover,
+  $count-color,
+  $gap: 2px
+) {
+  display: inline-flex;
+  align-items: center;
+  gap: $gap;
+  flex-shrink: 0;
+  position: relative;
+
+  .playlist-stepper-btn {
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
+    background: $btn-bg;
+    color: $btn-color;
+    border: 1px solid $btn-border;
+    border-radius: 3px !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+    appearance: none;
+
+    svg { width: 12px; height: 12px; pointer-events: none; }
+
+    &:hover  { background: $btn-bg-hover; border-color: $btn-border-hover; color: $btn-color; }
+    &:active { background: $btn-bg-hover; transform: translateY(1px); }
+  }
+
+  .playlist-stepper-count {
+    min-width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8em;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: $count-color;
+  }
+}
+
+
 // $focus-bg: optional background override on focus (e.g. var(--rg-bg-hover)).
 @mixin playlist-text-input($focus-bg: null, $height: 24px) {
   width: 100%;
@@ -143,6 +203,21 @@
 
     .popup-header-title {
       color: var(--rg-header-text);
+    }
+
+    // Groups random + Новый together flush on the right
+    .playlists-header-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+    }
+
+    .playlists-random-btn {
+      @include playlist-header-icon-btn(
+        14px, 28px,
+        hsl(var(--rg-popup-btn-sort)),
+        hsla(var(--rg-popup-btn-sort) / 0.15)
+      );
     }
 
     .playlists-add-btn {
@@ -286,14 +361,35 @@
     // Icon buttons on the header row
     .playlist-play-btn,
     .playlist-pause-btn,
-    .playlist-rename-btn,
-    .playlist-delete-btn,
-    .playlist-cancel-btn {
+    .playlist-rename-btn {
       @include playlist-header-icon-btn(16px);
     }
 
-    .playlist-delete-btn:hover,
-    .playlist-cancel-btn:hover { background: rgba(200, 40, 40, 0.25); }
+    .playlist-delete-btn,
+    .playlist-cancel-btn {
+      @include playlist-header-icon-btn(16px, 28px, var(--rg-bg-primary), rgba(200, 40, 40, 0.35));
+    }
+
+    // Playlist-level cycle stepper
+    .playlist-header-stepper {
+      @include playlist-stepper(
+        $btn-color:        var(--rg-bg-primary),
+        $btn-bg:           rgba(0, 0, 0, 0.15),
+        $btn-bg-hover:     rgba(0, 0, 0, 0.28),
+        $btn-border:       rgba(0, 0, 0, 0.0),
+        $btn-border-hover: rgba(0, 0, 0, 0.0),
+        $count-color:      var(--rg-bg-primary),
+        $gap: 1px
+      );
+
+      // Fade out when count is 1 (default), reveal on row hover
+      &--default {
+        opacity: 0.35;
+        .playlist-stepper-count { min-width: 0; padding: 0 2px; }
+      }
+    }
+
+    &:hover .playlist-header-stepper--default { opacity: 0.8; }
   }
 
   // ── Collapsible body ────────────────────────────────────────────────────────
@@ -409,45 +505,16 @@
       &.playlist-entry-missing { color: var(--rg-text-tertiary) !important; font-style: italic; }
     }
 
-    // Stepper
+    // Stepper — entry repeat count
     .playlist-entry-stepper {
-      display: inline-flex;
-      align-items: center;
-      gap: 2px;
-      flex-shrink: 0;
-      position: relative;
-
-      .playlist-entry-stepper-btn {
-        width: 20px;
-        height: 20px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-        background: var(--rg-bg-card);
-        color: var(--rg-text-secondary);
-        border: 1px solid var(--rg-border-primary);
-        border-radius: 3px !important;
-        cursor: pointer;
-        transition: all 0.2s ease;
-
-        svg { width: 12px; height: 12px; pointer-events: none; }
-
-        &:hover { background: var(--rg-bg-hover); border-color: var(--rg-border-hover); color: var(--rg-text-primary); }
-        &:active { background: var(--rg-bg-secondary); transform: translateY(1px); }
-      }
-
-      .playlist-entry-stepper-count {
-        min-width: 20px;
-        height: 20px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.8em;
-        font-weight: 600;
-        font-variant-numeric: tabular-nums;
-        color: var(--rg-text-primary);
-      }
+      @include playlist-stepper(
+        $btn-color:        var(--rg-text-secondary),
+        $btn-bg:           var(--rg-bg-card),
+        $btn-bg-hover:     var(--rg-bg-hover),
+        $btn-border:       var(--rg-border-primary),
+        $btn-border-hover: var(--rg-border-hover),
+        $count-color:      var(--rg-text-primary)
+      );
     }
 
     // Remove button — same 20×20 as stepper buttons

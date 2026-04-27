@@ -203,6 +203,37 @@
       font-variant-numeric: tabular-nums;
       padding: 8px 6px;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+
+      svg {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+        pointer-events: none;
+      }
+    }
+
+    // Cycle chip — shown only when playlist.repeatCount > 1
+    // Visually separated from the main counter: dimmer, smaller, left border as divider
+    .playlist-hud-cycles {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 0 8px;
+      font-size: 0.72em;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      align-self: stretch;
+      cursor: default;
+
+      svg {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+        pointer-events: none;
+      }
     }
   }
 

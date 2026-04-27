@@ -6,8 +6,9 @@ import { generateRandomString, getCurrentPage } from './utils.js';
 // ─────────────────────────────────────────────────────────────────────────────
 // Storage / session keys
 // ─────────────────────────────────────────────────────────────────────────────
-const STORAGE_KEY = 'latestGamesPlaylists';
-const SESSION_KEY = 'latestGames_activePlaylist';
+const STORAGE_KEY  = 'latestGamesPlaylists';
+const SESSION_KEY  = 'latestGames_activePlaylist';
+const SHUFFLE_KEY  = 'latestGames_randomShuffleBag';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Session helpers
@@ -392,6 +393,21 @@ export const PlaylistsManager = {
     }
   },
 
+  setPlaylistCycles(playlistId, count) {
+    const playlists = this.load();
+    const p = playlists.find(p => p.id === playlistId);
+    if (!p) return;
+    const newCount = Math.max(1, count);
+    p.repeatCount = newCount;
+    this.save(playlists);
+    // Sync session remainingCycles by the same delta so in-flight runs adjust correctly
+    const session = getActivePlaylistSession();
+    if (session && session.playlistId === playlistId && newCount > 1) {
+      const remaining = Math.min(newCount, session.remainingCycles ?? newCount);
+      setActivePlaylistSession({ ...session, remainingCycles: remaining });
+    }
+  },
+
   setEntryParams(playlistId, entryId, params) {
     const playlists = this.load();
     const p = playlists.find(p => p.id === playlistId);
@@ -443,8 +459,53 @@ export const PlaylistsManager = {
     const game = this.main.gamesManager.findGameById(firstEntry.gameId);
     if (!game) { alert('⚠️ Первая игра плейлиста не найдена.'); return; }
 
-    setActivePlaylistSession({ playlistId, entryIndex: 0, remainingRepeats: firstEntry.repeatCount });
+    setActivePlaylistSession({ playlistId, entryIndex: 0, remainingRepeats: firstEntry.repeatCount, remainingCycles: playlist.repeatCount ?? 1 });
     window.location.href = _generatePlaylistEntryLink(this.main, game, firstEntry);
+  },
+
+  startRandomPlaylist() {
+    if (!this.main) return;
+    const playlists = this.load().filter(p => p.entries.length > 0);
+    if (!playlists.length) {
+      alert('⚠️ Нет плейлистов с играми.');
+      return;
+    }
+
+    // ── Shuffle bag ───────────────────────────────────────────────────────────
+    // Keep a persisted queue of playlist IDs shuffled with Fisher-Yates.
+    // Pop from the front each call. When the bag is empty (or stale — contains
+    // IDs that no longer exist), rebuild it from the current playlist set,
+    // but exclude the last-played ID to guarantee it never repeats back-to-back
+    // even across a refill boundary.
+    const validIds = playlists.map(p => p.id);
+
+    let bag = [];
+    try { bag = JSON.parse(localStorage.getItem(SHUFFLE_KEY) || '[]'); } catch { }
+    // Drop any IDs that have since been deleted
+    bag = bag.filter(id => validIds.includes(id));
+
+    if (!bag.length) {
+      // Refill: Fisher-Yates shuffle of all valid IDs
+      const pool = [...validIds];
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      // Avoid immediate back-to-back repeat: if the last played id is at the
+      // front after the shuffle, rotate it to the back.
+      let lastPlayed = null;
+      try { lastPlayed = localStorage.getItem(SHUFFLE_KEY + '_last'); } catch { }
+      if (pool.length > 1 && pool[0] === lastPlayed) pool.push(pool.shift());
+      bag = pool;
+    }
+
+    const pickedId = bag.shift();
+    try {
+      localStorage.setItem(SHUFFLE_KEY, JSON.stringify(bag));
+      localStorage.setItem(SHUFFLE_KEY + '_last', pickedId);
+    } catch { }
+
+    this.startPlaylist(pickedId);
   },
 
   // ── Panel lifecycle ────────────────────────────────────────────────────────
@@ -647,6 +708,14 @@ export const PlaylistsManager = {
 
     const titleSpan = _el('span', 'popup-header-title', 'Плейлисты');
 
+    const randomBtn = _el('button', 'playlists-random-btn');
+    randomBtn.innerHTML = icons.random;
+    createCustomTooltip(randomBtn, 'Запустить случайный плейлист');
+    randomBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      this.startRandomPlaylist();
+    });
+
     const addBtn = _el('button', 'playlists-add-btn');
     addBtn.innerHTML = `${icons.plus}<span>Новый</span>`;
     createCustomTooltip(addBtn, 'Создать новый плейлист');
@@ -663,7 +732,9 @@ export const PlaylistsManager = {
       form.querySelector('.playlists-create-input')?.focus();
     });
 
-    header.append(titleSpan, addBtn);
+    const actions = _el('div', 'playlists-header-actions');
+    actions.append(randomBtn, addBtn);
+    header.append(titleSpan, actions);
     panel.appendChild(header);
 
     if (!playlists.length) {
@@ -774,7 +845,36 @@ export const PlaylistsManager = {
           this.refresh();
         }
       });
-      row.append(playBtn, titleSpan, renameBtn, delBtn);
+      // Playlist-level cycle stepper — only shown when repeatCount > 1 or on hover
+      const cycleCount     = playlist.repeatCount ?? 1;
+      const cycleStepper   = _el('div', 'playlist-header-stepper');
+      const cycleDecBtn    = _el('button', 'playlist-stepper-btn');
+      cycleDecBtn.innerHTML = icons.chevronLeft;
+      const cycleCountSpan = _el('span', 'playlist-stepper-count', String(cycleCount));
+      const cycleIncBtn    = _el('button', 'playlist-stepper-btn');
+      cycleIncBtn.innerHTML = icons.chevronRight;
+      cycleStepper.append(cycleDecBtn, cycleCountSpan, cycleIncBtn);
+      createCustomTooltip(cycleStepper, 'Количество повторов всего плейлиста');
+      if (cycleCount <= 1) cycleStepper.classList.add('playlist-header-stepper--default');
+
+      cycleDecBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        const next = Math.max(1, (playlist.repeatCount ?? 1) - 1);
+        this.setPlaylistCycles(playlist.id, next);
+        playlist.repeatCount = next;
+        cycleCountSpan.textContent = String(next);
+        cycleStepper.classList.toggle('playlist-header-stepper--default', next <= 1);
+      });
+      cycleIncBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        const next = (playlist.repeatCount ?? 1) + 1;
+        this.setPlaylistCycles(playlist.id, next);
+        playlist.repeatCount = next;
+        cycleCountSpan.textContent = String(next);
+        cycleStepper.classList.remove('playlist-header-stepper--default');
+      });
+
+      row.append(playBtn, titleSpan, cycleStepper, renameBtn, delBtn);
     }
 
     // Toggle expand on row click (excluding buttons)
@@ -847,11 +947,11 @@ export const PlaylistsManager = {
     }
 
     // Stepper
-    const stepper  = _el('div', 'playlist-entry-stepper');
-    const decBtn   = _el('button', 'playlist-entry-stepper-btn');
+    const stepper    = _el('div', 'playlist-entry-stepper');
+    const decBtn     = _el('button', 'playlist-stepper-btn');
     decBtn.innerHTML = icons.chevronLeft;
-    const countSpan = _el('span', 'playlist-entry-stepper-count', String(entry.repeatCount));
-    const incBtn   = _el('button', 'playlist-entry-stepper-btn');
+    const countSpan  = _el('span', 'playlist-stepper-count', String(entry.repeatCount));
+    const incBtn     = _el('button', 'playlist-stepper-btn');
     incBtn.innerHTML = icons.chevronRight;
     createCustomTooltip(stepper, 'Количество повторов этой игры');
 

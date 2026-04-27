@@ -223,12 +223,15 @@ export class GamesDataContainer {
       const playlists = JSON.parse(localStorage.getItem('latestGamesPlaylists') || '[]');
       const playlist  = playlists.find(p => p.id === session.playlistId);
       if (!playlist) return null;
+      const totalCycles = playlist.repeatCount ?? 1;
       return {
         session,
         playlist,
-        total: playlist.entries.length,
-        pos:   session.entryIndex + 1,
-        reps:  session.remainingRepeats
+        total:          playlist.entries.length,
+        pos:            session.entryIndex + 1,
+        reps:           session.remainingRepeats,
+        totalCycles,
+        remainingCycles: totalCycles > 1 ? (session.remainingCycles ?? totalCycles) : 1,
       };
     } catch { return null; }
   }
@@ -236,12 +239,12 @@ export class GamesDataContainer {
   createPlaylistIndicator() {
     const data = this._getPlaylistIndicatorData();
     if (!data) return;
-    const { playlist, pos, total, reps, session } = data;
+    const { playlist, pos, total, reps, session, totalCycles, remainingCycles } = data;
 
     this.ensureContainer();
     const indicator = document.createElement('div');
     indicator.className = 'indicator playlist-progress-indicator';
-    this._renderPlaylistIndicator(indicator, playlist, pos, total, reps, session);
+    this._renderPlaylistIndicator(indicator, playlist, pos, total, reps, session, totalCycles, remainingCycles);
 
     this.container.appendChild(indicator);
 
@@ -255,14 +258,15 @@ export class GamesDataContainer {
   }
 
   // Build/rebuild the full indicator DOM — used by both create and update.
-  _renderPlaylistIndicator(indicator, playlist, pos, total, reps, session) {
+  _renderPlaylistIndicator(indicator, playlist, pos, total, reps, session, totalCycles = 1, remainingCycles = 1) {
     const isPaused = !!(session?.paused);
     indicator.classList.toggle('playlist-progress-indicator--paused', isPaused);
-    indicator.innerHTML = this._playlistIndicatorHTML(pos, total, reps, isPaused);
+    indicator.innerHTML = this._playlistIndicatorHTML(pos, total, reps, isPaused, totalCycles, remainingCycles);
 
     // Counter zone — click opens/toggles the panel
     const counter = indicator.querySelector('.playlist-hud-counter');
-    const tip = `[Плейлист] ${playlist.title}[Позиция] ${pos} из ${total}[Осталось повторов] ${reps}`;
+    let tip = `[Плейлист] ${playlist.title}[Позиция] ${pos} из ${total}[Осталось повторов] ${reps}`;
+    if (totalCycles > 1) tip += `[Цикл] ${totalCycles - remainingCycles + 1} из ${totalCycles}`;
     createCustomTooltip(counter, tip);
     counter.addEventListener('click', () => {
       const rect = indicator.getBoundingClientRect();
@@ -316,13 +320,17 @@ export class GamesDataContainer {
     }
   }
 
-  _playlistIndicatorHTML(pos, total, reps, isPaused = false) {
+  _playlistIndicatorHTML(pos, total, reps, isPaused = false, totalCycles = 1, remainingCycles = 1) {
     const leftBtn = isPaused
       ? `<button class="playlist-hud-btn playlist-hud-resume">${icons.start}</button>`
       : `<button class="playlist-hud-btn playlist-hud-pause">${icons.pause}</button>`;
+    const cycleChip = totalCycles > 1
+      ? `<span class="playlist-hud-cycles">${icons.refresh}${totalCycles - remainingCycles + 1}/${totalCycles}</span>`
+      : '';
     return `
       ${leftBtn}
-      <span class="playlist-hud-counter">${pos}/${total} ×${reps}</span>
+      <span class="playlist-hud-counter">${pos}/${total} ${icons.x}${reps}</span>
+      ${cycleChip}
       <button class="playlist-hud-btn playlist-hud-stop">${icons.stop}</button>
     `;
   }
@@ -333,8 +341,8 @@ export class GamesDataContainer {
     if (!indicator) return;
     const data = this._getPlaylistIndicatorData();
     if (!data) { indicator.remove(); return; }
-    const { playlist, pos, total, reps, session } = data;
-    this._renderPlaylistIndicator(indicator, playlist, pos, total, reps, session);
+    const { playlist, pos, total, reps, session, totalCycles, remainingCycles } = data;
+    this._renderPlaylistIndicator(indicator, playlist, pos, total, reps, session, totalCycles, remainingCycles);
   }
 
   // ============================================================================
