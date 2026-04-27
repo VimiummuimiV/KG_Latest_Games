@@ -385,7 +385,6 @@
       // Fade out when count is 1 (default), reveal on row hover
       &--default {
         opacity: 0.35;
-        .playlist-stepper-count { min-width: 0; padding: 0 2px; }
       }
     }
 
