@@ -327,10 +327,11 @@ export class GamesDataContainer {
     const cycleChip = totalCycles > 1
       ? `<span class="playlist-hud-cycles">${icons.refresh}${totalCycles - remainingCycles + 1}/${totalCycles}</span>`
       : '';
+    const repeatText = reps > 1 ? ` ${icons.x}${reps}` : '';
     return `
       ${leftBtn}
       <div class="playlist-hud-data">
-      <span class="playlist-hud-counter">${pos}/${total} ${icons.x}${reps}</span>
+      <span class="playlist-hud-counter">${pos}/${total}${repeatText}</span>
       ${cycleChip}
       </div>
       <button class="playlist-hud-btn playlist-hud-stop">${icons.stop}</button>

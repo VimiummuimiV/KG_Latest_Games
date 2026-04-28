@@ -821,16 +821,17 @@ export const PlaylistsManager = {
       if (entry) {
         const totalCycles     = playlist.repeatCount ?? 1;
         const remainingCycles = session.remainingCycles ?? 1;
-        const cycleText       = totalCycles > 1 ? ` · ↻${totalCycles - remainingCycles + 1}/${totalCycles}` : '';
-        const badge = _el('span', 'playlist-active-badge');
-        const repeatText = `<span class="playlist-active-badge-reps">${icons.x}<span>${session.remainingRepeats}</span></span>`;
-        const cycleTextHtml = totalCycles > 1
+        const badge = _el('div', 'playlist-active-badge');
+        const cycleChip = totalCycles > 1
           ? `<span class="playlist-active-badge-cycles">${icons.refresh}<span>${totalCycles - remainingCycles + 1}/${totalCycles}</span></span>`
+          : '';
+        const repeatText = session.remainingRepeats > 1
+          ? `<span class="playlist-active-badge-reps">${icons.x}<span>${session.remainingRepeats}</span></span>`
           : '';
         badge.innerHTML = `
           <span class="playlist-active-badge-position">${session.entryIndex + 1}/${playlist.entries.length}</span>
           ${repeatText}
-          ${cycleTextHtml}
+          ${cycleChip}
         `;
         let tip = `[Плейлист] ${playlist.title}[Позиция] ${session.entryIndex + 1} из ${playlist.entries.length}[Осталось повторов] ${session.remainingRepeats}`;
         if (totalCycles > 1) tip += `[Цикл] ${totalCycles - remainingCycles + 1} из ${totalCycles}`;
