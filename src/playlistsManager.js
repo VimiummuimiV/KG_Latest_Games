@@ -833,7 +833,8 @@ export const PlaylistsManager = {
           ${repeatText}
           ${cycleChip}
         `;
-        let tip = `[Плейлист] ${playlist.title}[Позиция] ${session.entryIndex + 1} из ${playlist.entries.length}[Осталось повторов] ${session.remainingRepeats}`;
+        let tip = `[Плейлист] ${playlist.title}[Позиция] ${session.entryIndex + 1} из ${playlist.entries.length}`;
+        if (session.remainingRepeats > 1) tip += `[Осталось повторов] ${session.remainingRepeats}`;
         if (totalCycles > 1) tip += `[Цикл] ${totalCycles - remainingCycles + 1} из ${totalCycles}`;
         createCustomTooltip(badge, tip);
         titleSpan.appendChild(badge);

@@ -265,7 +265,8 @@ export class GamesDataContainer {
 
     // Hud data zone — click opens/toggles the panel
     const hudData = indicator.querySelector('.playlist-hud-data');
-    let tip = `[Плейлист] ${playlist.title}[Позиция] ${pos} из ${total}[Осталось повторов] ${reps}`;
+    let tip = `[Плейлист] ${playlist.title}[Позиция] ${pos} из ${total}`;
+    if (reps > 1) tip += `[Осталось повторов] ${reps}`;
     if (totalCycles > 1) tip += `[Цикл] ${totalCycles - remainingCycles + 1} из ${totalCycles}`;
     createCustomTooltip(hudData, tip);
     hudData.addEventListener('click', () => {
