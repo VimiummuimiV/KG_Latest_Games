@@ -825,7 +825,7 @@ export const PlaylistsManager = {
         const cycleChip = totalCycles > 1
           ? `<span class="playlist-active-badge-cycles">${icons.refresh}<span>${totalCycles - remainingCycles + 1}/${totalCycles}</span></span>`
           : '';
-        const repeatText = session.remainingRepeats > 1
+        const repeatText = entry.repeatCount > 1
           ? `<span class="playlist-active-badge-reps">${icons.x}<span>${session.remainingRepeats}</span></span>`
           : '';
         badge.innerHTML = `
@@ -834,7 +834,7 @@ export const PlaylistsManager = {
           ${cycleChip}
         `;
         let tip = `[Плейлист] ${playlist.title}[Позиция] ${session.entryIndex + 1} из ${playlist.entries.length}`;
-        if (session.remainingRepeats > 1) tip += `[Осталось повторов] ${session.remainingRepeats}`;
+        if (entry.repeatCount > 1) tip += `[Осталось повторов] ${session.remainingRepeats}`;
         if (totalCycles > 1) tip += `[Цикл] ${totalCycles - remainingCycles + 1} из ${totalCycles}`;
         createCustomTooltip(badge, tip);
         titleSpan.appendChild(badge);
