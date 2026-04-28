@@ -442,6 +442,27 @@
       }
     }
 
+    // Passed (already played) entries — dimmed via background, never opacity,
+    // so inner controls remain fully visible and interactable.
+    &--passed {
+      background: var(--rg-bg-primary) !important;
+      border-color: var(--rg-border-primary) !important;
+
+      .playlist-entry-label { filter: grayscale(70%) !important; }
+      .playlist-entry-play-btn,
+      .playlist-entry-drag-handle,
+      .playlist-entry-duplicate-btn,
+      .playlist-entry-params-btn { color: var(--rg-text-tertiary); }
+
+      .playlist-stepper-btn { background: transparent !important; }
+
+      &:hover {
+        background: var(--rg-bg-card) !important;
+        border-color: var(--rg-border-hover) !important;
+        .playlist-entry-label { filter: none !important; }
+      }
+    }
+
     &--progress::before {
       content: '';
       position: absolute;
@@ -460,7 +481,6 @@
     // Per-entry play button — vertically aligned with header play/stop
     .playlist-entry-play-btn {
       @include playlist-icon-btn('--rg-popup-item-new', 20px, 14px);
-      color: var(--rg-text-tertiary); // dimmed by default, brightens on hover via mixin
       border-color: transparent;
     }
 

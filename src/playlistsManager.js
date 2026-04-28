@@ -913,7 +913,8 @@ export const PlaylistsManager = {
     } else {
       playlist.entries.forEach((entry, idx) => {
         const isCurrentEntry = isActive && session.entryIndex === idx;
-        const row = this._buildEntryRow(playlist, entry, session, isCurrentEntry, idx);
+        const isPassedEntry = isActive && idx < session.entryIndex;
+        const row = this._buildEntryRow(playlist, entry, session, isCurrentEntry, idx, isPassedEntry);
         entryList.appendChild(row);
       });
       // Entry drag-to-reorder (vertical, same feel as game buttons)
@@ -926,9 +927,13 @@ export const PlaylistsManager = {
     return block;
   },
 
-  _buildEntryRow(playlist, entry, session, isCurrentEntry, entryIndex) {
+  _buildEntryRow(playlist, entry, session, isCurrentEntry, entryIndex, isPassedEntry = false) {
     const game = this.main?.gamesManager?.findGameById(entry.gameId) ?? null;
-    const row  = _el('div', `playlist-entry-row${isCurrentEntry ? ' playlist-entry-row--active' : ''}`);
+    const row  = _el('div', [
+      'playlist-entry-row',
+      isCurrentEntry  ? 'playlist-entry-row--active' : '',
+      isPassedEntry   ? 'playlist-entry-row--passed'  : '',
+    ].filter(Boolean).join(' '));
     row.dataset.entryId    = entry.id;
     row.dataset.entryIndex = entryIndex;
 
