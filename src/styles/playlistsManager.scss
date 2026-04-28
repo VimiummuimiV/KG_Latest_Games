@@ -328,7 +328,7 @@
 
     // Active playlist — amber/orange accent (same brightness range as the green)
     &--active {
-      background: hsl(var(--rg-popup-item-new)); // keep green for active
+      background: hsl(var(--rg-popup-item-new));
     }
 
     .playlist-title {
@@ -347,15 +347,45 @@
     .playlist-active-badge {
       display: inline-flex;
       align-items: center;
-      padding: 1px 6px;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 8px !important;
-      font-size: 0.82em;
-      font-weight: 700;
+      gap: 0.4em;
+      padding: 0.3em 0.5em;
+      background: var(--rg-bg-secondary) !important;
+      border-radius: 10px !important;
+      font-size: 1em;
       font-variant-numeric: tabular-nums;
-      color: var(--rg-bg-primary);
       white-space: nowrap;
       flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .playlist-active-badge-position,
+    .playlist-active-badge-reps,
+    .playlist-active-badge-cycles {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25em;
+      font-size: 1em;
+      font-weight: 600;
+    }
+
+    .playlist-active-badge-position {
+      color: var(--rg-playlist-active-badge-position);
+    }
+
+    .playlist-active-badge-reps {
+      color: var(--rg-playlist-active-badge-reps);
+    }
+
+    .playlist-active-badge-cycles {
+      color: var(--rg-playlist-active-badge-cycles);
+    }
+
+    .playlist-active-badge-reps svg,
+    .playlist-active-badge-cycles svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      pointer-events: none;
     }
 
     // Icon buttons on the header row

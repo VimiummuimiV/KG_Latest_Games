@@ -89,4 +89,8 @@ $darkTheme: (
   "--rg-vocab-play-hover-bg": hsl(30, 100%, 70%),
   // Playlist params
   "--rg-playlist-params-color": 270 70% 70%,
+  // Playlist active badge
+  "--rg-playlist-active-badge-position": hsl(140, 80%, 50%),
+  "--rg-playlist-active-badge-reps": hsl(40, 80%, 50%),
+  "--rg-playlist-active-badge-cycles": hsl(200, 80%, 50%)
 );

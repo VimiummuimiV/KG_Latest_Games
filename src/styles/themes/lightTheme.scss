@@ -89,4 +89,8 @@ $lightTheme: (
   "--rg-vocab-play-hover-bg": hsl(30, 75%, 50%),
   // Playlist params
   "--rg-playlist-params-color": 270 55% 50%,
+  // Playlist active badge
+  "--rg-playlist-active-badge-position": hsl(140, 80%, 35%),
+  "--rg-playlist-active-badge-reps": hsl(40, 80%, 40%),
+  "--rg-playlist-active-badge-cycles": hsl(200, 80%, 35%)
 );
