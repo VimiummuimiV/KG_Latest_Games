@@ -447,6 +447,7 @@
     &--passed {
       background: var(--rg-bg-primary) !important;
       border-color: var(--rg-border-primary) !important;
+      opacity: 0.5 !important;
 
       .playlist-entry-label { filter: grayscale(70%) !important; }
       .playlist-entry-play-btn,
@@ -459,6 +460,7 @@
       &:hover {
         background: var(--rg-bg-card) !important;
         border-color: var(--rg-border-hover) !important;
+        opacity: 1 !important;
         .playlist-entry-label { filter: none !important; }
       }
     }
