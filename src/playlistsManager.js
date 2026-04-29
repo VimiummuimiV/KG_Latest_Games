@@ -51,7 +51,7 @@ export function getActivePlaylistUrl(main) {
   if (!session) return null;
   try {
     const playlist = PlaylistsManager.load().find(p => p.id === session.playlistId);
-    const entry = playlist?.entries[session.entryIndex];
+    const entry = _getPlaylistEntry(playlist, session);
     const game = entry && main.gamesManager.findGameById(entry.gameId);
     return game ? _generatePlaylistEntryLink(main, game, entry) : null;
   } catch { return null; }
@@ -78,6 +78,12 @@ export function advancePlaylist(main) {
     return false;
   }
 
+  // If shuffle is active, entryIndex is an index into the shuffleOrder, not directly into entries[].
+  const order = Array.isArray(session.shuffleOrder) && session.shuffleOrder.length === playlist.entries.length
+    ? session.shuffleOrder
+    : null;
+  const cycleLength = order ? order.length : playlist.entries.length;
+
   let { entryIndex, remainingRepeats } = session;
   remainingRepeats--;
 
@@ -85,27 +91,34 @@ export function advancePlaylist(main) {
     setActivePlaylistSession({ ...session, remainingRepeats });
   } else {
     entryIndex++;
-    // If the current entry's repeats are done, advance to the next entry
-    if (entryIndex >= playlist.entries.length) {
-      // End of entries — check if playlist-level cycles remain
+    if (entryIndex >= cycleLength) {
+      // End of entries in this cycle — check if playlist-level cycles remain
       const remainingCycles = (session.remainingCycles ?? 1) - 1;
       if (remainingCycles > 0) {
-        // Start the next cycle from the beginning
-        const firstEntry = playlist.entries[0];
-        setActivePlaylistSession({ ...session, entryIndex: 0, remainingRepeats: firstEntry.repeatCount, remainingCycles });
+        const nextOrder = order ? _createShuffleOrder(playlist.entries.length) : null;
+        const firstIndex = nextOrder ? nextOrder[0] : 0;
+        const firstEntry = playlist.entries[firstIndex];
+        setActivePlaylistSession({
+          ...session,
+          entryIndex: 0,
+          remainingRepeats: firstEntry.repeatCount,
+          remainingCycles,
+          shuffleOrder: nextOrder,
+        });
       } else {
         _finishPlaylist(main, playlist);
         return false;
       }
     } else {
-      const nextEntry = playlist.entries[entryIndex];
+      const nextEntryIndex = order ? order[entryIndex] : entryIndex;
+      const nextEntry = playlist.entries[nextEntryIndex];
       setActivePlaylistSession({ ...session, entryIndex, remainingRepeats: nextEntry.repeatCount });
     }
   }
 
   const updated = getActivePlaylistSession();
-  const entry   = playlist.entries[updated.entryIndex];
-  const game    = main.gamesManager.findGameById(entry.gameId);
+  const entry   = _getPlaylistEntry(playlist, updated);
+  const game    = entry && main.gamesManager.findGameById(entry.gameId);
   // Skip deleted/missing games by recursing
   if (!game) return advancePlaylist(main);
 
@@ -113,10 +126,42 @@ export function advancePlaylist(main) {
 }
 
 function _finishPlaylist(main, playlist) {
-  cancelActivePlaylist(); // restores settings
+  cancelActivePlaylist();
+  // Immediately remove the HUD indicator and refresh the panel so the UI
+  // reflects the cleared session before the completion alert fires.
+  try { main?.pageHandler?.gamesDataContainer?.updatePlaylistIndicator(); } catch (_) {}
+  try { PlaylistsManager.refresh(); } catch (_) {}
   const name = playlist?.title || 'Плейлист';
-  // Friendly completion alert
   setTimeout(() => alert(`✅ Плейлист «${name}» завершён!`), 300);
+}
+
+// Fisher-Yates shuffle implementation to randomize playlist order for shuffle mode and random playlist picking.
+function _shuffleArray(array) {
+  const result = [...array];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+function _createShuffleOrder(length) {
+  return _shuffleArray([...Array(length).keys()]);
+}
+
+function _getPlaylistEntry(playlist, session) {
+  if (!playlist || !session) return null;
+  return playlist.entries[_getActiveEntryIndex(playlist, session)] ?? null;
+}
+
+// Returns the real entries[] index for the current session position,
+// accounting for shuffle order when active.
+function _getActiveEntryIndex(playlist, session) {
+  if (!playlist || !session) return 0;
+  const order = Array.isArray(session.shuffleOrder) && session.shuffleOrder.length === playlist.entries.length
+    ? session.shuffleOrder : null;
+  const position = session.entryIndex ?? 0;
+  return order ? (order[position] ?? 0) : position;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -329,7 +374,7 @@ export const PlaylistsManager = {
       while (playlists.some(p => p.title === `Плейлист-${n}`)) n++;
       name = `Плейлист-${n}`;
     }
-    const playlist = { id: generateRandomString(), title: name, entries: [] };
+    const playlist = { id: generateRandomString(), title: name, entries: [], shuffle: false };
     playlists.push(playlist);
     this.save(playlists);
     return playlist;
@@ -394,7 +439,7 @@ export const PlaylistsManager = {
       const freshP = freshPlaylists.find(fp => fp.id === playlistId);
       if (freshP) {
         const entryIdx = freshP.entries.findIndex(fe => fe.id === entryId);
-        if (entryIdx === session.entryIndex) {
+        if (entryIdx === _getActiveEntryIndex(freshP, session)) {
           const delta = newCount - oldCount;
           const newRemaining = Math.min(newCount, Math.max(1, session.remainingRepeats + delta));
           setActivePlaylistSession({ ...session, remainingRepeats: newRemaining });
@@ -448,7 +493,7 @@ export const PlaylistsManager = {
   },
 
   // ── Playback ───────────────────────────────────────────────────────────────
-  startPlaylist(playlistId) {
+  startPlaylist(playlistId, options = {}) {
     if (!this.main) return;
     const playlists = this.load();
     const playlist  = playlists.find(p => p.id === playlistId);
@@ -465,11 +510,21 @@ export const PlaylistsManager = {
       if (!confirm(`Запущен плейлист «${existingName}». Остановить его и запустить «${playlist.title}»?`)) return;
     }
 
-    const firstEntry = playlist.entries[0];
+    const shuffle = options.shuffle !== undefined ? options.shuffle : !!playlist.shuffle;
+    const shuffleOrder = shuffle ? _createShuffleOrder(playlist.entries.length) : null;
+    const firstEntryIndex = shuffle ? shuffleOrder[0] : 0;
+    const firstEntry = playlist.entries[firstEntryIndex];
     const game = this.main.gamesManager.findGameById(firstEntry.gameId);
     if (!game) { alert('⚠️ Первая игра плейлиста не найдена.'); return; }
 
-    setActivePlaylistSession({ playlistId, entryIndex: 0, remainingRepeats: firstEntry.repeatCount, remainingCycles: playlist.repeatCount ?? 1 });
+    setActivePlaylistSession({
+      playlistId,
+      entryIndex: 0,
+      remainingRepeats: firstEntry.repeatCount,
+      remainingCycles: playlist.repeatCount ?? 1,
+      shuffleOrder,
+      shuffleActive: shuffle,
+    });
     window.location.href = _generatePlaylistEntryLink(this.main, game, firstEntry);
   },
 
@@ -496,11 +551,7 @@ export const PlaylistsManager = {
 
     if (!bag.length) {
       // Refill: Fisher-Yates shuffle of all valid IDs
-      const pool = [...validIds];
-      for (let i = pool.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [pool[i], pool[j]] = [pool[j], pool[i]];
-      }
+      const pool = _shuffleArray(validIds);
       // Avoid immediate back-to-back repeat: if the last played id is at the
       // front after the shuffle, rotate it to the back.
       let lastPlayed = null;
@@ -669,7 +720,7 @@ export const PlaylistsManager = {
       const playlists = this.load();
       const playlist  = playlists.find(p => p.id === session.playlistId);
       if (!playlist) return;
-      const entry = playlist.entries[session.entryIndex];
+      const entry = _getPlaylistEntry(playlist, session);
       if (!entry || entry.repeatCount <= 1) {
         row.style.removeProperty('--playlist-progress');
         row.classList.remove('playlist-entry-row--progress');
@@ -789,7 +840,7 @@ export const PlaylistsManager = {
           _updatePlaylistHud();
           const playlists = this.load();
           const pl = playlists.find(p => p.id === current.playlistId);
-          const entry = pl?.entries[current.entryIndex];
+          const entry = pl ? _getPlaylistEntry(pl, getActivePlaylistSession()) : null;
           const game = entry ? this.main.gamesManager.findGameById(entry.gameId) : null;
           if (game) {
             window.location.href = this.main.gamesManager.generateGameLink(game);
@@ -817,7 +868,7 @@ export const PlaylistsManager = {
       });
 
       const titleSpan = _el('span', 'playlist-title', playlist.title);
-      const entry = playlist.entries[session.entryIndex];
+      const entry = _getPlaylistEntry(playlist, session);
       if (entry) {
         const totalCycles     = playlist.repeatCount ?? 1;
         const remainingCycles = session.remainingCycles ?? 1;
@@ -828,14 +879,20 @@ export const PlaylistsManager = {
         const repeatText = entry.repeatCount > 1
           ? `<span class="playlist-active-badge-reps">${icons.x}<span>${session.remainingRepeats}</span></span>`
           : '';
+        const shuffleActive = session.shuffleActive ?? !!playlist.shuffle;
+        const shuffleChip = shuffleActive
+          ? `<span class="playlist-active-badge-shuffle">${icons.random}</span>`
+          : '';
         badge.innerHTML = `
           <span class="playlist-active-badge-position">${session.entryIndex + 1}/${playlist.entries.length}</span>
           ${repeatText}
           ${cycleChip}
+          ${shuffleChip}
         `;
         let tip = `[Плейлист] ${playlist.title}[Позиция] ${session.entryIndex + 1} из ${playlist.entries.length}`;
         if (entry.repeatCount > 1) tip += `[Осталось повторов] ${session.remainingRepeats}`;
         if (totalCycles > 1) tip += `[Цикл] ${totalCycles - remainingCycles + 1} из ${totalCycles}`;
+        if (shuffleActive) tip += `[Порядок] случайный`;
         createCustomTooltip(badge, tip);
         titleSpan.appendChild(badge);
       }
@@ -850,25 +907,6 @@ export const PlaylistsManager = {
 
       const titleSpan = _el('span', 'playlist-title', playlist.title);
 
-      const renameBtn = _el('button', 'playlist-rename-btn');
-      renameBtn.innerHTML = icons.rename;
-      createCustomTooltip(renameBtn, 'Переименовать');
-      renameBtn.addEventListener('click', e => {
-        e.stopPropagation();
-        const t = prompt('Новое название:', playlist.title);
-        if (t && t.trim()) { this.renamePlaylist(playlist.id, t); this.refresh(); }
-      });
-
-      const delBtn = _el('button', 'playlist-delete-btn');
-      delBtn.innerHTML = icons.trashNothing;
-      createCustomTooltip(delBtn, 'Удалить плейлист');
-      delBtn.addEventListener('click', e => {
-        e.stopPropagation();
-        if (confirm(`Удалить плейлист «${playlist.title}»?`)) {
-          this.deletePlaylist(playlist.id);
-          this.refresh();
-        }
-      });
       // Playlist-level cycle stepper — only shown when repeatCount > 1 or on hover
       const cycleCount     = playlist.repeatCount ?? 1;
       const cycleStepper   = _el('div', 'playlist-header-stepper');
@@ -889,6 +927,7 @@ export const PlaylistsManager = {
         cycleCountSpan.textContent = String(next);
         cycleStepper.classList.toggle('playlist-header-stepper--default', next <= 1);
       });
+
       cycleIncBtn.addEventListener('click', e => {
         e.stopPropagation();
         const next = (playlist.repeatCount ?? 1) + 1;
@@ -898,7 +937,48 @@ export const PlaylistsManager = {
         cycleStepper.classList.remove('playlist-header-stepper--default');
       });
 
-      row.append(playBtn, titleSpan, cycleStepper, renameBtn, delBtn);
+      const shufflePlayBtn = _el('button', 'playlist-play-shuffle-btn');
+      shufflePlayBtn.innerHTML = icons.random;
+      const updateShuffleBtn = enabled => {
+        shufflePlayBtn.classList.toggle('active', enabled);
+        createCustomTooltip(shufflePlayBtn, enabled
+          ? `Отключить случайный порядок для «${playlist.title}»`
+          : `Включить случайный порядок для «${playlist.title}»`
+        );
+      };
+      updateShuffleBtn(!!playlist.shuffle);
+
+      shufflePlayBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        const playlists = this.load();
+        const current = playlists.find(p => p.id === playlist.id);
+        if (!current) return;
+        current.shuffle = !current.shuffle;
+        this.save(playlists);
+        updateShuffleBtn(current.shuffle);
+      });
+
+      const renameBtn = _el('button', 'playlist-rename-btn');
+      renameBtn.innerHTML = icons.rename;
+      createCustomTooltip(renameBtn, 'Переименовать');
+      renameBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        const t = prompt('Новое название:', playlist.title);
+        if (t && t.trim()) { this.renamePlaylist(playlist.id, t); this.refresh(); }
+      });
+
+      const delBtn = _el('button', 'playlist-delete-btn');
+      delBtn.innerHTML = icons.trashNothing;
+      createCustomTooltip(delBtn, 'Удалить плейлист');
+      delBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (confirm(`Удалить плейлист «${playlist.title}»?`)) {
+          this.deletePlaylist(playlist.id);
+          this.refresh();
+        }
+      });
+
+      row.append(playBtn, titleSpan, cycleStepper, shufflePlayBtn, renameBtn, delBtn);
     }
 
     // Toggle expand on row click (excluding buttons)
@@ -921,9 +1001,25 @@ export const PlaylistsManager = {
     if (!playlist.entries.length) {
       entryList.appendChild(_el('div', 'playlist-entries-empty', 'Нет игр. Добавьте из групп ниже.'));
     } else {
+      const activeRealIndex = isActive ? _getActiveEntryIndex(playlist, session) : -1;
       playlist.entries.forEach((entry, idx) => {
-        const isCurrentEntry = isActive && session.entryIndex === idx;
-        const isPassedEntry = isActive && idx < session.entryIndex;
+        const isCurrentEntry = isActive && idx === activeRealIndex;
+        // "Passed" entries: those that appear before the current position in the
+        // play order (shuffle-aware). In sequential mode this is idx < activeRealIndex.
+        // In shuffle mode we mark an entry passed if it has already been visited in
+        // the current cycle, i.e. its real index appears in shuffleOrder before the
+        // current position pointer.
+        let isPassedEntry = false;
+        if (isActive && !isCurrentEntry) {
+          const order = Array.isArray(session.shuffleOrder) && session.shuffleOrder.length === playlist.entries.length
+            ? session.shuffleOrder : null;
+          if (order) {
+            const posInOrder = order.indexOf(idx);
+            isPassedEntry = posInOrder >= 0 && posInOrder < session.entryIndex;
+          } else {
+            isPassedEntry = idx < activeRealIndex;
+          }
+        }
         const row = this._buildEntryRow(playlist, entry, session, isCurrentEntry, idx, isPassedEntry);
         entryList.appendChild(row);
       });

@@ -214,7 +214,7 @@
 
     .playlists-random-btn {
       @include playlist-header-icon-btn(
-        14px, 28px,
+        16px, 28px,
         hsl(var(--rg-popup-btn-sort)),
         hsla(var(--rg-popup-btn-sort) / 0.15)
       );
@@ -360,7 +360,8 @@
 
     .playlist-active-badge-position,
     .playlist-active-badge-reps,
-    .playlist-active-badge-cycles {
+    .playlist-active-badge-cycles,
+    .playlist-active-badge-shuffle {
       display: inline-flex;
       align-items: center;
       gap: 0.25em;
@@ -380,8 +381,13 @@
       color: var(--rg-playlist-active-badge-cycles);
     }
 
+    .playlist-active-badge-shuffle {
+      color: var(--rg-playlist-active-badge-shuffle);
+    }
+
     .playlist-active-badge-reps svg,
-    .playlist-active-badge-cycles svg {
+    .playlist-active-badge-cycles svg,
+    .playlist-active-badge-shuffle svg {
       width: 14px;
       height: 14px;
       flex-shrink: 0;
@@ -391,8 +397,14 @@
     // Icon buttons on the header row
     .playlist-play-btn,
     .playlist-pause-btn,
+    .playlist-play-shuffle-btn,
     .playlist-rename-btn {
       @include playlist-header-icon-btn(16px);
+    }
+
+    .playlist-play-shuffle-btn.active {
+      background: hsla(var(--rg-popup-btn-sort) / 0.25);
+      color: hsl(var(--rg-popup-btn-sort));
     }
 
     .playlist-delete-btn,

@@ -140,6 +140,29 @@
     border: 1px solid hsl(200, 45%, 40%);
   }
 
+  // Mixin: shared layout for every chip inside .playlist-hud-data.
+  // $secondary: true adds the smaller/secondary-chip overrides (font-size, font-weight,
+  // align-self) used by reps, cycles and shuffle — omit for the primary counter.
+  @mixin hud-chip($secondary: false) {
+    font-variant-numeric: tabular-nums;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+
+    @if $secondary {
+      font-size: 0.72em;
+      font-weight: 600;
+      align-self: stretch;
+    }
+
+    svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      pointer-events: none;
+    }
+  }
+
   // Mixin: all HSL-derived colour rules for one playlist-indicator theme.
   // Structural rules (layout, dimensions, transitions) live outside so they
   // are written exactly once. Only colour values belong here.
@@ -205,36 +228,23 @@
 
       // Counter — padded text zone, pointer signals panel toggle
       .playlist-hud-counter {
-        font-variant-numeric: tabular-nums;
-        display: inline-flex;
-        align-items: center;
-        gap: 3px;
+        @include hud-chip;
+      }
 
-        svg {
-          width: 14px;
-          height: 14px;
-          flex-shrink: 0;
-          pointer-events: none;
-        }
+      // Repeat chip — shown when entry repeatCount > 1
+      .playlist-hud-reps {
+        @include hud-chip($secondary: true);
       }
 
       // Cycle chip — shown only when playlist.repeatCount > 1
       // Visually separated from the main counter: dimmer, smaller, left border as divider
       .playlist-hud-cycles {
-        display: inline-flex;
-        align-items: center;
-        gap: 3px;
-        font-size: 0.72em;
-        font-weight: 600;
-        font-variant-numeric: tabular-nums;
-        align-self: stretch;
+        @include hud-chip($secondary: true);
+      }
 
-        svg {
-          width: 14px;
-          height: 14px;
-          flex-shrink: 0;
-          pointer-events: none;
-        }
+      // Shuffle chip — shown when playlist shuffle is enabled
+      .playlist-hud-shuffle {
+        @include hud-chip($secondary: true);
       }
     }
   }

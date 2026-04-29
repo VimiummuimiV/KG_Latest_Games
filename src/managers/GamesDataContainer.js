@@ -223,7 +223,11 @@ export class GamesDataContainer {
       const playlists = JSON.parse(localStorage.getItem('latestGamesPlaylists') || '[]');
       const playlist  = playlists.find(p => p.id === session.playlistId);
       if (!playlist) return null;
-      const entry = playlist.entries[session.entryIndex];
+      // Resolve the real entry index accounting for shuffle order
+      const order = Array.isArray(session.shuffleOrder) && session.shuffleOrder.length === playlist.entries.length
+        ? session.shuffleOrder : null;
+      const realEntryIndex = order ? (order[session.entryIndex] ?? 0) : session.entryIndex;
+      const entry = playlist.entries[realEntryIndex];
       if (!entry) return null;
       const totalCycles = playlist.repeatCount ?? 1;
       return {
@@ -235,6 +239,7 @@ export class GamesDataContainer {
         repeatCount:       entry.repeatCount ?? 1,
         totalCycles,
         remainingCycles:   totalCycles > 1 ? (session.remainingCycles ?? totalCycles) : 1,
+        shuffleActive:     session.shuffleActive ?? !!playlist.shuffle,
       };
     } catch { return null; }
   }
@@ -247,7 +252,7 @@ export class GamesDataContainer {
     this.ensureContainer();
     const indicator = document.createElement('div');
     indicator.className = 'indicator playlist-progress-indicator';
-    this._renderPlaylistIndicator(indicator, playlist, position, total, remainingRepeats, repeatCount, session, totalCycles, remainingCycles);
+    this._renderPlaylistIndicator(indicator, playlist, position, total, remainingRepeats, repeatCount, session, totalCycles, remainingCycles, !!data.shuffleActive);
 
     this.container.appendChild(indicator);
 
@@ -261,16 +266,17 @@ export class GamesDataContainer {
   }
 
   // Build/rebuild the full indicator DOM — used by both create and update.
-  _renderPlaylistIndicator(indicator, playlist, position, total, remainingRepeats, repeatCount, session, totalCycles = 1, remainingCycles = 1) {
+  _renderPlaylistIndicator(indicator, playlist, position, total, remainingRepeats, repeatCount, session, totalCycles = 1, remainingCycles = 1, shuffleActive = false) {
     const isPaused = !!(session?.paused);
     indicator.classList.toggle('playlist-progress-indicator--paused', isPaused);
-    indicator.innerHTML = this._playlistIndicatorHTML(position, total, remainingRepeats, repeatCount, isPaused, totalCycles, remainingCycles);
+    indicator.innerHTML = this._playlistIndicatorHTML(position, total, remainingRepeats, repeatCount, isPaused, totalCycles, remainingCycles, shuffleActive);
 
     // Hud data zone — click opens/toggles the panel
     const hudData = indicator.querySelector('.playlist-hud-data');
     let tip = `[Плейлист] ${playlist.title}[Позиция] ${position} из ${total}`;
     if (repeatCount > 1) tip += `[Осталось повторов] ${remainingRepeats}`;
     if (totalCycles > 1) tip += `[Цикл] ${totalCycles - remainingCycles + 1} из ${totalCycles}`;
+    if (shuffleActive) tip += `[Порядок] случайный`;
     createCustomTooltip(hudData, tip);
     hudData.addEventListener('click', () => {
       const rect = indicator.getBoundingClientRect();
@@ -324,19 +330,27 @@ export class GamesDataContainer {
     }
   }
 
-  _playlistIndicatorHTML(position, total, remainingRepeats, repeatCount, isPaused = false, totalCycles = 1, remainingCycles = 1) {
+  _playlistIndicatorHTML(position, total, remainingRepeats, repeatCount, isPaused = false, totalCycles = 1, remainingCycles = 1, shuffleActive = false) {
     const leftBtn = isPaused
       ? `<button class="playlist-hud-btn playlist-hud-resume">${icons.start}</button>`
       : `<button class="playlist-hud-btn playlist-hud-pause">${icons.pause}</button>`;
+    const repeatChip = repeatCount > 1
+      ? `<span class="playlist-hud-reps">${icons.x}${remainingRepeats}</span>`
+      : '';
     const cycleChip = totalCycles > 1
       ? `<span class="playlist-hud-cycles">${icons.refresh}${totalCycles - remainingCycles + 1}/${totalCycles}</span>`
       : '';
-    const repeatText = repeatCount > 1 ? ` ${icons.x}${remainingRepeats}` : '';
+    const shuffleChip = shuffleActive
+      ? `<span class="playlist-hud-shuffle">${icons.random}</span>`
+      : '';
+
     return `
       ${leftBtn}
       <div class="playlist-hud-data">
-      <span class="playlist-hud-counter">${position}/${total}${repeatText}</span>
+      <span class="playlist-hud-counter">${position}/${total}</span>
+      ${repeatChip}
       ${cycleChip}
+      ${shuffleChip}
       </div>
       <button class="playlist-hud-btn playlist-hud-stop">${icons.stop}</button>
     `;
@@ -348,8 +362,8 @@ export class GamesDataContainer {
     if (!indicator) return;
     const data = this._getPlaylistIndicatorData();
     if (!data) { indicator.remove(); return; }
-    const { playlist, position, total, remainingRepeats, repeatCount, session, totalCycles, remainingCycles } = data;
-    this._renderPlaylistIndicator(indicator, playlist, position, total, remainingRepeats, repeatCount, session, totalCycles, remainingCycles);
+    const { playlist, position, total, remainingRepeats, repeatCount, session, totalCycles, remainingCycles, shuffleActive } = data;
+    this._renderPlaylistIndicator(indicator, playlist, position, total, remainingRepeats, repeatCount, session, totalCycles, remainingCycles, shuffleActive);
   }
 
   // ============================================================================
