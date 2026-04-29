@@ -391,6 +391,33 @@ export const PlaylistsManager = {
     if (this.expandedPlaylistId === id) this.expandedPlaylistId = null;
   },
 
+  duplicatePlaylist(id) {
+    const playlists = this.load();
+    const source = playlists.find(p => p.id === id);
+    if (!source) return null;
+    // Strip any existing " (копия)" or " (копия N)" suffix to get a clean base title,
+    // so copying a copy doesn't keep appending "(копия) (копия) (копия)...".
+    const baseTitle = source.title.replace(/ \(копия(?: \d+)?\)$/, '');
+    let n = 1;
+    let title;
+    do { title = `${baseTitle} (копия ${n++})`; } while (playlists.some(p => p.title === title));
+    const copy = {
+      id: generateRandomString(),
+      title,
+      entries: source.entries.map(e => ({
+        id: generateRandomString(),
+        gameId: e.gameId,
+        repeatCount: e.repeatCount,
+        params: e.params ? { ...e.params } : {},
+      })),
+      shuffle: source.shuffle,
+      repeatCount: source.repeatCount,
+    };
+    playlists.push(copy);
+    this.save(playlists);
+    return copy;
+  },
+
   addEntry(playlistId, gameId, repeatCount = 1) {
     const playlists = this.load();
     const p = playlists.find(p => p.id === playlistId);
@@ -967,6 +994,15 @@ export const PlaylistsManager = {
         if (t && t.trim()) { this.renamePlaylist(playlist.id, t); this.refresh(); }
       });
 
+      const dupPlaylistBtn = _el('button', 'playlist-duplicate-btn');
+      dupPlaylistBtn.innerHTML = icons.copy;
+      createCustomTooltip(dupPlaylistBtn, 'Дублировать плейлист');
+      dupPlaylistBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        const copy = this.duplicatePlaylist(playlist.id);
+        if (copy) { this.expandedPlaylistId = null; this.refresh(); }
+      });
+
       const delBtn = _el('button', 'playlist-delete-btn');
       delBtn.innerHTML = icons.trashNothing;
       createCustomTooltip(delBtn, 'Удалить плейлист');
@@ -978,7 +1014,7 @@ export const PlaylistsManager = {
         }
       });
 
-      row.append(playBtn, titleSpan, cycleStepper, shufflePlayBtn, renameBtn, delBtn);
+      row.append(playBtn, titleSpan, cycleStepper, shufflePlayBtn, renameBtn, dupPlaylistBtn, delBtn);
     }
 
     // Toggle expand on row click (excluding buttons)

@@ -398,7 +398,8 @@
     .playlist-play-btn,
     .playlist-pause-btn,
     .playlist-play-shuffle-btn,
-    .playlist-rename-btn {
+    .playlist-rename-btn,
+    .playlist-duplicate-btn {
       @include playlist-header-icon-btn(16px);
     }
 
@@ -491,19 +492,30 @@
       border-color: var(--rg-border-primary) !important;
       opacity: 0.5 !important;
 
-      .playlist-entry-label { filter: grayscale(70%) !important; }
+      .playlist-entry-label,
       .playlist-entry-play-btn,
       .playlist-entry-drag-handle,
       .playlist-entry-duplicate-btn,
-      .playlist-entry-params-btn { color: var(--rg-text-tertiary); }
+      .playlist-entry-params-btn {
+        filter: grayscale(70%) !important;
+      }
 
-      .playlist-stepper-btn { background: transparent !important; }
+      .playlist-stepper-btn {
+        background: transparent !important;
+      }
 
       &:hover {
         background: var(--rg-bg-card) !important;
         border-color: var(--rg-border-hover) !important;
         opacity: 1 !important;
-        .playlist-entry-label { filter: none !important; }
+
+        .playlist-entry-label,
+        .playlist-entry-play-btn,
+        .playlist-entry-drag-handle,
+        .playlist-entry-duplicate-btn,
+        .playlist-entry-params-btn {
+          filter: none !important;
+        }
       }
     }
 
@@ -524,8 +536,7 @@
 
     // Per-entry play button — vertically aligned with header play/stop
     .playlist-entry-play-btn {
-      @include playlist-icon-btn('--rg-popup-item-new', 20px, 14px);
-      border-color: transparent;
+      @include playlist-icon-btn('--rg-playlist-entry-play', 20px, 14px);
     }
 
     // Drag handle
