@@ -184,7 +184,7 @@
   border: 1px solid var(--rg-border-primary) !important;
   border-radius: 4px !important;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3) !important;
-  min-width: 300px;
+  min-width: 400px;
   max-width: 500px;
   overflow: hidden;
 
@@ -306,6 +306,14 @@
     display: flex;
     flex-direction: column;
     gap: 0;
+
+    // Dragging state — same elevation and opacity as entry rows when dragged
+    &--dragging {
+      position: relative;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+      opacity: 0.85;
+    }
   }
 
   // Playlist header row — .vocab-labels-container style
@@ -431,6 +439,24 @@
       }
     }
 
+    // Drag handle — inherits color from the header row so it always contrasts
+    // on both the neutral-gray (inactive) and amber/green (active) backgrounds.
+    // Same grab/opacity pattern as .playlist-entry-drag-handle.
+    .playlist-block-drag-handle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      cursor: grab;
+      color: var(--rg-bg-primary);
+
+      svg { width: 12px; height: 12px; pointer-events: none; }
+
+      &:active { cursor: grabbing; }
+    }
+
     &:hover .playlist-header-stepper--default { opacity: 0.8; }
   }
 
@@ -487,10 +513,26 @@
 
     // Passed (already played) entries — dimmed via background, never opacity,
     // so inner controls remain fully visible and interactable.
+    // Exception: when the params panel is open the row is being actively edited,
+    // so we lift the dim entirely (same effect as hover).
     &--passed {
       background: var(--rg-bg-primary) !important;
       border-color: var(--rg-border-primary) !important;
       opacity: 0.5 !important;
+
+      &.playlist-entry-row--params-open {
+        opacity: 1 !important;
+        background: hsla(var(--rg-playlist-params-color) / 0.07) !important;
+        border-color: hsla(var(--rg-playlist-params-color) / 0.55) !important;
+
+        .playlist-entry-label,
+        .playlist-entry-play-btn,
+        .playlist-entry-drag-handle,
+        .playlist-entry-duplicate-btn,
+        .playlist-entry-params-btn {
+          filter: none !important;
+        }
+      }
 
       .playlist-entry-label,
       .playlist-entry-play-btn,
@@ -599,7 +641,7 @@
     }
 
     // Dragging state
-    &.playlist-entry-dragging {
+    &--dragging {
       position: relative;
       z-index: 100;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;

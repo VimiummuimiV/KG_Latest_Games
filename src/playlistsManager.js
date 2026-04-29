@@ -500,6 +500,14 @@ export const PlaylistsManager = {
     this.save(playlists);
   },
 
+  reorderPlaylists(fromIndex, toIndex) {
+    if (fromIndex === toIndex) return;
+    const playlists = this.load();
+    const [moved] = playlists.splice(fromIndex, 1);
+    playlists.splice(toIndex, 0, moved);
+    this.save(playlists);
+  },
+
   reorderEntries(playlistId, fromIndex, toIndex) {
     if (fromIndex === toIndex) return;
     const playlists = this.load();
@@ -832,6 +840,29 @@ export const PlaylistsManager = {
 
     const list = _el('div', 'playlists-list');
     playlists.forEach(playlist => list.appendChild(this._buildPlaylistBlock(playlist, session)));
+
+    // Playlist-level drag-to-reorder — same mechanism as entry drag, no duplication
+    this._attachSortableDrag(list, {
+      itemSelector:   '.playlist-block',
+      handleSelector: '.playlist-block-drag-handle',
+      draggingClass:  'playlist-block--dragging',
+      onReorder: (from, to) => this.reorderPlaylists(from, to),
+      onStart: block => {
+        const body = block.querySelector('.playlist-body');
+        if (body) {
+          block.dataset.dragBodyHidden = '1';
+          body.style.display = 'none';
+        }
+      },
+      onEnd: block => {
+        if (block.dataset.dragBodyHidden) {
+          const body = block.querySelector('.playlist-body');
+          if (body) body.style.display = '';
+          delete block.dataset.dragBodyHidden;
+        }
+      },
+    });
+
     panel.appendChild(list);
     return panel;
   },
@@ -924,7 +955,10 @@ export const PlaylistsManager = {
         titleSpan.appendChild(badge);
       }
 
-      row.append(pauseBtn, stopBtn, titleSpan);
+      const blockHandle = _el('span', 'playlist-block-drag-handle');
+      blockHandle.innerHTML = icons.dragable;
+
+      row.append(pauseBtn, stopBtn, blockHandle, titleSpan);
     } else {
       // Inactive: play button on left, rename + delete on right
       const playBtn = _el('button', 'playlist-play-btn');
@@ -1014,7 +1048,10 @@ export const PlaylistsManager = {
         }
       });
 
-      row.append(playBtn, titleSpan, cycleStepper, shufflePlayBtn, renameBtn, dupPlaylistBtn, delBtn);
+      const blockHandle = _el('span', 'playlist-block-drag-handle');
+      blockHandle.innerHTML = icons.dragable;
+
+      row.append(playBtn, blockHandle, titleSpan, cycleStepper, shufflePlayBtn, renameBtn, dupPlaylistBtn, delBtn);
     }
 
     // Toggle expand on row click (excluding buttons)
@@ -1059,8 +1096,13 @@ export const PlaylistsManager = {
         const row = this._buildEntryRow(playlist, entry, session, isCurrentEntry, idx, isPassedEntry);
         entryList.appendChild(row);
       });
-      // Entry drag-to-reorder (vertical, same feel as game buttons)
-      this._attachEntryDrag(entryList, playlist.id);
+      // Entry drag-to-reorder — uses the shared sortable drag helper
+      this._attachSortableDrag(entryList, {
+        itemSelector:   '.playlist-entry-row',
+        handleSelector: '.playlist-entry-drag-handle',
+        draggingClass:  'playlist-entry-row--dragging',
+        onReorder: (from, to) => this.reorderEntries(playlist.id, from, to),
+      });
     }
 
     body.appendChild(entryList);
@@ -1252,34 +1294,53 @@ export const PlaylistsManager = {
     return row;
   },
 
-  // ── Vertical drag-to-reorder for entry rows ─────────────────────────────
-  _attachEntryDrag(entryList, playlistId) {
-    // Guard against stacking multiple listeners when entries are live-injected
-    if (entryList.dataset.dragAttached) return;
-    entryList.dataset.dragAttached = '1';
+  // ── Generic vertical drag-to-reorder ────────────────────────────────────
+  // Shared by both entry rows and playlist blocks — zero duplication.
+  //
+  // opts.itemSelector     CSS selector for draggable items inside container
+  // opts.handleSelector   CSS selector for the drag handle element
+  // opts.draggingClass    class added to the item while it is being dragged
+  // opts.onReorder        (fromIndex, toIndex) => void — called on drop
+  //
+  // Placeholder visual is always .playlist-entry-placeholder so both drag
+  // contexts share the same dashed-border appearance without any extra CSS.
+  _attachSortableDrag(container, { itemSelector, handleSelector, draggingClass, onReorder, onStart, onEnd }) {
+    // Guard against stacking multiple listeners (e.g. live-injected entries)
+    if (container.dataset.dragAttached) return;
+    container.dataset.dragAttached = '1';
 
     let dragEl = null, placeholder = null, startY = 0, startIdx = 0;
 
-    const getRows = () => Array.from(entryList.querySelectorAll('.playlist-entry-row'));
+    const getItems = () => Array.from(container.querySelectorAll(itemSelector));
 
-    entryList.addEventListener('mousedown', e => {
-      const handle = e.target.closest('.playlist-entry-drag-handle');
+    container.addEventListener('mousedown', e => {
+      const handle = e.target.closest(handleSelector);
       if (!handle) return;
+      // Ensure the handle belongs to an item directly owned by this container,
+      // not to an item inside a nested sortable (e.g. entry handles vs block handles).
+      const item = handle.closest(itemSelector);
+      if (!item || item.parentNode !== container) return;
       e.preventDefault();
 
       // Clear any leftover placeholders from a previous interrupted drag
-      entryList.querySelectorAll('.playlist-entry-placeholder').forEach(p => p.remove());
+      container.querySelectorAll('.playlist-entry-placeholder').forEach(p => p.remove());
 
-      dragEl   = handle.closest('.playlist-entry-row');
-      startIdx = getRows().indexOf(dragEl);
+      dragEl   = item;
+      startIdx = getItems().indexOf(dragEl);
       startY   = e.clientY;
 
       const rect = dragEl.getBoundingClientRect();
-      dragEl.style.width  = rect.width + 'px';
-      dragEl.classList.add('playlist-entry-dragging');
+      dragEl.style.width = rect.width + 'px';
+      dragEl.classList.add(draggingClass);
+
+      if (onStart) onStart(dragEl);
+
+      // Re-measure height after onStart — it may have collapsed content (e.g. the
+      // playlist body), so the placeholder should reflect the post-collapse size.
+      const placeholderHeight = dragEl.getBoundingClientRect().height;
 
       placeholder = _el('div', 'playlist-entry-placeholder');
-      placeholder.style.height = rect.height + 'px';
+      placeholder.style.height = placeholderHeight + 'px';
       dragEl.parentNode.insertBefore(placeholder, dragEl);
 
       document.addEventListener('mousemove', onMove);
@@ -1288,17 +1349,16 @@ export const PlaylistsManager = {
 
     const onMove = e => {
       if (!dragEl) return;
-      const dy = e.clientY - startY;
-      dragEl.style.transform = `translateY(${dy}px)`;
+      dragEl.style.transform = `translateY(${e.clientY - startY}px)`;
 
-      const rows = getRows().filter(r => r !== dragEl);
+      const items = getItems().filter(r => r !== dragEl);
       let insertBefore = null;
-      for (const r of rows) {
+      for (const r of items) {
         const rRect = r.getBoundingClientRect();
         if (e.clientY < rRect.top + rRect.height / 2) { insertBefore = r; break; }
       }
-      if (insertBefore) entryList.insertBefore(placeholder, insertBefore);
-      else entryList.appendChild(placeholder);
+      if (insertBefore) container.insertBefore(placeholder, insertBefore);
+      else container.appendChild(placeholder);
     };
 
     const onUp = () => {
@@ -1306,19 +1366,20 @@ export const PlaylistsManager = {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
 
-      const rows   = getRows().filter(r => r !== dragEl);
-      const phIdx  = Array.from(entryList.children).indexOf(placeholder);
-      const toIdx  = Math.min(phIdx, rows.length);
-
-      dragEl.classList.remove('playlist-entry-dragging');
+      dragEl.classList.remove(draggingClass);
       dragEl.style.transform = '';
       dragEl.style.width     = '';
       placeholder.replaceWith(dragEl);
 
-      const finalIdx = getRows().indexOf(dragEl);
-      if (finalIdx !== startIdx) {
-        this.reorderEntries(playlistId, startIdx, finalIdx);
-      }
+      const finalIdx = getItems().indexOf(dragEl);
+      if (finalIdx !== startIdx) onReorder(startIdx, finalIdx);
+
+      if (onEnd) onEnd(dragEl);
+
+      // The browser fires a click event after mouseup on the same element.
+      // For playlist blocks that click would toggle expand/collapse, so we
+      // swallow exactly one click in the capture phase before it reaches any handler.
+      document.addEventListener('click', e => e.stopPropagation(), { capture: true, once: true });
 
       dragEl = null; placeholder = null;
     };
@@ -1505,7 +1566,12 @@ export const PlaylistsManager = {
                   playlist.entries.push(newEntry);
                   const newRow = this._buildEntryRow(fresh, newEntry, null, false, fresh.entries.length - 1);
                   entryList.appendChild(newRow);
-                  this._attachEntryDrag(entryList, playlist.id);
+                  this._attachSortableDrag(entryList, {
+                    itemSelector:   '.playlist-entry-row',
+                    handleSelector: '.playlist-entry-drag-handle',
+                    draggingClass:  'playlist-entry-row--dragging',
+                    onReorder: (from, to) => this.reorderEntries(playlist.id, from, to),
+                  });
                 }
               }
             }
