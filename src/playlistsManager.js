@@ -876,7 +876,7 @@ export const PlaylistsManager = {
     block.dataset.playlistId = playlist.id;
 
     // Header row — accordion toggle
-    const row = _el('div', `playlist-header-row${isActive ? ' playlist-header-row--active' : ''}`);
+    const row = _el('div', `playlist-header-row${isActive ? ' playlist-header-row--active' : ''}${isActive && session?.paused ? ' playlist-header-row--paused' : ''}`);
 
     if (isActive) {
       // Active: pause + stop buttons on the LEFT, badge + title on right

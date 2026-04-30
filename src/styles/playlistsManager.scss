@@ -334,9 +334,16 @@
 
     &:first-child { margin-top: 0; }
 
-    // Active playlist — amber/orange accent (same brightness range as the green)
     &--active {
-      background: hsl(var(--rg-popup-item-new));
+      background: hsl(var(--rg-playlist-header-active));
+
+      &.playlist-header-row--paused {
+        background: hsl(var(--rg-playlist-header-paused));
+
+        .playlist-active-badge-position {
+          color: hsl(var(--rg-playlist-header-paused));
+        }
+      }
     }
 
     .playlist-title {

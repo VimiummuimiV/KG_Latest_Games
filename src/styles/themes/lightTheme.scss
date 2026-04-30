@@ -90,10 +90,13 @@ $lightTheme: (
   // Playlist params
   "--rg-playlist-params-color": 270 55% 50%,
   // Playlist active badge
-  "--rg-playlist-active-badge-position": hsl(140, 40%, 35%),
-  "--rg-playlist-active-badge-reps": hsl(40, 40%, 40%),
+  "--rg-playlist-active-badge-position": hsl(120, 40%, 35%),
+  "--rg-playlist-active-badge-reps": hsl(40, 50%, 40%),
   "--rg-playlist-active-badge-cycles": hsl(200, 40%, 35%),
   "--rg-playlist-active-badge-shuffle": hsl(280, 40%, 45%),
   "--rg-playlist-entry-play": 120 40% 35%,
-  "--rg-playlist-entry-skip": 30 40% 45%
+  "--rg-playlist-entry-skip": 30 40% 45%,
+  // Playlist header
+  "--rg-playlist-header-active":  120 40% 35%,
+  "--rg-playlist-header-paused":   40 50% 40%
 );

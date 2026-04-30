@@ -181,16 +181,15 @@
   // Active playlist progress indicator
   .playlist-progress-indicator {
     border: 1px solid;  // width + style once; border-color comes from the mixin below
-    @include pl-indicator-theme(135, 45%);  // green — active
+    @include pl-indicator-theme(135, 45%); // active
     animation: bounceIn 0.3s ease forwards;
     padding: 0;
     gap: 0;
     overflow: hidden;
     cursor: default;
 
-    // Paused — amber/orange tint + pulse
     &--paused {
-      @include pl-indicator-theme(40, 60%);  // amber — paused
+      @include pl-indicator-theme(40, 60%); // paused
       animation: bounceIn 0.3s ease forwards, hudPause 2s ease-in-out 0.3s infinite;
     }
 
