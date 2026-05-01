@@ -810,7 +810,7 @@
     background: hsl(var(--rg-popup-item-new));
     border-radius: 2px;
     position: sticky;
-    top: calc(var(--picker-search-height, 34px) + var(--picker-confirm-height, 0px));
+    top: 36px;
     z-index: 2;
     display: flex;
     align-items: center;
