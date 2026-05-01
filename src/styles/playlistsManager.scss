@@ -26,6 +26,7 @@
   svg { width: $icon-size; height: $icon-size; pointer-events: none; }
 
   &:hover {
+    color: hsl(var(#{$color}));
     background: hsla(var(#{$color}) / 0.15);
     border-color: hsl(var(#{$color}));
   }
@@ -682,13 +683,14 @@
 
       &.has-overrides {
         color: hsl(var(--rg-playlist-params-color));
-        border-color: hsla(var(--rg-playlist-params-color) / 0.6);
         background: hsla(var(--rg-playlist-params-color) / 0.12);
+        border-color: hsla(var(--rg-playlist-params-color) / 0.6);
+      }
 
-        &:hover {
-          background: hsla(var(--rg-playlist-params-color) / 0.25);
-          border-color: hsl(var(--rg-playlist-params-color));
-        }
+      &:hover {
+        color: hsl(var(--rg-playlist-params-color));
+        background: hsla(var(--rg-playlist-params-color) / 0.25);
+        border-color: hsl(var(--rg-playlist-params-color));
       }
     }
   }
@@ -808,7 +810,7 @@
     background: hsl(var(--rg-popup-item-new));
     border-radius: 2px;
     position: sticky;
-    top: var(--picker-search-height, 34px);
+    top: calc(var(--picker-search-height, 34px) + var(--picker-confirm-height, 0px));
     z-index: 2;
     display: flex;
     align-items: center;
@@ -864,5 +866,229 @@
     color: var(--rg-text-tertiary);
     font-style: italic;
     font-size: 0.8em;
+  }
+
+  // ── Entry checkbox (only rendered in selection mode — no space taken otherwise) ──
+  .playlist-entry-checkbox {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: hsl(var(--rg-popup-btn-save));
+  }
+
+  // Selected entry row tint
+  .playlist-entry-row--selected {
+    background: hsla(var(--rg-popup-btn-save) / 0.1) !important;
+    border-color: hsla(var(--rg-popup-btn-save) / 0.5) !important;
+    &:hover {
+      background: hsla(var(--rg-popup-btn-save) / 0.18) !important;
+      border-color: hsla(var(--rg-popup-btn-save) / 0.75) !important;
+    }
+  }
+
+  // ── Multi-select action bar ────────────────────────────────────────────────
+  .playlist-multiselect-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4em 0.6em;
+    gap: 0.5em;
+    background: hsla(var(--rg-popup-btn-save) / 0.08);
+    border: 1px solid hsla(var(--rg-popup-btn-save) / 0.4);
+    border-radius: 3px !important;
+    margin-top: 0.3em;
+    transition: background 0.15s ease, border-color 0.15s ease;
+
+    .playlist-multiselect-count {
+      transition: color 0.15s ease;
+    }
+
+    // When bulk params panel is open below — merge visually like entry-row--params-open
+    &--params-open {
+      border-bottom-left-radius:  0 !important;
+      border-bottom-right-radius: 0 !important;
+      border-bottom: none !important;
+      border-color: hsla(var(--rg-playlist-params-color) / 0.55) !important;
+      background: hsla(var(--rg-playlist-params-color) / 0.07) !important;
+
+      .playlist-multiselect-count {
+        color: hsl(var(--rg-playlist-params-color));
+      }
+    }
+  }
+
+  .playlist-multiselect-left,
+  .playlist-multiselect-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    flex-shrink: 0;
+  }
+
+  .playlist-multiselect-count {
+    font-size: 0.78em;
+    font-weight: 600;
+    color: hsl(var(--rg-popup-btn-save));
+    flex-shrink: 0;
+  }
+
+  // Small text buttons (Все / Снять / ✕) — same neutral style
+  .playlist-multiselect-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    height: 20px;          // matches .playlist-stepper-btn height
+    font-size: 0.75em;
+    font-weight: 500;
+    font-family: inherit;
+    border-radius: 3px !important;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    outline: none;
+    appearance: none;
+    flex-shrink: 0;
+
+    svg { width: 11px; height: 11px; pointer-events: none; }
+
+    &--neutral {
+      background: var(--rg-bg-card);
+      color: var(--rg-text-secondary);
+      border: 1px solid var(--rg-border-primary);
+      &:hover { background: var(--rg-bg-hover); border-color: var(--rg-border-hover); color: var(--rg-text-primary); }
+    }
+
+    &--copy {
+      @include playlist-icon-btn('--rg-popup-btn-copy', 20px, 12px);
+    }
+
+    &--params {
+      @include playlist-icon-btn('--rg-playlist-params-color', 20px, 12px);
+      color: var(--rg-text-tertiary);
+      &:hover { color: hsl(var(--rg-playlist-params-color)); }
+    }
+  }
+
+  // Standalone remove button for the multiselect bar — same appearance as
+  // .playlist-entry-remove but without inheriting any entry-row context styles.
+  .playlist-multiselect-remove {
+    @include playlist-icon-btn('--rg-popup-btn-remove', 20px, 12px, true);
+  }
+
+  // Repeat stepper inside the multiselect bar — same tokens as entry stepper
+  .playlist-multiselect-stepper {
+    @include playlist-stepper(
+      $btn-color:        var(--rg-text-secondary),
+      $btn-bg:           var(--rg-bg-card),
+      $btn-bg-hover:     var(--rg-bg-hover),
+      $btn-border:       var(--rg-border-primary),
+      $btn-border-hover: var(--rg-border-hover),
+      $count-color:      var(--rg-text-primary),
+      $gap: 2px
+    );
+  }
+
+  // ── Bulk params panel action row ───────────────────────────────────────────
+  // .playlist-bulk-params already gets .playlist-entry-params styles from JS.
+  // Override top edge so it attaches flush to the bar above (no gap, no top border).
+  .playlist-bulk-params {
+    border-top-left-radius:  0 !important;
+    border-top-right-radius: 0 !important;
+    border-top: none !important;
+    border-color: hsla(var(--rg-playlist-params-color) / 0.55) !important;
+    margin-top: 0 !important;
+  }
+
+  .playlist-bulk-params-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    margin-top: 0.35em;
+    padding-top: 0.35em;
+    border-top: 1px solid hsla(var(--rg-playlist-params-color) / 0.3);
+  }
+
+  .playlist-bulk-params-apply {
+    @include playlist-labeled-btn('--rg-popup-btn-save', 0px);
+    padding: 0.2em 0.7em;
+    font-size: 0.75em;
+    font-family: inherit;
+  }
+
+  .playlist-bulk-params-clear {
+    @include playlist-labeled-btn('--rg-popup-btn-revert', 0px);
+    padding: 0.2em 0.7em;
+    font-size: 0.75em;
+    font-family: inherit;
+  }
+
+  .playlist-bulk-params-cancel {
+    @include playlist-labeled-btn('--rg-popup-btn-remove', 0px);
+    padding: 0.2em 0.7em;
+    font-size: 0.75em;
+    font-family: inherit;
+    margin-left: auto;
+  }
+
+  // ── Picker checkbox + confirm bar ──────────────────────────────────────────
+  .playlist-picker-checkbox {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: hsl(var(--rg-popup-btn-save));
+    // Hidden until the row is hovered, or any row is checked (confirm bar visible)
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    &:disabled { cursor: default; }
+  }
+
+  .playlist-picker-game-row:hover .playlist-picker-checkbox:not(:disabled),
+  .playlist-picker-game-row.picker-row--selected .playlist-picker-checkbox,
+  .playlist-picker-body:has(.playlist-picker-confirm-bar:not(.playlist-picker-confirm-bar--hidden))
+    .playlist-picker-game-row:not(.already-added) .playlist-picker-checkbox {
+    opacity: 1;
+  }
+
+  .playlist-picker-game-row.picker-row--selected {
+    background: hsla(var(--rg-popup-btn-save) / 0.1) !important;
+    border-color: hsla(var(--rg-popup-btn-save) / 0.5) !important;
+  }
+
+  .playlist-picker-confirm-bar {
+    position: sticky;
+    top: var(--picker-search-height, 34px);
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.4em 0.6em;
+    background: var(--rg-bg-primary);
+    border-bottom: 1px solid hsla(var(--rg-popup-btn-save) / 0.4);
+    z-index: 3;
+    &--hidden { display: none; }
+  }
+
+  .playlist-picker-confirm-count {
+    font-size: 0.75em;
+    font-weight: 600;
+    color: hsl(var(--rg-popup-btn-save));
+  }
+
+  .playlist-picker-confirm-btn {
+    @include playlist-labeled-btn('--rg-popup-btn-save', 0px);
+    padding: 0.2em 0.8em;
+    font-size: 0.78em;
+    font-family: inherit;
+  }
+
+  .playlist-picker-confirm-clear {
+    @include playlist-labeled-btn('--rg-popup-btn-remove', 0px);
+    padding: 0.2em 0.6em;
+    font-size: 0.78em;
+    font-family: inherit;
+    margin-left: auto;
   }
 }

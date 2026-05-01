@@ -249,42 +249,25 @@ function _generatePlaylistEntryLink(main, game, entry) {
 }
 
 /**
- * Build the collapsible per-entry params section that lets the user override
- * type (visibility), timeout and idletime for this specific playlist entry.
+ * Shared param group builder used by both _buildParamsSection and _buildBulkParamsSection.
+ * Appends Вид / TM / AFK groups into `section`, wires buttons to mutate `ep` and call
+ * `onPersist()`. Returns `syncConstraints` so the caller can run it once after build.
  */
-function _buildParamsSection(playlist, entry, paramsBtn) {
-  if (!entry.params) entry.params = {};
-  const ep = entry.params;
-
-  const section = _el('div', 'playlist-entry-params');
-
-  // Enforce: открытый (normal) cannot have timeout 5 — bump to 10 automatically.
+function _buildParamsGroups(section, ep, onPersist) {
   function syncConstraints() {
-    const isNormal = (ep.type ?? null) === 'normal';
+    // If the type is normal, disable the TM 5 button; if TM is currently 5, switch it to 10.
+    const isNormal = ep.type === 'normal';
     section.querySelectorAll('.playlist-entry-params-option[data-group="timeout"]').forEach(btn => {
-      const isBlocked = isNormal && Number(btn.dataset.val) === 5;
-      btn.disabled = isBlocked;
-      btn.classList.toggle('playlist-entry-params-option--disabled', isBlocked);
+      const blocked = isNormal && Number(btn.dataset.val) === 5;
+      btn.disabled = blocked;
+      btn.classList.toggle('playlist-entry-params-option--disabled', blocked);
     });
-    // Auto-bump: if normal is now active and timeout override is 5, switch to 10
     if (isNormal && ep.timeout === 5) {
       ep.timeout = 10;
       section.querySelectorAll('.playlist-entry-params-option[data-group="timeout"]').forEach(btn => {
         btn.classList.toggle('active', Number(btn.dataset.val) === ep.timeout);
       });
-      PlaylistsManager.setEntryParams(playlist.id, entry.id, ep);
-    }
-  }
-
-  function _persistAndRefresh() {
-    PlaylistsManager.setEntryParams(playlist.id, entry.id, ep);
-    syncConstraints();
-    _syncParamsBtnState(paramsBtn, ep);
-    const row = paramsBtn.closest('.playlist-entry-row');
-    if (row) {
-      const label = row.querySelector('.playlist-entry-label');
-      const game = PlaylistsManager.main?.gamesManager?.findGameById(entry.gameId);
-      if (label && game) _refreshEntryLabelTooltip(label, game, ep);
+      onPersist();
     }
   }
 
@@ -306,7 +289,8 @@ function _buildParamsSection(playlist, entry, paramsBtn) {
         setVal(wasActive ? null : val);
         group.querySelectorAll('.playlist-entry-params-option').forEach(b => b.classList.remove('active'));
         if (!wasActive) btn.classList.add('active');
-        _persistAndRefresh();
+        onPersist();
+        syncConstraints();
       });
 
       group.append(btn);
@@ -335,9 +319,30 @@ function _buildParamsSection(playlist, entry, paramsBtn) {
     )
   );
 
-  // Apply initial constraint state (e.g. params loaded from storage)
-  syncConstraints();
+  return syncConstraints;
+}
 
+/**
+ * Build the collapsible per-entry params section.
+ */
+function _buildParamsSection(playlist, entry, paramsBtn) {
+  if (!entry.params) entry.params = {};
+  const ep = entry.params;
+  const section = _el('div', 'playlist-entry-params');
+
+  function onPersist() {
+    PlaylistsManager.setEntryParams(playlist.id, entry.id, ep);
+    _syncParamsBtnState(paramsBtn, ep);
+    const row = paramsBtn.closest('.playlist-entry-row');
+    if (row) {
+      const label = row.querySelector('.playlist-entry-label');
+      const game  = PlaylistsManager.main?.gamesManager?.findGameById(entry.gameId);
+      if (label && game) _refreshEntryLabelTooltip(label, game, ep);
+    }
+  }
+
+  const syncConstraints = _buildParamsGroups(section, ep, onPersist);
+  syncConstraints();
   return section;
 }
 
@@ -354,6 +359,10 @@ export const PlaylistsManager = {
   expandedPlaylistId: null,
   _intendedX: null,
   _intendedY: null,
+  // Multi-select: maps playlistId → Set<entryId>. Survives refresh().
+  _selectedEntries: {},
+  // Which playlists currently have multi-select mode active (Set<playlistId>).
+  _selectionMode: new Set(),
 
   // ── Persistence ────────────────────────────────────────────────────────────
   load() {
@@ -498,6 +507,151 @@ export const PlaylistsManager = {
     if (!e) return;
     e.params = { ...params };
     this.save(playlists);
+  },
+
+  // ── Bulk operations ────────────────────────────────────────────────────────
+
+  bulkRemoveEntries(playlistId, entryIds) {
+    const ids = new Set(entryIds);
+    const playlists = this.load();
+    const p = playlists.find(p => p.id === playlistId);
+    if (!p) return;
+    p.entries = p.entries.filter(e => !ids.has(e.id));
+    this.save(playlists);
+    this._selectedEntries[playlistId]?.clear();
+    this._selectionMode.delete(playlistId);
+  },
+
+  bulkDuplicateEntries(playlistId, entryIds) {
+    const ids = new Set(entryIds);
+    const playlists = this.load();
+    const p = playlists.find(p => p.id === playlistId);
+    if (!p) return;
+    const copies = p.entries
+      .filter(e => ids.has(e.id))
+      .map(e => ({ id: generateRandomString(), gameId: e.gameId, repeatCount: e.repeatCount, params: e.params ? { ...e.params } : {} }));
+    p.entries.push(...copies);
+    this.save(playlists);
+    this._selectedEntries[playlistId]?.clear();
+    this._selectionMode.delete(playlistId);
+  },
+
+  // Merges params onto each selected entry. null value removes that key.
+  bulkSetParams(playlistId, entryIds, params) {
+    const ids = new Set(entryIds);
+    const playlists = this.load();
+    const p = playlists.find(p => p.id === playlistId);
+    if (!p) return;
+    p.entries.forEach(e => {
+      if (!ids.has(e.id)) return;
+      e.params = e.params ? { ...e.params } : {};
+      Object.entries(params).forEach(([k, v]) => {
+        if (v == null) delete e.params[k];
+        else e.params[k] = v;
+      });
+    });
+    this.save(playlists);
+    this._selectedEntries[playlistId]?.clear();
+    this._selectionMode.delete(playlistId);
+  },
+
+  bulkSetRepeat(playlistId, entryIds, count) {
+    const ids = new Set(entryIds);
+    const playlists = this.load();
+    const p = playlists.find(p => p.id === playlistId);
+    if (!p) return;
+    const newCount = Math.max(1, count);
+    p.entries.forEach(e => {
+      if (ids.has(e.id)) e.repeatCount = newCount;
+    });
+    this.save(playlists);
+  },
+
+  // ── Shared helpers ─────────────────────────────────────────────────────────
+
+  // Wraps _attachSortableDrag with the fixed entry-row options.
+  _attachEntryDrag(entryList, playlistId) {
+    this._attachSortableDrag(entryList, {
+      itemSelector:   '.playlist-entry-row',
+      handleSelector: '.playlist-entry-drag-handle',
+      draggingClass:  'playlist-entry-row--dragging',
+      onReorder: (from, to) => this.reorderEntries(playlistId, from, to),
+    });
+  },
+
+  // Drag-to-select: mousedown records the target state; mouseover while LMB
+  // held applies it to every checkbox the cursor crosses.
+  // cbSelector    — matches checkbox elements inside container
+  // onToggle(cb, checked) — called after each state change
+  _attachDragSelect(container, cbSelector, onToggle) {
+    if (container.dataset.dragSelectAttached) return;
+    container.dataset.dragSelectAttached = '1';
+    let dragState = null;
+
+    container.addEventListener('mousedown', e => {
+      const cb = e.target.closest(cbSelector);
+      if (!cb || cb.disabled) return;
+      // Prevent text selection while dragging across rows
+      e.preventDefault();
+      dragState = !cb.checked;
+      // Apply to the first checkbox immediately — mouseover won't fire for it
+      cb.checked = dragState;
+      onToggle(cb, dragState);
+    });
+    // mousedown already handled the toggle, so prevent the browser's click from
+    // re-toggling the same checkbox — which would undo the change on a single click.
+    container.addEventListener('click', e => {
+      const cb = e.target.closest(cbSelector);
+      if (!cb || cb.disabled) return;
+      e.preventDefault();
+    });
+    container.addEventListener('mouseover', e => {
+      if (dragState === null || e.buttons !== 1) { dragState = null; return; }
+      const cb = e.target.closest(cbSelector);
+      if (!cb || cb.disabled || cb.checked === dragState) return;
+      cb.checked = dragState;
+      onToggle(cb, dragState);
+    });
+    const stopDrag = () => { dragState = null; };
+    document.addEventListener('mouseup', stopDrag, { capture: true });
+  },
+
+  // Attach long-press auto-repeat to a stepper button.
+  // A single click still calls stepFn once (via the click event).
+  // Holding LMB fires stepFn after HOLD_DELAY ms, then every HOLD_INTERVAL ms.
+  // The click that fires on release after a hold is suppressed.
+  _attachStepperHold(btn, stepFn) {
+    const HOLD_DELAY    = 400; // ms before auto-repeat starts
+    const HOLD_INTERVAL =  120; // ms between auto-repeat ticks
+    let holdTimer = null;
+    let interval  = null;
+    let holdFired = false;
+
+    const stop = () => {
+      clearTimeout(holdTimer);
+      clearInterval(interval);
+      holdTimer = null;
+      interval  = null;
+    };
+
+    btn.addEventListener('mousedown', e => {
+      if (e.button !== 0) return;
+      holdFired = false;
+      holdTimer = setTimeout(() => {
+        holdFired = true;
+        stepFn();
+        interval = setInterval(stepFn, HOLD_INTERVAL);
+      }, HOLD_DELAY);
+    });
+    btn.addEventListener('mouseup',    stop);
+    btn.addEventListener('mouseleave', stop);
+    // Single click: holdFired is false → run stepFn normally.
+    // After a hold:  holdFired is true  → skip (hold already stepped) and reset.
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (holdFired) { holdFired = false; return; }
+      stepFn();
+    });
   },
 
   reorderPlaylists(fromIndex, toIndex) {
@@ -980,8 +1134,7 @@ export const PlaylistsManager = {
       createCustomTooltip(cycleStepper, 'Количество повторов всего плейлиста');
       if (cycleCount <= 1) cycleStepper.classList.add('playlist-header-stepper--default');
 
-      cycleDecBtn.addEventListener('click', e => {
-        e.stopPropagation();
+      this._attachStepperHold(cycleDecBtn, () => {
         const next = Math.max(1, (playlist.repeatCount ?? 1) - 1);
         this.setPlaylistCycles(playlist.id, next);
         playlist.repeatCount = next;
@@ -989,8 +1142,7 @@ export const PlaylistsManager = {
         cycleStepper.classList.toggle('playlist-header-stepper--default', next <= 1);
       });
 
-      cycleIncBtn.addEventListener('click', e => {
-        e.stopPropagation();
+      this._attachStepperHold(cycleIncBtn, () => {
         const next = (playlist.repeatCount ?? 1) + 1;
         this.setPlaylistCycles(playlist.id, next);
         playlist.repeatCount = next;
@@ -1074,14 +1226,21 @@ export const PlaylistsManager = {
     if (!playlist.entries.length) {
       entryList.appendChild(_el('div', 'playlist-entries-empty', 'Нет игр. Добавьте из групп ниже.'));
     } else {
+      const sel = this._selectedEntries[playlist.id] ??= new Set();
+      const inSelMode = this._selectionMode.has(playlist.id);
+
+      // Prune stale IDs
+      const validIds = new Set(playlist.entries.map(e => e.id));
+      for (const id of [...sel]) { if (!validIds.has(id)) sel.delete(id); }
+      if (sel.size === 0 && inSelMode) this._selectionMode.delete(playlist.id);
+
+      if (this._selectionMode.has(playlist.id)) {
+        entryList.appendChild(this._buildMultiSelectBar(playlist, sel));
+      }
+
       const activeRealIndex = isActive ? _getActiveEntryIndex(playlist, session) : -1;
       playlist.entries.forEach((entry, idx) => {
         const isCurrentEntry = isActive && idx === activeRealIndex;
-        // "Passed" entries: those that appear before the current position in the
-        // play order (shuffle-aware). In sequential mode this is idx < activeRealIndex.
-        // In shuffle mode we mark an entry passed if it has already been visited in
-        // the current cycle, i.e. its real index appears in shuffleOrder before the
-        // current position pointer.
         let isPassedEntry = false;
         if (isActive && !isCurrentEntry) {
           const order = Array.isArray(session.shuffleOrder) && session.shuffleOrder.length === playlist.entries.length
@@ -1093,16 +1252,58 @@ export const PlaylistsManager = {
             isPassedEntry = idx < activeRealIndex;
           }
         }
-        const row = this._buildEntryRow(playlist, entry, session, isCurrentEntry, idx, isPassedEntry);
-        entryList.appendChild(row);
+        entryList.appendChild(this._buildEntryRow(playlist, entry, session, isCurrentEntry, idx, isPassedEntry));
       });
-      // Entry drag-to-reorder — uses the shared sortable drag helper
-      this._attachSortableDrag(entryList, {
-        itemSelector:   '.playlist-entry-row',
-        handleSelector: '.playlist-entry-drag-handle',
-        draggingClass:  'playlist-entry-row--dragging',
-        onReorder: (from, to) => this.reorderEntries(playlist.id, from, to),
+
+      this._attachEntryDrag(entryList, playlist.id);
+
+      // ── Long-press on any entry to enter selection mode ──────────────────
+      // 500 ms hold on a row (not on a button/input) activates checkboxes.
+      // pointermove only cancels if the pointer actually moved beyond 6px —
+      // a bare pointerdown always fires a tiny synthetic move that would
+      // otherwise kill the timer before it ever fires.
+      let longPressTimer = null;
+      let longPressStartX = 0;
+      let longPressStartY = 0;
+      entryList.addEventListener('pointerdown', e => {
+        if (e.button !== 0) return;
+        if (e.target.closest('button, input, .playlist-entry-drag-handle')) return;
+        const row = e.target.closest('.playlist-entry-row');
+        if (!row) return;
+        longPressStartX = e.clientX;
+        longPressStartY = e.clientY;
+        longPressTimer = setTimeout(() => {
+          longPressTimer = null;
+          if (this._selectionMode.has(playlist.id)) return;
+          this._selectionMode.add(playlist.id);
+          const entryId = row.dataset.entryId;
+          if (entryId) sel.add(entryId);
+          this.refresh();
+        }, 500);
       });
+      const cancelLongPress = () => { if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; } };
+      entryList.addEventListener('pointerup',     cancelLongPress);
+      entryList.addEventListener('pointercancel', cancelLongPress);
+      entryList.addEventListener('pointermove', e => {
+        if (!longPressTimer) return;
+        const dx = e.clientX - longPressStartX;
+        const dy = e.clientY - longPressStartY;
+        if (Math.sqrt(dx * dx + dy * dy) > 6) cancelLongPress();
+      });
+
+      // ── Drag-to-select checkboxes (only active once in selection mode) ───
+      if (this._selectionMode.has(playlist.id)) {
+        this._attachDragSelect(entryList, '.playlist-entry-checkbox', (cb, checked) => {
+          const entryId = cb.dataset.entryId;
+          checked ? sel.add(entryId) : sel.delete(entryId);
+          cb.closest('.playlist-entry-row')?.classList.toggle('playlist-entry-row--selected', checked);
+          const bar = entryList.querySelector('.playlist-multiselect-bar');
+          if (bar) {
+            const span = bar.querySelector('.playlist-multiselect-count');
+            if (span) span.textContent = `${sel.size}`;
+          }
+        });
+      }
     }
 
     body.appendChild(entryList);
@@ -1167,8 +1368,7 @@ export const PlaylistsManager = {
       ? Math.max(0, entry.repeatCount - sessionAtBuild.remainingRepeats)
       : 0;
 
-    decBtn.addEventListener('click', e => {
-      e.stopPropagation();
+    this._attachStepperHold(decBtn, () => {
       const next = Math.max(1, entry.repeatCount - 1);
       this.setRepeat(playlist.id, entry.id, next);
       countSpan.textContent = String(next);
@@ -1176,8 +1376,7 @@ export const PlaylistsManager = {
       _updatePlaylistHud();
       _updateEntryProgress(row, entry, playedCount, isCurrentEntry);
     });
-    incBtn.addEventListener('click', e => {
-      e.stopPropagation();
+    this._attachStepperHold(incBtn, () => {
       const next = entry.repeatCount + 1;
       this.setRepeat(playlist.id, entry.id, next);
       countSpan.textContent = String(next);
@@ -1214,11 +1413,10 @@ export const PlaylistsManager = {
       if (!fresh) return;
       const entryList = row.closest('.playlist-entries');
       if (!entryList) return;
-      // Remove empty-state placeholder if present
-      const empty = entryList.querySelector('.playlist-entries-empty');
-      if (empty) empty.remove();
+      entryList.querySelector('.playlist-entries-empty')?.remove();
       const newRow = this._buildEntryRow(fresh, copy, null, false, fresh.entries.length - 1);
       entryList.appendChild(newRow);
+      this._attachEntryDrag(entryList, playlist.id);
     });
 
     // Per-entry play button — starts the playlist from this entry
@@ -1291,6 +1489,32 @@ export const PlaylistsManager = {
     });
 
     row.append(entryPlayBtn, handle, dupBtn, label, stepper, paramsBtn, removeBtn);
+
+    // ── Checkbox (only rendered when selection mode is active) ──────────────
+    if (PlaylistsManager._selectionMode.has(playlist.id)) {
+      const sel        = PlaylistsManager._selectedEntries[playlist.id] ??= new Set();
+      const isSelected = sel.has(entry.id);
+      const cb = document.createElement('input');
+      cb.type             = 'checkbox';
+      cb.className        = 'playlist-entry-checkbox';
+      cb.dataset.entryId  = entry.id;
+      cb.checked          = isSelected;
+      if (isSelected) row.classList.add('playlist-entry-row--selected');
+
+      cb.addEventListener('change', e => {
+        e.stopPropagation();
+        if (cb.checked) sel.add(entry.id);
+        else sel.delete(entry.id);
+        row.classList.toggle('playlist-entry-row--selected', cb.checked);
+        // Live-update bar count
+        const entryList = row.closest('.playlist-entries');
+        const countSpan = entryList?.querySelector('.playlist-multiselect-count');
+        if (countSpan) countSpan.textContent = `${sel.size}`;
+      });
+
+      row.prepend(cb);
+    }
+
     return row;
   },
 
@@ -1383,6 +1607,170 @@ export const PlaylistsManager = {
 
       dragEl = null; placeholder = null;
     };
+  },
+
+  // ── Multi-select action bar ────────────────────────────────────────────────
+  _buildMultiSelectBar(playlist, sel) {
+    const bar = _el('div', 'playlist-multiselect-bar');
+
+    // Left side: count + select-all + deselect + exit
+    const countSpan  = _el('span', 'playlist-multiselect-count', `${sel.size}`);
+
+    const selAllBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--neutral');
+    selAllBtn.textContent = 'Все';
+    createCustomTooltip(selAllBtn, 'Выбрать все');
+    selAllBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      playlist.entries.forEach(en => sel.add(en.id));
+      this.refresh();
+    });
+
+    const deselBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--neutral');
+    deselBtn.textContent = 'Снять';
+    createCustomTooltip(deselBtn, 'Снять выделение');
+    deselBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      sel.clear();
+      this.refresh();
+    });
+
+    const exitBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--neutral');
+    exitBtn.textContent = '✕';
+    createCustomTooltip(exitBtn, 'Выйти из режима выбора');
+    exitBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      sel.clear();
+      this._selectionMode.delete(playlist.id);
+      this.refresh();
+    });
+
+    // Right side: repeat stepper + duplicate + params + remove
+    const repCount = { value: 1 };
+    const repStepper  = _el('div', 'playlist-multiselect-stepper');
+    const repDecBtn   = _el('button', 'playlist-stepper-btn');
+    repDecBtn.innerHTML = icons.chevronLeft;
+    const repCountSpan = _el('span', 'playlist-stepper-count', '1');
+    const repIncBtn   = _el('button', 'playlist-stepper-btn');
+    repIncBtn.innerHTML = icons.chevronRight;
+    repStepper.append(repDecBtn, repCountSpan, repIncBtn);
+    createCustomTooltip(repStepper, 'Задать повторы для выбранных');
+
+    const applyBulkRepeat = () => {
+      this.bulkSetRepeat(playlist.id, [...sel], repCount.value);
+      // Update each affected entry row's stepper count in-place without a full refresh
+      const entryList = repStepper.closest('.playlist-entries');
+      if (entryList) {
+        sel.forEach(entryId => {
+          const row  = entryList.querySelector(`.playlist-entry-row[data-entry-id="${entryId}"]`);
+          const span = row?.querySelector('.playlist-stepper-count');
+          if (span) span.textContent = String(repCount.value);
+        });
+      }
+    };
+
+    this._attachStepperHold(repDecBtn, () => {
+      if (sel.size === 0) return;
+      repCount.value = Math.max(1, repCount.value - 1);
+      repCountSpan.textContent = String(repCount.value);
+      applyBulkRepeat();
+    });
+    this._attachStepperHold(repIncBtn, () => {
+      if (sel.size === 0) return;
+      repCount.value++;
+      repCountSpan.textContent = String(repCount.value);
+      applyBulkRepeat();
+    });
+
+    const dupBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--copy');
+    dupBtn.innerHTML = icons.copy;
+    createCustomTooltip(dupBtn, 'Дублировать выбранные');
+    dupBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      this.bulkDuplicateEntries(playlist.id, [...sel]);
+      this.refresh();
+    });
+
+    const paramsBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--params');
+    paramsBtn.innerHTML = icons.parameters;
+    createCustomTooltip(paramsBtn, 'Задать параметры для выбранных');
+    paramsBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const entryList = paramsBtn.closest('.playlist-entries');
+      if (!entryList) return;
+      const existing = entryList.querySelector('.playlist-bulk-params');
+      if (existing) {
+        existing.remove();
+        bar.classList.remove('playlist-multiselect-bar--params-open');
+        return;
+      }
+      bar.insertAdjacentElement('afterend', this._buildBulkParamsSection(playlist, [...sel]));
+      bar.classList.add('playlist-multiselect-bar--params-open');
+    });
+
+    const removeBtn = _el('button', 'playlist-multiselect-remove');
+    removeBtn.innerHTML = icons.delete;
+    createCustomTooltip(removeBtn, 'Убрать выбранные из плейлиста');
+    removeBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const n = sel.size;
+      if (!n) return;
+      const word = n === 1 ? 'игру' : n < 5 ? 'игры' : 'игр';
+      if (!confirm(`Убрать ${n} ${word} из плейлиста?`)) return;
+      this.bulkRemoveEntries(playlist.id, [...sel]);
+      this.refresh();
+    });
+
+    const left = _el('div', 'playlist-multiselect-left');
+    left.append(countSpan, selAllBtn, deselBtn, exitBtn);
+    const right = _el('div', 'playlist-multiselect-right');
+    right.append(repStepper, dupBtn, paramsBtn, removeBtn);
+    bar.append(left, right);
+    return bar;
+  },
+
+  // ── Bulk params panel ──────────────────────────────────────────────────────
+  _buildBulkParamsSection(playlist, entryIds) {
+    const section = _el('div', 'playlist-entry-params playlist-bulk-params');
+    const ep = {}; // neutral — nothing pre-selected
+
+    // Helper: remove section and clear the bar's params-open state
+    const closePanel = () => {
+      const bar = section.previousElementSibling?.classList.contains('playlist-multiselect-bar')
+        ? section.previousElementSibling : null;
+      section.remove();
+      bar?.classList.remove('playlist-multiselect-bar--params-open');
+    };
+
+    // onPersist is a no-op during editing; save happens on Apply
+    const syncConstraints = _buildParamsGroups(section, ep, () => {});
+    syncConstraints();
+
+    const actionRow = _el('div', 'playlist-bulk-params-actions');
+
+    const applyBtn = _el('button', 'playlist-bulk-params-apply');
+    applyBtn.textContent = 'Применить';
+    applyBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (!Object.keys(ep).length) { closePanel(); return; }
+      this.bulkSetParams(playlist.id, entryIds, ep);
+      this.refresh();
+    });
+
+    const clearBtn = _el('button', 'playlist-bulk-params-clear');
+    clearBtn.textContent = 'Сбросить у всех';
+    clearBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      this.bulkSetParams(playlist.id, entryIds, { type: null, timeout: null, idletime: null });
+      this.refresh();
+    });
+
+    const cancelBtn = _el('button', 'playlist-bulk-params-cancel');
+    cancelBtn.textContent = 'Отмена';
+    cancelBtn.addEventListener('click', e => { e.stopPropagation(); closePanel(); });
+
+    actionRow.append(applyBtn, clearBtn, cancelBtn);
+    section.appendChild(actionRow);
+    return section;
   },
 
   _buildCreateForm(onDone) {
@@ -1514,17 +1902,88 @@ export const PlaylistsManager = {
     searchInput.type        = 'text';
     searchInput.placeholder = 'Поиск по названию...';
     searchWrap.appendChild(searchInput);
-    body.appendChild(searchWrap);
 
-    // After appending, measure search wrap height and expose as CSS var
-    // so sticky group headers can offset themselves below it
+    // ── Multi-add state ────────────────────────────────────────────────────
+    const pickerSel = new Set(); // Set<gameId>
+
+    const confirmBar    = _el('div', 'playlist-picker-confirm-bar playlist-picker-confirm-bar--hidden');
+    const confirmCount  = _el('span', 'playlist-picker-confirm-count', '');
+    const confirmAddBtn = _el('button', 'playlist-picker-confirm-btn');
+    confirmAddBtn.textContent = 'Добавить выбранные';
+    const confirmClearBtn = _el('button', 'playlist-picker-confirm-clear');
+    confirmClearBtn.textContent = 'Снять';
+    confirmBar.append(confirmCount, confirmAddBtn, confirmClearBtn);
+
+    body.appendChild(searchWrap);
+    body.appendChild(confirmBar);
     requestAnimationFrame(() => {
       const h = searchWrap.offsetHeight;
       if (h) body.style.setProperty('--picker-search-height', `${h}px`);
     });
 
-    // Prevent outside-click handler from firing when interacting with the search
     searchInput.addEventListener('click', e => e.stopPropagation());
+
+    const updateConfirmBar = () => {
+      confirmCount.textContent = `${pickerSel.size}`;
+      const visible = pickerSel.size > 0;
+      confirmBar.classList.toggle('playlist-picker-confirm-bar--hidden', !visible);
+      // Keep group-header top offset in sync with confirm bar height
+      requestAnimationFrame(() => {
+        const h = visible ? confirmBar.offsetHeight : 0;
+        body.style.setProperty('--picker-confirm-height', `${h}px`);
+      });
+    };
+
+    // Inject newly added entries into the live entry list
+    const injectAddedEntries = (block, countBefore) => {
+      const entryList = block?.querySelector('.playlist-entries');
+      if (!entryList) return;
+      entryList.querySelector('.playlist-entries-empty')?.remove();
+      const fresh = this.load().find(p => p.id === playlist.id);
+      if (!fresh) return;
+      fresh.entries.slice(countBefore).forEach((newEntry, i) => {
+        playlist.entries.push(newEntry);
+        const newRow = this._buildEntryRow(fresh, newEntry, null, false, countBefore + i);
+        entryList.appendChild(newRow);
+      });
+      this._attachEntryDrag(entryList, playlist.id);
+    };
+
+    confirmAddBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const countBefore = playlist.entries.length;
+      pickerSel.forEach(gameId => {
+        this.addEntry(playlist.id, gameId, 1);
+        const gameRow = body.querySelector(`.playlist-picker-game-row[data-game-id="${gameId}"]`);
+        if (gameRow) {
+          gameRow.classList.add('already-added');
+          const cb = gameRow.querySelector('.playlist-picker-checkbox');
+          if (cb) { cb.checked = false; cb.disabled = true; }
+          const btn = gameRow.querySelector('.playlist-picker-add-btn');
+          if (btn) { btn.innerHTML = icons.checkmark; btn.disabled = true; }
+        }
+      });
+      pickerSel.clear();
+      updateConfirmBar();
+      injectAddedEntries(confirmBar.closest('.playlist-block'), countBefore);
+    });
+
+    confirmClearBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      pickerSel.clear();
+      body.querySelectorAll('.playlist-picker-checkbox').forEach(cb => { cb.checked = false; });
+      body.querySelectorAll('.playlist-picker-game-row').forEach(r => r.classList.remove('picker-row--selected'));
+      updateConfirmBar();
+    });
+
+    // Drag-to-select on picker rows
+    this._attachDragSelect(body, '.playlist-picker-checkbox', (cb, checked) => {
+      const gameId  = cb.dataset.gameId;
+      const gameRow = cb.closest('.playlist-picker-game-row');
+      checked ? pickerSel.add(gameId) : pickerSel.delete(gameId);
+      gameRow?.classList.toggle('picker-row--selected', checked);
+      updateConfirmBar();
+    });
 
     const allRows = [];
     this.main.groupsManager.groups.forEach(group => {
@@ -1535,9 +1994,22 @@ export const PlaylistsManager = {
 
       group.games.forEach(game => {
         const alreadyAdded = playlist.entries.some(e => e.gameId === game.id);
-        const gtype  = gameTypes[game.params.gametype] || game.params.gametype;
-        const name   = game.params.vocName ? `«${game.params.vocName}»` : gtype;
+        const gtype   = gameTypes[game.params.gametype] || game.params.gametype;
+        const name    = game.params.vocName ? `«${game.params.vocName}»` : gtype;
         const gameRow = _el('div', `playlist-picker-game-row${alreadyAdded ? ' already-added' : ''}`);
+        gameRow.dataset.gameId = game.id;
+
+        const pickerCb = document.createElement('input');
+        pickerCb.type      = 'checkbox';
+        pickerCb.className = 'playlist-picker-checkbox';
+        pickerCb.dataset.gameId = game.id;
+        pickerCb.disabled  = alreadyAdded;
+        pickerCb.addEventListener('change', e => {
+          e.stopPropagation();
+          pickerCb.checked ? pickerSel.add(game.id) : pickerSel.delete(game.id);
+          gameRow.classList.toggle('picker-row--selected', pickerCb.checked);
+          updateConfirmBar();
+        });
 
         const nameSpan = _el('span', `playlist-picker-game-name gametype-${game.params.gametype}`, name);
         const visLabel = visibilities[game.params.type] || game.params.type;
@@ -1550,37 +2022,22 @@ export const PlaylistsManager = {
         if (!alreadyAdded) {
           addBtn.addEventListener('click', e => {
             e.stopPropagation();
+            const countBefore = playlist.entries.length;
             this.addEntry(playlist.id, game.id, 1);
             addBtn.innerHTML = icons.checkmark;
             addBtn.disabled  = true;
             gameRow.classList.add('already-added');
-            // Live-inject into entry list
-            const block = addBtn.closest('.playlist-block');
-            if (block) {
-              const entryList = block.querySelector('.playlist-entries');
-              if (entryList) {
-                entryList.querySelector('.playlist-entries-empty')?.remove();
-                const fresh    = this.load().find(p => p.id === playlist.id);
-                const newEntry = fresh?.entries[fresh.entries.length - 1];
-                if (fresh && newEntry) {
-                  playlist.entries.push(newEntry);
-                  const newRow = this._buildEntryRow(fresh, newEntry, null, false, fresh.entries.length - 1);
-                  entryList.appendChild(newRow);
-                  this._attachSortableDrag(entryList, {
-                    itemSelector:   '.playlist-entry-row',
-                    handleSelector: '.playlist-entry-drag-handle',
-                    draggingClass:  'playlist-entry-row--dragging',
-                    onReorder: (from, to) => this.reorderEntries(playlist.id, from, to),
-                  });
-                }
-              }
-            }
+            pickerCb.disabled = true;
+            pickerSel.delete(game.id);
+            gameRow.classList.remove('picker-row--selected');
+            updateConfirmBar();
+            injectAddedEntries(addBtn.closest('.playlist-block'), countBefore);
           });
         } else {
           addBtn.disabled = true;
         }
 
-        gameRow.append(nameSpan, descSpan, addBtn);
+        gameRow.append(pickerCb, nameSpan, descSpan, addBtn);
         body.appendChild(gameRow);
         allRows.push({ gameRow, groupHeader, name: name.toLowerCase() });
       });
