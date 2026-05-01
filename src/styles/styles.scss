@@ -12,9 +12,11 @@
 :root {
   &.latest-games-light-theme {
     @include theme(light.$lightTheme);
+    color-scheme: light;
   }
   &.latest-games-dark-theme {
     @include theme(dark.$darkTheme);
+    color-scheme: dark;
   }
 }
 

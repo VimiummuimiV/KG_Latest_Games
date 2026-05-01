@@ -934,13 +934,13 @@
     flex-shrink: 0;
   }
 
-  // Small text buttons (Все / Снять) — same neutral style
+  // Small text buttons (Все / Снять / Выйти) — same neutral style
   .playlist-multiselect-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 0 6px;
-    height: 20px;          // matches .playlist-stepper-btn height
+    height: 20px;
     font-size: 0.75em;
     font-weight: 500;
     font-family: inherit;

@@ -1931,13 +1931,8 @@ export const PlaylistsManager = {
       confirmBar.classList.toggle('playlist-picker-confirm-bar--hidden', !visible);
       // Keep group-header top offset in sync with confirm bar height
       requestAnimationFrame(() => {
-        if (visible) {
-          const bodyTop = body.getBoundingClientRect().top;
-          const barBottom = confirmBar.getBoundingClientRect().bottom;
-          body.style.setProperty('--picker-confirm-height', `${Math.round(barBottom - bodyTop)}px`);
-        } else {
-          body.style.setProperty('--picker-confirm-height', '0px');
-        }
+        const h = visible ? confirmBar.offsetHeight : 0;
+        body.style.setProperty('--picker-confirm-height', `${h}px`);
       });
     };
 
