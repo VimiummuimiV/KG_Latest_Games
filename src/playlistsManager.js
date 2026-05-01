@@ -1757,7 +1757,7 @@ export const PlaylistsManager = {
     });
 
     const clearBtn = _el('button', 'playlist-bulk-params-clear');
-    clearBtn.textContent = 'Сбросить у всех';
+    clearBtn.textContent = 'Сбросить';
     clearBtn.addEventListener('click', e => {
       e.stopPropagation();
       this.bulkSetParams(playlist.id, entryIds, { type: null, timeout: null, idletime: null });
@@ -1909,7 +1909,7 @@ export const PlaylistsManager = {
     const confirmBar    = _el('div', 'playlist-picker-confirm-bar playlist-picker-confirm-bar--hidden');
     const confirmCount  = _el('span', 'playlist-picker-confirm-count', '');
     const confirmAddBtn = _el('button', 'playlist-picker-confirm-btn');
-    confirmAddBtn.textContent = 'Добавить выбранные';
+    confirmAddBtn.textContent = 'Добавить';
     const confirmClearBtn = _el('button', 'playlist-picker-confirm-clear');
     confirmClearBtn.textContent = 'Снять';
     confirmBar.append(confirmCount, confirmAddBtn, confirmClearBtn);
