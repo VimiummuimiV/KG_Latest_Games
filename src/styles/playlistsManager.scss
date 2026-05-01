@@ -934,7 +934,7 @@
     flex-shrink: 0;
   }
 
-  // Small text buttons (Все / Снять / ✕) — same neutral style
+  // Small text buttons (Все / Снять) — same neutral style
   .playlist-multiselect-btn {
     display: inline-flex;
     align-items: center;
@@ -975,6 +975,11 @@
   // .playlist-entry-remove but without inheriting any entry-row context styles.
   .playlist-multiselect-remove {
     @include playlist-icon-btn('--rg-popup-btn-remove', 20px, 12px, true);
+  }
+
+  // Exit-selection-mode button — neutral SVG icon, no border at rest.
+  .playlist-multiselect-exit {
+    @include playlist-icon-btn('--rg-popup-btn-remove', 20px, 11px, true);
   }
 
   // Repeat stepper inside the multiselect bar — same tokens as entry stepper
@@ -1060,7 +1065,7 @@
 
   .playlist-picker-confirm-bar {
     position: sticky;
-    top: var(--picker-search-height, 34px);
+    top: var(--picker-search-height, 36px);
     display: flex;
     align-items: center;
     gap: 0.4em;

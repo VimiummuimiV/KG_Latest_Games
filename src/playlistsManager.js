@@ -1634,8 +1634,8 @@ export const PlaylistsManager = {
       this.refresh();
     });
 
-    const exitBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--neutral');
-    exitBtn.textContent = '✕';
+    const exitBtn = _el('button', 'playlist-multiselect-exit');
+    exitBtn.innerHTML = icons.x;
     createCustomTooltip(exitBtn, 'Выйти из режима выбора');
     exitBtn.addEventListener('click', e => {
       e.stopPropagation();
@@ -1917,8 +1917,10 @@ export const PlaylistsManager = {
     body.appendChild(searchWrap);
     body.appendChild(confirmBar);
     requestAnimationFrame(() => {
-      const h = searchWrap.offsetHeight;
-      if (h) body.style.setProperty('--picker-search-height', `${h}px`);
+      const bodyTop = body.getBoundingClientRect().top;
+      const wrapBottom = searchWrap.getBoundingClientRect().bottom;
+      const h = Math.round(wrapBottom - bodyTop);
+      if (h > 0) body.style.setProperty('--picker-search-height', `${h}px`);
     });
 
     searchInput.addEventListener('click', e => e.stopPropagation());
@@ -1929,8 +1931,13 @@ export const PlaylistsManager = {
       confirmBar.classList.toggle('playlist-picker-confirm-bar--hidden', !visible);
       // Keep group-header top offset in sync with confirm bar height
       requestAnimationFrame(() => {
-        const h = visible ? confirmBar.offsetHeight : 0;
-        body.style.setProperty('--picker-confirm-height', `${h}px`);
+        if (visible) {
+          const bodyTop = body.getBoundingClientRect().top;
+          const barBottom = confirmBar.getBoundingClientRect().bottom;
+          body.style.setProperty('--picker-confirm-height', `${Math.round(barBottom - bodyTop)}px`);
+        } else {
+          body.style.setProperty('--picker-confirm-height', '0px');
+        }
       });
     };
 
