@@ -1256,7 +1256,7 @@ export const PlaylistsManager = {
     // Set CSS var so the sticky multiselect bar knows how far down to sit.
     // Uses rAF so the row is painted and offsetHeight is accurate.
     requestAnimationFrame(() => {
-      block.style.setProperty('--playlist-header-height', `${row.offsetHeight + 5}px`);
+      block.style.setProperty('--playlist-header-height', `${row.offsetHeight}px`);
     });
 
     if (!isExpanded) return block;
