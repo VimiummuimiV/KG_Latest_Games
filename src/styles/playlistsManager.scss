@@ -1012,6 +1012,9 @@
     border-radius: 3px !important;
     margin-top: 0.3em;
     transition: background 0.15s ease, border-color 0.15s ease;
+    position: sticky;
+    top: var(--playlist-header-height, 0px);
+    z-index: 9; // just below playlist-header-row (z-index: 10)
 
     .playlist-multiselect-count {
       transition: color 0.15s ease;

@@ -1253,6 +1253,12 @@ export const PlaylistsManager = {
 
     block.appendChild(row);
 
+    // Set CSS var so the sticky multiselect bar knows how far down to sit.
+    // Uses rAF so the row is painted and offsetHeight is accurate.
+    requestAnimationFrame(() => {
+      block.style.setProperty('--playlist-header-height', `${row.offsetHeight + 5}px`);
+    });
+
     if (!isExpanded) return block;
 
     // Collapsible body
@@ -1956,9 +1962,12 @@ export const PlaylistsManager = {
     };
 
     const closePicker = () => {
-      // Also exit picker selection mode on close
+      // Exit picker selection mode and clear all row selections on close
       body.classList.remove('playlist-picker-body--selection');
       pickerSel.clear();
+      body.querySelectorAll('.playlist-picker-checkbox').forEach(cb => { cb.checked = false; });
+      body.querySelectorAll('.playlist-picker-game-row').forEach(r => r.classList.remove('picker-row--selected'));
+      updateConfirmBar();
       body.classList.add('playlist-picker-body--hidden');
       toggleBtn.innerHTML = `${icons.plus}<span>Добавить игры</span>`;
       requestAnimationFrame(() => PlaylistsManager._constrain());
