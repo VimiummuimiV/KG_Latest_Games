@@ -768,7 +768,23 @@
   }
 
   // ── Game picker ─────────────────────────────────────────────────────────────
-  .playlist-game-picker { margin-top: 0.5em; }
+  // Sticky at the bottom of the .playlists-list scroll container so the
+  // "Добавить игры" button is always reachable regardless of scroll position.
+  .playlist-game-picker {
+    position: sticky;
+    bottom: 0;
+    z-index: 9; // below playlist-header-row (10) but above normal content
+    background: var(--rg-bg-primary);
+    padding: 0.5em 0;
+    border-top: 1px solid var(--rg-border-primary);
+  }
+
+  // Button row — single toggle, always stays inside .playlist-game-picker
+  .playlist-picker-btn-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+  }
 
   .playlist-picker-toggle {
     @include playlist-labeled-btn('--rg-popup-btn-sort', 13px);
@@ -777,30 +793,110 @@
     user-select: none;
   }
 
+  // ── Group filter chip strip — toggled by Фильтры button in overlay footer ─
+  .playlist-picker-group-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3em;
+    padding: 0 0.5em 0.45em;
+    position: sticky;
+    top: var(--picker-search-height, 36px);
+    background: var(--rg-bg-primary);
+    z-index: 4;
+    border-bottom: 1px solid var(--rg-border-primary);
+
+    &--hidden { display: none; }
+  }
+
+  // Overlay footer: buttons left-aligned
+  .playlist-picker-overlay-footer {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.3em;
+    background: var(--rg-bg-primary);
+    border-top: 1px solid var(--rg-border-primary);
+    padding: 0.5em;
+    z-index: 6;
+  }
+
+  // ── Overlay body — floats above playlists-list, attached to popup root ──
   .playlist-picker-body {
     margin-top: 0.3em;
     max-height: 40vh;
     overflow-y: auto;
     overflow-x: hidden;
     @include thin-scrollbar();
-    // No outer border — individual rows carry their own border like vocab-item
     &--hidden { display: none; }
+
+    &--overlay {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      max-height: none;
+      z-index: 50;
+      background: var(--rg-bg-primary);
+      overflow-y: auto;
+      overflow-x: hidden;
+      margin-top: 0;
+      @include thin-scrollbar();
+    }
   }
 
-  // Search inside picker — same padding as vocab manager search
+  // Search inside picker
   .playlist-picker-search-wrap {
-    padding: 0.5em 0;
+    padding: 0.5em 0.5em 0.4em;
     position: sticky;
     top: 0;
     background: var(--rg-bg-primary);
-    z-index: 3;
+    z-index: 5;
 
     .playlist-search-input {
       @include playlist-text-input(var(--rg-bg-hover));
     }
   }
 
-  // Group header — matches .vocab-labels-container exactly
+  // Chips: neutral gray by default, sort-color accent when active.
+  // NOT using playlist-labeled-btn — that mixin is for action buttons (creates/sorts).
+  // These are filter toggles: should read as inactive/off until explicitly enabled.
+  .playlist-picker-group-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2em 0.6em;
+    font-size: 0.78em;
+    font-weight: 500;
+    font-family: inherit;
+    white-space: nowrap;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: var(--rg-bg-card);
+    color: var(--rg-text-secondary);
+    border: 1px solid var(--rg-border-primary);
+    border-radius: 3px !important;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: var(--rg-bg-hover);
+      border-color: var(--rg-border-hover);
+      color: var(--rg-text-primary);
+    }
+
+    &.active {
+      background: hsla(var(--rg-popup-btn-sort) / 0.15) !important;
+      border-color: hsl(var(--rg-popup-btn-sort)) !important;
+      color: hsl(var(--rg-popup-btn-sort)) !important;
+      font-weight: 600;
+
+      &:hover { background: hsla(var(--rg-popup-btn-sort) / 0.25) !important; }
+    }
+  }
+
+  // Group header — sticky, offset below search + optional filter strip + confirm bar
   .playlist-picker-group-header {
     padding: 0.5em 0.7em;
     margin: 0.6em 0 0.3em 0;
@@ -810,7 +906,11 @@
     background: hsl(var(--rg-popup-item-new));
     border-radius: 2px;
     position: sticky;
-    top: 36px;
+    top: calc(
+      var(--picker-search-height, 36px) +
+      var(--picker-group-filter-height, 0px) +
+      var(--picker-confirm-height, 0px)
+    );
     z-index: 2;
     display: flex;
     align-items: center;
@@ -1065,7 +1165,7 @@
 
   .playlist-picker-confirm-bar {
     position: sticky;
-    top: var(--picker-search-height, 36px);
+    top: calc(var(--picker-search-height, 36px) + var(--picker-group-filter-height, 0px));
     display: flex;
     align-items: center;
     gap: 0.4em;
@@ -1094,6 +1194,5 @@
     padding: 0.2em 0.6em;
     font-size: 0.78em;
     font-family: inherit;
-    margin-left: auto;
   }
 }

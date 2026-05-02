@@ -1868,75 +1868,148 @@ export const PlaylistsManager = {
   },
 
   _buildGamePicker(playlist) {
-    const picker    = _el('div', 'playlist-game-picker');
+    const picker = _el('div', 'playlist-game-picker');
+
+    // ── Button row: single "Add games" toggle ─────────────────────────────
+    const btnRow    = _el('div', 'playlist-picker-btn-row');
     const toggleBtn = _el('button', 'playlist-picker-toggle');
     toggleBtn.innerHTML = `${icons.plus}<span>Добавить игры</span>`;
+    createCustomTooltip(toggleBtn, 'Показать список игр для добавления в плейлист');
 
-    const body = _el('div', 'playlist-picker-body playlist-picker-body--hidden');
+    btnRow.append(toggleBtn);
+    picker.appendChild(btnRow);
 
-    const setToggleState = hidden => {
-      toggleBtn.innerHTML = hidden
-        ? `${icons.plus}<span>Добавить игры</span>`
-        : `${icons.chevronLeft}<span>Свернуть</span>`;
+    // ── Picker body — portaled to popup root so it floats above playlists-list
+    const body = _el('div', 'playlist-picker-body playlist-picker-body--hidden playlist-picker-body--overlay');
+
+    // ── Dedicated close footer inside the overlay (never moves, always at bottom) ──
+    const overlayFooter   = _el('div', 'playlist-picker-overlay-footer');
+    const collapseBtn     = _el('button', 'playlist-picker-toggle');
+    collapseBtn.innerHTML = `${icons.chevronLeft}<span>Свернуть</span>`;
+    createCustomTooltip(collapseBtn, 'Закрыть список игр и вернуться к плейлисту');
+
+    const filtersBtn      = _el('button', 'playlist-picker-toggle playlist-picker-filters-btn');
+    filtersBtn.innerHTML  = `<span>Фильтры</span>`;
+    createCustomTooltip(filtersBtn, '[Клик] Показать / Скрыть фильтр по группам [ЛКМ + Перетаскивание] Множественный выбор групп');
+
+    overlayFooter.append(collapseBtn, filtersBtn);
+
+    // ── Open / close helpers ───────────────────────────────────────────────
+    const _positionOverlay = () => {
+      const popup = PlaylistsManager.popup;
+      if (!popup || body.classList.contains('playlist-picker-body--hidden')) return;
+      const header = popup.querySelector('.popup-header');
+      const pr = popup.getBoundingClientRect();
+      const top = header
+        ? Math.round(header.getBoundingClientRect().bottom - pr.top)
+        : 0;
+      body.style.top = top + 'px';
     };
 
+    const openPicker = () => {
+      const popup = PlaylistsManager.popup;
+      if (!popup) return;
+      if (!popup.contains(body)) popup.appendChild(body);
+      body.classList.remove('playlist-picker-body--hidden');
+      toggleBtn.innerHTML = `${icons.chevronLeft}<span>Свернуть</span>`;
+      _positionOverlay();
+      requestAnimationFrame(() => { syncHeights(); PlaylistsManager._constrain(); });
+    };
+
+    const closePicker = () => {
+      body.classList.add('playlist-picker-body--hidden');
+      toggleBtn.innerHTML = `${icons.plus}<span>Добавить игры</span>`;
+      requestAnimationFrame(() => PlaylistsManager._constrain());
+    };
+
+    // toggleBtn in picker (sticky bottom of playlists-list) — always visible
     toggleBtn.addEventListener('click', e => {
       e.stopPropagation();
-      const hidden = body.classList.toggle('playlist-picker-body--hidden');
-      setToggleState(hidden);
-      requestAnimationFrame(() => {
-        // If the panel is currently constrained by the viewport edges, keep it there after expanding the picker
-        if (hidden && PlaylistsManager.popup) {
-          if (PlaylistsManager._intendedX !== null) PlaylistsManager.popup.style.left = PlaylistsManager._intendedX + 'px';
-          if (PlaylistsManager._intendedY !== null) PlaylistsManager.popup.style.top  = PlaylistsManager._intendedY + 'px';
-        }
-        PlaylistsManager._constrain();
-      });
+      body.classList.contains('playlist-picker-body--hidden') ? openPicker() : closePicker();
     });
 
-    if (!this.main) { picker.append(toggleBtn, body); return picker; }
+    // collapseBtn in overlay footer — mirrors the same action
+    collapseBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      closePicker();
+    });
 
-    // Search inside picker
+    // filtersBtn wired after groupFilterRow is defined (see below)
+
+    if (!this.main) { picker.append(body); return picker; }
+
+    // ── Search ─────────────────────────────────────────────────────────────
     const searchWrap  = _el('div', 'playlist-picker-search-wrap');
     const searchInput = _el('input', 'playlist-search-input');
     searchInput.type        = 'text';
     searchInput.placeholder = 'Поиск по названию...';
     searchWrap.appendChild(searchInput);
+    searchInput.addEventListener('click', e => e.stopPropagation());
+
+    // ── Group filter chip strip — always visible when picker is open ──────
+    const groupFilterRow = _el('div', 'playlist-picker-group-filter playlist-picker-group-filter--hidden');
+    const activeGroups   = new Set();
+    let   chipDragState  = null;
+
+    // filtersBtn toggles the chip strip; active state mirrors strip visibility
+    filtersBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      groupFilterRow.classList.toggle('playlist-picker-group-filter--hidden');
+      syncHeights();
+    });
 
     // ── Multi-add state ────────────────────────────────────────────────────
     const pickerSel = new Set(); // Set<gameId>
 
-    const confirmBar    = _el('div', 'playlist-picker-confirm-bar playlist-picker-confirm-bar--hidden');
-    const confirmCount  = _el('span', 'playlist-picker-confirm-count', '');
-    const confirmAddBtn = _el('button', 'playlist-picker-confirm-btn');
-    confirmAddBtn.textContent = 'Добавить';
+    // ── Confirm bar ────────────────────────────────────────────────────────
+    const confirmBar      = _el('div', 'playlist-picker-confirm-bar playlist-picker-confirm-bar--hidden');
+    const confirmCount    = _el('span', 'playlist-picker-confirm-count', '');
+    const confirmAddBtn   = _el('button', 'playlist-picker-confirm-btn');
+    confirmAddBtn.textContent  = 'Добавить';
     const confirmClearBtn = _el('button', 'playlist-picker-confirm-clear');
     confirmClearBtn.textContent = 'Снять';
     confirmBar.append(confirmCount, confirmAddBtn, confirmClearBtn);
 
-    body.appendChild(searchWrap);
-    body.appendChild(confirmBar);
-    requestAnimationFrame(() => {
-      const bodyTop = body.getBoundingClientRect().top;
-      const wrapBottom = searchWrap.getBoundingClientRect().bottom;
-      const h = Math.round(wrapBottom - bodyTop);
-      if (h > 0) body.style.setProperty('--picker-search-height', `${h}px`);
-    });
+    // ── Sync CSS vars for sticky top offsets ──────────────────────────────
+    const syncHeights = () => {
+      requestAnimationFrame(() => {
+        const sh = searchWrap.offsetHeight;
+        const filterVisible = !groupFilterRow.classList.contains('playlist-picker-group-filter--hidden');
+        const gh = filterVisible ? groupFilterRow.offsetHeight : 0;
+        body.style.setProperty('--picker-search-height',       `${sh}px`);
+        body.style.setProperty('--picker-group-filter-height', `${gh}px`);
+        const ch = confirmBar.classList.contains('playlist-picker-confirm-bar--hidden')
+          ? 0 : confirmBar.offsetHeight;
+        body.style.setProperty('--picker-confirm-height', `${ch}px`);
+      });
+    };
 
-    searchInput.addEventListener('click', e => e.stopPropagation());
+    // ── Combined filter: text + group chips ────────────────────────────────
+    const applyFilter = () => {
+      const term    = searchInput.value.toLowerCase().trim();
+      const byGroup = activeGroups.size > 0;
+      const visibleHeaders = new Set();
+      allRows.forEach(({ gameRow, groupHeader, name, groupTitle }) => {
+        const show = (!term || name.includes(term)) && (!byGroup || activeGroups.has(groupTitle));
+        gameRow.style.display = show ? '' : 'none';
+        if (show) visibleHeaders.add(groupHeader);
+      });
+      body.querySelectorAll('.playlist-picker-group-header').forEach(h => {
+        h.style.display = visibleHeaders.has(h) ? '' : 'none';
+      });
+    };
 
+    // ── Confirm bar update ─────────────────────────────────────────────────
     const updateConfirmBar = () => {
       confirmCount.textContent = `${pickerSel.size}`;
       const visible = pickerSel.size > 0;
       confirmBar.classList.toggle('playlist-picker-confirm-bar--hidden', !visible);
-      // Keep group-header top offset in sync with confirm bar height
-      requestAnimationFrame(() => {
-        const h = visible ? confirmBar.offsetHeight : 0;
-        body.style.setProperty('--picker-confirm-height', `${h}px`);
-      });
+      syncHeights();
     };
 
-    // Inject newly added entries into the live entry list
+    // ── Inject newly added entries into the live entry list ────────────────
+    // picker (btn-row) stays in its original DOM place even after body is
+    // portaled, so picker.closest() still resolves the playlist-block correctly.
     const injectAddedEntries = (block, countBefore) => {
       const entryList = block?.querySelector('.playlist-entries');
       if (!entryList) return;
@@ -1967,7 +2040,7 @@ export const PlaylistsManager = {
       });
       pickerSel.clear();
       updateConfirmBar();
-      injectAddedEntries(confirmBar.closest('.playlist-block'), countBefore);
+      injectAddedEntries(picker.closest('.playlist-block'), countBefore);
     });
 
     confirmClearBtn.addEventListener('click', e => {
@@ -1978,7 +2051,7 @@ export const PlaylistsManager = {
       updateConfirmBar();
     });
 
-    // Drag-to-select on picker rows
+    // ── Drag-to-select on game rows ────────────────────────────────────────
     this._attachDragSelect(body, '.playlist-picker-checkbox', (cb, checked) => {
       const gameId  = cb.dataset.gameId;
       const gameRow = cb.closest('.playlist-picker-game-row');
@@ -1987,6 +2060,7 @@ export const PlaylistsManager = {
       updateConfirmBar();
     });
 
+    // ── Build game rows (keyed by group) ───────────────────────────────────
     const allRows = [];
     this.main.groupsManager.groups.forEach(group => {
       if (!group.games.length) return;
@@ -2033,7 +2107,7 @@ export const PlaylistsManager = {
             pickerSel.delete(game.id);
             gameRow.classList.remove('picker-row--selected');
             updateConfirmBar();
-            injectAddedEntries(addBtn.closest('.playlist-block'), countBefore);
+            injectAddedEntries(picker.closest('.playlist-block'), countBefore);
           });
         } else {
           addBtn.disabled = true;
@@ -2041,26 +2115,58 @@ export const PlaylistsManager = {
 
         gameRow.append(pickerCb, nameSpan, descSpan, addBtn);
         body.appendChild(gameRow);
-        allRows.push({ gameRow, groupHeader, name: name.toLowerCase() });
+        allRows.push({ gameRow, groupHeader, name: name.toLowerCase(), groupTitle: group.title });
       });
     });
 
     if (!allRows.length) body.appendChild(_el('div', 'playlist-picker-empty', 'Нет доступных игр'));
 
-    searchInput.addEventListener('input', e => {
-      const term = e.target.value.toLowerCase().trim();
-      const visibleGroups = new Set();
-      allRows.forEach(({ gameRow, groupHeader, name }) => {
-        const match = !term || name.includes(term);
-        gameRow.style.display = match ? '' : 'none';
-        if (match) visibleGroups.add(groupHeader);
-      });
-      body.querySelectorAll('.playlist-picker-group-header').forEach(h => {
-        h.style.display = visibleGroups.has(h) ? '' : 'none';
-      });
+    // ── Build group chips (one per unique group that has games) ───────────
+    const groupsWithGames = [...new Set(allRows.map(r => r.groupTitle))];
+    groupsWithGames.forEach(groupTitle => {
+      const chip = _el('button', 'playlist-picker-group-chip');
+      chip.textContent        = groupTitle;
+      chip.dataset.groupTitle = groupTitle;
+      createCustomTooltip(chip, `Показать только группу «${groupTitle}»`);
+      groupFilterRow.appendChild(chip);
     });
 
-    picker.append(toggleBtn, body);
+    // Chip state helper
+    const applyChipState = (chip, state) => {
+      chip.classList.toggle('active', state);
+      state ? activeGroups.add(chip.dataset.groupTitle) : activeGroups.delete(chip.dataset.groupTitle);
+    };
+
+    // Drag-to-toggle chips — LMB down sets intent, mouseover spreads it
+    groupFilterRow.addEventListener('mousedown', e => {
+      const chip = e.target.closest('.playlist-picker-group-chip');
+      if (!chip) return;
+      e.preventDefault();
+      chipDragState = !chip.classList.contains('active');
+      applyChipState(chip, chipDragState);
+      applyFilter();
+    });
+    groupFilterRow.addEventListener('mouseover', e => {
+      if (chipDragState === null || e.buttons !== 1) { chipDragState = null; return; }
+      const chip = e.target.closest('.playlist-picker-group-chip');
+      if (chip && chip.classList.contains('active') !== chipDragState) {
+        applyChipState(chip, chipDragState);
+        applyFilter();
+      }
+    });
+    document.addEventListener('mouseup', () => { chipDragState = null; }, { capture: true });
+
+    searchInput.addEventListener('input', () => applyFilter());
+
+    // ── Assemble body (prepend sticky controls, game rows already appended)
+    // Final DOM order: searchWrap → groupFilterRow → confirmBar → [rows] → overlayFooter
+    body.prepend(confirmBar);
+    if (groupsWithGames.length > 0) body.prepend(groupFilterRow);
+    body.prepend(searchWrap);
+    body.append(overlayFooter);
+
+    // body stays detached until openPicker() portals it to the popup root.
+    // picker only ever contains btnRow (sticky bottom of playlists-list).
     return picker;
   }
 };
