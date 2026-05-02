@@ -1227,16 +1227,14 @@ export const PlaylistsManager = {
       entryList.appendChild(_el('div', 'playlist-entries-empty', 'Нет игр. Добавьте из групп ниже.'));
     } else {
       const sel = this._selectedEntries[playlist.id] ??= new Set();
-      const inSelMode = this._selectionMode.has(playlist.id);
 
-      // Prune stale IDs
+      // Prune stale IDs that no longer exist in the playlist
       const validIds = new Set(playlist.entries.map(e => e.id));
       for (const id of [...sel]) { if (!validIds.has(id)) sel.delete(id); }
-      if (sel.size === 0 && inSelMode) this._selectionMode.delete(playlist.id);
+      if (sel.size === 0) this._selectionMode.delete(playlist.id);
 
-      if (this._selectionMode.has(playlist.id)) {
-        entryList.appendChild(this._buildMultiSelectBar(playlist, sel));
-      }
+      // ── Multiselect bar — always in DOM; CSS hides it until selection mode ─
+      entryList.appendChild(this._buildMultiSelectBar(playlist, sel, entryList));
 
       const activeRealIndex = isActive ? _getActiveEntryIndex(playlist, session) : -1;
       playlist.entries.forEach((entry, idx) => {
@@ -1257,9 +1255,23 @@ export const PlaylistsManager = {
 
       this._attachEntryDrag(entryList, playlist.id);
 
-      // ── Long-press on any entry to enter selection mode ──────────────────
-      // 500 ms hold on a row (not on a button/input) activates checkboxes.
-      // pointermove only cancels if the pointer actually moved beyond 6px —
+      // Restore selection mode class if it was active before a data-driven refresh
+      if (this._selectionMode.has(playlist.id)) {
+        entryList.classList.add('playlist-entries--selection');
+      }
+
+      // ── Drag-to-select checkboxes — always attached; checkboxes always in DOM ──
+      this._attachDragSelect(entryList, '.playlist-entry-checkbox', (cb, checked) => {
+        const entryId = cb.dataset.entryId;
+        checked ? sel.add(entryId) : sel.delete(entryId);
+        cb.closest('.playlist-entry-row')?.classList.toggle('playlist-entry-row--selected', checked);
+        const span = entryList.querySelector('.playlist-multiselect-count');
+        if (span) span.textContent = `${sel.size}`;
+      });
+
+      // ── Long-press on any entry row to enter selection mode ──────────────
+      // Toggles playlist-entries--selection directly — no refresh().
+      // pointermove only cancels if the pointer actually moved beyond 6 px —
       // a bare pointerdown always fires a tiny synthetic move that would
       // otherwise kill the timer before it ever fires.
       let longPressTimer = null;
@@ -1274,11 +1286,19 @@ export const PlaylistsManager = {
         longPressStartY = e.clientY;
         longPressTimer = setTimeout(() => {
           longPressTimer = null;
-          if (this._selectionMode.has(playlist.id)) return;
+          if (entryList.classList.contains('playlist-entries--selection')) return;
+          entryList.classList.add('playlist-entries--selection');
           this._selectionMode.add(playlist.id);
+          // Pre-select the long-pressed row in-place
           const entryId = row.dataset.entryId;
-          if (entryId) sel.add(entryId);
-          this.refresh();
+          if (entryId) {
+            sel.add(entryId);
+            row.classList.add('playlist-entry-row--selected');
+            const cb = row.querySelector('.playlist-entry-checkbox');
+            if (cb) cb.checked = true;
+            const span = entryList.querySelector('.playlist-multiselect-count');
+            if (span) span.textContent = `${sel.size}`;
+          }
         }, 500);
       });
       const cancelLongPress = () => { if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; } };
@@ -1290,20 +1310,6 @@ export const PlaylistsManager = {
         const dy = e.clientY - longPressStartY;
         if (Math.sqrt(dx * dx + dy * dy) > 6) cancelLongPress();
       });
-
-      // ── Drag-to-select checkboxes (only active once in selection mode) ───
-      if (this._selectionMode.has(playlist.id)) {
-        this._attachDragSelect(entryList, '.playlist-entry-checkbox', (cb, checked) => {
-          const entryId = cb.dataset.entryId;
-          checked ? sel.add(entryId) : sel.delete(entryId);
-          cb.closest('.playlist-entry-row')?.classList.toggle('playlist-entry-row--selected', checked);
-          const bar = entryList.querySelector('.playlist-multiselect-bar');
-          if (bar) {
-            const span = bar.querySelector('.playlist-multiselect-count');
-            if (span) span.textContent = `${sel.size}`;
-          }
-        });
-      }
     }
 
     body.appendChild(entryList);
@@ -1490,15 +1496,15 @@ export const PlaylistsManager = {
 
     row.append(entryPlayBtn, handle, dupBtn, label, stepper, paramsBtn, removeBtn);
 
-    // ── Checkbox (only rendered when selection mode is active) ──────────────
-    if (PlaylistsManager._selectionMode.has(playlist.id)) {
+    // ── Checkbox — always in DOM; CSS hides it until playlist-entries--selection ──
+    {
       const sel        = PlaylistsManager._selectedEntries[playlist.id] ??= new Set();
       const isSelected = sel.has(entry.id);
       const cb = document.createElement('input');
-      cb.type             = 'checkbox';
-      cb.className        = 'playlist-entry-checkbox';
-      cb.dataset.entryId  = entry.id;
-      cb.checked          = isSelected;
+      cb.type            = 'checkbox';
+      cb.className       = 'playlist-entry-checkbox';
+      cb.dataset.entryId = entry.id;
+      cb.checked         = isSelected;
       if (isSelected) row.classList.add('playlist-entry-row--selected');
 
       cb.addEventListener('change', e => {
@@ -1610,8 +1616,20 @@ export const PlaylistsManager = {
   },
 
   // ── Multi-select action bar ────────────────────────────────────────────────
-  _buildMultiSelectBar(playlist, sel) {
+  // entryList is passed so that select-all / deselect / exit can update
+  // checkboxes and row classes in-place without a full refresh().
+  _buildMultiSelectBar(playlist, sel, entryList) {
     const bar = _el('div', 'playlist-multiselect-bar');
+
+    // Shared helper: exit selection mode in-place without refresh()
+    const exitSelectionMode = () => {
+      sel.clear();
+      this._selectionMode.delete(playlist.id);
+      entryList.classList.remove('playlist-entries--selection');
+      entryList.querySelectorAll('.playlist-entry-checkbox').forEach(cb => { cb.checked = false; });
+      entryList.querySelectorAll('.playlist-entry-row--selected').forEach(r => r.classList.remove('playlist-entry-row--selected'));
+      countSpan.textContent = '0';
+    };
 
     // Left side: count + select-all + deselect + exit
     const countSpan  = _el('span', 'playlist-multiselect-count', `${sel.size}`);
@@ -1622,7 +1640,12 @@ export const PlaylistsManager = {
     selAllBtn.addEventListener('click', e => {
       e.stopPropagation();
       playlist.entries.forEach(en => sel.add(en.id));
-      this.refresh();
+      // Tick every checkbox and highlight every row in-place
+      entryList.querySelectorAll('.playlist-entry-checkbox').forEach(cb => {
+        cb.checked = true;
+        cb.closest('.playlist-entry-row')?.classList.add('playlist-entry-row--selected');
+      });
+      countSpan.textContent = `${sel.size}`;
     });
 
     const deselBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--neutral');
@@ -1631,7 +1654,9 @@ export const PlaylistsManager = {
     deselBtn.addEventListener('click', e => {
       e.stopPropagation();
       sel.clear();
-      this.refresh();
+      entryList.querySelectorAll('.playlist-entry-checkbox').forEach(cb => { cb.checked = false; });
+      entryList.querySelectorAll('.playlist-entry-row--selected').forEach(r => r.classList.remove('playlist-entry-row--selected'));
+      countSpan.textContent = '0';
     });
 
     const exitBtn = _el('button', 'playlist-multiselect-exit');
@@ -1639,9 +1664,7 @@ export const PlaylistsManager = {
     createCustomTooltip(exitBtn, 'Выйти из режима выбора');
     exitBtn.addEventListener('click', e => {
       e.stopPropagation();
-      sel.clear();
-      this._selectionMode.delete(playlist.id);
-      this.refresh();
+      exitSelectionMode();
     });
 
     // Right side: repeat stepper + duplicate + params + remove
@@ -1917,6 +1940,9 @@ export const PlaylistsManager = {
     };
 
     const closePicker = () => {
+      // Also exit picker selection mode on close
+      body.classList.remove('playlist-picker-body--selection');
+      pickerSel.clear();
       body.classList.add('playlist-picker-body--hidden');
       toggleBtn.innerHTML = `${icons.plus}<span>Добавить игры</span>`;
       requestAnimationFrame(() => PlaylistsManager._constrain());
@@ -1959,7 +1985,7 @@ export const PlaylistsManager = {
     });
 
     // ── Multi-add state ────────────────────────────────────────────────────
-    const pickerSel = new Set(); // Set<gameId>
+    const pickerSel = new Set(); // Set<gameId> — local to this picker instance
 
     // ── Confirm bar ────────────────────────────────────────────────────────
     const confirmBar      = _el('div', 'playlist-picker-confirm-bar playlist-picker-confirm-bar--hidden');
@@ -2039,6 +2065,8 @@ export const PlaylistsManager = {
         }
       });
       pickerSel.clear();
+      // Exit picker selection mode after bulk-add
+      body.classList.remove('playlist-picker-body--selection');
       updateConfirmBar();
       injectAddedEntries(picker.closest('.playlist-block'), countBefore);
     });
@@ -2046,17 +2074,10 @@ export const PlaylistsManager = {
     confirmClearBtn.addEventListener('click', e => {
       e.stopPropagation();
       pickerSel.clear();
+      // Exit picker selection mode on clear
+      body.classList.remove('playlist-picker-body--selection');
       body.querySelectorAll('.playlist-picker-checkbox').forEach(cb => { cb.checked = false; });
       body.querySelectorAll('.playlist-picker-game-row').forEach(r => r.classList.remove('picker-row--selected'));
-      updateConfirmBar();
-    });
-
-    // ── Drag-to-select on game rows ────────────────────────────────────────
-    this._attachDragSelect(body, '.playlist-picker-checkbox', (cb, checked) => {
-      const gameId  = cb.dataset.gameId;
-      const gameRow = cb.closest('.playlist-picker-game-row');
-      checked ? pickerSel.add(gameId) : pickerSel.delete(gameId);
-      gameRow?.classList.toggle('picker-row--selected', checked);
       updateConfirmBar();
     });
 
@@ -2075,17 +2096,20 @@ export const PlaylistsManager = {
         const gameRow = _el('div', `playlist-picker-game-row${alreadyAdded ? ' already-added' : ''}`);
         gameRow.dataset.gameId = game.id;
 
-        const pickerCb = document.createElement('input');
-        pickerCb.type      = 'checkbox';
-        pickerCb.className = 'playlist-picker-checkbox';
-        pickerCb.dataset.gameId = game.id;
-        pickerCb.disabled  = alreadyAdded;
-        pickerCb.addEventListener('change', e => {
-          e.stopPropagation();
-          pickerCb.checked ? pickerSel.add(game.id) : pickerSel.delete(game.id);
-          gameRow.classList.toggle('picker-row--selected', pickerCb.checked);
-          updateConfirmBar();
-        });
+        // ── Checkbox — always in DOM; CSS hides it until playlist-picker-body--selection ──
+        if (!alreadyAdded) {
+          const pickerCb = document.createElement('input');
+          pickerCb.type      = 'checkbox';
+          pickerCb.className = 'playlist-picker-checkbox';
+          pickerCb.dataset.gameId = game.id;
+          pickerCb.addEventListener('change', e => {
+            e.stopPropagation();
+            pickerCb.checked ? pickerSel.add(game.id) : pickerSel.delete(game.id);
+            gameRow.classList.toggle('picker-row--selected', pickerCb.checked);
+            updateConfirmBar();
+          });
+          gameRow.append(pickerCb);
+        }
 
         const nameSpan = _el('span', `playlist-picker-game-name gametype-${game.params.gametype}`, name);
         const visLabel = visibilities[game.params.type] || game.params.type;
@@ -2103,7 +2127,8 @@ export const PlaylistsManager = {
             addBtn.innerHTML = icons.checkmark;
             addBtn.disabled  = true;
             gameRow.classList.add('already-added');
-            pickerCb.disabled = true;
+            const cb = gameRow.querySelector('.playlist-picker-checkbox');
+            if (cb) { cb.checked = false; cb.disabled = true; }
             pickerSel.delete(game.id);
             gameRow.classList.remove('picker-row--selected');
             updateConfirmBar();
@@ -2113,10 +2138,57 @@ export const PlaylistsManager = {
           addBtn.disabled = true;
         }
 
-        gameRow.append(pickerCb, nameSpan, descSpan, addBtn);
+        gameRow.append(nameSpan, descSpan, addBtn);
         body.appendChild(gameRow);
         allRows.push({ gameRow, groupHeader, name: name.toLowerCase(), groupTitle: group.title });
       });
+    });
+
+    // ── Drag-to-select on game rows — always attached; checkboxes always in DOM ──
+    this._attachDragSelect(body, '.playlist-picker-checkbox', (cb, checked) => {
+      const gameId  = cb.dataset.gameId;
+      const gameRow = cb.closest('.playlist-picker-game-row');
+      checked ? pickerSel.add(gameId) : pickerSel.delete(gameId);
+      gameRow?.classList.toggle('picker-row--selected', checked);
+      updateConfirmBar();
+    });
+
+    // ── Long-press on any game row to enter picker selection mode ──────────
+    // Toggles playlist-picker-body--selection directly — no refresh().
+    // Mirrors the identical long-press block on entryList in _buildPlaylistBlock.
+    let pickerLongPressTimer = null;
+    let pickerLongPressStartX = 0;
+    let pickerLongPressStartY = 0;
+    body.addEventListener('pointerdown', e => {
+      if (e.button !== 0) return;
+      if (e.target.closest('button, input')) return;
+      const gameRow = e.target.closest('.playlist-picker-game-row');
+      if (!gameRow || gameRow.classList.contains('already-added')) return;
+      pickerLongPressStartX = e.clientX;
+      pickerLongPressStartY = e.clientY;
+      pickerLongPressTimer = setTimeout(() => {
+        pickerLongPressTimer = null;
+        if (body.classList.contains('playlist-picker-body--selection')) return;
+        body.classList.add('playlist-picker-body--selection');
+        // Pre-select the long-pressed row in-place
+        const gameId = gameRow.dataset.gameId;
+        if (gameId) {
+          pickerSel.add(gameId);
+          gameRow.classList.add('picker-row--selected');
+          const cb = gameRow.querySelector('.playlist-picker-checkbox');
+          if (cb) cb.checked = true;
+          updateConfirmBar();
+        }
+      }, 500);
+    });
+    const cancelPickerLongPress = () => { if (pickerLongPressTimer) { clearTimeout(pickerLongPressTimer); pickerLongPressTimer = null; } };
+    body.addEventListener('pointerup',     cancelPickerLongPress);
+    body.addEventListener('pointercancel', cancelPickerLongPress);
+    body.addEventListener('pointermove', e => {
+      if (!pickerLongPressTimer) return;
+      const dx = e.clientX - pickerLongPressStartX;
+      const dy = e.clientY - pickerLongPressStartY;
+      if (Math.sqrt(dx * dx + dy * dy) > 6) cancelPickerLongPress();
     });
 
     if (!allRows.length) body.appendChild(_el('div', 'playlist-picker-empty', 'Нет доступных игр'));

@@ -969,7 +969,7 @@
     font-size: 0.8em;
   }
 
-  // ── Entry checkbox (only rendered in selection mode — no space taken otherwise) ──
+  // ── Entry checkbox — always in DOM; hidden until playlist-entries--selection ──
   .playlist-entry-checkbox {
     flex-shrink: 0;
     width: 14px;
@@ -977,6 +977,18 @@
     margin: 0;
     cursor: pointer;
     accent-color: hsl(var(--rg-popup-btn-save));
+    display: none;
+  }
+
+  // ── Multiselect bar — always in DOM; hidden until selection mode ────────────
+  .playlist-multiselect-bar {
+    display: none;
+  }
+
+  // Reveal checkboxes, bar, and selected-row tint when selection mode is active
+  .playlist-entries--selection {
+    .playlist-entry-checkbox { display: block; }
+    .playlist-multiselect-bar { display: flex; }
   }
 
   // Selected entry row tint
@@ -991,7 +1003,6 @@
 
   // ── Multi-select action bar ────────────────────────────────────────────────
   .playlist-multiselect-bar {
-    display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0.4em 0.6em;
@@ -1139,6 +1150,7 @@
   }
 
   // ── Picker checkbox + confirm bar ──────────────────────────────────────────
+  // Checkbox always in DOM; hidden until playlist-picker-body--selection is active.
   .playlist-picker-checkbox {
     flex-shrink: 0;
     width: 14px;
@@ -1146,17 +1158,12 @@
     margin: 0;
     cursor: pointer;
     accent-color: hsl(var(--rg-popup-btn-save));
-    // Hidden until the row is hovered, or any row is checked (confirm bar visible)
-    opacity: 0;
-    transition: opacity 0.15s ease;
+    display: none;
     &:disabled { cursor: default; }
   }
 
-  .playlist-picker-game-row:hover .playlist-picker-checkbox:not(:disabled),
-  .playlist-picker-game-row.picker-row--selected .playlist-picker-checkbox,
-  .playlist-picker-body:has(.playlist-picker-confirm-bar:not(.playlist-picker-confirm-bar--hidden))
-    .playlist-picker-game-row:not(.already-added) .playlist-picker-checkbox {
-    opacity: 1;
+  .playlist-picker-body--selection .playlist-picker-checkbox:not(:disabled) {
+    display: block;
   }
 
   .playlist-picker-game-row.picker-row--selected {
