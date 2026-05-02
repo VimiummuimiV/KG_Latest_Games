@@ -654,6 +654,44 @@ export const PlaylistsManager = {
     });
   },
 
+  // Attach long-press selection-mode activation to a scrollable container.
+  // container       — the element to listen on (entryList or picker body)
+  // rowSelector     — CSS selector to find the pressed row
+  // skipSelector    — elements that should NOT start a long press
+  // activeClass     — CSS class toggled on container to enter selection mode
+  // isAlreadyActive — fn() → bool: returns true if selection mode is already on
+  // onActivate(row) — called once when the long press fires; pre-selects the row
+  _attachLongPressSelection(container, { rowSelector, skipSelector, activeClass, isAlreadyActive, onActivate }) {
+    let timer = null;
+    let startX = 0;
+    let startY = 0;
+
+    container.addEventListener('pointerdown', e => {
+      if (e.button !== 0) return;
+      if (e.target.closest(skipSelector)) return;
+      const row = e.target.closest(rowSelector);
+      if (!row) return;
+      startX = e.clientX;
+      startY = e.clientY;
+      timer = setTimeout(() => {
+        timer = null;
+        if (isAlreadyActive()) return;
+        container.classList.add(activeClass);
+        onActivate(row);
+      }, 500);
+    });
+
+    const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+    container.addEventListener('pointerup',     cancel);
+    container.addEventListener('pointercancel', cancel);
+    container.addEventListener('pointermove', e => {
+      if (!timer) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (Math.sqrt(dx * dx + dy * dy) > 6) cancel();
+    });
+  },
+
   reorderPlaylists(fromIndex, toIndex) {
     if (fromIndex === toIndex) return;
     const playlists = this.load();
@@ -1270,26 +1308,13 @@ export const PlaylistsManager = {
       });
 
       // ── Long-press on any entry row to enter selection mode ──────────────
-      // Toggles playlist-entries--selection directly — no refresh().
-      // pointermove only cancels if the pointer actually moved beyond 6 px —
-      // a bare pointerdown always fires a tiny synthetic move that would
-      // otherwise kill the timer before it ever fires.
-      let longPressTimer = null;
-      let longPressStartX = 0;
-      let longPressStartY = 0;
-      entryList.addEventListener('pointerdown', e => {
-        if (e.button !== 0) return;
-        if (e.target.closest('button, input, .playlist-entry-drag-handle')) return;
-        const row = e.target.closest('.playlist-entry-row');
-        if (!row) return;
-        longPressStartX = e.clientX;
-        longPressStartY = e.clientY;
-        longPressTimer = setTimeout(() => {
-          longPressTimer = null;
-          if (entryList.classList.contains('playlist-entries--selection')) return;
-          entryList.classList.add('playlist-entries--selection');
+      this._attachLongPressSelection(entryList, {
+        rowSelector:     '.playlist-entry-row',
+        skipSelector:    'button, input, .playlist-entry-drag-handle',
+        activeClass:     'playlist-entries--selection',
+        isAlreadyActive: () => entryList.classList.contains('playlist-entries--selection'),
+        onActivate: row => {
           this._selectionMode.add(playlist.id);
-          // Pre-select the long-pressed row in-place
           const entryId = row.dataset.entryId;
           if (entryId) {
             sel.add(entryId);
@@ -1299,16 +1324,7 @@ export const PlaylistsManager = {
             const span = entryList.querySelector('.playlist-multiselect-count');
             if (span) span.textContent = `${sel.size}`;
           }
-        }, 500);
-      });
-      const cancelLongPress = () => { if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; } };
-      entryList.addEventListener('pointerup',     cancelLongPress);
-      entryList.addEventListener('pointercancel', cancelLongPress);
-      entryList.addEventListener('pointermove', e => {
-        if (!longPressTimer) return;
-        const dx = e.clientX - longPressStartX;
-        const dy = e.clientY - longPressStartY;
-        if (Math.sqrt(dx * dx + dy * dy) > 6) cancelLongPress();
+        },
       });
     }
 
@@ -2154,41 +2170,22 @@ export const PlaylistsManager = {
     });
 
     // ── Long-press on any game row to enter picker selection mode ──────────
-    // Toggles playlist-picker-body--selection directly — no refresh().
-    // Mirrors the identical long-press block on entryList in _buildPlaylistBlock.
-    let pickerLongPressTimer = null;
-    let pickerLongPressStartX = 0;
-    let pickerLongPressStartY = 0;
-    body.addEventListener('pointerdown', e => {
-      if (e.button !== 0) return;
-      if (e.target.closest('button, input')) return;
-      const gameRow = e.target.closest('.playlist-picker-game-row');
-      if (!gameRow || gameRow.classList.contains('already-added')) return;
-      pickerLongPressStartX = e.clientX;
-      pickerLongPressStartY = e.clientY;
-      pickerLongPressTimer = setTimeout(() => {
-        pickerLongPressTimer = null;
-        if (body.classList.contains('playlist-picker-body--selection')) return;
-        body.classList.add('playlist-picker-body--selection');
-        // Pre-select the long-pressed row in-place
-        const gameId = gameRow.dataset.gameId;
+    this._attachLongPressSelection(body, {
+      rowSelector:     '.playlist-picker-game-row',
+      skipSelector:    'button, input',
+      activeClass:     'playlist-picker-body--selection',
+      isAlreadyActive: () => body.classList.contains('playlist-picker-body--selection'),
+      onActivate: row => {
+        if (row.classList.contains('already-added')) return;
+        const gameId = row.dataset.gameId;
         if (gameId) {
           pickerSel.add(gameId);
-          gameRow.classList.add('picker-row--selected');
-          const cb = gameRow.querySelector('.playlist-picker-checkbox');
+          row.classList.add('picker-row--selected');
+          const cb = row.querySelector('.playlist-picker-checkbox');
           if (cb) cb.checked = true;
           updateConfirmBar();
         }
-      }, 500);
-    });
-    const cancelPickerLongPress = () => { if (pickerLongPressTimer) { clearTimeout(pickerLongPressTimer); pickerLongPressTimer = null; } };
-    body.addEventListener('pointerup',     cancelPickerLongPress);
-    body.addEventListener('pointercancel', cancelPickerLongPress);
-    body.addEventListener('pointermove', e => {
-      if (!pickerLongPressTimer) return;
-      const dx = e.clientX - pickerLongPressStartX;
-      const dy = e.clientY - pickerLongPressStartY;
-      if (Math.sqrt(dx * dx + dy * dy) > 6) cancelPickerLongPress();
+      },
     });
 
     if (!allRows.length) body.appendChild(_el('div', 'playlist-picker-empty', 'Нет доступных игр'));
