@@ -173,6 +173,29 @@
 }
 
 .playlists-manager-popup {
+  // ── Solid-tint background tokens ───────────────────────────────────────────
+  // These expose the repeated "tint over solid base" pattern as named variables
+  // so every sticky/opaque surface uses a single token instead of a repeated
+  // multi-layer linear-gradient construction.
+  //
+  // Pattern: linear-gradient(hsla(color / alpha), hsla(color / alpha)), base
+  // produces a visually identical tint but the rendered pixel is fully opaque,
+  // which is required for position:sticky elements inside a scroll container.
+  //
+  // --pl-bg-params     : params-color tint (entry params panel, bulk params,
+  //                      params-open row/bar states)
+  // --pl-bg-multiselect: popup-btn-save tint (multiselect bar resting state)
+  --pl-bg-params: linear-gradient(
+      hsla(var(--rg-playlist-params-color) / 0.07),
+      hsla(var(--rg-playlist-params-color) / 0.07)
+    ),
+    var(--rg-bg-primary);
+  --pl-bg-multiselect: linear-gradient(
+      hsla(var(--rg-popup-btn-save) / 0.06),
+      hsla(var(--rg-popup-btn-save) / 0.06)
+    ),
+    var(--rg-bg-primary);
+
   position: fixed;
   background: var(--rg-bg-primary);
   color: var(--rg-text-primary);
@@ -530,7 +553,7 @@
 
       &.playlist-entry-row--params-open {
         opacity: 1 !important;
-        background: hsla(var(--rg-playlist-params-color) / 0.07) !important;
+        background: var(--pl-bg-params) !important;
         border-color: hsla(var(--rg-playlist-params-color) / 0.55) !important;
 
         .playlist-entry-label,
@@ -661,15 +684,16 @@
     // Applied to both inactive and active rows — the params-color bg replaces
     // both the default card bg and the active-entry green tint, so the row and
     // panel read as a single container. Active border/highlight is preserved.
+    // Solid base (--pl-bg-params) prevents bleed-through when sticky-scrolling.
     &.playlist-entry-row--params-open {
       border-bottom-left-radius: 0 !important;
       border-bottom-right-radius: 0 !important;
       border-bottom: none !important;
       border-color: hsla(var(--rg-playlist-params-color) / 0.55) !important;
-      background: hsla(var(--rg-playlist-params-color) / 0.07) !important;
+      background: var(--pl-bg-params) !important;
       // Suppress hover bg change so the unified tint stays stable while editing
       &:hover, &.playlist-entry-row--active:hover {
-        background: hsla(var(--rg-playlist-params-color) / 0.07) !important;
+        background: var(--pl-bg-params) !important;
         border-bottom: none !important;
         border-color: hsla(var(--rg-playlist-params-color) / 0.55) !important;
       }
@@ -702,10 +726,17 @@
     gap: 0.35em;
     padding: 0.5em 0.7em;
     margin-top: 0;
-    background: hsla(var(--rg-playlist-params-color) / 0.07);
+    // Solid params-tint background (see --pl-bg-params at popup root).
+    background: var(--pl-bg-params);
     border: 1px solid hsla(var(--rg-playlist-params-color) / 0.55);
     border-top: none;
     border-radius: 0 0 3px 3px !important;
+    // Sticky so the panel doesn't scroll away while editing.
+    // Entry params are never open during selection mode so the bar is always
+    // hidden — top aligns flush below the playlist header row.
+    position: sticky;
+    top: var(--playlist-header-height, 0px);
+    z-index: 8; // below multiselect bar (9) and header row (10)
 
     .playlist-entry-params-group {
       display: flex;
@@ -1007,12 +1038,15 @@
     justify-content: space-between;
     padding: 0.4em 0.6em;
     gap: 0.5em;
-    background: var(--rg-bg-primary);
+    // Resting state: save-color tint over solid base (fully opaque for sticky).
+    background: var(--pl-bg-multiselect);
     border: 1px solid hsla(var(--rg-popup-btn-save) / 0.4);
     border-radius: 3px !important;
     margin-top: 0.3em;
     transition: background 0.15s ease, border-color 0.15s ease;
     position: sticky;
+    // Sit just below the playlist header row (--playlist-header-height is set on
+    // .playlist-block via rAF in JS so this var is always accurate).
     top: var(--playlist-header-height, 0px);
     z-index: 9; // just below playlist-header-row (z-index: 10)
 
@@ -1020,13 +1054,14 @@
       transition: color 0.15s ease;
     }
 
-    // When bulk params panel is open below — merge visually like entry-row--params-open
+    // When bulk params panel is open below — shift to params tint and merge
+    // visually with the panel (no bottom radius, no bottom border).
     &--params-open {
       border-bottom-left-radius:  0 !important;
       border-bottom-right-radius: 0 !important;
       border-bottom: none !important;
       border-color: hsla(var(--rg-playlist-params-color) / 0.55) !important;
-      background: hsla(var(--rg-playlist-params-color) / 0.07) !important;
+      background: var(--pl-bg-params) !important;
 
       .playlist-multiselect-count {
         color: hsl(var(--rg-playlist-params-color));
@@ -1119,6 +1154,13 @@
     border-top: none !important;
     border-color: hsla(var(--rg-playlist-params-color) / 0.55) !important;
     margin-top: 0 !important;
+    background: var(--pl-bg-params) !important;
+    // Sticky directly below the multiselect bar.
+    // --playlist-multiselect-bar-height is set by JS (rAF on params-open) and
+    // equals the actual rendered bar height, so no hardcoded approximation needed.
+    position: sticky;
+    top: calc(var(--playlist-header-height, 0px) + var(--playlist-multiselect-bar-height, 0px)) !important;
+    z-index: 8; // below multiselect bar (9) and header row (10)
   }
 
   .playlist-bulk-params-actions {

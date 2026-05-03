@@ -1253,7 +1253,10 @@ export const PlaylistsManager = {
 
     block.appendChild(row);
 
-    // Set CSS var so the sticky multiselect bar knows how far down to sit.
+    // Set CSS vars for the sticky stack on this block.
+    // --playlist-header-height          → used by .playlist-multiselect-bar and .playlist-entry-params (top = this)
+    // --playlist-multiselect-bar-height → set via rAF when bulk params opens (bar is visible by then),
+    //                                     used by .playlist-bulk-params (top = header + bar)
     // Uses rAF so the row is painted and offsetHeight is accurate.
     requestAnimationFrame(() => {
       block.style.setProperty('--playlist-header-height', `${row.offsetHeight}px`);
@@ -1651,6 +1654,12 @@ export const PlaylistsManager = {
       entryList.querySelectorAll('.playlist-entry-checkbox').forEach(cb => { cb.checked = false; });
       entryList.querySelectorAll('.playlist-entry-row--selected').forEach(r => r.classList.remove('playlist-entry-row--selected'));
       countSpan.textContent = '0';
+      // Also close the bulk params panel if it was open
+      const bulkParams = entryList.querySelector('.playlist-bulk-params');
+      if (bulkParams) {
+        bulkParams.remove();
+        bar.classList.remove('playlist-multiselect-bar--params-open');
+      }
     };
 
     // Left side: count + select-all + deselect + exit
@@ -1750,6 +1759,14 @@ export const PlaylistsManager = {
       }
       bar.insertAdjacentElement('afterend', this._buildBulkParamsSection(playlist, [...sel]));
       bar.classList.add('playlist-multiselect-bar--params-open');
+      // Measure bar height now that it's visible and set the CSS var on the block
+      // so .playlist-bulk-params knows exactly where to stick (header + bar).
+      requestAnimationFrame(() => {
+        const block = bar.closest('.playlist-block');
+        if (block) {
+          block.style.setProperty('--playlist-multiselect-bar-height', `${bar.offsetHeight}px`);
+        }
+      });
     });
 
     const removeBtn = _el('button', 'playlist-multiselect-remove');
