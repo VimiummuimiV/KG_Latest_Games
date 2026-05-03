@@ -1254,10 +1254,9 @@ export const PlaylistsManager = {
     block.appendChild(row);
 
     // Set CSS vars for the sticky stack on this block.
-    // --playlist-header-height          → used by .playlist-multiselect-bar and .playlist-entry-params (top = this)
-    // --playlist-multiselect-bar-height → set via rAF when bulk params opens (bar is visible by then),
-    //                                     used by .playlist-bulk-params (top = header + bar)
-    // Uses rAF so the row is painted and offsetHeight is accurate.
+    // --playlist-header-height          → bar and entry-row--params-open stick here
+    // --playlist-entry-row-height       → set via rAF when entry params open; params panel top = header + row
+    // --playlist-multiselect-bar-height → set via rAF when bulk params open; bulk panel top = header + bar
     requestAnimationFrame(() => {
       block.style.setProperty('--playlist-header-height', `${row.offsetHeight}px`);
     });
@@ -1517,6 +1516,11 @@ export const PlaylistsManager = {
       const section = _buildParamsSection(playlist, entry, paramsBtn);
       row.parentNode.insertBefore(section, row.nextSibling);
       row.classList.add('playlist-entry-row--params-open');
+      // Measure the row height so the params panel can stick flush below it.
+      requestAnimationFrame(() => {
+        const block = row.closest('.playlist-block');
+        if (block) block.style.setProperty('--playlist-entry-row-height', `${row.offsetHeight}px`);
+      });
     });
 
     row.append(entryPlayBtn, handle, dupBtn, label, stepper, paramsBtn, removeBtn);

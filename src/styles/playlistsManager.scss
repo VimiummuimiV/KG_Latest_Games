@@ -686,6 +686,9 @@
     // panel read as a single container. Active border/highlight is preserved.
     // Solid base (--pl-bg-params) prevents bleed-through when sticky-scrolling.
     &.playlist-entry-row--params-open {
+      position: sticky;
+      top: var(--playlist-header-height, 0px);
+      z-index: 8; // same level as .playlist-entry-params below it
       border-bottom-left-radius: 0 !important;
       border-bottom-right-radius: 0 !important;
       border-bottom: none !important;
@@ -731,11 +734,10 @@
     border: 1px solid hsla(var(--rg-playlist-params-color) / 0.55);
     border-top: none;
     border-radius: 0 0 3px 3px !important;
-    // Sticky so the panel doesn't scroll away while editing.
-    // Entry params are never open during selection mode so the bar is always
-    // hidden — top aligns flush below the playlist header row.
+    // Sticky flush below the entry row (which also sticks at --playlist-header-height).
+    // --playlist-entry-row-height is set by JS (rAF on params-open).
     position: sticky;
-    top: var(--playlist-header-height, 0px);
+    top: calc(var(--playlist-header-height, 0px) + var(--playlist-entry-row-height, 0px));
     z-index: 8; // below multiselect bar (9) and header row (10)
 
     .playlist-entry-params-group {
