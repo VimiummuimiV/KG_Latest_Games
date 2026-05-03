@@ -575,7 +575,8 @@ export const PlaylistsManager = {
       itemSelector:   '.playlist-entry-row',
       handleSelector: '.playlist-entry-drag-handle',
       draggingClass:  'playlist-entry-row--dragging',
-      onReorder: (from, to) => this.reorderEntries(playlistId, from, to),
+      onReorder:      (from, to) => this.reorderEntries(playlistId, from, to),
+      onGroupReorder: (newIds)   => this.reorderEntriesOrder(playlistId, newIds),
     });
   },
 
@@ -732,6 +733,29 @@ export const PlaylistsManager = {
       else if (fromIndex < toIndex && idx > fromIndex && idx <= toIndex) idx--;
       else if (fromIndex > toIndex && idx >= toIndex && idx < fromIndex) idx++;
       setActivePlaylistSession({ ...session, entryIndex: idx });
+    }
+  },
+
+  // Atomically saves a fully reordered entry list (used by group drag-and-drop).
+  // newEntryIds is the complete ordered array of entry IDs as reflected in the DOM.
+  reorderEntriesOrder(playlistId, newEntryIds) {
+    const playlists = this.load();
+    const p = playlists.find(p => p.id === playlistId);
+    if (!p) return;
+    // Capture the active entry ID before modifying so we can update the session index.
+    const session = getActivePlaylistSession();
+    let activeEntryId = null;
+    if (session && session.playlistId === playlistId && !session.shuffleOrder) {
+      activeEntryId = p.entries[session.entryIndex]?.id ?? null;
+    }
+    const map = new Map(p.entries.map(e => [e.id, e]));
+    p.entries = newEntryIds.map(id => map.get(id)).filter(Boolean);
+    this.save(playlists);
+    if (activeEntryId) {
+      const newIdx = p.entries.findIndex(e => e.id === activeEntryId);
+      if (newIdx !== -1 && newIdx !== session.entryIndex) {
+        setActivePlaylistSession({ ...session, entryIndex: newIdx });
+      }
     }
   },
 
@@ -1592,18 +1616,50 @@ export const PlaylistsManager = {
   // opts.itemSelector     CSS selector for draggable items inside container
   // opts.handleSelector   CSS selector for the drag handle element
   // opts.draggingClass    class added to the item while it is being dragged
-  // opts.onReorder        (fromIndex, toIndex) => void — called on drop
+  // opts.onReorder        (fromIndex, toIndex) => void — called on single-item drop
+  // opts.onGroupReorder   (newEntryIds[]) => void — called on multi-item group drop
   //
   // Placeholder visual is always .playlist-entry-placeholder so both drag
   // contexts share the same dashed-border appearance without any extra CSS.
-  _attachSortableDrag(container, { itemSelector, handleSelector, draggingClass, onReorder, onStart, onEnd }) {
+  // Multi-select group drag: when the grabbed item is selected and inside a
+  // selection-mode container, the entire contiguous run of selected items drags
+  // together as one unit regardless of which handle inside the group is used.
+  // Autoscroll fires in both single and group modes when the cursor approaches
+  // the top or bottom edge of the nearest scrollable ancestor.
+  _attachSortableDrag(container, { itemSelector, handleSelector, draggingClass, onReorder, onGroupReorder, onStart, onEnd }) {
     // Guard against stacking multiple listeners (e.g. live-injected entries)
     if (container.dataset.dragAttached) return;
     container.dataset.dragAttached = '1';
 
     let dragEl = null, placeholder = null, startY = 0, startIdx = 0;
+    let dragGroup = [];   // [dragEl] for single, full contiguous run for group
+    let scrollRAF = null; // autoscroll rAF handle
 
     const getItems = () => Array.from(container.querySelectorAll(itemSelector));
+
+    // Walk up to find the nearest scrollable ancestor for autoscroll.
+    const findScrollEl = () => {
+      let el = container.parentElement;
+      while (el) {
+        const ov = getComputedStyle(el).overflowY;
+        if (ov === 'auto' || ov === 'scroll') return el;
+        el = el.parentElement;
+      }
+      return null;
+    };
+
+    // Kick off (or cancel) edge-triggered autoscroll each mousemove tick.
+    const doAutoscroll = clientY => {
+      cancelAnimationFrame(scrollRAF);
+      const scrollEl = findScrollEl();
+      if (!scrollEl) return;
+      const r = scrollEl.getBoundingClientRect();
+      const ZONE = 48, SPEED = 8;
+      const dir = clientY < r.top + ZONE ? -1 : clientY > r.bottom - ZONE ? 1 : 0;
+      if (!dir) return;
+      const tick = () => { scrollEl.scrollTop += dir * SPEED; scrollRAF = requestAnimationFrame(tick); };
+      scrollRAF = requestAnimationFrame(tick);
+    };
 
     container.addEventListener('mousedown', e => {
       const handle = e.target.closest(handleSelector);
@@ -1617,23 +1673,66 @@ export const PlaylistsManager = {
       // Clear any leftover placeholders from a previous interrupted drag
       container.querySelectorAll('.playlist-entry-placeholder').forEach(p => p.remove());
 
-      dragEl   = item;
-      startIdx = getItems().indexOf(dragEl);
-      startY   = e.clientY;
+      dragEl = item;
+      startY = e.clientY;
 
-      const rect = dragEl.getBoundingClientRect();
-      dragEl.style.width = rect.width + 'px';
-      dragEl.classList.add(draggingClass);
+      // ── Determine drag group ───────────────────────────────────────────────
+      // Group drag activates only for entry rows that are selected inside an
+      // active selection-mode container, and only when onGroupReorder is provided.
+      const isGroupCandidate = onGroupReorder &&
+        item.classList.contains('playlist-entry-row--selected') &&
+        !!item.closest('.playlist-entries--selection');
 
-      if (onStart) onStart(dragEl);
+      if (isGroupCandidate) {
+        const allItems = getItems();
+        const idx = allItems.indexOf(dragEl);
+        let lo = idx, hi = idx;
+        while (lo > 0 && allItems[lo - 1].classList.contains('playlist-entry-row--selected')) lo--;
+        while (hi < allItems.length - 1 && allItems[hi + 1].classList.contains('playlist-entry-row--selected')) hi++;
+        dragGroup = allItems.slice(lo, hi + 1);
+      } else {
+        dragGroup = [dragEl];
+      }
 
-      // Re-measure height after onStart — it may have collapsed content (e.g. the
-      // playlist body), so the placeholder should reflect the post-collapse size.
-      const placeholderHeight = dragEl.getBoundingClientRect().height;
+      startIdx = getItems().indexOf(dragGroup[0]);
 
-      placeholder = _el('div', 'playlist-entry-placeholder');
-      placeholder.style.height = placeholderHeight + 'px';
-      dragEl.parentNode.insertBefore(placeholder, dragEl);
+      if (dragGroup.length > 1) {
+        // ── Group drag ───────────────────────────────────────────────────────
+        // Measure every item before detaching, then fix-position them in <body>
+        // so they float above the list and move together.
+        const rects = dragGroup.map(el => el.getBoundingClientRect());
+        const totalH = rects[rects.length - 1].bottom - rects[0].top;
+
+        placeholder = _el('div', 'playlist-entry-placeholder');
+        placeholder.style.height = totalH + 'px';
+        container.insertBefore(placeholder, dragGroup[0]);
+
+        // Items stay inside the container — position:fixed takes them out of
+        // flow while keeping them inside .playlists-manager-popup so all CSS
+        // rules remain in effect. position:fixed naturally escapes overflow:hidden.
+        dragGroup.forEach((el, i) => {
+          el._dragOrigTop = rects[i].top;
+          el.style.position  = 'fixed';
+          el.style.top       = rects[i].top + 'px';
+          el.style.left      = rects[i].left + 'px';
+          el.style.width     = rects[i].width + 'px';
+          el.style.margin    = '0';
+          el.style.zIndex    = '200';
+          el.style.opacity   = '0.9';
+        });
+      } else {
+        // ── Single drag — existing behaviour ─────────────────────────────────
+        const rect = dragEl.getBoundingClientRect();
+        dragEl.style.width = rect.width + 'px';
+        dragEl.classList.add(draggingClass);
+        if (onStart) onStart(dragEl);
+        // Re-measure height after onStart — it may have collapsed content (e.g. the
+        // playlist body), so the placeholder should reflect the post-collapse size.
+        const placeholderHeight = dragEl.getBoundingClientRect().height;
+        placeholder = _el('div', 'playlist-entry-placeholder');
+        placeholder.style.height = placeholderHeight + 'px';
+        dragEl.parentNode.insertBefore(placeholder, dragEl);
+      }
 
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup', onUp);
@@ -1641,9 +1740,20 @@ export const PlaylistsManager = {
 
     const onMove = e => {
       if (!dragEl) return;
-      dragEl.style.transform = `translateY(${e.clientY - startY}px)`;
+      const dy = e.clientY - startY;
 
-      const items = getItems().filter(r => r !== dragEl);
+      if (dragGroup.length > 1) {
+        dragGroup.forEach(el => { el.style.top = (el._dragOrigTop + dy) + 'px'; });
+      } else {
+        dragEl.style.transform = `translateY(${dy}px)`;
+      }
+
+      // Move placeholder to reflect drop target among non-dragged items.
+      // For group drag the items are still in the container but position:fixed,
+      // so we must explicitly exclude them from the hit-test list.
+      const items = dragGroup.length > 1
+        ? getItems().filter(r => !dragGroup.includes(r))
+        : getItems().filter(r => r !== dragEl);
       let insertBefore = null;
       for (const r of items) {
         const rRect = r.getBoundingClientRect();
@@ -1651,29 +1761,46 @@ export const PlaylistsManager = {
       }
       if (insertBefore) container.insertBefore(placeholder, insertBefore);
       else container.appendChild(placeholder);
+
+      doAutoscroll(e.clientY);
     };
 
     const onUp = () => {
       if (!dragEl) return;
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
+      cancelAnimationFrame(scrollRAF);
 
-      dragEl.classList.remove(draggingClass);
-      dragEl.style.transform = '';
-      dragEl.style.width     = '';
-      placeholder.replaceWith(dragEl);
+      if (dragGroup.length > 1) {
+        // Clear inline styles and move each item to its new position (before placeholder).
+        dragGroup.forEach(el => {
+          ['position', 'top', 'left', 'width', 'margin', 'zIndex', 'opacity']
+            .forEach(p => { el.style[p] = ''; });
+          delete el._dragOrigTop;
+          container.insertBefore(el, placeholder);
+        });
+        placeholder.remove();
 
-      const finalIdx = getItems().indexOf(dragEl);
-      if (finalIdx !== startIdx) onReorder(startIdx, finalIdx);
+        // Report the full new order so the data layer can do a single atomic save.
+        onGroupReorder(getItems().map(el => el.dataset.entryId).filter(Boolean));
+      } else {
+        dragEl.classList.remove(draggingClass);
+        dragEl.style.transform = '';
+        dragEl.style.width     = '';
+        placeholder.replaceWith(dragEl);
 
-      if (onEnd) onEnd(dragEl);
+        const finalIdx = getItems().indexOf(dragEl);
+        if (finalIdx !== startIdx) onReorder(startIdx, finalIdx);
+
+        if (onEnd) onEnd(dragEl);
+      }
 
       // The browser fires a click event after mouseup on the same element.
       // For playlist blocks that click would toggle expand/collapse, so we
       // swallow exactly one click in the capture phase before it reaches any handler.
       document.addEventListener('click', e => e.stopPropagation(), { capture: true, once: true });
 
-      dragEl = null; placeholder = null;
+      dragEl = null; placeholder = null; dragGroup = [];
     };
   },
 
