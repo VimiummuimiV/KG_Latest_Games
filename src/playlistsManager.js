@@ -1698,13 +1698,13 @@ export const PlaylistsManager = {
 
       if (dragGroup.length > 1) {
         // ── Group drag ───────────────────────────────────────────────────────
-        // Measure every item before detaching, then fix-position them in <body>
-        // so they float above the list and move together.
+        // Measure every item before detaching, then use a single-row placeholder
+        // so group drag and single drag have the same placeholder height.
         const rects = dragGroup.map(el => el.getBoundingClientRect());
-        const totalH = rects[rects.length - 1].bottom - rects[0].top;
+        const singleRowHeight = rects[0].height;
 
         placeholder = _el('div', 'playlist-entry-placeholder');
-        placeholder.style.height = totalH + 'px';
+        placeholder.style.height = singleRowHeight + 'px';
         container.insertBefore(placeholder, dragGroup[0]);
 
         // Items stay inside the container — position:fixed (set via CSS class)
