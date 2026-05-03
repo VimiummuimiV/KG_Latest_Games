@@ -1352,6 +1352,13 @@ export const PlaylistsManager = {
             const span = entryList.querySelector('.playlist-multiselect-count');
             if (span) span.textContent = `${sel.size}`;
           }
+          // Multiselect bar is now visible — update its height var so the dup
+          // bar (if open) re-sticks correctly below it.
+          requestAnimationFrame(() => {
+            const block = entryList.closest('.playlist-block');
+            const msBar = entryList.querySelector('.playlist-multiselect-bar');
+            if (block && msBar) block.style.setProperty('--playlist-multiselect-bar-height', `${msBar.offsetHeight}px`);
+          });
         },
       });
     }
@@ -1451,12 +1458,18 @@ export const PlaylistsManager = {
       }
     });
 
-    // Duplicate — appends a copy of this entry to the end of the playlist
+    // Duplicate — single click appends 1 copy; Ctrl+Click opens the dup bar
+    // where the user can set a count (stepper + direct input) and confirm.
     const dupBtn = _el('button', 'playlist-entry-duplicate-btn');
     dupBtn.innerHTML = icons.copy;
-    createCustomTooltip(dupBtn, 'Дублировать в конец плейлиста');
+    createCustomTooltip(dupBtn, '[Клик] Дублировать в конец плейлиста [Ctrl + Клик] Задать количество копий');
     dupBtn.addEventListener('click', e => {
       e.stopPropagation();
+      if (e.ctrlKey) {
+        const entryList = row.closest('.playlist-entries');
+        if (entryList) this._toggleDupBar(playlist, entry, entryList);
+        return;
+      }
       const copy = this.duplicateEntry(playlist.id, entry.id);
       if (!copy) return;
       const fresh = this.load().find(p => p.id === playlist.id);
@@ -1676,6 +1689,10 @@ export const PlaylistsManager = {
       this._selectionMode.delete(playlist.id);
       entryList.classList.remove('playlist-entries--selection');
       window.getSelection()?.removeAllRanges();
+      // Multiselect bar is now hidden — reset its height var so the dup bar
+      // (if open) re-sticks directly below the playlist header.
+      const block = entryList.closest('.playlist-block');
+      if (block) block.style.setProperty('--playlist-multiselect-bar-height', '0px');
       entryList.querySelectorAll('.playlist-entry-checkbox').forEach(cb => { cb.checked = false; });
       entryList.querySelectorAll('.playlist-entry-row--selected').forEach(r => r.classList.remove('playlist-entry-row--selected'));
       countSpan.textContent = '0';
@@ -1812,6 +1829,123 @@ export const PlaylistsManager = {
     const right = _el('div', 'playlist-multiselect-right');
     right.append(repStepper, dupBtn, paramsBtn, removeBtn);
     bar.append(left, right);
+    return bar;
+  },
+
+  // ── Per-entry duplicate bar ────────────────────────────────────────────────
+  // Toggle: if a dup bar for this entry is already open, close it; otherwise
+  // close any other open dup bar in the list and open one for this entry.
+  _toggleDupBar(playlist, entry, entryList) {
+    const existing = entryList.querySelector('.playlist-dup-bar');
+    if (existing) {
+      const wasFor = existing.dataset.entryId === entry.id;
+      existing.remove();
+      if (wasFor) return; // clicked Ctrl+same row → just close
+    }
+    const bar = this._buildDupBar(playlist, entry, entryList);
+    // Insert right after the multiselect bar (always first child) if present,
+    // otherwise prepend — so the DOM order matches the sticky stack order.
+    const multiBar = entryList.querySelector('.playlist-multiselect-bar');
+    if (multiBar) multiBar.insertAdjacentElement('afterend', bar);
+    else entryList.prepend(bar);
+    // Ensure --playlist-multiselect-bar-height is accurate so the CSS calc
+    // top: header + multiselect resolves correctly even when multiselect bar
+    // is hidden (height 0). Also set --playlist-dup-bar-height for anything
+    // downstream that needs to account for this bar.
+    requestAnimationFrame(() => {
+      const block = entryList.closest('.playlist-block');
+      if (!block) return;
+      const msBar = entryList.querySelector('.playlist-multiselect-bar');
+      block.style.setProperty('--playlist-multiselect-bar-height', `${msBar ? msBar.offsetHeight : 0}px`);
+      block.style.setProperty('--playlist-dup-bar-height', `${bar.offsetHeight}px`);
+    });
+  },
+
+  _buildDupBar(playlist, entry, entryList) {
+    const DUP_MAX = 50;
+    const dupCount = { value: 1 };
+    const bar = _el('div', 'playlist-dup-bar');
+    bar.dataset.entryId = entry.id;
+
+    // ── Input — direct number entry; overrides stepper when non-empty ─────
+    const input = _el('input', 'playlist-dup-input');
+    createCustomTooltip(input, `Количество копий (макс. ${DUP_MAX})`);
+    input.type        = 'number';
+    input.min         = '1';
+    input.max         = String(DUP_MAX);
+    input.addEventListener('click',   e => e.stopPropagation());
+    input.addEventListener('keydown', e => e.stopPropagation());
+    input.addEventListener('input', e => {
+      e.stopPropagation();
+      const v = parseInt(input.value, 10);
+      // Live-clamp only on explicit out-of-range to not interfere while typing
+      if (!isNaN(v)) {
+        const clamped = Math.max(1, Math.min(DUP_MAX, v));
+        if (v !== clamped) input.value = String(clamped);
+        dupCount.value = clamped;
+        stepperCountSpan.textContent = String(clamped);
+      }
+    });
+
+    // ── Stepper — active only when input is empty ─────────────────────────
+    const stepperWrap   = _el('div', 'playlist-multiselect-stepper');
+    const decBtn        = _el('button', 'playlist-stepper-btn');
+    decBtn.innerHTML    = icons.chevronLeft;
+    const stepperCountSpan = _el('span', 'playlist-stepper-count', '1');
+    const incBtn        = _el('button', 'playlist-stepper-btn');
+    incBtn.innerHTML    = icons.chevronRight;
+    stepperWrap.append(decBtn, stepperCountSpan, incBtn);
+    createCustomTooltip(stepperWrap, `Количество копий (макс. ${DUP_MAX})`);
+
+    const getEffectiveCount = () => {
+      const v = parseInt(input.value, 10);
+      return (!input.value.trim() || isNaN(v)) ? dupCount.value : Math.max(1, Math.min(DUP_MAX, v));
+    };
+
+    this._attachStepperHold(decBtn, () => {
+      if (input.value.trim()) return; // input has priority — stepper is ignored
+      dupCount.value = Math.max(1, dupCount.value - 1);
+      stepperCountSpan.textContent = String(dupCount.value);
+    });
+    this._attachStepperHold(incBtn, () => {
+      if (input.value.trim()) return;
+      dupCount.value = Math.min(DUP_MAX, dupCount.value + 1);
+      stepperCountSpan.textContent = String(dupCount.value);
+    });
+
+    // ── Confirm ───────────────────────────────────────────────────────────
+    const confirmBtn = _el('button', 'playlist-dup-confirm');
+    confirmBtn.textContent = 'Дублировать';
+    confirmBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const n = getEffectiveCount();
+      const fresh = this.load().find(p => p.id === playlist.id);
+      if (!fresh) return;
+      entryList.querySelector('.playlist-entries-empty')?.remove();
+      for (let i = 0; i < n; i++) {
+        const copy = this.duplicateEntry(playlist.id, entry.id);
+        if (!copy) break;
+        const refreshed = this.load().find(p => p.id === playlist.id);
+        if (!refreshed) break;
+        const newRow = this._buildEntryRow(refreshed, copy, null, false, refreshed.entries.length - 1);
+        entryList.appendChild(newRow);
+      }
+      this._attachEntryDrag(entryList, playlist.id);
+      bar.remove();
+    });
+
+    // ── Cancel ────────────────────────────────────────────────────────────
+    const cancelBtn = _el('button', 'playlist-dup-cancel');
+    cancelBtn.textContent = 'Отмена';
+    cancelBtn.addEventListener('click', e => { e.stopPropagation(); bar.remove(); });
+
+    // Enter key in input confirms
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.stopPropagation(); confirmBtn.click(); }
+      if (e.key === 'Escape') { e.stopPropagation(); bar.remove(); }
+    });
+
+    bar.append(stepperWrap, input, confirmBtn, cancelBtn);
     return bar;
   },
 

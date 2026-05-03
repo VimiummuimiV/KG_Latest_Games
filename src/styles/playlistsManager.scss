@@ -633,7 +633,7 @@
       &:active { cursor: grabbing; }
     }
 
-    // Duplicate playlist entry row button
+    // Duplicate button
     .playlist-entry-duplicate-btn {
       @include playlist-icon-btn('--rg-popup-btn-copy', 20px, 12px);
     }
@@ -1200,6 +1200,50 @@
   }
 
   .playlist-bulk-params-cancel {
+    @include playlist-labeled-btn('--rg-popup-btn-remove', 0px);
+    padding: 0.2em 0.7em;
+    font-size: 0.75em;
+    font-family: inherit;
+    margin-left: auto;
+  }
+
+  // ── Per-entry duplicate bar ────────────────────────────────────────────────
+  // Sticky bar inserted right after the multiselect bar (or at top of entry
+  // list when no multiselect bar is visible). Stacks using the same CSS vars
+  // as the rest of the sticky hierarchy: header → multiselect → dup bar.
+  .playlist-dup-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.4em 0.6em;
+    background: var(--pl-bg-multiselect);
+    border: 1px solid hsla(var(--rg-popup-btn-copy) / 0.45);
+    border-radius: 3px !important;
+    margin-top: 0.3em;
+    position: sticky;
+    top: calc(var(--playlist-header-height, 0px) + var(--playlist-multiselect-bar-height, 0px));
+    z-index: 9;
+  }
+
+  .playlist-dup-input {
+    @include playlist-text-input();
+    background: var(--rg-bg-primary) !important; // override text-input's default bg so it stands out as an active field in the dup bar
+    width: 52px;
+    flex-shrink: 0;
+    // hide browser spin buttons — stepper handles increment/decrement
+    appearance: textfield;
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button { display: none; }
+  }
+
+  .playlist-dup-confirm {
+    @include playlist-labeled-btn('--rg-popup-btn-copy', 0px);
+    padding: 0.2em 0.7em;
+    font-size: 0.75em;
+    font-family: inherit;
+  }
+
+  .playlist-dup-cancel {
     @include playlist-labeled-btn('--rg-popup-btn-remove', 0px);
     padding: 0.2em 0.7em;
     font-size: 0.75em;
