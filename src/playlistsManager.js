@@ -1675,6 +1675,7 @@ export const PlaylistsManager = {
       sel.clear();
       this._selectionMode.delete(playlist.id);
       entryList.classList.remove('playlist-entries--selection');
+      window.getSelection()?.removeAllRanges();
       entryList.querySelectorAll('.playlist-entry-checkbox').forEach(cb => { cb.checked = false; });
       entryList.querySelectorAll('.playlist-entry-row--selected').forEach(r => r.classList.remove('playlist-entry-row--selected'));
       countSpan.textContent = '0';
@@ -2005,6 +2006,7 @@ export const PlaylistsManager = {
     const closePicker = () => {
       // Exit picker selection mode and clear all row selections on close
       body.classList.remove('playlist-picker-body--selection');
+      window.getSelection()?.removeAllRanges();
       pickerSel.clear();
       body.querySelectorAll('.playlist-picker-checkbox').forEach(cb => { cb.checked = false; });
       body.querySelectorAll('.playlist-picker-game-row').forEach(r => r.classList.remove('picker-row--selected'));
@@ -2133,6 +2135,7 @@ export const PlaylistsManager = {
       pickerSel.clear();
       // Exit picker selection mode after bulk-add
       body.classList.remove('playlist-picker-body--selection');
+      window.getSelection()?.removeAllRanges();
       updateConfirmBar();
       injectAddedEntries(picker.closest('.playlist-block'), countBefore);
     });
@@ -2142,6 +2145,7 @@ export const PlaylistsManager = {
       pickerSel.clear();
       // Exit picker selection mode on clear
       body.classList.remove('playlist-picker-body--selection');
+      window.getSelection()?.removeAllRanges();
       body.querySelectorAll('.playlist-picker-checkbox').forEach(cb => { cb.checked = false; });
       body.querySelectorAll('.playlist-picker-game-row').forEach(r => r.classList.remove('picker-row--selected'));
       updateConfirmBar();
