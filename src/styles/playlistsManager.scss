@@ -672,12 +672,26 @@
       flex-shrink: 0;
     }
 
-    // Dragging state
+    // Shared drag appearance — identical visuals whether dragging one row or many.
+    &--dragging,
+    &--group-dragging {
+      opacity: 0.9;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+    }
+
+    // Single-row drag: stays in flow (translateY), just needs stacking.
     &--dragging {
       position: relative;
       z-index: 100;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
-      opacity: 0.85;
+    }
+
+    // Group-drag: position:fixed (set here, coords set by JS) takes items out of
+    // flow without removing them from the DOM, so all existing CSS rules
+    // (border, background, gametype colors…) stay in effect.
+    &--group-dragging {
+      position: fixed !important;
+      margin: 0 !important;
+      z-index: 200;
     }
 
     // When the params panel is open — square the bottom corners, unify the

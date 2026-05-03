@@ -1707,18 +1707,18 @@ export const PlaylistsManager = {
         placeholder.style.height = totalH + 'px';
         container.insertBefore(placeholder, dragGroup[0]);
 
-        // Items stay inside the container — position:fixed takes them out of
-        // flow while keeping them inside .playlists-manager-popup so all CSS
-        // rules remain in effect. position:fixed naturally escapes overflow:hidden.
+        // Items stay inside the container — position:fixed (set via CSS class)
+        // takes them out of flow while keeping them inside .playlists-manager-popup
+        // so all CSS rules remain in effect. position:fixed naturally escapes
+        // overflow:hidden. Only the measured pixel coords are set as inline styles;
+        // all static visual properties (position, z-index, opacity, margin, box-shadow)
+        // live in the .playlist-entry-row--group-dragging CSS rule.
         dragGroup.forEach((el, i) => {
           el._dragOrigTop = rects[i].top;
-          el.style.position  = 'fixed';
-          el.style.top       = rects[i].top + 'px';
-          el.style.left      = rects[i].left + 'px';
-          el.style.width     = rects[i].width + 'px';
-          el.style.margin    = '0';
-          el.style.zIndex    = '200';
-          el.style.opacity   = '0.9';
+          el.style.top   = rects[i].top + 'px';
+          el.style.left  = rects[i].left + 'px';
+          el.style.width = rects[i].width + 'px';
+          el.classList.add('playlist-entry-row--group-dragging');
         });
       } else {
         // ── Single drag — existing behaviour ─────────────────────────────────
@@ -1755,9 +1755,19 @@ export const PlaylistsManager = {
         ? getItems().filter(r => !dragGroup.includes(r))
         : getItems().filter(r => r !== dragEl);
       let insertBefore = null;
+      const movingUp = e.clientY < startY;
       for (const r of items) {
         const rRect = r.getBoundingClientRect();
-        if (e.clientY < rRect.top + rRect.height / 2) { insertBefore = r; break; }
+        // Group drag: fixed-positioned elements still visually occupy their
+        // original space, so the naive midpoint snaps one slot too late when
+        // moving upward. Bias the threshold toward the bottom of the row when
+        // going up so the placeholder commits to the new slot at the right moment.
+        // Single drag uses the exact midpoint — it's translateY-based and already
+        // correct in both directions.
+        const threshold = (dragGroup.length > 1 && movingUp)
+          ? rRect.top + rRect.height * 0.65
+          : rRect.top + rRect.height * 0.5;
+        if (e.clientY < threshold) { insertBefore = r; break; }
       }
       if (insertBefore) container.insertBefore(placeholder, insertBefore);
       else container.appendChild(placeholder);
@@ -1772,10 +1782,12 @@ export const PlaylistsManager = {
       cancelAnimationFrame(scrollRAF);
 
       if (dragGroup.length > 1) {
-        // Clear inline styles and move each item to its new position (before placeholder).
+        // Clear inline styles (only the measured pixel coords were set inline;
+        // static visual properties are handled by the CSS class removed below).
         dragGroup.forEach(el => {
-          ['position', 'top', 'left', 'width', 'margin', 'zIndex', 'opacity']
+          ['top', 'left', 'width']
             .forEach(p => { el.style[p] = ''; });
+          el.classList.remove('playlist-entry-row--group-dragging');
           delete el._dragOrigTop;
           container.insertBefore(el, placeholder);
         });
