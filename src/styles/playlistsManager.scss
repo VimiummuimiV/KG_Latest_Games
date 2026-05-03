@@ -133,6 +133,7 @@
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     color: $count-color;
+    user-select: none;
   }
 }
 
@@ -983,6 +984,7 @@
       font-size: 0.75em;
       color: var(--rg-text-tertiary);
       flex-shrink: 0;
+      user-select: none;
     }
 
     .playlist-picker-add-btn {
@@ -1022,6 +1024,15 @@
   .playlist-entries--selection {
     .playlist-entry-checkbox { display: block; }
     .playlist-multiselect-bar { display: flex; }
+
+    // Make the whole row feel clickable and prevent accidental text selection
+    .playlist-entry-row {
+      cursor: pointer;
+
+      .playlist-entry-label {
+        user-select: none;
+      }
+    }
   }
 
   // Selected entry row tint
@@ -1209,8 +1220,17 @@
     &:disabled { cursor: default; }
   }
 
-  .playlist-picker-body--selection .playlist-picker-checkbox:not(:disabled) {
-    display: block;
+  .playlist-picker-body--selection {
+    .playlist-picker-checkbox:not(:disabled) { display: block; }
+
+    // Make the whole row feel clickable and prevent accidental text selection
+    .playlist-picker-game-row:not(.already-added) {
+      cursor: pointer;
+
+      .playlist-picker-game-name {
+        user-select: none;
+      }
+    }
   }
 
   .playlist-picker-game-row.picker-row--selected {

@@ -581,15 +581,31 @@ export const PlaylistsManager = {
 
   // Drag-to-select: mousedown records the target state; mouseover while LMB
   // held applies it to every checkbox the cursor crosses.
-  // cbSelector    — matches checkbox elements inside container
+  // cbSelector        — matches checkbox elements inside container
   // onToggle(cb, checked) — called after each state change
-  _attachDragSelect(container, cbSelector, onToggle) {
+  // opts.rowSelector  — wider hit target; clicking/dragging the row also toggles
+  //                     its checkbox (only when opts.activeClass is on container)
+  // opts.activeClass  — class on container that enables row-level selection
+  // opts.skipSelector — elements inside a row that should NOT trigger row-select
+  _attachDragSelect(container, cbSelector, onToggle, opts = {}) {
     if (container.dataset.dragSelectAttached) return;
     container.dataset.dragSelectAttached = '1';
     let dragState = null;
 
+    // Resolve a checkbox from either a direct cb hit or a row hit (when active).
+    const resolveCb = target => {
+      const directCb = target.closest(cbSelector);
+      if (directCb) return directCb;
+      if (!opts.rowSelector || !opts.activeClass) return null;
+      if (!container.classList.contains(opts.activeClass)) return null;
+      if (opts.skipSelector && target.closest(opts.skipSelector)) return null;
+      const row = target.closest(opts.rowSelector);
+      if (!row) return null;
+      return row.querySelector(cbSelector) ?? null;
+    };
+
     container.addEventListener('mousedown', e => {
-      const cb = e.target.closest(cbSelector);
+      const cb = resolveCb(e.target);
       if (!cb || cb.disabled) return;
       // Prevent text selection while dragging across rows
       e.preventDefault();
@@ -601,13 +617,13 @@ export const PlaylistsManager = {
     // mousedown already handled the toggle, so prevent the browser's click from
     // re-toggling the same checkbox — which would undo the change on a single click.
     container.addEventListener('click', e => {
-      const cb = e.target.closest(cbSelector);
+      const cb = resolveCb(e.target);
       if (!cb || cb.disabled) return;
       e.preventDefault();
     });
     container.addEventListener('mouseover', e => {
       if (dragState === null || e.buttons !== 1) { dragState = null; return; }
-      const cb = e.target.closest(cbSelector);
+      const cb = resolveCb(e.target);
       if (!cb || cb.disabled || cb.checked === dragState) return;
       cb.checked = dragState;
       onToggle(cb, dragState);
@@ -1313,6 +1329,10 @@ export const PlaylistsManager = {
         cb.closest('.playlist-entry-row')?.classList.toggle('playlist-entry-row--selected', checked);
         const span = entryList.querySelector('.playlist-multiselect-count');
         if (span) span.textContent = `${sel.size}`;
+      }, {
+        rowSelector:  '.playlist-entry-row',
+        activeClass:  'playlist-entries--selection',
+        skipSelector: 'button, input, .playlist-entry-drag-handle',
       });
 
       // ── Long-press on any entry row to enter selection mode ──────────────
@@ -2197,6 +2217,10 @@ export const PlaylistsManager = {
       checked ? pickerSel.add(gameId) : pickerSel.delete(gameId);
       gameRow?.classList.toggle('picker-row--selected', checked);
       updateConfirmBar();
+    }, {
+      rowSelector:  '.playlist-picker-game-row',
+      activeClass:  'playlist-picker-body--selection',
+      skipSelector: 'button, input',
     });
 
     // ── Long-press on any game row to enter picker selection mode ──────────
