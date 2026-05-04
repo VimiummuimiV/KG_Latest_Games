@@ -479,6 +479,7 @@ export const PlaylistsManager = {
           const delta = newCount - oldCount;
           const newRemaining = Math.min(newCount, Math.max(1, session.remainingRepeats + delta));
           setActivePlaylistSession({ ...session, remainingRepeats: newRemaining });
+          _updatePlaylistHud();
         }
       }
     }
@@ -496,6 +497,7 @@ export const PlaylistsManager = {
     if (session && session.playlistId === playlistId && newCount > 1) {
       const remaining = Math.min(newCount, session.remainingCycles ?? newCount);
       setActivePlaylistSession({ ...session, remainingCycles: remaining });
+      _updatePlaylistHud();
     }
   },
 
@@ -1005,6 +1007,8 @@ export const PlaylistsManager = {
     } catch { }
   },
 
+  updateActiveBadge() { _updateActiveBadge(); },
+
   // Scroll the active entry row to the center of the list viewport.
   // Used by both show() and refresh() to avoid duplicating the logic.
   _scrollToActiveEntry() {
@@ -1160,30 +1164,8 @@ export const PlaylistsManager = {
       const titleSpan = _el('span', 'playlist-title', playlist.title);
       const entry = _getPlaylistEntry(playlist, session);
       if (entry) {
-        const totalCycles     = playlist.repeatCount ?? 1;
-        const remainingCycles = session.remainingCycles ?? 1;
         const badge = _el('div', 'playlist-active-badge');
-        const cycleChip = totalCycles > 1
-          ? `<span class="playlist-active-badge-cycles">${icons.refresh}<span>${totalCycles - remainingCycles + 1}/${totalCycles}</span></span>`
-          : '';
-        const repeatText = entry.repeatCount > 1
-          ? `<span class="playlist-active-badge-reps">${icons.x}<span>${session.remainingRepeats}</span></span>`
-          : '';
-        const shuffleActive = session.shuffleActive ?? !!playlist.shuffle;
-        const shuffleChip = shuffleActive
-          ? `<span class="playlist-active-badge-shuffle">${icons.random}</span>`
-          : '';
-        badge.innerHTML = `
-          <span class="playlist-active-badge-position">${session.entryIndex + 1}/${playlist.entries.length}</span>
-          ${repeatText}
-          ${cycleChip}
-          ${shuffleChip}
-        `;
-        let tip = `[Плейлист] ${playlist.title}[Позиция] ${session.entryIndex + 1} из ${playlist.entries.length}`;
-        if (entry.repeatCount > 1) tip += `[Осталось повторов] ${session.remainingRepeats}`;
-        if (totalCycles > 1) tip += `[Цикл] ${totalCycles - remainingCycles + 1} из ${totalCycles}`;
-        if (shuffleActive) tip += `[Порядок] случайный`;
-        createCustomTooltip(badge, tip);
+        _renderActiveBadge(badge, playlist, session, entry);
         titleSpan.appendChild(badge);
       }
 
@@ -2577,7 +2559,49 @@ export const PlaylistsManager = {
 function _updatePlaylistHud() {
   try {
     PlaylistsManager.main?.pageHandler?.gamesDataContainer?.updatePlaylistIndicator();
+    _updateActiveBadge();
   } catch { }
+}
+
+// Populate (or repopulate) a playlist-active-badge element with current session data.
+function _renderActiveBadge(badge, playlist, session, entry) {
+  const totalCycles     = playlist.repeatCount ?? 1;
+  const remainingCycles = session.remainingCycles ?? 1;
+  const shuffleActive   = session.shuffleActive ?? !!playlist.shuffle;
+  const cycleChip = totalCycles > 1
+    ? `<span class="playlist-active-badge-cycles">${icons.refresh}<span>${totalCycles - remainingCycles + 1}/${totalCycles}</span></span>`
+    : '';
+  const repeatText = entry.repeatCount > 1
+    ? `<span class="playlist-active-badge-reps">${icons.x}<span>${session.remainingRepeats}</span></span>`
+    : '';
+  const shuffleChip = shuffleActive
+    ? `<span class="playlist-active-badge-shuffle">${icons.random}</span>`
+    : '';
+  badge.innerHTML = `
+    <span class="playlist-active-badge-position">${session.entryIndex + 1}/${playlist.entries.length}</span>
+    ${repeatText}
+    ${cycleChip}
+    ${shuffleChip}
+  `;
+  let tip = `[Плейлист] ${playlist.title}[Позиция] ${session.entryIndex + 1} из ${playlist.entries.length}`;
+  if (entry.repeatCount > 1) tip += `[Осталось повторов] ${session.remainingRepeats}`;
+  if (totalCycles > 1)       tip += `[Цикл] ${totalCycles - remainingCycles + 1} из ${totalCycles}`;
+  if (shuffleActive)         tip += `[Порядок] случайный`;
+  createCustomTooltip(badge, tip);
+}
+
+// Update the playlist-active-badge in the open panel in-place.
+function _updateActiveBadge() {
+  const session = getActivePlaylistSession();
+  if (!session) return;
+  const badge = document.querySelector('.playlists-manager-popup .playlist-active-badge');
+  if (!badge) return;
+  const playlists = PlaylistsManager.load();
+  const playlist  = playlists.find(p => p.id === session.playlistId);
+  if (!playlist) return;
+  const entry = _getPlaylistEntry(playlist, session);
+  if (!entry) return;
+  _renderActiveBadge(badge, playlist, session, entry);
 }
 
 // Update the progress fill on the active entry row in real-time.

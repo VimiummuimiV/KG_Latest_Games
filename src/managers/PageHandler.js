@@ -94,6 +94,7 @@ export class PageHandler {
               // Update the HUD indicator after advancing (new session values are now in storage)
               try { this.gamesDataContainer.updatePlaylistIndicator(); } catch { }
               try { PlaylistsManager.updateActiveEntryProgress(); } catch { }
+              try { PlaylistsManager.updateActiveBadge(); } catch { }
               if (result === 'paused') {
                 // Playlist is paused — user navigated away manually, do nothing
                 return;
