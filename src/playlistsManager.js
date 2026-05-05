@@ -2045,7 +2045,7 @@ export const PlaylistsManager = {
       nameChip.dataset.filterKey   = 'name';
       nameChip.dataset.filterValue = seedGameId ?? '';
       if (seedGameId && activeFilters.name.has(seedGameId)) nameChip.classList.add('active');
-      createCustomTooltip(nameChip, 'Фильтр по названию');
+      createCustomTooltip(nameChip, _smartChipTooltip('Фильтр по названию'));
       row.appendChild(nameChip);
       // Expose for realtime label update when seed changes
       row._nameChip = nameChip;
@@ -2061,7 +2061,7 @@ export const PlaylistsManager = {
         vocKindChip.dataset.filterKey   = 'gamekind';
         vocKindChip.dataset.filterValue = 'voc';
         if (activeFilters.gamekind.has('voc')) vocKindChip.classList.add('active');
-        createCustomTooltip(vocKindChip, 'Фильтр: только словарные игры');
+        createCustomTooltip(vocKindChip, _smartChipTooltip('Фильтр: только словарные игры'));
         row.appendChild(vocKindChip);
 
         const stdKindChip = _el('button', 'playlist-smartselect-chip');
@@ -2069,7 +2069,7 @@ export const PlaylistsManager = {
         stdKindChip.dataset.filterKey   = 'gamekind';
         stdKindChip.dataset.filterValue = 'standard';
         if (activeFilters.gamekind.has('standard')) stdKindChip.classList.add('active');
-        createCustomTooltip(stdKindChip, 'Фильтр: только стандартные игры');
+        createCustomTooltip(stdKindChip, _smartChipTooltip('Фильтр: только стандартные игры'));
         row.appendChild(stdKindChip);
       }
 
@@ -2081,7 +2081,7 @@ export const PlaylistsManager = {
         chip.dataset.filterKey       = 'type';
         chip.dataset.filterValue     = t;
         if (activeFilters.type.has(t)) chip.classList.add('active');
-        createCustomTooltip(chip, `Фильтр по режиму «${visibilities[t] || t}»`);
+        createCustomTooltip(chip, _smartChipTooltip(`Фильтр по режиму «${visibilities[t] || t}»`));
         row.appendChild(chip);
       });
 
@@ -2093,7 +2093,7 @@ export const PlaylistsManager = {
         chip.dataset.filterKey       = 'timeout';
         chip.dataset.filterValue     = String(tm);
         if (activeFilters.timeout.has(tm)) chip.classList.add('active');
-        createCustomTooltip(chip, `Фильтр по TM ${tm}`);
+        createCustomTooltip(chip, _smartChipTooltip(`Фильтр по TM ${tm}`));
         row.appendChild(chip);
       });
 
@@ -2105,7 +2105,7 @@ export const PlaylistsManager = {
         chip.dataset.filterKey       = 'idletime';
         chip.dataset.filterValue     = String(afk);
         if (activeFilters.idletime.has(afk)) chip.classList.add('active');
-        createCustomTooltip(chip, `Фильтр по AFK ${afk}`);
+        createCustomTooltip(chip, _smartChipTooltip(`Фильтр по AFK ${afk}`));
         row.appendChild(chip);
       });
 
@@ -2117,7 +2117,7 @@ export const PlaylistsManager = {
       withChip.dataset.filterKey       = 'override';
       withChip.dataset.filterValue     = 'yes';
       if (activeFilters.override.has('yes')) withChip.classList.add('active');
-      createCustomTooltip(withChip, 'Фильтр: с переопределёнными параметрами');
+      createCustomTooltip(withChip, _smartChipTooltip('Фильтр: с переопределёнными параметрами'));
       row.appendChild(withChip);
 
       const noChip = _el('button', 'playlist-smartselect-chip');
@@ -2125,7 +2125,7 @@ export const PlaylistsManager = {
       noChip.dataset.filterKey         = 'override';
       noChip.dataset.filterValue       = 'no';
       if (activeFilters.override.has('no')) noChip.classList.add('active');
-      createCustomTooltip(noChip, 'Фильтр: без переопределённых параметров');
+      createCustomTooltip(noChip, _smartChipTooltip('Фильтр: без переопределённых параметров'));
       row.appendChild(noChip);
 
       // ── Repeat chips — one per unique repeatCount value in the playlist ─────
@@ -2136,7 +2136,7 @@ export const PlaylistsManager = {
         chip.dataset.filterKey       = 'repeat';
         chip.dataset.filterValue     = String(rep);
         if (activeFilters.repeat.has(rep)) chip.classList.add('active');
-        createCustomTooltip(chip, `Фильтр по количеству повторов ×${rep}`);
+        createCustomTooltip(chip, _smartChipTooltip(`Фильтр по количеству повторов ×${rep}`));
         row.appendChild(chip);
       });
 
@@ -3011,12 +3011,7 @@ export const PlaylistsManager = {
       const chip = _el('button', 'playlist-picker-group-chip');
       chip.textContent        = groupTitle;
       chip.dataset.groupTitle = groupTitle;
-      createCustomTooltip(chip, `
-        [Клик] Показать только группу «${groupTitle}»
-        [Ctrl + Клик] Добавить / Убрать группу «${groupTitle}» из фильтра
-        [ЛКМ + Перетаскивание] Показать только группы, над которыми проходит курсор
-        [Ctrl + ЛКМ + Перетаскивание] Добавить / Убрать группы, над которыми проходит курсор, из фильтра
-      `);
+      createCustomTooltip(chip, _groupChipTooltip(groupTitle));
       groupFilterRow.appendChild(chip);
     });
 
@@ -3199,4 +3194,22 @@ function _buildChipStripActions(container, chipSel, onDeselect, onSelectAll,
   container.prepend(wrap);
   sync();
   return sync;
+}
+
+function _groupChipTooltip(groupTitle) {
+  return `
+    [Клик] Показать только группу «${groupTitle}»
+    [Ctrl + Клик] Добавить / Убрать группу «${groupTitle}» из фильтра
+    [ЛКМ + Перетаскивание] Показать только группы, над которыми проходит курсор
+    [Ctrl + ЛКМ + Перетаскивание] Добавить / Убрать группы, над которыми проходит курсор, из фильтра
+  `;
+}
+
+function _smartChipTooltip(filterAction) {
+  return `
+    [Клик] ${filterAction}
+    [Ctrl + Клик] Добавить / Убрать из фильтра
+    [ЛКМ + Перетаскивание] Применить фильтр ко всем, над которыми проходит курсор
+    [Ctrl + ЛКМ + Перетаскивание] Добавить / Убрать из фильтра всё, над чем проходит курсор
+  `;
 }
