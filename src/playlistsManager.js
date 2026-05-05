@@ -1335,6 +1335,10 @@ export const PlaylistsManager = {
         cb.closest('.playlist-entry-row')?.classList.toggle('playlist-entry-row--selected', checked);
         const span = entryList.querySelector('.playlist-multiselect-count');
         if (span) span.textContent = `${sel.size}`;
+        if (checked) {
+          const msBar = entryList.querySelector('.playlist-multiselect-bar');
+          if (msBar?._setSeedEntry) msBar._setSeedEntry(entryId);
+        }
       }, {
         rowSelector:  '.playlist-entry-row',
         activeClass:  'playlist-entries--selection',
@@ -1442,6 +1446,8 @@ export const PlaylistsManager = {
       entry.repeatCount = next;
       _updatePlaylistHud();
       _updateEntryProgress(row, entry, playedCount, isCurrentEntry);
+      const msBar = row.closest('.playlist-entries')?.querySelector('.playlist-multiselect-bar');
+      if (msBar?._refreshFilterRow) msBar._refreshFilterRow();
     });
     this._attachStepperHold(incBtn, () => {
       const next = entry.repeatCount + 1;
@@ -1450,6 +1456,8 @@ export const PlaylistsManager = {
       entry.repeatCount = next;
       _updatePlaylistHud();
       _updateEntryProgress(row, entry, playedCount, isCurrentEntry);
+      const msBar = row.closest('.playlist-entries')?.querySelector('.playlist-multiselect-bar');
+      if (msBar?._refreshFilterRow) msBar._refreshFilterRow();
     });
     stepper.append(decBtn, countSpan, incBtn);
 
@@ -1587,10 +1595,12 @@ export const PlaylistsManager = {
         if (cb.checked) sel.add(entry.id);
         else sel.delete(entry.id);
         row.classList.toggle('playlist-entry-row--selected', cb.checked);
-        // Live-update bar count
+        // Live-update bar count and track latest touched entry for name chip
         const entryList = row.closest('.playlist-entries');
         const countSpan = entryList?.querySelector('.playlist-multiselect-count');
         if (countSpan) countSpan.textContent = `${sel.size}`;
+        const msBar = entryList?.querySelector('.playlist-multiselect-bar');
+        if (msBar?._setSeedEntry) msBar._setSeedEntry(entry.id);
       });
 
       row.prepend(cb);
@@ -1812,17 +1822,53 @@ export const PlaylistsManager = {
     const bar = _el('div', 'playlist-multiselect-bar');
 
     // ── Smart-select: apply a filter, select matching entries, deselect non-matching ──
-    // seedEntryId is set by onActivate (long-press) so filters have a reference point.
-    let seedEntryId = null;
+    // seedEntryId     is set by onActivate (long-press); reference point for name chip.
+    // latestSelectedId tracks the last entry the user manually checked/unchecked so
+    //                  the name chip always reflects the most recently touched entry.
+    let seedEntryId      = null;
+    let latestSelectedId = null;
 
-    const applySmartFilter = (matchFn) => {
+    // activeFilters: each key holds a Set of accepted values (OR within a key, AND across keys).
+    const activeFilters = {
+      name:     new Set(),
+      type:     new Set(),
+      timeout:  new Set(),
+      idletime: new Set(),
+      override: new Set(), // values: 'yes' | 'no'
+      repeat:   new Set(), // values: number (repeatCount)
+    };
+
+    const applyActiveFilters = () => {
       const freshPlaylists = this.load();
       const fp = freshPlaylists.find(p => p.id === playlist.id);
       if (!fp) return;
+      const hasAny = Object.values(activeFilters).some(s => s.size > 0);
+      // When all chips are deactivated, clear the selection entirely
+      if (!hasAny) {
+        sel.clear();
+        entryList.querySelectorAll('.playlist-entry-checkbox').forEach(cb => {
+          cb.checked = false;
+          cb.closest('.playlist-entry-row')?.classList.remove('playlist-entry-row--selected');
+        });
+        countSpan.textContent = '0';
+        return;
+      }
       sel.clear();
       fp.entries.forEach(entry => {
-        const game = this.main?.gamesManager?.findGameById(entry.gameId);
-        if (matchFn(entry, game)) sel.add(entry.id);
+        const game   = this.main?.gamesManager?.findGameById(entry.gameId);
+        const eName  = game?.params?.vocName ?? null;
+        const eType  = entry.params?.type     ?? game?.params?.type;
+        const eTM    = entry.params?.timeout  ?? game?.params?.timeout;
+        const eAFK   = entry.params?.idletime ?? game?.params?.idletime;
+        const eHasOv = !!(entry.params && ('type' in entry.params || 'timeout' in entry.params || 'idletime' in entry.params));
+        // AND across groups, OR within each group
+        if (activeFilters.name.size     > 0 && !activeFilters.name.has(eName))                       return;
+        if (activeFilters.type.size     > 0 && !activeFilters.type.has(eType))                       return;
+        if (activeFilters.timeout.size  > 0 && !activeFilters.timeout.has(eTM))                      return;
+        if (activeFilters.idletime.size > 0 && !activeFilters.idletime.has(eAFK))                    return;
+        if (activeFilters.override.size > 0 && !activeFilters.override.has(eHasOv ? 'yes' : 'no'))   return;
+        if (activeFilters.repeat.size   > 0 && !activeFilters.repeat.has(entry.repeatCount ?? 1))    return;
+        sel.add(entry.id);
       });
       // Sync checkboxes and row highlights
       entryList.querySelectorAll('.playlist-entry-checkbox').forEach(cb => {
@@ -1831,6 +1877,27 @@ export const PlaylistsManager = {
         cb.closest('.playlist-entry-row')?.classList.toggle('playlist-entry-row--selected', match);
       });
       countSpan.textContent = `${sel.size}`;
+    };
+
+    // Shared drag-to-toggle for chip strips — same pattern as playlist-picker-group-chip.
+    // chipDragState is local to each strip so multiple strips don't interfere.
+    const attachChipDrag = (strip, chipSelector, onToggle) => {
+      let chipDragState = null;
+      strip.addEventListener('mousedown', e => {
+        const chip = e.target.closest(chipSelector);
+        if (!chip || chip.disabled) return;
+        e.preventDefault();
+        chipDragState = !chip.classList.contains('active');
+        onToggle(chip, chipDragState);
+      });
+      strip.addEventListener('mouseover', e => {
+        if (chipDragState === null || e.buttons !== 1) { chipDragState = null; return; }
+        const chip = e.target.closest(chipSelector);
+        if (chip && !chip.disabled && chip.classList.contains('active') !== chipDragState) {
+          onToggle(chip, chipDragState);
+        }
+      });
+      document.addEventListener('mouseup', () => { chipDragState = null; }, { capture: true });
     };
 
     const updateBarHeight = () => {
@@ -1860,21 +1927,27 @@ export const PlaylistsManager = {
       const effectiveTimeout  = e => e.params?.timeout  ?? this.main?.gamesManager?.findGameById(e.gameId)?.params?.timeout;
       const effectiveIdletime = e => e.params?.idletime ?? this.main?.gamesManager?.findGameById(e.gameId)?.params?.idletime;
 
-      const seedEntry = fp.entries.find(e => e.id === seedEntryId);
+      const seedEntry = fp.entries.find(e => e.id === (latestSelectedId ?? seedEntryId));
       const seedGame  = seedEntry ? this.main?.gamesManager?.findGameById(seedEntry.gameId) : null;
+
+      // Shared toggle helper — flips chip active state, mirrors into activeFilters, re-filters.
+      const toggleChip = (chip, filterKey, value, forceState) => {
+        const active = forceState !== undefined ? forceState : !chip.classList.contains('active');
+        chip.classList.toggle('active', active);
+        active ? activeFilters[filterKey].add(value) : activeFilters[filterKey].delete(value);
+        applyActiveFilters();
+      };
 
       // ── Name chip — shows vocName of latest selected / seed entry ─────────
       // Only shown if the seed entry has a vocName (skips gametype like Словарь).
       const seedVocName = seedGame?.params?.vocName ?? null;
       const nameChip = _el('button', 'playlist-smartselect-chip');
-      nameChip.textContent = seedVocName ? `«${seedVocName}»` : '—';
-      nameChip.disabled = !seedVocName;
-      createCustomTooltip(nameChip, 'Выбрать все с таким же названием');
-      nameChip.addEventListener('click', e => {
-        e.stopPropagation();
-        if (!seedVocName) return;
-        applySmartFilter(en => effectiveVocName(en) === seedVocName);
-      });
+      nameChip.textContent         = seedVocName ? `«${seedVocName}»` : '—';
+      nameChip.disabled            = !seedVocName;
+      nameChip.dataset.filterKey   = 'name';
+      nameChip.dataset.filterValue = seedVocName ?? '';
+      if (seedVocName && activeFilters.name.has(seedVocName)) nameChip.classList.add('active');
+      createCustomTooltip(nameChip, 'Фильтр по названию');
       row.appendChild(nameChip);
       // Expose for realtime label update when seed changes
       row._nameChip = nameChip;
@@ -1883,12 +1956,11 @@ export const PlaylistsManager = {
       const uniqueTypes = [...new Set(fp.entries.map(e => effectiveType(e)).filter(Boolean))].sort();
       uniqueTypes.forEach(t => {
         const chip = _el('button', 'playlist-smartselect-chip');
-        chip.textContent = visibilities[t] || t;
-        createCustomTooltip(chip, `Выбрать все «${visibilities[t] || t}»`);
-        chip.addEventListener('click', e => {
-          e.stopPropagation();
-          applySmartFilter(en => effectiveType(en) === t);
-        });
+        chip.textContent             = visibilities[t] || t;
+        chip.dataset.filterKey       = 'type';
+        chip.dataset.filterValue     = t;
+        if (activeFilters.type.has(t)) chip.classList.add('active');
+        createCustomTooltip(chip, `Фильтр по режиму «${visibilities[t] || t}»`);
         row.appendChild(chip);
       });
 
@@ -1896,12 +1968,11 @@ export const PlaylistsManager = {
       const uniqueTMs = [...new Set(fp.entries.map(e => effectiveTimeout(e)).filter(v => v != null))].sort((a, b) => a - b);
       uniqueTMs.forEach(tm => {
         const chip = _el('button', 'playlist-smartselect-chip');
-        chip.textContent = `TM ${tm}`;
-        createCustomTooltip(chip, `Выбрать все с TM ${tm}`);
-        chip.addEventListener('click', e => {
-          e.stopPropagation();
-          applySmartFilter(en => effectiveTimeout(en) === tm);
-        });
+        chip.textContent             = `TM ${tm}`;
+        chip.dataset.filterKey       = 'timeout';
+        chip.dataset.filterValue     = String(tm);
+        if (activeFilters.timeout.has(tm)) chip.classList.add('active');
+        createCustomTooltip(chip, `Фильтр по TM ${tm}`);
         row.appendChild(chip);
       });
 
@@ -1909,84 +1980,52 @@ export const PlaylistsManager = {
       const uniqueAFKs = [...new Set(fp.entries.map(e => effectiveIdletime(e)).filter(v => v != null))].sort((a, b) => a - b);
       uniqueAFKs.forEach(afk => {
         const chip = _el('button', 'playlist-smartselect-chip');
-        chip.textContent = `AFK ${afk}`;
-        createCustomTooltip(chip, `Выбрать все с AFK ${afk}`);
-        chip.addEventListener('click', e => {
-          e.stopPropagation();
-          applySmartFilter(en => effectiveIdletime(en) === afk);
-        });
+        chip.textContent             = `AFK ${afk}`;
+        chip.dataset.filterKey       = 'idletime';
+        chip.dataset.filterValue     = String(afk);
+        if (activeFilters.idletime.has(afk)) chip.classList.add('active');
+        createCustomTooltip(chip, `Фильтр по AFK ${afk}`);
         row.appendChild(chip);
       });
-
-      // ── Repeat filter: stepper + input (like dup-bar, but for selection) ──
-      const REP_MAX = 50;
-      const repVal = { value: seedEntry ? (seedEntry.repeatCount ?? 1) : 1 };
-
-      const repWrap       = _el('div', 'playlist-smartselect-rep-wrap');
-      const repStepper    = _el('div', 'playlist-multiselect-stepper');
-      const repDecBtn     = _el('button', 'playlist-stepper-btn');
-      repDecBtn.innerHTML = icons.chevronLeft;
-      const repCountSpan  = _el('span', 'playlist-stepper-count', String(repVal.value));
-      const repIncBtn     = _el('button', 'playlist-stepper-btn');
-      repIncBtn.innerHTML = icons.chevronRight;
-      repStepper.append(repDecBtn, repCountSpan, repIncBtn);
-      createCustomTooltip(repStepper, 'Выбрать все с таким количеством повторов');
-
-      const repInput = _el('input', 'playlist-sel-input');
-      repInput.type  = 'number';
-      repInput.min   = '1';
-      repInput.max   = String(REP_MAX);
-
-      const getRepValue = () => {
-        const v = parseInt(repInput.value, 10);
-        return (!repInput.value.trim() || isNaN(v)) ? repVal.value : Math.max(1, Math.min(REP_MAX, v));
-      };
-      const applyRepFilter = () => applySmartFilter(en => (en.repeatCount ?? 1) === getRepValue());
-
-      repInput.addEventListener('click',   e => e.stopPropagation());
-      repInput.addEventListener('keydown', e => e.stopPropagation());
-      repInput.addEventListener('input', e => {
-        e.stopPropagation();
-        const v = parseInt(repInput.value, 10);
-        if (!isNaN(v)) {
-          const clamped = Math.max(1, Math.min(REP_MAX, v));
-          if (v !== clamped) repInput.value = String(clamped);
-          repVal.value = clamped;
-          repCountSpan.textContent = String(clamped);
-          applyRepFilter();
-        }
-      });
-
-      this._attachStepperHold(repDecBtn, () => {
-        if (repInput.value.trim()) return; // input has priority
-        repVal.value = Math.max(1, repVal.value - 1);
-        repCountSpan.textContent = String(repVal.value);
-        applyRepFilter();
-      });
-      this._attachStepperHold(repIncBtn, () => {
-        if (repInput.value.trim()) return;
-        repVal.value = Math.min(REP_MAX, repVal.value + 1);
-        repCountSpan.textContent = String(repVal.value);
-        applyRepFilter();
-      });
-
-      repWrap.append(repStepper, repInput);
-      row.appendChild(repWrap);
 
       // ── С пер. / Без пер. chips ───────────────────────────────────────────
       const hasOverride = en => !!(en.params && ('type' in en.params || 'timeout' in en.params || 'idletime' in en.params));
 
       const withChip = _el('button', 'playlist-smartselect-chip');
-      withChip.textContent = 'С пер.';
-      createCustomTooltip(withChip, 'Выбрать все с переопределёнными параметрами');
-      withChip.addEventListener('click', e => { e.stopPropagation(); applySmartFilter(hasOverride); });
+      withChip.textContent             = 'С пер.';
+      withChip.dataset.filterKey       = 'override';
+      withChip.dataset.filterValue     = 'yes';
+      if (activeFilters.override.has('yes')) withChip.classList.add('active');
+      createCustomTooltip(withChip, 'Фильтр: с переопределёнными параметрами');
       row.appendChild(withChip);
 
       const noChip = _el('button', 'playlist-smartselect-chip');
-      noChip.textContent = 'Без пер.';
-      createCustomTooltip(noChip, 'Выбрать все без переопределённых параметров');
-      noChip.addEventListener('click', e => { e.stopPropagation(); applySmartFilter(en => !hasOverride(en)); });
+      noChip.textContent               = 'Без пер.';
+      noChip.dataset.filterKey         = 'override';
+      noChip.dataset.filterValue       = 'no';
+      if (activeFilters.override.has('no')) noChip.classList.add('active');
+      createCustomTooltip(noChip, 'Фильтр: без переопределённых параметров');
       row.appendChild(noChip);
+
+      // ── Repeat chips — one per unique repeatCount value in the playlist ─────
+      const uniqueReps = [...new Set(fp.entries.map(e => e.repeatCount ?? 1))].sort((a, b) => a - b);
+      uniqueReps.forEach(rep => {
+        const chip = _el('button', 'playlist-smartselect-chip');
+        chip.textContent             = `×${rep}`;
+        chip.dataset.filterKey       = 'repeat';
+        chip.dataset.filterValue     = String(rep);
+        if (activeFilters.repeat.has(rep)) chip.classList.add('active');
+        createCustomTooltip(chip, `Фильтр по количеству повторов ×${rep}`);
+        row.appendChild(chip);
+      });
+
+      // ── Chip drag-to-toggle — LMB down sets intent, mouseover spreads it ──
+      attachChipDrag(row, '.playlist-smartselect-chip', (chip, active) => {
+        const key   = chip.dataset.filterKey;
+        const raw   = chip.dataset.filterValue;
+        const value = (key === 'timeout' || key === 'idletime' || key === 'repeat') ? Number(raw) : raw;
+        toggleChip(chip, key, value, active);
+      });
 
       return row;
     };
@@ -2000,20 +2039,23 @@ export const PlaylistsManager = {
       filterRow?.remove();
       filterRow     = null;
       filterRowOpen = false;
+      Object.values(activeFilters).forEach(s => s.clear());
       filterBtn.classList.remove('active');
       bar.classList.remove('playlist-multiselect-bar--filter-open');
       updateBarHeight();
     };
 
+    const refreshFilterRow = () => {
+      if (!filterRowOpen || !filterRow) return;
+      const newRow = buildFilterRow();
+      filterRow.replaceWith(newRow);
+      filterRow = newRow;
+      updateBarHeight();
+    };
+
     // Shared helper: exit selection mode in-place without refresh()
     const exitSelectionMode = () => {
-      // Close filter row
-      filterRow?.remove();
-      filterRow     = null;
-      filterRowOpen = false;
-      filterBtn?.classList.remove('active');
-      bar.classList.remove('playlist-multiselect-bar--filter-open');
-
+      closeFilterRow();
       sel.clear();
       this._selectionMode.delete(playlist.id);
       entryList.classList.remove('playlist-entries--selection');
@@ -2037,12 +2079,19 @@ export const PlaylistsManager = {
     // setSeedEntry: called by long-press onActivate; also rebuilds the open filter
     // row so name chip and all data-driven chips update in realtime.
     const setSeedEntry = id => {
-      seedEntryId = id;
+      seedEntryId      = id;
+      latestSelectedId = id;
       if (filterRowOpen && filterRow) {
-        const newRow = buildFilterRow();
-        filterRow.replaceWith(newRow);
-        filterRow = newRow;
-        updateBarHeight();
+        // If the name filter was active under the old vocName, migrate it to the
+        // new one so the rebuilt chip restores its active state correctly.
+        if (activeFilters.name.size > 0) {
+          const fp = this.load().find(p => p.id === playlist.id);
+          const entry = fp?.entries.find(e => e.id === id);
+          const newVocName = this.main?.gamesManager?.findGameById(entry?.gameId)?.params?.vocName ?? null;
+          activeFilters.name.clear();
+          if (newVocName) activeFilters.name.add(newVocName);
+        }
+        refreshFilterRow();
       }
     };
 
@@ -2133,6 +2182,8 @@ export const PlaylistsManager = {
           const span = row?.querySelector('.playlist-stepper-count');
           if (span) span.textContent = String(repCount.value);
         });
+        const msBar = el.querySelector('.playlist-multiselect-bar');
+        if (msBar?._refreshFilterRow) msBar._refreshFilterRow();
       }
     };
 
@@ -2203,8 +2254,9 @@ export const PlaylistsManager = {
     bar.append(left, right);
 
     // Expose methods so callers (long-press, entry params) can interact
-    bar._setSeedEntry   = setSeedEntry;
-    bar._closeFilterRow = closeFilterRow;
+    bar._setSeedEntry      = setSeedEntry;
+    bar._refreshFilterRow  = refreshFilterRow;
+    bar._closeFilterRow    = closeFilterRow;
     return bar;
   },
 

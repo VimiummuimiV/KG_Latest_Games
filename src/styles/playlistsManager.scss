@@ -1149,34 +1149,20 @@
       color: hsl(var(--rg-popup-btn-save));
     }
 
-    &:active { background: hsla(var(--rg-popup-btn-save) / 0.25); }
+    &.active {
+      background: hsla(var(--rg-popup-btn-save) / 0.15) !important;
+      border-color: hsl(var(--rg-popup-btn-save)) !important;
+      color: hsl(var(--rg-popup-btn-save)) !important;
+      font-weight: 600;
+
+      &:hover { background: hsla(var(--rg-popup-btn-save) / 0.25) !important; }
+    }
 
     &:disabled {
       opacity: 0.35;
       cursor: default;
       pointer-events: none;
     }
-  }
-
-  // Repeat-filter control inside the smart-select row: stepper + direct input.
-  // Elements are vertically centred inside this flex wrapper.
-  .playlist-smartselect-rep-wrap {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3em;
-    flex-shrink: 0;
-  }
-
-  // Direct-entry input inside the smart-select rep-wrap — same visual as
-  // the dup-bar input, but semantically belongs to selection not duplication.
-  .playlist-sel-input {
-    @include playlist-text-input();
-    background: var(--rg-bg-primary) !important;
-    width: 52px;
-    flex-shrink: 0;
-    appearance: textfield;
-    &::-webkit-inner-spin-button,
-    &::-webkit-outer-spin-button { display: none; }
   }
 
   .playlist-smartselect-empty {
