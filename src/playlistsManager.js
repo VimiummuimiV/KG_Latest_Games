@@ -1856,7 +1856,7 @@ export const PlaylistsManager = {
       sel.clear();
       fp.entries.forEach(entry => {
         const game   = this.main?.gamesManager?.findGameById(entry.gameId);
-        const eName  = game?.params?.vocName ?? null;
+        const eName  = game?.id ?? null;
         const eType  = entry.params?.type     ?? game?.params?.type;
         const eTM    = entry.params?.timeout  ?? game?.params?.timeout;
         const eAFK   = entry.params?.idletime ?? game?.params?.idletime;
@@ -1922,7 +1922,6 @@ export const PlaylistsManager = {
       }
 
       // Effective param helpers — entry override takes priority over game default
-      const effectiveVocName  = e => this.main?.gamesManager?.findGameById(e.gameId)?.params?.vocName ?? null;
       const effectiveType     = e => e.params?.type     ?? this.main?.gamesManager?.findGameById(e.gameId)?.params?.type;
       const effectiveTimeout  = e => e.params?.timeout  ?? this.main?.gamesManager?.findGameById(e.gameId)?.params?.timeout;
       const effectiveIdletime = e => e.params?.idletime ?? this.main?.gamesManager?.findGameById(e.gameId)?.params?.idletime;
@@ -1938,15 +1937,18 @@ export const PlaylistsManager = {
         applyActiveFilters();
       };
 
-      // ── Name chip — shows vocName of latest selected / seed entry ─────────
-      // Only shown if the seed entry has a vocName (skips gametype like Словарь).
-      const seedVocName = seedGame?.params?.vocName ?? null;
+      // ── Name chip — shows display name of latest selected / seed entry ──────
+      // Works for all game types: uses vocName when present, falls back to gametype label.
+      const seedGameId   = seedGame?.id ?? null;
+      const seedVocName  = seedGame?.params?.vocName ?? null;
+      const seedGtype    = seedGame ? (gameTypes[seedGame.params?.gametype] || seedGame.params?.gametype) : null;
+      const seedDispName = seedVocName ? `«${seedVocName}»` : (seedGtype ?? null);
       const nameChip = _el('button', 'playlist-smartselect-chip');
-      nameChip.textContent         = seedVocName ? `«${seedVocName}»` : '—';
-      nameChip.disabled            = !seedVocName;
+      nameChip.textContent         = seedDispName ?? '—';
+      nameChip.disabled            = !seedGameId;
       nameChip.dataset.filterKey   = 'name';
-      nameChip.dataset.filterValue = seedVocName ?? '';
-      if (seedVocName && activeFilters.name.has(seedVocName)) nameChip.classList.add('active');
+      nameChip.dataset.filterValue = seedGameId ?? '';
+      if (seedGameId && activeFilters.name.has(seedGameId)) nameChip.classList.add('active');
       createCustomTooltip(nameChip, 'Фильтр по названию');
       row.appendChild(nameChip);
       // Expose for realtime label update when seed changes
@@ -2082,14 +2084,14 @@ export const PlaylistsManager = {
       seedEntryId      = id;
       latestSelectedId = id;
       if (filterRowOpen && filterRow) {
-        // If the name filter was active under the old vocName, migrate it to the
+        // If the name filter was active under the old game, migrate it to the
         // new one so the rebuilt chip restores its active state correctly.
         if (activeFilters.name.size > 0) {
           const fp = this.load().find(p => p.id === playlist.id);
           const entry = fp?.entries.find(e => e.id === id);
-          const newVocName = this.main?.gamesManager?.findGameById(entry?.gameId)?.params?.vocName ?? null;
+          const newGameId = this.main?.gamesManager?.findGameById(entry?.gameId)?.id ?? null;
           activeFilters.name.clear();
-          if (newVocName) activeFilters.name.add(newVocName);
+          if (newGameId) activeFilters.name.add(newGameId);
         }
         refreshFilterRow();
       }
