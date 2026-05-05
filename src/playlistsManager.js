@@ -647,24 +647,9 @@ export const PlaylistsManager = {
     if (container.dataset.dragSelectAttached) return;
     container.dataset.dragSelectAttached = '1';
     let dragState = null;
-    const selectScrollRAF = [null]; // mutable cancel handle for _startAutoscroll
+    const selectScrollRAF = [null];
     let selectLastY = 0;
 
-    // Re-evaluate the row under the last known cursor Y after each autoscroll tick.
-    const onSelectScrollTick = () => {
-      const el = document.elementFromPoint(
-        container.getBoundingClientRect().left + 4,
-        selectLastY
-      );
-      if (!el) return;
-      const cb = resolveCb(el);
-      if (cb && !cb.disabled && cb.checked !== dragState) {
-        cb.checked = dragState;
-        onToggle(cb, dragState);
-      }
-    };
-
-    // Resolve a checkbox from either a direct cb hit or a row hit (when active).
     const resolveCb = target => {
       const directCb = target.closest(cbSelector);
       if (directCb) return directCb;
@@ -674,6 +659,11 @@ export const PlaylistsManager = {
       const row = target.closest(opts.rowSelector);
       if (!row) return null;
       return row.querySelector(cbSelector) ?? null;
+    };
+
+    const tryToggle = target => {
+      const cb = resolveCb(target);
+      if (cb && !cb.disabled && cb.checked !== dragState) { cb.checked = dragState; onToggle(cb, dragState); }
     };
 
     container.addEventListener('mousedown', e => {
@@ -694,20 +684,26 @@ export const PlaylistsManager = {
       if (!cb || cb.disabled) return;
       e.preventDefault();
     });
-    // Use mousemove (not mouseover) so we get continuous updates and can drive autoscroll.
+    // mousemove: sweep all rows in the Y range covered since the last event,
+    // catching any skipped when moving fast; also drives autoscroll.
     document.addEventListener('mousemove', e => {
-      if (dragState === null || e.buttons !== 1) {
-        dragState = null;
-        cancelAnimationFrame(selectScrollRAF[0]);
-        return;
+      if (dragState === null || e.buttons !== 1) { dragState = null; cancelAnimationFrame(selectScrollRAF[0]); return; }
+      if (opts.rowSelector) {
+        const lo = Math.min(selectLastY, e.clientY);
+        const hi = Math.max(selectLastY, e.clientY);
+        container.querySelectorAll(opts.rowSelector).forEach(row => {
+          const r = row.getBoundingClientRect();
+          if (r.bottom >= lo && r.top <= hi) tryToggle(row);
+        });
       }
       selectLastY = e.clientY;
-      const cb = resolveCb(e.target);
-      if (cb && !cb.disabled && cb.checked !== dragState) {
-        cb.checked = dragState;
-        onToggle(cb, dragState);
-      }
-      _startAutoscroll(selectScrollRAF, _findScrollParent(container), e.clientY, onSelectScrollTick);
+      _startAutoscroll(selectScrollRAF, _findScrollParent(container), e.clientY, () => {
+        if (!opts.rowSelector) return;
+        container.querySelectorAll(opts.rowSelector).forEach(row => {
+          const r = row.getBoundingClientRect();
+          if (r.top <= selectLastY && r.bottom >= selectLastY) tryToggle(row);
+        });
+      });
     });
     const stopDrag = () => { dragState = null; cancelAnimationFrame(selectScrollRAF[0]); };
     document.addEventListener('mouseup', stopDrag, { capture: true });
