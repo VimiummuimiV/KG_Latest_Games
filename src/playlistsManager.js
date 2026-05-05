@@ -538,6 +538,34 @@ export const PlaylistsManager = {
     this._selectionMode.delete(playlistId);
   },
 
+  // Duplicates an ordered group of entries N times, preserving their relative
+  // order in each copy. Appends all copies to the end of the playlist.
+  // Does NOT clear selection or selectionMode — the caller decides that.
+  // Returns the flat array of all newly created entry objects.
+  bulkDuplicateEntriesN(playlistId, entryIds, n) {
+    if (!n || n < 1) return [];
+    const playlists = this.load();
+    const p = playlists.find(p => p.id === playlistId);
+    if (!p) return [];
+    // Preserve the order from p.entries, not from the entryIds array.
+    const idSet   = new Set(entryIds);
+    const sources = p.entries.filter(e => idSet.has(e.id));
+    if (!sources.length) return [];
+    const allNew = [];
+    for (let i = 0; i < n; i++) {
+      const copies = sources.map(e => ({
+        id: generateRandomString(),
+        gameId: e.gameId,
+        repeatCount: e.repeatCount,
+        params: e.params ? { ...e.params } : {},
+      }));
+      p.entries.push(...copies);
+      allNew.push(...copies);
+    }
+    this.save(playlists);
+    return allNew;
+  },
+
   // Merges params onto each selected entry. null value removes that key.
   bulkSetParams(playlistId, entryIds, params) {
     const ids = new Set(entryIds);
@@ -1476,23 +1504,56 @@ export const PlaylistsManager = {
       }
     });
 
-    // Duplicate — single click appends 1 copy; Ctrl+Click opens the dup bar
-    // where the user can set a count (stepper + direct input) and confirm.
+    // Duplicate — single click: duplicate this entry (or the whole selected group
+    // if selection mode is active and this entry is part of the selected group).
+    // Ctrl+Click: open the dup bar to set a repeat count (same group awareness).
     const dupBtn = _el('button', 'playlist-entry-duplicate-btn');
     dupBtn.innerHTML = icons.copy;
     createCustomTooltip(dupBtn, '[Клик] Дублировать в конец плейлиста [Ctrl + Клик] Задать количество копий');
     dupBtn.addEventListener('click', e => {
       e.stopPropagation();
+      const entryList = row.closest('.playlist-entries');
+
+      // Resolve the group to duplicate: if selection mode is active AND this
+      // entry is selected, collect the full contiguous selected run (same
+      // algorithm as group drag). Otherwise fall back to just this entry.
+      const getGroupIds = () => {
+        if (!entryList?.classList.contains('playlist-entries--selection')) return null;
+        if (!row.classList.contains('playlist-entry-row--selected')) return null;
+        const allRows = Array.from(entryList.querySelectorAll('.playlist-entry-row'));
+        const idx = allRows.indexOf(row);
+        let lo = idx, hi = idx;
+        while (lo > 0 && allRows[lo - 1].classList.contains('playlist-entry-row--selected')) lo--;
+        while (hi < allRows.length - 1 && allRows[hi + 1].classList.contains('playlist-entry-row--selected')) hi++;
+        return allRows.slice(lo, hi + 1).map(r => r.dataset.entryId).filter(Boolean);
+      };
+
       if (e.ctrlKey) {
-        const entryList = row.closest('.playlist-entries');
-        if (entryList) this._toggleDupBar(playlist, entry, entryList);
+        if (entryList) this._toggleDupBar(playlist, entry, entryList, getGroupIds());
         return;
       }
+
+      const groupIds = getGroupIds();
+      if (groupIds && groupIds.length > 1) {
+        // Group duplicate — one copy of the whole contiguous selected run
+        const newEntries = this.bulkDuplicateEntriesN(playlist.id, groupIds, 1);
+        if (!newEntries.length) return;
+        const fresh = this.load().find(p => p.id === playlist.id);
+        if (!fresh) return;
+        entryList.querySelector('.playlist-entries-empty')?.remove();
+        newEntries.forEach((ne, i) => {
+          const newRow = this._buildEntryRow(fresh, ne, null, false, fresh.entries.length - newEntries.length + i);
+          entryList.appendChild(newRow);
+        });
+        this._attachEntryDrag(entryList, playlist.id);
+        return;
+      }
+
+      // Single-entry duplicate (original behaviour)
       const copy = this.duplicateEntry(playlist.id, entry.id);
       if (!copy) return;
       const fresh = this.load().find(p => p.id === playlist.id);
       if (!fresh) return;
-      const entryList = row.closest('.playlist-entries');
       if (!entryList) return;
       entryList.querySelector('.playlist-entries-empty')?.remove();
       const newRow = this._buildEntryRow(fresh, copy, null, false, fresh.entries.length - 1);
@@ -2230,11 +2291,35 @@ export const PlaylistsManager = {
 
     const dupBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--copy');
     dupBtn.innerHTML = icons.copy;
-    createCustomTooltip(dupBtn, 'Дублировать выбранные');
+    createCustomTooltip(dupBtn, '[Клик] Дублировать выбранные [Ctrl + Клик] Задать количество копий');
     dupBtn.addEventListener('click', e => {
       e.stopPropagation();
-      this.bulkDuplicateEntries(playlist.id, [...sel]);
-      this.refresh();
+      if (!sel.size) return;
+      const selIds = [...sel];
+
+      if (e.ctrlKey) {
+        // Open the dup bar for the selected group (use the first selected entry as anchor)
+        const anchorRow = entryList.querySelector('.playlist-entry-row--selected');
+        const anchorId  = anchorRow?.dataset.entryId;
+        const anchorEntry = anchorId ? playlist.entries.find(en => en.id === anchorId) : null;
+        if (anchorEntry) this._toggleDupBar(playlist, anchorEntry, entryList, selIds);
+        return;
+      }
+
+      // Single duplicate of the whole selection, in-place (no full refresh)
+      const newEntries = this.bulkDuplicateEntriesN(playlist.id, selIds, 1);
+      if (!newEntries.length) return;
+      const fresh = this.load().find(p => p.id === playlist.id);
+      if (!fresh) return;
+      entryList.querySelector('.playlist-entries-empty')?.remove();
+      newEntries.forEach((ne, i) => {
+        const newRow = this._buildEntryRow(fresh, ne, null, false, fresh.entries.length - newEntries.length + i);
+        entryList.appendChild(newRow);
+      });
+      this._attachEntryDrag(entryList, playlist.id);
+      // Refresh the filter row chip counts in case repeat/type mix changed
+      const msBar = entryList.querySelector('.playlist-multiselect-bar');
+      if (msBar?._refreshFilterRow) msBar._refreshFilterRow();
     });
 
     const paramsBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--params');
@@ -2291,14 +2376,16 @@ export const PlaylistsManager = {
   // ── Per-entry duplicate bar ────────────────────────────────────────────────
   // Toggle: if a dup bar for this entry is already open, close it; otherwise
   // close any other open dup bar in the list and open one for this entry.
-  _toggleDupBar(playlist, entry, entryList) {
+  // groupIds: optional array of entry IDs forming the contiguous selected group;
+  // when provided the bar duplicates the whole group instead of a single entry.
+  _toggleDupBar(playlist, entry, entryList, groupIds = null) {
     const existing = entryList.querySelector('.playlist-dup-bar');
     if (existing) {
       const wasFor = existing.dataset.entryId === entry.id;
       existing.remove();
       if (wasFor) return; // clicked Ctrl+same row → just close
     }
-    const bar = this._buildDupBar(playlist, entry, entryList);
+    const bar = this._buildDupBar(playlist, entry, entryList, groupIds);
     // Insert right after the multiselect bar (always first child) if present,
     // otherwise prepend — so the DOM order matches the sticky stack order.
     const multiBar = entryList.querySelector('.playlist-multiselect-bar');
@@ -2317,11 +2404,19 @@ export const PlaylistsManager = {
     });
   },
 
-  _buildDupBar(playlist, entry, entryList) {
-    const DUP_MAX = 50;
-    const dupCount = { value: 1 };
-    const bar = _el('div', 'playlist-dup-bar');
+  // groupIds: when non-null (and length > 1) the bar operates on the whole group.
+  _buildDupBar(playlist, entry, entryList, groupIds = null) {
+    const DUP_MAX   = 50;
+    const isGroup   = Array.isArray(groupIds) && groupIds.length > 1;
+    const dupCount  = { value: 1 };
+    const bar       = _el('div', 'playlist-dup-bar');
     bar.dataset.entryId = entry.id;
+
+    // ── Label — shown only for group mode so the user knows what's being duplicated
+    if (isGroup) {
+      const label = _el('span', 'playlist-dup-label', `Группа (${groupIds.length})`);
+      bar.appendChild(label);
+    }
 
     // ── Input — direct number entry; overrides stepper when non-empty ─────
     const input = _el('input', 'playlist-dup-input');
@@ -2375,18 +2470,34 @@ export const PlaylistsManager = {
     confirmBtn.addEventListener('click', e => {
       e.stopPropagation();
       const n = getEffectiveCount();
-      const fresh = this.load().find(p => p.id === playlist.id);
-      if (!fresh) return;
       entryList.querySelector('.playlist-entries-empty')?.remove();
-      for (let i = 0; i < n; i++) {
-        const copy = this.duplicateEntry(playlist.id, entry.id);
-        if (!copy) break;
-        const refreshed = this.load().find(p => p.id === playlist.id);
-        if (!refreshed) break;
-        const newRow = this._buildEntryRow(refreshed, copy, null, false, refreshed.entries.length - 1);
-        entryList.appendChild(newRow);
+
+      if (isGroup) {
+        // Duplicate the whole group N times
+        const newEntries = this.bulkDuplicateEntriesN(playlist.id, groupIds, n);
+        if (newEntries.length) {
+          const fresh = this.load().find(p => p.id === playlist.id);
+          if (fresh) {
+            newEntries.forEach((ne, i) => {
+              const newRow = this._buildEntryRow(fresh, ne, null, false, fresh.entries.length - newEntries.length + i);
+              entryList.appendChild(newRow);
+            });
+            this._attachEntryDrag(entryList, playlist.id);
+          }
+        }
+      } else {
+        // Single-entry duplicate N times (original behaviour)
+        for (let i = 0; i < n; i++) {
+          const copy = this.duplicateEntry(playlist.id, entry.id);
+          if (!copy) break;
+          const refreshed = this.load().find(p => p.id === playlist.id);
+          if (!refreshed) break;
+          const newRow = this._buildEntryRow(refreshed, copy, null, false, refreshed.entries.length - 1);
+          entryList.appendChild(newRow);
+        }
+        this._attachEntryDrag(entryList, playlist.id);
       }
-      this._attachEntryDrag(entryList, playlist.id);
+
       bar.remove();
     });
 
