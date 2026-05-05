@@ -1831,6 +1831,7 @@ export const PlaylistsManager = {
     // activeFilters: each key holds a Set of accepted values (OR within a key, AND across keys).
     const activeFilters = {
       name:     new Set(),
+      gamekind: new Set(), // values: 'voc' | 'standard'
       type:     new Set(),
       timeout:  new Set(),
       idletime: new Set(),
@@ -1855,14 +1856,16 @@ export const PlaylistsManager = {
       }
       sel.clear();
       fp.entries.forEach(entry => {
-        const game   = this.main?.gamesManager?.findGameById(entry.gameId);
-        const eName  = game?.id ?? null;
-        const eType  = entry.params?.type     ?? game?.params?.type;
-        const eTM    = entry.params?.timeout  ?? game?.params?.timeout;
-        const eAFK   = entry.params?.idletime ?? game?.params?.idletime;
-        const eHasOv = !!(entry.params && ('type' in entry.params || 'timeout' in entry.params || 'idletime' in entry.params));
+        const game      = this.main?.gamesManager?.findGameById(entry.gameId);
+        const eName     = game?.id ?? null;
+        const eGamekind = game?.params?.gametype === 'voc' ? 'voc' : 'standard';
+        const eType     = entry.params?.type     ?? game?.params?.type;
+        const eTM       = entry.params?.timeout  ?? game?.params?.timeout;
+        const eAFK      = entry.params?.idletime ?? game?.params?.idletime;
+        const eHasOv    = !!(entry.params && ('type' in entry.params || 'timeout' in entry.params || 'idletime' in entry.params));
         // AND across groups, OR within each group
         if (activeFilters.name.size     > 0 && !activeFilters.name.has(eName))                       return;
+        if (activeFilters.gamekind.size > 0 && !activeFilters.gamekind.has(eGamekind))               return;
         if (activeFilters.type.size     > 0 && !activeFilters.type.has(eType))                       return;
         if (activeFilters.timeout.size  > 0 && !activeFilters.timeout.has(eTM))                      return;
         if (activeFilters.idletime.size > 0 && !activeFilters.idletime.has(eAFK))                    return;
@@ -1953,6 +1956,29 @@ export const PlaylistsManager = {
       row.appendChild(nameChip);
       // Expose for realtime label update when seed changes
       row._nameChip = nameChip;
+
+      // ── Game-kind chips — Словари / Стандартные ──────────────────────────────
+      // Only rendered when the playlist contains both kinds (otherwise the chip
+      // would either select everything or nothing — both useless).
+      const hasVoc      = fp.entries.some(e => this.main?.gamesManager?.findGameById(e.gameId)?.params?.gametype === 'voc');
+      const hasStandard = fp.entries.some(e => this.main?.gamesManager?.findGameById(e.gameId)?.params?.gametype !== 'voc');
+      if (hasVoc && hasStandard) {
+        const vocKindChip = _el('button', 'playlist-smartselect-chip');
+        vocKindChip.textContent         = 'Словари';
+        vocKindChip.dataset.filterKey   = 'gamekind';
+        vocKindChip.dataset.filterValue = 'voc';
+        if (activeFilters.gamekind.has('voc')) vocKindChip.classList.add('active');
+        createCustomTooltip(vocKindChip, 'Фильтр: только словарные игры');
+        row.appendChild(vocKindChip);
+
+        const stdKindChip = _el('button', 'playlist-smartselect-chip');
+        stdKindChip.textContent         = 'Стандартные';
+        stdKindChip.dataset.filterKey   = 'gamekind';
+        stdKindChip.dataset.filterValue = 'standard';
+        if (activeFilters.gamekind.has('standard')) stdKindChip.classList.add('active');
+        createCustomTooltip(stdKindChip, 'Фильтр: только стандартные игры');
+        row.appendChild(stdKindChip);
+      }
 
       // ── Visibility chips — ALL unique type values across the playlist ─────
       const uniqueTypes = [...new Set(fp.entries.map(e => effectiveType(e)).filter(Boolean))].sort();
