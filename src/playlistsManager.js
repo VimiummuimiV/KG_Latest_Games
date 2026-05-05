@@ -1984,13 +1984,13 @@ export const PlaylistsManager = {
         if (!chip || chip.disabled) return;
         e.preventDefault();
         chipDragState = !chip.classList.contains('active');
-        onToggle(chip, chipDragState);
+        onToggle(chip, chipDragState, e.ctrlKey); // ctrlKey → additive multi-select
       });
       strip.addEventListener('mouseover', e => {
         if (chipDragState === null || e.buttons !== 1) { chipDragState = null; return; }
         const chip = e.target.closest(chipSelector);
         if (chip && !chip.disabled && chip.classList.contains('active') !== chipDragState) {
-          onToggle(chip, chipDragState);
+          onToggle(chip, chipDragState, true); // drag is always additive
         }
       });
       document.addEventListener('mouseup', () => { chipDragState = null; }, { capture: true });
@@ -2140,12 +2140,36 @@ export const PlaylistsManager = {
         row.appendChild(chip);
       });
 
-      // ── Chip drag-to-toggle — LMB down sets intent, mouseover spreads it ──
-      attachChipDrag(row, '.playlist-smartselect-chip', (chip, active) => {
+      // ── Strip action buttons + chip drag-to-toggle ────────────────────────
+      // Single click = exclusive. Ctrl+Click / drag = additive multi-select.
+      const ssVal = c => {
+        const k = c.dataset.filterKey, r = c.dataset.filterValue;
+        return (k === 'timeout' || k === 'idletime' || k === 'repeat') ? Number(r) : r;
+      };
+      const syncSsActions = _buildChipStripActions(
+        row, '.playlist-smartselect-chip',
+        chips => chips.forEach(c => toggleChip(c, c.dataset.filterKey, ssVal(c), false)),
+        chips => chips.forEach(c => toggleChip(c, c.dataset.filterKey, ssVal(c), true)),
+        'Снять все фильтры',
+        'Выбрать все фильтры',
+      );
+
+      attachChipDrag(row, '.playlist-smartselect-chip', (chip, active, isMulti) => {
         const key   = chip.dataset.filterKey;
         const raw   = chip.dataset.filterValue;
         const value = (key === 'timeout' || key === 'idletime' || key === 'repeat') ? Number(raw) : raw;
+        if (!isMulti && active) {
+          // Exclusive: deselect every other active chip before activating this one
+          row.querySelectorAll('.playlist-smartselect-chip.active').forEach(c => {
+            if (c === chip) return;
+            const k = c.dataset.filterKey;
+            const r = c.dataset.filterValue;
+            const v = (k === 'timeout' || k === 'idletime' || k === 'repeat') ? Number(r) : r;
+            toggleChip(c, k, v, false);
+          });
+        }
         toggleChip(chip, key, value, active);
+        syncSsActions();
       });
 
       return row;
@@ -2987,7 +3011,12 @@ export const PlaylistsManager = {
       const chip = _el('button', 'playlist-picker-group-chip');
       chip.textContent        = groupTitle;
       chip.dataset.groupTitle = groupTitle;
-      createCustomTooltip(chip, `Показать только группу «${groupTitle}»`);
+      createCustomTooltip(chip, `
+        [Клик] Показать только группу «${groupTitle}»
+        [Ctrl + Клик] Добавить / Убрать группу «${groupTitle}» из фильтра
+        [ЛКМ + Перетаскивание] Показать только группы, над которыми проходит курсор
+        [Ctrl + ЛКМ + Перетаскивание] Добавить / Убрать группы, над которыми проходит курсор, из фильтра
+      `);
       groupFilterRow.appendChild(chip);
     });
 
@@ -2997,14 +3026,33 @@ export const PlaylistsManager = {
       state ? activeGroups.add(chip.dataset.groupTitle) : activeGroups.delete(chip.dataset.groupTitle);
     };
 
-    // Drag-to-toggle chips — LMB down sets intent, mouseover spreads it
+    // ── Group filter action buttons ────────────────────────────────────────
+    const syncGfActions = _buildChipStripActions(
+      groupFilterRow, '.playlist-picker-group-chip',
+      chips => { chips.forEach(c => applyChipState(c, false)); applyFilter(); },
+      chips => { chips.forEach(c => applyChipState(c, true));  applyFilter(); },
+      'Снять все группы',
+      'Выбрать все группы',
+    );
+
+    // Drag-to-toggle chips — LMB down sets intent, mouseover spreads it.
+    // Single click = exclusive (deselect all others, select clicked).
+    // Ctrl+Click  = additive toggle (multi-select, keeps others).
+    // Drag        = always additive.
     groupFilterRow.addEventListener('mousedown', e => {
       const chip = e.target.closest('.playlist-picker-group-chip');
       if (!chip) return;
       e.preventDefault();
       chipDragState = !chip.classList.contains('active');
+      if (!e.ctrlKey && chipDragState) {
+        // Exclusive: deselect all other active chips before activating this one
+        groupFilterRow.querySelectorAll('.playlist-picker-group-chip.active').forEach(c => {
+          if (c !== chip) applyChipState(c, false);
+        });
+      }
       applyChipState(chip, chipDragState);
       applyFilter();
+      syncGfActions();
     });
     groupFilterRow.addEventListener('mouseover', e => {
       if (chipDragState === null || e.buttons !== 1) { chipDragState = null; return; }
@@ -3012,6 +3060,7 @@ export const PlaylistsManager = {
       if (chip && chip.classList.contains('active') !== chipDragState) {
         applyChipState(chip, chipDragState);
         applyFilter();
+        syncGfActions();
       }
     });
     document.addEventListener('mouseup', () => { chipDragState = null; }, { capture: true });
@@ -3101,4 +3150,53 @@ function _el(tag, className, text) {
   if (className) n.className = className;
   if (text !== undefined) n.textContent = text;
   return n;
+}
+
+/**
+ * Prepend [✕ deselect-all] [✓ select-all] action buttons to a chip strip.
+ *
+ * @param {HTMLElement} container  — the strip element (row / groupFilterRow)
+ * @param {string}      chipSel   — CSS selector for chips inside container
+ * @param {Function}    onDeselect  — receives array of currently-active chips
+ * @param {Function}    onSelectAll — receives array of inactive, non-disabled chips
+ * @param {string}      [deselectTip] — tooltip for the ✕ button
+ * @param {string}      [selectTip]   — tooltip for the ✓ button
+ * @returns {Function} sync — call after any chip state change to update disabled states
+ */
+function _buildChipStripActions(container, chipSel, onDeselect, onSelectAll,
+  deselectTip = 'Снять все', selectTip = 'Выбрать все') {
+  const wrap        = _el('div', 'playlist-chip-strip-actions');
+  const deselectBtn = _el('button', 'playlist-chip-action-btn');
+  const selectBtn   = _el('button', 'playlist-chip-action-btn');
+  deselectBtn.innerHTML = icons.x;
+  deselectBtn.classList.add('deselect');
+  selectBtn.innerHTML   = icons.check;
+  selectBtn.classList.add('select');
+  createCustomTooltip(deselectBtn, deselectTip);
+  createCustomTooltip(selectBtn,   selectTip);
+
+  const allChips = () => [...container.querySelectorAll(chipSel)];
+  const sync = () => {
+    const chips  = allChips();
+    const active = chips.filter(c => c.classList.contains('active')).length;
+    const total  = chips.filter(c => !c.disabled).length;
+    deselectBtn.disabled = active === 0;
+    selectBtn.disabled   = active === total;
+  };
+
+  deselectBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    onDeselect(allChips().filter(c => c.classList.contains('active')));
+    sync();
+  });
+  selectBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    onSelectAll(allChips().filter(c => !c.classList.contains('active') && !c.disabled));
+    sync();
+  });
+
+  wrap.append(deselectBtn, selectBtn);
+  container.prepend(wrap);
+  sync();
+  return sync;
 }

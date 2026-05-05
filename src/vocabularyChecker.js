@@ -38,7 +38,8 @@ function processAnchor(anchor) {
   if (vocIdToGroups.has(vocId)) {
     const icon = document.createElement('span');
     icon.className = 'kg-voc-checkmark';
-    icon.innerHTML = icons.checkmark;
+    icon.innerHTML = icons.check;
+    icon.style.stroke = '#4caf50';
     createCustomTooltip(icon, 'Словарь уже существует в группе: ' + vocIdToGroups.get(vocId).join(', '));
 
     const isVocPage = window.location.pathname.startsWith('/vocs/');

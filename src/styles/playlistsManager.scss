@@ -945,6 +945,47 @@
     }
   }
 
+  // ── Strip action buttons shared by group-filter and smartselect strips ──
+  // Prepended before the chips; separated by a right border divider.
+  .playlist-chip-strip-actions {
+    display: inline-flex;
+    align-items: center;
+    align-self: center;
+    gap: 0.2em;
+    flex-shrink: 0;
+    border-right: 1px solid var(--rg-border-primary);
+  }
+
+  .playlist-chip-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.55em;
+    height: 1.55em;
+    background: transparent;
+    color: var(--rg-text-secondary);
+    border: 1px solid var(--rg-border-primary);
+    border-radius: 3px !important;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    
+    svg { stroke-width: 4px; }
+    &.select svg { stroke: #1ca533; }
+    &.deselect svg { stroke: #a51c1c; }
+
+    &:hover:not(:disabled) {
+      background: var(--rg-bg-hover);
+      border-color: var(--rg-border-hover);
+    }
+
+    &:disabled {
+      opacity: 0.22;
+      cursor: default;
+      pointer-events: none;
+    }
+  }
+
   // Group header — sticky, offset below search + optional filter strip + confirm bar
   .playlist-picker-group-header {
     padding: 0.5em 0.7em;
