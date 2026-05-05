@@ -1357,6 +1357,10 @@ export const PlaylistsManager = {
             if (cb) cb.checked = true;
             const span = entryList.querySelector('.playlist-multiselect-count');
             if (span) span.textContent = `${sel.size}`;
+            // Tell the multiselect bar which entry was long-pressed so smart-select
+            // filters have a reference point for matching patterns.
+            const msBar = entryList.querySelector('.playlist-multiselect-bar');
+            if (msBar?._setSeedEntry) msBar._setSeedEntry(entryId);
           }
           // Multiselect bar is now visible — update its height var so the dup
           // bar (if open) re-sticks correctly below it.
@@ -1550,6 +1554,9 @@ export const PlaylistsManager = {
           if (prevRow) prevRow.classList.remove('playlist-entry-row--params-open');
           openSection.remove();
         });
+        // Close the smart-select filter row if open (mutual exclusion)
+        const msBar = entryList.querySelector('.playlist-multiselect-bar');
+        if (msBar?._closeFilterRow) msBar._closeFilterRow();
       }
       if (!entry.params) entry.params = {};
       const section = _buildParamsSection(playlist, entry, paramsBtn);
@@ -1804,8 +1811,209 @@ export const PlaylistsManager = {
   _buildMultiSelectBar(playlist, sel, entryList) {
     const bar = _el('div', 'playlist-multiselect-bar');
 
+    // ── Smart-select: apply a filter, select matching entries, deselect non-matching ──
+    // seedEntryId is set by onActivate (long-press) so filters have a reference point.
+    let seedEntryId = null;
+
+    const applySmartFilter = (matchFn) => {
+      const freshPlaylists = this.load();
+      const fp = freshPlaylists.find(p => p.id === playlist.id);
+      if (!fp) return;
+      sel.clear();
+      fp.entries.forEach(entry => {
+        const game = this.main?.gamesManager?.findGameById(entry.gameId);
+        if (matchFn(entry, game)) sel.add(entry.id);
+      });
+      // Sync checkboxes and row highlights
+      entryList.querySelectorAll('.playlist-entry-checkbox').forEach(cb => {
+        const match = sel.has(cb.dataset.entryId);
+        cb.checked = match;
+        cb.closest('.playlist-entry-row')?.classList.toggle('playlist-entry-row--selected', match);
+      });
+      countSpan.textContent = `${sel.size}`;
+    };
+
+    const updateBarHeight = () => {
+      requestAnimationFrame(() => {
+        const block = entryList.closest('.playlist-block');
+        const msBar = entryList.querySelector('.playlist-multiselect-bar');
+        if (block && msBar) block.style.setProperty('--playlist-multiselect-bar-height', `${msBar.offsetHeight}px`);
+      });
+    };
+
+    // ── Build the smart-select filter row ────────────────────────────────────
+    // Called fresh each time the filter row is opened or seedEntryId changes,
+    // so all chips always reflect the current playlist data in realtime.
+    const buildFilterRow = () => {
+      const row = _el('div', 'playlist-smartselect-row');
+
+      const freshPlaylists = this.load();
+      const fp = freshPlaylists.find(p => p.id === playlist.id);
+      if (!fp || !fp.entries.length) {
+        row.appendChild(_el('span', 'playlist-smartselect-empty', 'Нет доступных фильтров'));
+        return row;
+      }
+
+      // Effective param helpers — entry override takes priority over game default
+      const effectiveVocName  = e => this.main?.gamesManager?.findGameById(e.gameId)?.params?.vocName ?? null;
+      const effectiveType     = e => e.params?.type     ?? this.main?.gamesManager?.findGameById(e.gameId)?.params?.type;
+      const effectiveTimeout  = e => e.params?.timeout  ?? this.main?.gamesManager?.findGameById(e.gameId)?.params?.timeout;
+      const effectiveIdletime = e => e.params?.idletime ?? this.main?.gamesManager?.findGameById(e.gameId)?.params?.idletime;
+
+      const seedEntry = fp.entries.find(e => e.id === seedEntryId);
+      const seedGame  = seedEntry ? this.main?.gamesManager?.findGameById(seedEntry.gameId) : null;
+
+      // ── Name chip — shows vocName of latest selected / seed entry ─────────
+      // Only shown if the seed entry has a vocName (skips gametype like Словарь).
+      const seedVocName = seedGame?.params?.vocName ?? null;
+      const nameChip = _el('button', 'playlist-smartselect-chip');
+      nameChip.textContent = seedVocName ? `«${seedVocName}»` : '—';
+      nameChip.disabled = !seedVocName;
+      createCustomTooltip(nameChip, 'Выбрать все с таким же названием');
+      nameChip.addEventListener('click', e => {
+        e.stopPropagation();
+        if (!seedVocName) return;
+        applySmartFilter(en => effectiveVocName(en) === seedVocName);
+      });
+      row.appendChild(nameChip);
+      // Expose for realtime label update when seed changes
+      row._nameChip = nameChip;
+
+      // ── Visibility chips — ALL unique type values across the playlist ─────
+      const uniqueTypes = [...new Set(fp.entries.map(e => effectiveType(e)).filter(Boolean))].sort();
+      uniqueTypes.forEach(t => {
+        const chip = _el('button', 'playlist-smartselect-chip');
+        chip.textContent = visibilities[t] || t;
+        createCustomTooltip(chip, `Выбрать все «${visibilities[t] || t}»`);
+        chip.addEventListener('click', e => {
+          e.stopPropagation();
+          applySmartFilter(en => effectiveType(en) === t);
+        });
+        row.appendChild(chip);
+      });
+
+      // ── TM chips — ALL unique timeout values across the playlist ──────────
+      const uniqueTMs = [...new Set(fp.entries.map(e => effectiveTimeout(e)).filter(v => v != null))].sort((a, b) => a - b);
+      uniqueTMs.forEach(tm => {
+        const chip = _el('button', 'playlist-smartselect-chip');
+        chip.textContent = `TM ${tm}`;
+        createCustomTooltip(chip, `Выбрать все с TM ${tm}`);
+        chip.addEventListener('click', e => {
+          e.stopPropagation();
+          applySmartFilter(en => effectiveTimeout(en) === tm);
+        });
+        row.appendChild(chip);
+      });
+
+      // ── AFK chips — ALL unique idletime values across the playlist ────────
+      const uniqueAFKs = [...new Set(fp.entries.map(e => effectiveIdletime(e)).filter(v => v != null))].sort((a, b) => a - b);
+      uniqueAFKs.forEach(afk => {
+        const chip = _el('button', 'playlist-smartselect-chip');
+        chip.textContent = `AFK ${afk}`;
+        createCustomTooltip(chip, `Выбрать все с AFK ${afk}`);
+        chip.addEventListener('click', e => {
+          e.stopPropagation();
+          applySmartFilter(en => effectiveIdletime(en) === afk);
+        });
+        row.appendChild(chip);
+      });
+
+      // ── Repeat filter: stepper + input (like dup-bar, but for selection) ──
+      const REP_MAX = 50;
+      const repVal = { value: seedEntry ? (seedEntry.repeatCount ?? 1) : 1 };
+
+      const repWrap       = _el('div', 'playlist-smartselect-rep-wrap');
+      const repStepper    = _el('div', 'playlist-multiselect-stepper');
+      const repDecBtn     = _el('button', 'playlist-stepper-btn');
+      repDecBtn.innerHTML = icons.chevronLeft;
+      const repCountSpan  = _el('span', 'playlist-stepper-count', String(repVal.value));
+      const repIncBtn     = _el('button', 'playlist-stepper-btn');
+      repIncBtn.innerHTML = icons.chevronRight;
+      repStepper.append(repDecBtn, repCountSpan, repIncBtn);
+      createCustomTooltip(repStepper, 'Выбрать все с таким количеством повторов');
+
+      const repInput = _el('input', 'playlist-sel-input');
+      repInput.type  = 'number';
+      repInput.min   = '1';
+      repInput.max   = String(REP_MAX);
+
+      const getRepValue = () => {
+        const v = parseInt(repInput.value, 10);
+        return (!repInput.value.trim() || isNaN(v)) ? repVal.value : Math.max(1, Math.min(REP_MAX, v));
+      };
+      const applyRepFilter = () => applySmartFilter(en => (en.repeatCount ?? 1) === getRepValue());
+
+      repInput.addEventListener('click',   e => e.stopPropagation());
+      repInput.addEventListener('keydown', e => e.stopPropagation());
+      repInput.addEventListener('input', e => {
+        e.stopPropagation();
+        const v = parseInt(repInput.value, 10);
+        if (!isNaN(v)) {
+          const clamped = Math.max(1, Math.min(REP_MAX, v));
+          if (v !== clamped) repInput.value = String(clamped);
+          repVal.value = clamped;
+          repCountSpan.textContent = String(clamped);
+          applyRepFilter();
+        }
+      });
+
+      this._attachStepperHold(repDecBtn, () => {
+        if (repInput.value.trim()) return; // input has priority
+        repVal.value = Math.max(1, repVal.value - 1);
+        repCountSpan.textContent = String(repVal.value);
+        applyRepFilter();
+      });
+      this._attachStepperHold(repIncBtn, () => {
+        if (repInput.value.trim()) return;
+        repVal.value = Math.min(REP_MAX, repVal.value + 1);
+        repCountSpan.textContent = String(repVal.value);
+        applyRepFilter();
+      });
+
+      repWrap.append(repStepper, repInput);
+      row.appendChild(repWrap);
+
+      // ── С пер. / Без пер. chips ───────────────────────────────────────────
+      const hasOverride = en => !!(en.params && ('type' in en.params || 'timeout' in en.params || 'idletime' in en.params));
+
+      const withChip = _el('button', 'playlist-smartselect-chip');
+      withChip.textContent = 'С пер.';
+      createCustomTooltip(withChip, 'Выбрать все с переопределёнными параметрами');
+      withChip.addEventListener('click', e => { e.stopPropagation(); applySmartFilter(hasOverride); });
+      row.appendChild(withChip);
+
+      const noChip = _el('button', 'playlist-smartselect-chip');
+      noChip.textContent = 'Без пер.';
+      createCustomTooltip(noChip, 'Выбрать все без переопределённых параметров');
+      noChip.addEventListener('click', e => { e.stopPropagation(); applySmartFilter(en => !hasOverride(en)); });
+      row.appendChild(noChip);
+
+      return row;
+    };
+
+    let filterRow     = null;
+    let filterRowOpen = false;
+
+    // Internal helper — close filter row from outside (e.g. when entry params open)
+    const closeFilterRow = () => {
+      if (!filterRowOpen) return;
+      filterRow?.remove();
+      filterRow     = null;
+      filterRowOpen = false;
+      filterBtn.classList.remove('active');
+      bar.classList.remove('playlist-multiselect-bar--filter-open');
+      updateBarHeight();
+    };
+
     // Shared helper: exit selection mode in-place without refresh()
     const exitSelectionMode = () => {
+      // Close filter row
+      filterRow?.remove();
+      filterRow     = null;
+      filterRowOpen = false;
+      filterBtn?.classList.remove('active');
+      bar.classList.remove('playlist-multiselect-bar--filter-open');
+
       sel.clear();
       this._selectionMode.delete(playlist.id);
       entryList.classList.remove('playlist-entries--selection');
@@ -1822,11 +2030,24 @@ export const PlaylistsManager = {
       if (bulkParams) {
         bulkParams.remove();
         bar.classList.remove('playlist-multiselect-bar--params-open');
+        paramsBtn.classList.remove('active');
       }
     };
 
-    // Left side: count + select-all + deselect + exit
-    const countSpan  = _el('span', 'playlist-multiselect-count', `${sel.size}`);
+    // setSeedEntry: called by long-press onActivate; also rebuilds the open filter
+    // row so name chip and all data-driven chips update in realtime.
+    const setSeedEntry = id => {
+      seedEntryId = id;
+      if (filterRowOpen && filterRow) {
+        const newRow = buildFilterRow();
+        filterRow.replaceWith(newRow);
+        filterRow = newRow;
+        updateBarHeight();
+      }
+    };
+
+    // ── Left side: count + select-all + deselect + smart-filter + exit ───────
+    const countSpan = _el('span', 'playlist-multiselect-count', `${sel.size}`);
 
     const selAllBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--neutral');
     selAllBtn.textContent = 'Все';
@@ -1853,6 +2074,36 @@ export const PlaylistsManager = {
       countSpan.textContent = '0';
     });
 
+    // Filter button — SVG icon, toggles smart-select row
+    const filterBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--neutral');
+    filterBtn.innerHTML = icons.menu;
+    createCustomTooltip(filterBtn, 'Выбрать по шаблону');
+    filterBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (filterRowOpen) {
+        closeFilterRow();
+      } else {
+        // Close bulk params if open (mutual exclusion)
+        const existingBulk = entryList.querySelector('.playlist-bulk-params');
+        if (existingBulk) {
+          existingBulk.remove();
+          bar.classList.remove('playlist-multiselect-bar--params-open');
+          paramsBtn.classList.remove('active');
+        }
+        // Close any open per-entry params panels (mutual exclusion)
+        entryList.querySelectorAll('.playlist-entry-params:not(.playlist-bulk-params)').forEach(ep => {
+          ep.previousElementSibling?.classList.remove('playlist-entry-row--params-open');
+          ep.remove();
+        });
+        filterRow = buildFilterRow();
+        bar.after(filterRow);
+        filterRowOpen = true;
+        filterBtn.classList.add('active');
+        bar.classList.add('playlist-multiselect-bar--filter-open');
+        updateBarHeight();
+      }
+    });
+
     const exitBtn = _el('button', 'playlist-multiselect-exit');
     exitBtn.innerHTML = icons.x;
     createCustomTooltip(exitBtn, 'Выйти из режима выбора');
@@ -1861,13 +2112,13 @@ export const PlaylistsManager = {
       exitSelectionMode();
     });
 
-    // Right side: repeat stepper + duplicate + params + remove
-    const repCount = { value: 1 };
-    const repStepper  = _el('div', 'playlist-multiselect-stepper');
-    const repDecBtn   = _el('button', 'playlist-stepper-btn');
+    // ── Right side: repeat stepper + duplicate + params + remove ─────────────
+    const repCount      = { value: 1 };
+    const repStepper    = _el('div', 'playlist-multiselect-stepper');
+    const repDecBtn     = _el('button', 'playlist-stepper-btn');
     repDecBtn.innerHTML = icons.chevronLeft;
-    const repCountSpan = _el('span', 'playlist-stepper-count', '1');
-    const repIncBtn   = _el('button', 'playlist-stepper-btn');
+    const repCountSpan  = _el('span', 'playlist-stepper-count', '1');
+    const repIncBtn     = _el('button', 'playlist-stepper-btn');
     repIncBtn.innerHTML = icons.chevronRight;
     repStepper.append(repDecBtn, repCountSpan, repIncBtn);
     createCustomTooltip(repStepper, 'Задать повторы для выбранных');
@@ -1875,10 +2126,10 @@ export const PlaylistsManager = {
     const applyBulkRepeat = () => {
       this.bulkSetRepeat(playlist.id, [...sel], repCount.value);
       // Update each affected entry row's stepper count in-place without a full refresh
-      const entryList = repStepper.closest('.playlist-entries');
-      if (entryList) {
+      const el = repStepper.closest('.playlist-entries');
+      if (el) {
         sel.forEach(entryId => {
-          const row  = entryList.querySelector(`.playlist-entry-row[data-entry-id="${entryId}"]`);
+          const row  = el.querySelector(`.playlist-entry-row[data-entry-id="${entryId}"]`);
           const span = row?.querySelector('.playlist-stepper-count');
           if (span) span.textContent = String(repCount.value);
         });
@@ -1912,23 +2163,23 @@ export const PlaylistsManager = {
     createCustomTooltip(paramsBtn, 'Задать параметры для выбранных');
     paramsBtn.addEventListener('click', e => {
       e.stopPropagation();
-      const entryList = paramsBtn.closest('.playlist-entries');
-      if (!entryList) return;
-      const existing = entryList.querySelector('.playlist-bulk-params');
+      const el = paramsBtn.closest('.playlist-entries');
+      if (!el) return;
+      const existing = el.querySelector('.playlist-bulk-params');
       if (existing) {
         existing.remove();
         bar.classList.remove('playlist-multiselect-bar--params-open');
+        paramsBtn.classList.remove('active');
         return;
       }
+      // Close filter row if open (mutual exclusion)
+      closeFilterRow();
+      paramsBtn.classList.add('active');
       bar.insertAdjacentElement('afterend', this._buildBulkParamsSection(playlist, [...sel]));
       bar.classList.add('playlist-multiselect-bar--params-open');
-      // Measure bar height now that it's visible and set the CSS var on the block
-      // so .playlist-bulk-params knows exactly where to stick (header + bar).
       requestAnimationFrame(() => {
         const block = bar.closest('.playlist-block');
-        if (block) {
-          block.style.setProperty('--playlist-multiselect-bar-height', `${bar.offsetHeight}px`);
-        }
+        if (block) block.style.setProperty('--playlist-multiselect-bar-height', `${bar.offsetHeight}px`);
       });
     });
 
@@ -1946,10 +2197,14 @@ export const PlaylistsManager = {
     });
 
     const left = _el('div', 'playlist-multiselect-left');
-    left.append(countSpan, selAllBtn, deselBtn, exitBtn);
+    left.append(countSpan, selAllBtn, deselBtn, filterBtn, exitBtn);
     const right = _el('div', 'playlist-multiselect-right');
     right.append(repStepper, dupBtn, paramsBtn, removeBtn);
     bar.append(left, right);
+
+    // Expose methods so callers (long-press, entry params) can interact
+    bar._setSeedEntry   = setSeedEntry;
+    bar._closeFilterRow = closeFilterRow;
     return bar;
   },
 

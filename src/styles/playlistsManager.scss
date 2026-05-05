@@ -1094,6 +1094,95 @@
         color: hsl(var(--rg-playlist-params-color));
       }
     }
+
+    // When the smart-select filter row is open — merge visually (same border/bg
+    // as resting state; just remove bottom edge so the row attaches flush).
+    &--filter-open {
+      border-bottom-left-radius:  0 !important;
+      border-bottom-right-radius: 0 !important;
+      border-bottom: none !important;
+    }
+  }
+
+  // ── Smart-select filter row ────────────────────────────────────────────────
+  // Sticky flush below the multiselect bar. Uses the same sticky positioning
+  // formula as .playlist-bulk-params (they are mutually exclusive so no collision).
+  .playlist-smartselect-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3em;
+    padding: 0.35em 0.6em;
+    background: var(--pl-bg-multiselect);
+    border: 1px solid hsla(var(--rg-popup-btn-save) / 0.4);
+    border-top: none;
+    border-radius: 0 0 3px 3px !important;
+    // Sticky directly below the multiselect bar (same formula as bulk-params).
+    position: sticky;
+    top: calc(var(--playlist-header-height, 0px) + var(--playlist-multiselect-bar-height, 0px));
+    z-index: 8; // below multiselect bar (9) and header row (10)
+  }
+
+  // Smart-select chips match the picker group chip style exactly (3px radius,
+  // same color tokens, neutral resting state → save-color when active/hovered).
+  .playlist-smartselect-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2em 0.6em;
+    font-size: 0.78em;
+    font-weight: 500;
+    font-family: inherit;
+    white-space: nowrap;
+    background: var(--rg-bg-card);
+    color: var(--rg-text-secondary);
+    border: 1px solid var(--rg-border-primary);
+    border-radius: 3px !important;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+    outline: none;
+    appearance: none;
+
+    &:hover {
+      background: hsla(var(--rg-popup-btn-save) / 0.15);
+      border-color: hsl(var(--rg-popup-btn-save));
+      color: hsl(var(--rg-popup-btn-save));
+    }
+
+    &:active { background: hsla(var(--rg-popup-btn-save) / 0.25); }
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: default;
+      pointer-events: none;
+    }
+  }
+
+  // Repeat-filter control inside the smart-select row: stepper + direct input.
+  // Elements are vertically centred inside this flex wrapper.
+  .playlist-smartselect-rep-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    flex-shrink: 0;
+  }
+
+  // Direct-entry input inside the smart-select rep-wrap — same visual as
+  // the dup-bar input, but semantically belongs to selection not duplication.
+  .playlist-sel-input {
+    @include playlist-text-input();
+    background: var(--rg-bg-primary) !important;
+    width: 52px;
+    flex-shrink: 0;
+    appearance: textfield;
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button { display: none; }
+  }
+
+  .playlist-smartselect-empty {
+    font-size: 0.75em;
+    color: var(--rg-text-tertiary);
+    font-style: italic;
   }
 
   .playlist-multiselect-left,
@@ -1135,6 +1224,11 @@
       color: var(--rg-text-secondary);
       border: 1px solid var(--rg-border-primary);
       &:hover { background: var(--rg-bg-hover); border-color: var(--rg-border-hover); color: var(--rg-text-primary); }
+      &.active {
+        background: hsla(var(--rg-popup-btn-save) / 0.15);
+        border-color: hsl(var(--rg-popup-btn-save));
+        color: hsl(var(--rg-popup-btn-save));
+      }
     }
 
     &--copy {
@@ -1145,6 +1239,12 @@
       @include playlist-icon-btn('--rg-playlist-params-color', 20px, 12px);
       color: var(--rg-text-tertiary);
       &:hover { color: hsl(var(--rg-playlist-params-color)); }
+      // Active when the bulk params panel is open
+      &.active {
+        color: hsl(var(--rg-playlist-params-color));
+        background: hsla(var(--rg-playlist-params-color) / 0.12);
+        border-color: hsla(var(--rg-playlist-params-color) / 0.6);
+      }
     }
   }
 
