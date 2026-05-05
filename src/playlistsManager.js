@@ -348,6 +348,45 @@ function _buildParamsSection(playlist, entry, paramsBtn) {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Shared autoscroll helpers — used by both drag-to-reorder and drag-to-select.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Walk up from `el` to find the nearest scrollable ancestor.
+function _findScrollParent(el) {
+  let node = el.parentElement;
+  while (node) {
+    const ov = getComputedStyle(node).overflowY;
+    if (ov === 'auto' || ov === 'scroll') return node;
+    node = node.parentElement;
+  }
+  return null;
+}
+
+// Start (or restart) an edge-triggered autoscroll rAF loop.
+// rafRef   — single-element array [rafId] used as a mutable cancel handle
+// scrollEl — the element whose scrollTop is mutated
+// clientY  — current cursor Y in viewport coords
+// onTick   — optional callback fired after every scroll step (e.g. to re-hit-test rows)
+const _AUTOSCROLL_ZONE  = 48; // px from edge where scrolling begins
+const _AUTOSCROLL_SPEED =  8; // px per frame
+
+function _startAutoscroll(rafRef, scrollEl, clientY, onTick) {
+  cancelAnimationFrame(rafRef[0]);
+  if (!scrollEl) return;
+  const r   = scrollEl.getBoundingClientRect();
+  const dir = clientY < r.top + _AUTOSCROLL_ZONE ? -1
+            : clientY > r.bottom - _AUTOSCROLL_ZONE ? 1
+            : 0;
+  if (!dir) return;
+  const tick = () => {
+    scrollEl.scrollTop += dir * _AUTOSCROLL_SPEED;
+    if (onTick) onTick();
+    rafRef[0] = requestAnimationFrame(tick);
+  };
+  rafRef[0] = requestAnimationFrame(tick);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PlaylistsManager singleton
 // ─────────────────────────────────────────────────────────────────────────────
 export const PlaylistsManager = {
@@ -524,20 +563,6 @@ export const PlaylistsManager = {
     this._selectionMode.delete(playlistId);
   },
 
-  bulkDuplicateEntries(playlistId, entryIds) {
-    const ids = new Set(entryIds);
-    const playlists = this.load();
-    const p = playlists.find(p => p.id === playlistId);
-    if (!p) return;
-    const copies = p.entries
-      .filter(e => ids.has(e.id))
-      .map(e => ({ id: generateRandomString(), gameId: e.gameId, repeatCount: e.repeatCount, params: e.params ? { ...e.params } : {} }));
-    p.entries.push(...copies);
-    this.save(playlists);
-    this._selectedEntries[playlistId]?.clear();
-    this._selectionMode.delete(playlistId);
-  },
-
   // Duplicates an ordered group of entries N times, preserving their relative
   // order in each copy. Appends all copies to the end of the playlist.
   // Does NOT clear selection or selectionMode — the caller decides that.
@@ -622,6 +647,22 @@ export const PlaylistsManager = {
     if (container.dataset.dragSelectAttached) return;
     container.dataset.dragSelectAttached = '1';
     let dragState = null;
+    const selectScrollRAF = [null]; // mutable cancel handle for _startAutoscroll
+    let selectLastY = 0;
+
+    // Re-evaluate the row under the last known cursor Y after each autoscroll tick.
+    const onSelectScrollTick = () => {
+      const el = document.elementFromPoint(
+        container.getBoundingClientRect().left + 4,
+        selectLastY
+      );
+      if (!el) return;
+      const cb = resolveCb(el);
+      if (cb && !cb.disabled && cb.checked !== dragState) {
+        cb.checked = dragState;
+        onToggle(cb, dragState);
+      }
+    };
 
     // Resolve a checkbox from either a direct cb hit or a row hit (when active).
     const resolveCb = target => {
@@ -641,7 +682,8 @@ export const PlaylistsManager = {
       // Prevent text selection while dragging across rows
       e.preventDefault();
       dragState = !cb.checked;
-      // Apply to the first checkbox immediately — mouseover won't fire for it
+      selectLastY = e.clientY;
+      // Apply to the first checkbox immediately — mousemove won't fire for it
       cb.checked = dragState;
       onToggle(cb, dragState);
     });
@@ -652,14 +694,22 @@ export const PlaylistsManager = {
       if (!cb || cb.disabled) return;
       e.preventDefault();
     });
-    container.addEventListener('mouseover', e => {
-      if (dragState === null || e.buttons !== 1) { dragState = null; return; }
+    // Use mousemove (not mouseover) so we get continuous updates and can drive autoscroll.
+    document.addEventListener('mousemove', e => {
+      if (dragState === null || e.buttons !== 1) {
+        dragState = null;
+        cancelAnimationFrame(selectScrollRAF[0]);
+        return;
+      }
+      selectLastY = e.clientY;
       const cb = resolveCb(e.target);
-      if (!cb || cb.disabled || cb.checked === dragState) return;
-      cb.checked = dragState;
-      onToggle(cb, dragState);
+      if (cb && !cb.disabled && cb.checked !== dragState) {
+        cb.checked = dragState;
+        onToggle(cb, dragState);
+      }
+      _startAutoscroll(selectScrollRAF, _findScrollParent(container), e.clientY, onSelectScrollTick);
     });
-    const stopDrag = () => { dragState = null; };
+    const stopDrag = () => { dragState = null; cancelAnimationFrame(selectScrollRAF[0]); };
     document.addEventListener('mouseup', stopDrag, { capture: true });
   },
 
@@ -1692,34 +1742,12 @@ export const PlaylistsManager = {
     container.dataset.dragAttached = '1';
 
     let dragEl = null, placeholder = null, startY = 0, startIdx = 0;
-    let dragGroup = [];   // [dragEl] for single, full contiguous run for group
-    let scrollRAF = null; // autoscroll rAF handle
+    let dragGroup = [];         // [dragEl] for single, full contiguous run for group
+    const scrollRAF = [null];   // mutable cancel handle for _startAutoscroll
+    let dragScrollEl   = null;  // scrollable ancestor captured at drag start
+    let dragScrollBase = 0;     // scrollTop at drag start — used to correct translateY
 
     const getItems = () => Array.from(container.querySelectorAll(itemSelector));
-
-    // Walk up to find the nearest scrollable ancestor for autoscroll.
-    const findScrollEl = () => {
-      let el = container.parentElement;
-      while (el) {
-        const ov = getComputedStyle(el).overflowY;
-        if (ov === 'auto' || ov === 'scroll') return el;
-        el = el.parentElement;
-      }
-      return null;
-    };
-
-    // Kick off (or cancel) edge-triggered autoscroll each mousemove tick.
-    const doAutoscroll = clientY => {
-      cancelAnimationFrame(scrollRAF);
-      const scrollEl = findScrollEl();
-      if (!scrollEl) return;
-      const r = scrollEl.getBoundingClientRect();
-      const ZONE = 48, SPEED = 8;
-      const dir = clientY < r.top + ZONE ? -1 : clientY > r.bottom - ZONE ? 1 : 0;
-      if (!dir) return;
-      const tick = () => { scrollEl.scrollTop += dir * SPEED; scrollRAF = requestAnimationFrame(tick); };
-      scrollRAF = requestAnimationFrame(tick);
-    };
 
     container.addEventListener('mousedown', e => {
       const handle = e.target.closest(handleSelector);
@@ -1735,6 +1763,10 @@ export const PlaylistsManager = {
 
       dragEl = item;
       startY = e.clientY;
+      // Capture the scrollable ancestor and its current scrollTop so that
+      // autoscroll-induced position changes can be compensated in onMove.
+      dragScrollEl   = _findScrollParent(container);
+      dragScrollBase = dragScrollEl ? dragScrollEl.scrollTop : 0;
 
       // ── Determine drag group ───────────────────────────────────────────────
       // Group drag activates only for entry rows that are selected inside an
@@ -1805,7 +1837,10 @@ export const PlaylistsManager = {
       if (dragGroup.length > 1) {
         dragGroup.forEach(el => { el.style.top = (el._dragOrigTop + dy) + 'px'; });
       } else {
-        dragEl.style.transform = `translateY(${dy}px)`;
+        // Compensate for any scrollTop change since drag started so the item
+        // stays visually under the cursor even after autoscroll fires.
+        const scrollDelta = dragScrollEl ? dragScrollEl.scrollTop - dragScrollBase : 0;
+        dragEl.style.transform = `translateY(${dy + scrollDelta}px)`;
       }
 
       // Move placeholder to reflect drop target among non-dragged items.
@@ -1832,14 +1867,14 @@ export const PlaylistsManager = {
       if (insertBefore) container.insertBefore(placeholder, insertBefore);
       else container.appendChild(placeholder);
 
-      doAutoscroll(e.clientY);
+      _startAutoscroll(scrollRAF, dragScrollEl, e.clientY);
     };
 
     const onUp = () => {
       if (!dragEl) return;
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
-      cancelAnimationFrame(scrollRAF);
+      cancelAnimationFrame(scrollRAF[0]);
 
       if (dragGroup.length > 1) {
         // Clear inline styles (only the measured pixel coords were set inline;
@@ -1873,6 +1908,7 @@ export const PlaylistsManager = {
       document.addEventListener('click', e => e.stopPropagation(), { capture: true, once: true });
 
       dragEl = null; placeholder = null; dragGroup = [];
+      dragScrollEl = null; dragScrollBase = 0;
     };
   },
 
