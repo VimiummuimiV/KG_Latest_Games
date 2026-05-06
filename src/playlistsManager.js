@@ -1040,6 +1040,14 @@ export const PlaylistsManager = {
   _keydown: e => {
     if (PlaylistsManager._isPinned()) return;
     if (e.key === 'Escape') PlaylistsManager.hide();
+    if (e.key === 'Tab') {
+      const popup = PlaylistsManager.popup;
+      if (!popup) return;
+      const toggleBtn = popup.querySelector('.playlist-picker-btn-row .playlist-picker-toggle');
+      if (!toggleBtn) return;
+      e.preventDefault();
+      toggleBtn.click();
+    }
   },
 
   _startDrag(e) {
@@ -2751,7 +2759,7 @@ export const PlaylistsManager = {
     const btnRow    = _el('div', 'playlist-picker-btn-row');
     const toggleBtn = _el('button', 'playlist-picker-toggle');
     toggleBtn.innerHTML = `${icons.plus}<span>Добавить игры</span>`;
-    createCustomTooltip(toggleBtn, 'Показать список игр для добавления в плейлист');
+    createCustomTooltip(toggleBtn, '[Клик / Tab] Показать / скрыть список игр для добавления в плейлист');
 
     btnRow.append(toggleBtn);
     picker.appendChild(btnRow);
@@ -2763,7 +2771,7 @@ export const PlaylistsManager = {
     const overlayFooter   = _el('div', 'playlist-picker-overlay-footer');
     const collapseBtn     = _el('button', 'playlist-picker-toggle');
     collapseBtn.innerHTML = `${icons.chevronLeft}<span>Свернуть</span>`;
-    createCustomTooltip(collapseBtn, 'Закрыть список игр и вернуться к плейлисту');
+    createCustomTooltip(collapseBtn, '[Клик / Tab] Закрыть список игр и вернуться к плейлисту');
 
     const filtersBtn      = _el('button', 'playlist-picker-toggle playlist-picker-filters-btn');
     filtersBtn.innerHTML  = `<span>Фильтры</span>`;
