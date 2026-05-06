@@ -384,6 +384,22 @@
       gap: 0.5em;
     }
 
+    // Small "N игр" badge — always visible on every playlist header row
+    .playlist-game-count-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.1em 0.45em;
+      font-size: 0.8em;
+      font-weight: 600;
+      background: rgba(0, 0, 0, 0.18);
+      border-radius: 3px !important;
+      color: var(--rg-bg-primary);
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+      cursor: default;
+    }
+
     .playlist-active-badge {
       display: inline-flex;
       align-items: center;
@@ -1021,7 +1037,10 @@
     margin-top: 0.3em;
 
     &:hover { background: var(--rg-bg-hover); border-color: var(--rg-border-hover); }
-    &.already-added { opacity: 0.45; }
+    &.already-added {
+      opacity: 0.45;
+      &:hover { opacity: 1; }
+    }
 
     .playlist-picker-game-name {
       flex: 1;
@@ -1036,15 +1055,75 @@
     }
 
     .playlist-picker-game-desc {
-      font-size: 0.75em;
-      color: var(--rg-text-tertiary);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
       flex-shrink: 0;
       user-select: none;
+    }
+
+    .playlist-picker-game-desc-text {
+      font-size: 0.75em;
+      color: var(--rg-text-tertiary);
+    }
+
+    // Live ×N counter shown next to desc when game is already in playlist
+    .playlist-picker-game-added-count {
+      font-size: 0.72em;
+      font-weight: 700;
+      color: hsl(var(--rg-popup-btn-save));
+      background: hsla(var(--rg-popup-btn-save) / 0.12);
+      border: 1px solid hsla(var(--rg-popup-btn-save) / 0.4);
+      border-radius: 3px !important;
+      padding: 0 4px;
+      line-height: 1.5;
+      font-variant-numeric: tabular-nums;
+      transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    }
+
+    // Mirror the remove tints onto the added-count badge whenever the add button
+    // is in removing or remove-flash state (uses :has() — supported in all modern browsers).
+    &:has(.playlist-picker-add-btn.removing),
+    &:has(.playlist-picker-add-btn.remove-flash) {
+      .playlist-picker-game-added-count {
+        color: hsl(var(--rg-popup-btn-remove)) !important;
+        background: hsla(var(--rg-popup-btn-remove) / 0.15) !important;
+        border-color: hsla(var(--rg-popup-btn-remove) / 0.5) !important;
+      }
+    }
+
+    &:has(.playlist-picker-add-btn.remove-flash) {
+      .playlist-picker-game-added-count {
+        transition: color 0.35s ease, background 0.35s ease, border-color 0.35s ease !important;
+      }
     }
 
     .playlist-picker-add-btn {
       @include playlist-icon-btn('--rg-popup-btn-save', 20px, 12px, true);
       flex-shrink: 0;
+
+      svg { stroke-width: 3 !important; }
+
+      // Normal adding state (mousedown without Ctrl) — green tint
+      &.adding {
+        background: hsla(var(--rg-popup-btn-save) / 0.3) !important;
+        border-color: hsl(var(--rg-popup-btn-save)) !important;
+      }
+
+      // Ctrl held — red/remove tint with X icon intent
+      &.removing {
+        background: hsla(var(--rg-popup-btn-remove) / 0.25) !important;
+        border-color: hsl(var(--rg-popup-btn-remove)) !important;
+        color: hsl(var(--rg-popup-btn-remove)) !important;
+      }
+
+      // Brief flash after a remove — X icon + red tint, fades out naturally
+      &.remove-flash {
+        background: hsla(var(--rg-popup-btn-remove) / 0.2) !important;
+        border-color: hsl(var(--rg-popup-btn-remove)) !important;
+        color: hsl(var(--rg-popup-btn-remove)) !important;
+        transition: background 0.35s ease, border-color 0.35s ease, color 0.35s ease !important;
+      }
 
       &:hover:not(:disabled) { background: hsla(var(--rg-popup-btn-save) / 0.15); border-color: hsl(var(--rg-popup-btn-save)); }
       &:active:not(:disabled) { background: hsla(var(--rg-popup-btn-save) / 0.25); }
@@ -1364,6 +1443,15 @@
     position: sticky;
     top: calc(var(--playlist-header-height, 0px) + var(--playlist-multiselect-bar-height, 0px));
     z-index: 9;
+  }
+
+  // Group-mode label inside the dup bar — e.g. "Группа (3)"
+  .playlist-dup-label {
+    font-size: 0.75em;
+    font-weight: 700;
+    color: hsl(var(--rg-popup-btn-copy));
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .playlist-dup-input {

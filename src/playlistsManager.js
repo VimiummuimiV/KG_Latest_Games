@@ -623,14 +623,53 @@ export const PlaylistsManager = {
 
   // ── Shared helpers ─────────────────────────────────────────────────────────
 
-  // Wraps _attachSortableDrag with the fixed entry-row options.
-  _attachEntryDrag(entryList, playlistId) {
+  // After a drag reorder, reload entries from storage and update the chip tooltip.
+  _syncPlaylistEntriesAndChip(entryList, playlistId) {
+    const block = entryList.closest('.playlist-block');
+    if (!block) return;
+    const fresh = this.load().find(p => p.id === playlistId);
+    if (!fresh) return;
+    const chip = block.querySelector('.playlist-game-count-chip');
+    if (!chip) return;
+    const { text, tip } = _buildGameCountChipContent(fresh, this.main);
+    chip.textContent = text;
+    if (tip) updateTooltipContent(chip, tip);
+  },
+
+  // Wraps _attachSortableDrag + _attachDragSelect with the fixed entry-row options.
+  // Single guard on the container prevents double-attachment on repeated calls.
+  _attachEntryDrag(entryList, playlistId, sel) {
+    if (entryList.dataset.entryDragAttached) return;
+    entryList.dataset.entryDragAttached = '1';
+
     this._attachSortableDrag(entryList, {
       itemSelector:   '.playlist-entry-row',
       handleSelector: '.playlist-entry-drag-handle',
       draggingClass:  'playlist-entry-row--dragging',
-      onReorder:      (from, to) => this.reorderEntries(playlistId, from, to),
-      onGroupReorder: (newIds)   => this.reorderEntriesOrder(playlistId, newIds),
+      onReorder: (from, to) => {
+        this.reorderEntries(playlistId, from, to);
+        this._syncPlaylistEntriesAndChip(entryList, playlistId);
+      },
+      onGroupReorder: (newIds) => {
+        this.reorderEntriesOrder(playlistId, newIds);
+        this._syncPlaylistEntriesAndChip(entryList, playlistId);
+      },
+    });
+
+    this._attachDragSelect(entryList, '.playlist-entry-checkbox', (cb, checked) => {
+      const entryId = cb.dataset.entryId;
+      checked ? sel.add(entryId) : sel.delete(entryId);
+      cb.closest('.playlist-entry-row')?.classList.toggle('playlist-entry-row--selected', checked);
+      const span = entryList.querySelector('.playlist-multiselect-count');
+      if (span) span.textContent = `${sel.size}`;
+      if (checked) {
+        const msBar = entryList.querySelector('.playlist-multiselect-bar');
+        if (msBar?._setSeedEntry) msBar._setSeedEntry(entryId);
+      }
+    }, {
+      rowSelector:  '.playlist-entry-row',
+      activeClass:  'playlist-entries--selection',
+      skipSelector: 'button, input, .playlist-entry-drag-handle',
     });
   },
 
@@ -643,8 +682,6 @@ export const PlaylistsManager = {
   // opts.activeClass  — class on container that enables row-level selection
   // opts.skipSelector — elements inside a row that should NOT trigger row-select
   _attachDragSelect(container, cbSelector, onToggle, opts = {}) {
-    if (container.dataset.dragSelectAttached) return;
-    container.dataset.dragSelectAttached = '1';
     let dragState = null;
     const selectScrollRAF = [null];
     let selectLastY = 0;
@@ -1192,7 +1229,8 @@ export const PlaylistsManager = {
     const row = _el('div', `playlist-header-row${isActive ? ' playlist-header-row--active' : ''}${isActive && session?.paused ? ' playlist-header-row--paused' : ''}`);
 
     if (isActive) {
-      // Active: pause + stop buttons on the LEFT, badge + title on right
+      // Active: pause and stop buttons on the LEFT, then drag handle, then title + badge on the RIGHT
+      // (no shuffle or cycle controls since those apply to the whole playlist and are not relevant when it's already active).
       const isPaused = !!(session && session.paused);
       const pauseBtn = _el('button', 'playlist-pause-btn');
       pauseBtn.innerHTML = isPaused ? icons.start : icons.pause;
@@ -1246,18 +1284,24 @@ export const PlaylistsManager = {
         titleSpan.appendChild(badge);
       }
 
+      // Game count chip — always visible on every header (active or not)
+      _appendGameCountChip(titleSpan, playlist, this.main);
+
       const blockHandle = _el('span', 'playlist-block-drag-handle');
       blockHandle.innerHTML = icons.dragable;
 
       row.append(pauseBtn, stopBtn, blockHandle, titleSpan);
     } else {
-      // Inactive: play button on left, rename + delete on right
+      // Inactive: play button on the LEFT, then title + badge, then cycle stepper + shuffle + rename + duplicate + delete buttons on the RIGHT.
       const playBtn = _el('button', 'playlist-play-btn');
       playBtn.innerHTML = icons.start;
       createCustomTooltip(playBtn, `Запустить плейлист «${playlist.title}»`);
       playBtn.addEventListener('click', e => { e.stopPropagation(); this.startPlaylist(playlist.id); });
 
       const titleSpan = _el('span', 'playlist-title', playlist.title);
+
+      // Game count chip — always visible on every header (active or not)
+      _appendGameCountChip(titleSpan, playlist, this.main);
 
       // Playlist-level cycle stepper — only shown when repeatCount > 1 or on hover
       const cycleCount     = playlist.repeatCount ?? 1;
@@ -1367,20 +1411,19 @@ export const PlaylistsManager = {
 
     // Entry list (no search here — entries list is short)
     const entryList = _el('div', 'playlist-entries');
+    const sel = this._selectedEntries[playlist.id] ??= new Set();
+
+    // Prune stale IDs that no longer exist in the playlist
+    const validIds = new Set(playlist.entries.map(e => e.id));
+    for (const id of [...sel]) { if (!validIds.has(id)) sel.delete(id); }
+    if (sel.size === 0) this._selectionMode.delete(playlist.id);
+
+    // ── Multiselect bar — always in DOM; CSS hides it until selection mode ─
+    entryList.appendChild(this._buildMultiSelectBar(playlist, sel, entryList));
 
     if (!playlist.entries.length) {
       entryList.appendChild(_el('div', 'playlist-entries-empty', 'Нет игр. Добавьте из групп ниже.'));
     } else {
-      const sel = this._selectedEntries[playlist.id] ??= new Set();
-
-      // Prune stale IDs that no longer exist in the playlist
-      const validIds = new Set(playlist.entries.map(e => e.id));
-      for (const id of [...sel]) { if (!validIds.has(id)) sel.delete(id); }
-      if (sel.size === 0) this._selectionMode.delete(playlist.id);
-
-      // ── Multiselect bar — always in DOM; CSS hides it until selection mode ─
-      entryList.appendChild(this._buildMultiSelectBar(playlist, sel, entryList));
-
       const activeRealIndex = isActive ? _getActiveEntryIndex(playlist, session) : -1;
       playlist.entries.forEach((entry, idx) => {
         const isCurrentEntry = isActive && idx === activeRealIndex;
@@ -1398,61 +1441,44 @@ export const PlaylistsManager = {
         entryList.appendChild(this._buildEntryRow(playlist, entry, session, isCurrentEntry, idx, isPassedEntry));
       });
 
-      this._attachEntryDrag(entryList, playlist.id);
+      this._attachEntryDrag(entryList, playlist.id, sel);
 
       // Restore selection mode class if it was active before a data-driven refresh
       if (this._selectionMode.has(playlist.id)) {
         entryList.classList.add('playlist-entries--selection');
       }
+    }
 
-      // ── Drag-to-select checkboxes — always attached; checkboxes always in DOM ──
-      this._attachDragSelect(entryList, '.playlist-entry-checkbox', (cb, checked) => {
-        const entryId = cb.dataset.entryId;
-        checked ? sel.add(entryId) : sel.delete(entryId);
-        cb.closest('.playlist-entry-row')?.classList.toggle('playlist-entry-row--selected', checked);
-        const span = entryList.querySelector('.playlist-multiselect-count');
-        if (span) span.textContent = `${sel.size}`;
-        if (checked) {
+    // ── Long-press on any entry row to enter selection mode ──────────────
+    this._attachLongPressSelection(entryList, {
+      rowSelector:     '.playlist-entry-row',
+      skipSelector:    'button, input, .playlist-entry-drag-handle',
+      activeClass:     'playlist-entries--selection',
+      isAlreadyActive: () => entryList.classList.contains('playlist-entries--selection'),
+      onActivate: row => {
+        this._selectionMode.add(playlist.id);
+        const entryId = row.dataset.entryId;
+        if (entryId) {
+          sel.add(entryId);
+          row.classList.add('playlist-entry-row--selected');
+          const cb = row.querySelector('.playlist-entry-checkbox');
+          if (cb) cb.checked = true;
+          const span = entryList.querySelector('.playlist-multiselect-count');
+          if (span) span.textContent = `${sel.size}`;
+          // Tell the multiselect bar which entry was long-pressed so smart-select
+          // filters have a reference point for matching patterns.
           const msBar = entryList.querySelector('.playlist-multiselect-bar');
           if (msBar?._setSeedEntry) msBar._setSeedEntry(entryId);
         }
-      }, {
-        rowSelector:  '.playlist-entry-row',
-        activeClass:  'playlist-entries--selection',
-        skipSelector: 'button, input, .playlist-entry-drag-handle',
-      });
-
-      // ── Long-press on any entry row to enter selection mode ──────────────
-      this._attachLongPressSelection(entryList, {
-        rowSelector:     '.playlist-entry-row',
-        skipSelector:    'button, input, .playlist-entry-drag-handle',
-        activeClass:     'playlist-entries--selection',
-        isAlreadyActive: () => entryList.classList.contains('playlist-entries--selection'),
-        onActivate: row => {
-          this._selectionMode.add(playlist.id);
-          const entryId = row.dataset.entryId;
-          if (entryId) {
-            sel.add(entryId);
-            row.classList.add('playlist-entry-row--selected');
-            const cb = row.querySelector('.playlist-entry-checkbox');
-            if (cb) cb.checked = true;
-            const span = entryList.querySelector('.playlist-multiselect-count');
-            if (span) span.textContent = `${sel.size}`;
-            // Tell the multiselect bar which entry was long-pressed so smart-select
-            // filters have a reference point for matching patterns.
-            const msBar = entryList.querySelector('.playlist-multiselect-bar');
-            if (msBar?._setSeedEntry) msBar._setSeedEntry(entryId);
-          }
-          // Multiselect bar is now visible — update its height var so the dup
-          // bar (if open) re-sticks correctly below it.
-          requestAnimationFrame(() => {
-            const block = entryList.closest('.playlist-block');
-            const msBar = entryList.querySelector('.playlist-multiselect-bar');
-            if (block && msBar) block.style.setProperty('--playlist-multiselect-bar-height', `${msBar.offsetHeight}px`);
-          });
-        },
-      });
-    }
+        // Multiselect bar is now visible — update its height var so the dup
+        // bar (if open) re-sticks correctly below it.
+        requestAnimationFrame(() => {
+          const block = entryList.closest('.playlist-block');
+          const msBar = entryList.querySelector('.playlist-multiselect-bar');
+          if (block && msBar) block.style.setProperty('--playlist-multiselect-bar-height', `${msBar.offsetHeight}px`);
+        });
+      },
+    });
 
     body.appendChild(entryList);
     body.appendChild(this._buildGamePicker(playlist));
@@ -1544,13 +1570,20 @@ export const PlaylistsManager = {
     createCustomTooltip(removeBtn, 'Убрать из плейлиста');
     removeBtn.addEventListener('click', e => {
       e.stopPropagation();
+      // Capture DOM references BEFORE detaching the row
+      const list  = row.closest('.playlist-entries');
+      const block = list?.closest('.playlist-block');
       this.removeEntry(playlist.id, entry.id);
+      const entryIdx = playlist.entries.indexOf(entry);
+      if (entryIdx !== -1) playlist.entries.splice(entryIdx, 1);
       row.remove();
-      const list = row.closest('.playlist-entries');
       if (list && !list.querySelector('.playlist-entry-row')) {
         list.innerHTML = '';
         list.appendChild(_el('div', 'playlist-entries-empty', 'Нет игр. Добавьте из групп ниже.'));
       }
+      _syncGameCountChip(block, playlist, PlaylistsManager.main);
+      // Sync the portaled picker body via the hook exposed on the picker element.
+      block?.querySelector('.playlist-game-picker')?._syncPickerRow(entry.gameId);
     });
 
     // Duplicate — single click: duplicate this entry (or the whole selected group
@@ -1594,7 +1627,7 @@ export const PlaylistsManager = {
           const newRow = this._buildEntryRow(fresh, ne, null, false, fresh.entries.length - newEntries.length + i);
           entryList.appendChild(newRow);
         });
-        this._attachEntryDrag(entryList, playlist.id);
+        this._attachEntryDrag(entryList, playlist.id, this._selectedEntries[playlist.id] ??= new Set());
         return;
       }
 
@@ -1607,7 +1640,7 @@ export const PlaylistsManager = {
       entryList.querySelector('.playlist-entries-empty')?.remove();
       const newRow = this._buildEntryRow(fresh, copy, null, false, fresh.entries.length - 1);
       entryList.appendChild(newRow);
-      this._attachEntryDrag(entryList, playlist.id);
+      this._attachEntryDrag(entryList, playlist.id, this._selectedEntries[playlist.id] ??= new Set());
     });
 
     // Per-entry play button — starts the playlist from this entry
@@ -1736,9 +1769,6 @@ export const PlaylistsManager = {
   // Autoscroll fires in both single and group modes when the cursor approaches
   // the top or bottom edge of the nearest scrollable ancestor.
   _attachSortableDrag(container, { itemSelector, handleSelector, draggingClass, onReorder, onGroupReorder, onStart, onEnd }) {
-    // Guard against stacking multiple listeners (e.g. live-injected entries)
-    if (container.dataset.dragAttached) return;
-    container.dataset.dragAttached = '1';
 
     let dragEl = null, placeholder = null, startY = 0, startIdx = 0;
     let dragGroup = [];         // [dragEl] for single, full contiguous run for group
@@ -2375,7 +2405,7 @@ export const PlaylistsManager = {
         const newRow = this._buildEntryRow(fresh, ne, null, false, fresh.entries.length - newEntries.length + i);
         entryList.appendChild(newRow);
       });
-      this._attachEntryDrag(entryList, playlist.id);
+      this._attachEntryDrag(entryList, playlist.id, this._selectedEntries[playlist.id] ??= new Set());
       // Refresh the filter row chip counts in case repeat/type mix changed
       const msBar = entryList.querySelector('.playlist-multiselect-bar');
       if (msBar?._refreshFilterRow) msBar._refreshFilterRow();
@@ -2541,7 +2571,7 @@ export const PlaylistsManager = {
               const newRow = this._buildEntryRow(fresh, ne, null, false, fresh.entries.length - newEntries.length + i);
               entryList.appendChild(newRow);
             });
-            this._attachEntryDrag(entryList, playlist.id);
+            this._attachEntryDrag(entryList, playlist.id, this._selectedEntries[playlist.id] ??= new Set());
           }
         }
       } else {
@@ -2554,7 +2584,7 @@ export const PlaylistsManager = {
           const newRow = this._buildEntryRow(refreshed, copy, null, false, refreshed.entries.length - 1);
           entryList.appendChild(newRow);
         }
-        this._attachEntryDrag(entryList, playlist.id);
+        this._attachEntryDrag(entryList, playlist.id, this._selectedEntries[playlist.id] ??= new Set());
       }
 
       bar.remove();
@@ -2881,10 +2911,11 @@ export const PlaylistsManager = {
       if (!fresh) return;
       fresh.entries.slice(countBefore).forEach((newEntry, i) => {
         playlist.entries.push(newEntry);
-        const newRow = this._buildEntryRow(fresh, newEntry, null, false, countBefore + i);
+        const newRow = this._buildEntryRow(playlist, newEntry, null, false, countBefore + i);
         entryList.appendChild(newRow);
       });
-      this._attachEntryDrag(entryList, playlist.id);
+      const sel = this._selectedEntries[playlist.id] ??= new Set();
+      this._attachEntryDrag(entryList, playlist.id, sel);
     };
 
     confirmAddBtn.addEventListener('click', e => {
@@ -2899,6 +2930,7 @@ export const PlaylistsManager = {
           if (cb) { cb.checked = false; cb.disabled = true; }
           const btn = gameRow.querySelector('.playlist-picker-add-btn');
           if (btn) { btn.innerHTML = icons.check; btn.disabled = true; }
+          if (gameRow._syncAddedCount) gameRow._syncAddedCount();
         }
       });
       pickerSel.clear();
@@ -2906,7 +2938,9 @@ export const PlaylistsManager = {
       body.classList.remove('playlist-picker-body--selection');
       window.getSelection()?.removeAllRanges();
       updateConfirmBar();
-      injectAddedEntries(picker.closest('.playlist-block'), countBefore);
+      const _caBlock = picker.closest('.playlist-block');
+      injectAddedEntries(_caBlock, countBefore);
+      _syncGameCountChip(_caBlock, playlist, this.main);
     });
 
     confirmClearBtn.addEventListener('click', e => {
@@ -2964,11 +2998,58 @@ export const PlaylistsManager = {
 
         const nameSpan = _el('span', `playlist-picker-game-name gametype-${game.params.gametype}`, name);
         const visLabel = visibilities[game.params.type] || game.params.type;
-        const descSpan = _el('span', 'playlist-picker-game-desc', `${visLabel} · TM ${game.params.timeout}`);
+
+        // descSpan shows "Режим · TM N" plus a live "×N added" count when applicable.
+        const descSpan = _el('span', 'playlist-picker-game-desc');
+        const descText = _el('span', 'playlist-picker-game-desc-text', `${visLabel} · TM ${game.params.timeout}`);
+        const addedCount = _el('span', 'playlist-picker-game-added-count');
+        const syncAddedCount = () => {
+          const n = getCount();
+          if (n > 0) {
+            addedCount.textContent = `×${n}`;
+            addedCount.style.display = '';
+          } else {
+            addedCount.style.display = 'none';
+          }
+        };
+        syncAddedCount();
+        gameRow._syncAddedCount = syncAddedCount;
+        gameRow._syncAddBtnTooltip = syncAddBtnTooltip;
+        descSpan.append(descText, addedCount);
 
         const addBtn = _el('button', 'playlist-picker-add-btn');
+        // Icon-only: plus when not added, check when already added
         addBtn.innerHTML = alreadyAdded ? icons.check : icons.plus;
         syncAddBtnTooltip();
+
+        // Ctrl visual cue: red/remove tint on mousedown, cleared on mouseup/mouseleave
+        addBtn.addEventListener('mousedown', e => {
+          if (e.button !== 0) return;
+          if (e.ctrlKey && getCount() > 0) {
+            addBtn.classList.add('removing');
+          } else {
+            addBtn.classList.add('adding');
+          }
+        });
+        addBtn.addEventListener('mouseup', () => {
+          addBtn.classList.remove('removing', 'adding');
+        });
+        addBtn.addEventListener('mouseleave', () => {
+          addBtn.classList.remove('removing', 'adding');
+        });
+        // Also update tint when Ctrl key state changes while button is held
+        addBtn.addEventListener('keydown', e => {
+          if (e.key === 'Control' && addBtn.matches(':active')) {
+            addBtn.classList.remove('adding');
+            if (getCount() > 0) addBtn.classList.add('removing');
+          }
+        });
+        addBtn.addEventListener('keyup', e => {
+          if (e.key === 'Control' && addBtn.matches(':active')) {
+            addBtn.classList.remove('removing');
+            addBtn.classList.add('adding');
+          }
+        });
 
         // The add button is always enabled — even for already-added games — so
         // the user can deliberately add duplicate entries to the playlist.
@@ -2985,8 +3066,11 @@ export const PlaylistsManager = {
           pickerSel.delete(game.id);
           gameRow.classList.remove('picker-row--selected');
           updateConfirmBar();
-          injectAddedEntries(picker.closest('.playlist-block'), countBefore);
+          const _daBlock = picker.closest('.playlist-block');
+          injectAddedEntries(_daBlock, countBefore);
+          _syncGameCountChip(_daBlock, playlist, this.main);
           syncAddBtnTooltip();
+          syncAddedCount();
         };
 
         const doRemove = () => {
@@ -3001,8 +3085,19 @@ export const PlaylistsManager = {
             entryList.innerHTML = '';
             entryList.appendChild(_el('div', 'playlist-entries-empty', 'Нет игр. Добавьте из групп ниже.'));
           }
-          if (getCount() === 0) { addBtn.innerHTML = icons.plus; gameRow.classList.remove('already-added'); }
+          const remaining = getCount();
+          if (remaining === 0) { gameRow.classList.remove('already-added'); }
           syncAddBtnTooltip();
+          syncAddedCount();
+          _syncGameCountChip(block, playlist, this.main);
+          // Flash ×-icon briefly, then settle on the correct icon
+          addBtn.innerHTML = icons.x;
+          addBtn.classList.add('remove-flash');
+          clearTimeout(addBtn._removeFlashTimer);
+          addBtn._removeFlashTimer = setTimeout(() => {
+            addBtn.classList.remove('remove-flash');
+            addBtn.innerHTML = remaining > 0 ? icons.check : icons.plus;
+          }, 400);
         };
 
         this._attachButtonHold(addBtn, doAdd, doRemove);
@@ -3111,11 +3206,68 @@ export const PlaylistsManager = {
     body.prepend(searchWrap);
     body.append(overlayFooter);
 
+    // Expose a sync function on the picker element so that code outside the
+    // picker closure (e.g. entry-row remove button) can update a game row in
+    // the portaled body without needing a DOM reference to body itself.
+    picker._syncPickerRow = (gameId) => {
+      const gameRow = body.querySelector(`.playlist-picker-game-row[data-game-id="${gameId}"]`);
+      if (!gameRow) return;
+      if (gameRow._syncAddedCount)   gameRow._syncAddedCount();
+      if (gameRow._syncAddBtnTooltip) gameRow._syncAddBtnTooltip();
+      const remaining = playlist.entries.filter(e => e.gameId === gameId).length;
+      gameRow.classList.toggle('already-added', remaining > 0);
+      const btn = gameRow.querySelector('.playlist-picker-add-btn');
+      if (btn) btn.innerHTML = remaining > 0 ? icons.check : icons.plus;
+    };
+
     // body stays detached until openPicker() portals it to the popup root.
     // picker only ever contains btnRow (sticky bottom of playlists-list).
     return picker;
   }
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Game-count chip helper — builds and appends the chip to a title span.
+// Shared by both active and inactive header branches.
+// ─────────────────────────────────────────────────────────────────────────────
+function _buildGameCountChipContent(playlist, main) {
+  const n = playlist.entries.length;
+  const text = n === 1 ? '1 игра' : n < 5 ? `${n} игры` : `${n} игр`;
+  let tip = '';
+  if (n > 0 && main?.gamesManager) {
+    const nameCounts = new Map();
+    for (const entry of playlist.entries) {
+      const game = main.gamesManager.findGameById(entry.gameId);
+      const gtype = game ? (gameTypes[game.params.gametype] || game.params.gametype) : null;
+      const dispName = game
+        ? (game.params.vocName ? `«${game.params.vocName}»` : gtype)
+        : `#${entry.gameId}`;
+      nameCounts.set(dispName, (nameCounts.get(dispName) ?? 0) + 1);
+    }
+    tip = [...nameCounts.entries()]
+      .map(([name, count]) => `[${name}] ${count}`)
+      .join('');
+  }
+  return { text, tip };
+}
+
+function _appendGameCountChip(titleSpan, playlist, main) {
+  const chip = _el('span', 'playlist-game-count-chip');
+  const { text, tip } = _buildGameCountChipContent(playlist, main);
+  chip.textContent = text;
+  titleSpan.appendChild(chip);
+  if (tip) createCustomTooltip(chip, tip);
+}
+
+// Update the chip in-place inside a playlist block — called after live add/remove
+// without a full refresh() so the count and tooltip stay accurate.
+function _syncGameCountChip(block, playlist, main) {
+  const chip = block?.querySelector('.playlist-game-count-chip');
+  if (!chip) return;
+  const { text, tip } = _buildGameCountChipContent(playlist, main);
+  chip.textContent = text;
+  if (tip) updateTooltipContent(chip, tip);
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Update the HUD playlist indicator text in-place (called on stepper change)
