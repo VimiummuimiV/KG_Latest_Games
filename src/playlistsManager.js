@@ -708,41 +708,45 @@ export const PlaylistsManager = {
     document.addEventListener('mouseup', stopDrag, { capture: true });
   },
 
-  // Attach long-press auto-repeat to a stepper button.
+  // Attach long-press auto-repeat to a button.
   // A single click still calls stepFn once (via the click event).
   // Holding LMB fires stepFn after HOLD_DELAY ms, then every HOLD_INTERVAL ms.
   // The click that fires on release after a hold is suppressed.
-  _attachStepperHold(btn, stepFn) {
+  // Optional ctrlStepFn: if provided, Ctrl+Click / Ctrl+Hold calls it instead of stepFn.
+  _attachButtonHold(btn, stepFn, ctrlStepFn) {
     const HOLD_DELAY    = 400; // ms before auto-repeat starts
     const HOLD_INTERVAL =  120; // ms between auto-repeat ticks
     let holdTimer = null;
     let interval  = null;
     let holdFired = false;
+    let activeFn  = null; // captured at mousedown so Ctrl state is stable during hold
 
     const stop = () => {
       clearTimeout(holdTimer);
       clearInterval(interval);
       holdTimer = null;
       interval  = null;
+      activeFn  = null;
     };
 
     btn.addEventListener('mousedown', e => {
       if (e.button !== 0) return;
+      activeFn  = (ctrlStepFn && e.ctrlKey) ? ctrlStepFn : stepFn;
       holdFired = false;
       holdTimer = setTimeout(() => {
         holdFired = true;
-        stepFn();
-        interval = setInterval(stepFn, HOLD_INTERVAL);
+        activeFn();
+        interval = setInterval(() => activeFn(), HOLD_INTERVAL);
       }, HOLD_DELAY);
     });
     btn.addEventListener('mouseup',    stop);
     btn.addEventListener('mouseleave', stop);
-    // Single click: holdFired is false → run stepFn normally.
+    // Single click: holdFired is false → run the appropriate fn.
     // After a hold:  holdFired is true  → skip (hold already stepped) and reset.
     btn.addEventListener('click', e => {
       e.stopPropagation();
       if (holdFired) { holdFired = false; return; }
-      stepFn();
+      ((ctrlStepFn && e.ctrlKey) ? ctrlStepFn : stepFn)();
     });
   },
 
@@ -1267,7 +1271,7 @@ export const PlaylistsManager = {
       createCustomTooltip(cycleStepper, 'Количество повторов всего плейлиста');
       if (cycleCount <= 1) cycleStepper.classList.add('playlist-header-stepper--default');
 
-      this._attachStepperHold(cycleDecBtn, () => {
+      this._attachButtonHold(cycleDecBtn, () => {
         const next = Math.max(1, (playlist.repeatCount ?? 1) - 1);
         this.setPlaylistCycles(playlist.id, next);
         playlist.repeatCount = next;
@@ -1275,7 +1279,7 @@ export const PlaylistsManager = {
         cycleStepper.classList.toggle('playlist-header-stepper--default', next <= 1);
       });
 
-      this._attachStepperHold(cycleIncBtn, () => {
+      this._attachButtonHold(cycleIncBtn, () => {
         const next = (playlist.repeatCount ?? 1) + 1;
         this.setPlaylistCycles(playlist.id, next);
         playlist.repeatCount = next;
@@ -1512,7 +1516,7 @@ export const PlaylistsManager = {
       ? Math.max(0, entry.repeatCount - sessionAtBuild.remainingRepeats)
       : 0;
 
-    this._attachStepperHold(decBtn, () => {
+    this._attachButtonHold(decBtn, () => {
       const next = Math.max(1, entry.repeatCount - 1);
       this.setRepeat(playlist.id, entry.id, next);
       countSpan.textContent = String(next);
@@ -1522,7 +1526,7 @@ export const PlaylistsManager = {
       const msBar = row.closest('.playlist-entries')?.querySelector('.playlist-multiselect-bar');
       if (msBar?._refreshFilterRow) msBar._refreshFilterRow();
     });
-    this._attachStepperHold(incBtn, () => {
+    this._attachButtonHold(incBtn, () => {
       const next = entry.repeatCount + 1;
       this.setRepeat(playlist.id, entry.id, next);
       countSpan.textContent = String(next);
@@ -2331,13 +2335,13 @@ export const PlaylistsManager = {
       }
     };
 
-    this._attachStepperHold(repDecBtn, () => {
+    this._attachButtonHold(repDecBtn, () => {
       if (sel.size === 0) return;
       repCount.value = Math.max(1, repCount.value - 1);
       repCountSpan.textContent = String(repCount.value);
       applyBulkRepeat();
     });
-    this._attachStepperHold(repIncBtn, () => {
+    this._attachButtonHold(repIncBtn, () => {
       if (sel.size === 0) return;
       repCount.value++;
       repCountSpan.textContent = String(repCount.value);
@@ -2508,12 +2512,12 @@ export const PlaylistsManager = {
       return (!input.value.trim() || isNaN(v)) ? dupCount.value : Math.max(1, Math.min(DUP_MAX, v));
     };
 
-    this._attachStepperHold(decBtn, () => {
+    this._attachButtonHold(decBtn, () => {
       if (input.value.trim()) return; // input has priority — stepper is ignored
       dupCount.value = Math.max(1, dupCount.value - 1);
       stepperCountSpan.textContent = String(dupCount.value);
     });
-    this._attachStepperHold(incBtn, () => {
+    this._attachButtonHold(incBtn, () => {
       if (input.value.trim()) return;
       dupCount.value = Math.min(DUP_MAX, dupCount.value + 1);
       stepperCountSpan.textContent = String(dupCount.value);
@@ -2970,24 +2974,7 @@ export const PlaylistsManager = {
         // the user can deliberately add duplicate entries to the playlist.
         // The row stays visually dimmed (already-added class) but the button
         // itself remains clickable and shows a live count tooltip.
-        addBtn.addEventListener('click', e => {
-          e.stopPropagation();
-          if (e.ctrlKey) {
-            const lastEntry = [...playlist.entries].reverse().find(en => en.gameId === game.id);
-            if (!lastEntry) return;
-            this.removeEntry(playlist.id, lastEntry.id);
-            playlist.entries.splice(playlist.entries.indexOf(lastEntry), 1);
-            const block = picker.closest('.playlist-block');
-            block?.querySelector(`.playlist-entry-row[data-entry-id="${lastEntry.id}"]`)?.remove();
-            const entryList = block?.querySelector('.playlist-entries');
-            if (entryList && !entryList.querySelector('.playlist-entry-row')) {
-              entryList.innerHTML = '';
-              entryList.appendChild(_el('div', 'playlist-entries-empty', 'Нет игр. Добавьте из групп ниже.'));
-            }
-            if (getCount() === 0) { addBtn.innerHTML = icons.plus; gameRow.classList.remove('already-added'); }
-            syncAddBtnTooltip();
-            return;
-          }
+        const doAdd = () => {
           const countBefore = playlist.entries.length;
           this.addEntry(playlist.id, game.id, 1);
           addBtn.innerHTML = icons.check;
@@ -3000,7 +2987,25 @@ export const PlaylistsManager = {
           updateConfirmBar();
           injectAddedEntries(picker.closest('.playlist-block'), countBefore);
           syncAddBtnTooltip();
-        });
+        };
+
+        const doRemove = () => {
+          const lastEntry = [...playlist.entries].reverse().find(en => en.gameId === game.id);
+          if (!lastEntry) return;
+          this.removeEntry(playlist.id, lastEntry.id);
+          playlist.entries.splice(playlist.entries.indexOf(lastEntry), 1);
+          const block = picker.closest('.playlist-block');
+          block?.querySelector(`.playlist-entry-row[data-entry-id="${lastEntry.id}"]`)?.remove();
+          const entryList = block?.querySelector('.playlist-entries');
+          if (entryList && !entryList.querySelector('.playlist-entry-row')) {
+            entryList.innerHTML = '';
+            entryList.appendChild(_el('div', 'playlist-entries-empty', 'Нет игр. Добавьте из групп ниже.'));
+          }
+          if (getCount() === 0) { addBtn.innerHTML = icons.plus; gameRow.classList.remove('already-added'); }
+          syncAddBtnTooltip();
+        };
+
+        this._attachButtonHold(addBtn, doAdd, doRemove);
 
         gameRow.append(nameSpan, descSpan, addBtn);
         body.appendChild(gameRow);
