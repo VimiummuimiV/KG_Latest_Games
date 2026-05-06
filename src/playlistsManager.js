@@ -2982,8 +2982,8 @@ export const PlaylistsManager = {
           pickerSel.delete(game.id);
           gameRow.classList.remove('picker-row--selected');
           updateConfirmBar();
-          syncAddBtnTooltip();
           injectAddedEntries(picker.closest('.playlist-block'), countBefore);
+          syncAddBtnTooltip();
         });
 
         gameRow.append(nameSpan, descSpan, addBtn);
