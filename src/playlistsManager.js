@@ -1,4 +1,4 @@
-import { createCustomTooltip } from './tooltip.js';
+import { createCustomTooltip, updateTooltipContent } from './tooltip.js';
 import { icons } from './icons.js';
 import { gameTypes, visibilities, timeouts, idleTimes } from './definitions.js';
 import { generateRandomString, getCurrentPage } from './utils.js';
@@ -209,7 +209,7 @@ function buildBtnTooltip(button, state = 'default') {
 function _syncParamsBtnState(paramsBtn, params) {
   const hasOv = _hasEntryParamOverrides(params);
   paramsBtn.classList.toggle('has-overrides', hasOv);
-  createCustomTooltip(paramsBtn, buildBtnTooltip('paramsBtn', hasOv ? 'override' : 'default'));
+  updateTooltipContent(paramsBtn, buildBtnTooltip('paramsBtn', hasOv ? 'override' : 'default'));
 }
 
 /** Rebuild the entry label tooltip to reflect current ep overrides vs game defaults. */
@@ -222,7 +222,7 @@ function _refreshEntryLabelTooltip(label, game, ep, sessionInfo = null) {
   tip += `[Режим] ${visLabel}[TM] ${tmVal}`;
   if (afkVal) tip += `[AFK] ${afkVal}`;
   if (sessionInfo) tip += `[Пройдено] ${sessionInfo.played} из ${sessionInfo.total}`;
-  createCustomTooltip(label, tip);
+  updateTooltipContent(label, tip);
 }
 
 /**
@@ -1287,7 +1287,7 @@ export const PlaylistsManager = {
       shufflePlayBtn.innerHTML = icons.random;
       const updateShuffleBtn = enabled => {
         shufflePlayBtn.classList.toggle('active', enabled);
-        createCustomTooltip(shufflePlayBtn, enabled
+        updateTooltipContent(shufflePlayBtn, enabled
           ? `Отключить случайный порядок для «${playlist.title}»`
           : `Включить случайный порядок для «${playlist.title}»`
         );
@@ -2687,7 +2687,7 @@ export const PlaylistsManager = {
             this.expandedPlaylistId = created.id;
 
             btn.classList.add('playlists-create-group-btn--done');
-            createCustomTooltip(btn, `Плейлист «${group.title}» уже создан из этой группы`);
+            updateTooltipContent(btn, `Плейлист «${group.title}» уже создан из этой группы`);
 
             onDone();
           });
@@ -2937,7 +2937,7 @@ export const PlaylistsManager = {
         // Updates the add button tooltip to reflect the current duplicate count.
         const syncAddBtnTooltip = () => {
           const n = getCount();
-          createCustomTooltip(addBtn, n > 0
+          updateTooltipContent(addBtn, n > 0
             ? `Добавить ещё одну копию [Уже в плейлисте] ${n} шт.`
             : 'Добавить в плейлист');
         };
@@ -2963,7 +2963,11 @@ export const PlaylistsManager = {
 
         const addBtn = _el('button', 'playlist-picker-add-btn');
         addBtn.innerHTML = alreadyAdded ? icons.check : icons.plus;
-        syncAddBtnTooltip();
+        // createCustomTooltip initializes the tooltip on this fresh element;
+        // all subsequent updates go through syncAddBtnTooltip -> updateTooltipContent.
+        createCustomTooltip(addBtn, getCount() > 0
+          ? `Добавить ещё одну копию [Уже в плейлисте] ${getCount()} шт.`
+          : 'Добавить в плейлист');
 
         // The add button is always enabled — even for already-added games — so
         // the user can deliberately add duplicate entries to the playlist.
@@ -2975,7 +2979,7 @@ export const PlaylistsManager = {
           this.addEntry(playlist.id, game.id, 1);
           addBtn.innerHTML = icons.check;
           gameRow.classList.add('already-added');
-          // Disable checkbox on first add (multi-select flow stays clean)
+          // Disable checkbox on first add (keeps multi-select flow clean)
           const cb = gameRow.querySelector('.playlist-picker-checkbox');
           if (cb) { cb.checked = false; cb.disabled = true; }
           pickerSel.delete(game.id);
@@ -3129,7 +3133,7 @@ function _renderActiveBadge(badge, playlist, session, entry) {
   if (entry.repeatCount > 1) tip += `[Осталось повторов] ${session.remainingRepeats}`;
   if (totalCycles > 1)       tip += `[Цикл] ${totalCycles - remainingCycles + 1} из ${totalCycles}`;
   if (shuffleActive)         tip += `[Порядок] случайный`;
-  createCustomTooltip(badge, tip);
+  updateTooltipContent(badge, tip);
 }
 
 // Update the playlist-active-badge in the open panel in-place.
