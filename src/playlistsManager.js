@@ -1043,6 +1043,12 @@ export const PlaylistsManager = {
     if (e.key === 'Tab') {
       const popup = PlaylistsManager.popup;
       if (!popup) return;
+      const hoveredHeader = popup.querySelector('.playlist-header-row:hover');
+      if (hoveredHeader) {
+        e.preventDefault();
+        hoveredHeader.click();
+        return;
+      }
       const toggleBtn = popup.querySelector('.playlist-picker-btn-row .playlist-picker-toggle');
       if (!toggleBtn) return;
       e.preventDefault();
