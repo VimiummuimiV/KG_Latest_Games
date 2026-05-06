@@ -2895,7 +2895,7 @@ export const PlaylistsManager = {
           const cb = gameRow.querySelector('.playlist-picker-checkbox');
           if (cb) { cb.checked = false; cb.disabled = true; }
           const btn = gameRow.querySelector('.playlist-picker-add-btn');
-          if (btn) { btn.innerHTML = icons.checkmark; btn.disabled = true; }
+          if (btn) { btn.innerHTML = icons.check; btn.disabled = true; }
         }
       });
       pickerSel.clear();
@@ -2952,7 +2952,7 @@ export const PlaylistsManager = {
         const descSpan = _el('span', 'playlist-picker-game-desc', `${visLabel} · TM ${game.params.timeout}`);
 
         const addBtn = _el('button', 'playlist-picker-add-btn');
-        addBtn.innerHTML = alreadyAdded ? icons.checkmark : icons.plus;
+        addBtn.innerHTML = alreadyAdded ? icons.check : icons.plus;
         createCustomTooltip(addBtn, alreadyAdded ? 'Уже в плейлисте' : 'Добавить в плейлист');
 
         if (!alreadyAdded) {
@@ -2960,7 +2960,7 @@ export const PlaylistsManager = {
             e.stopPropagation();
             const countBefore = playlist.entries.length;
             this.addEntry(playlist.id, game.id, 1);
-            addBtn.innerHTML = icons.checkmark;
+            addBtn.innerHTML = icons.check;
             addBtn.disabled  = true;
             gameRow.classList.add('already-added');
             const cb = gameRow.querySelector('.playlist-picker-checkbox');
