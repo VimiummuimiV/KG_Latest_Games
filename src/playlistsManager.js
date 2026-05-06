@@ -2750,12 +2750,18 @@ export const PlaylistsManager = {
       body.style.top = top + 'px';
     };
 
+    const PICKER_POPUP_MIN_HEIGHT = '400px';
+
     const openPicker = () => {
       const popup = PlaylistsManager.popup;
       if (!popup) return;
       if (!popup.contains(body)) popup.appendChild(body);
       body.classList.remove('playlist-picker-body--hidden');
       toggleBtn.innerHTML = `${icons.chevronLeft}<span>Свернуть</span>`;
+      // When the playlist is empty the popup is very short, which leaves almost
+      // no room for the absolute-positioned overlay (top → bottom:0). Force a
+      // min-height on the popup so the picker is always usable.
+      popup.style.minHeight = PICKER_POPUP_MIN_HEIGHT;
       _positionOverlay();
       requestAnimationFrame(() => { syncHeights(); PlaylistsManager._constrain(); });
     };
@@ -2770,6 +2776,9 @@ export const PlaylistsManager = {
       updateConfirmBar();
       body.classList.add('playlist-picker-body--hidden');
       toggleBtn.innerHTML = `${icons.plus}<span>Добавить игры</span>`;
+      // Remove the min-height we forced on the popup when opening, so the popup
+      // shrinks back to its natural content height after the picker is hidden.
+      if (PlaylistsManager.popup) PlaylistsManager.popup.style.minHeight = '';
       requestAnimationFrame(() => PlaylistsManager._constrain());
     };
 
