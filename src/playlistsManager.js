@@ -1048,7 +1048,7 @@ export const PlaylistsManager = {
       e.preventDefault();
       toggleBtn.click();
     }
-    if (e.key === 's' || e.key === 'S') {
+    if (e.code === 'KeyS') {
       if (document.activeElement?.matches('input, textarea')) return;
       const popup = PlaylistsManager.popup;
       if (!popup) return;
