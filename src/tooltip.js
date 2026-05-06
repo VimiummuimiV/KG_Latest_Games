@@ -26,17 +26,37 @@ const shouldShowTooltip = (type) => {
   return true;
 };
 
+const TOOLTIP_MARGIN = 10; // px gap from viewport edges
+
 const positionTooltip = (clientX, clientY) => {
   if (!tooltipEl) return;
-  let leftPos = clientX + 10;
+  const screenWidth  = window.innerWidth;
+  const screenHeight = window.innerHeight;
+
+  // ── Horizontal ───────────────────────────────────────────────────────────
   const tooltipWidth = tooltipEl.offsetWidth;
-  const screenWidth = window.innerWidth;
+  const leftPos = Math.min(Math.max(clientX + 10, TOOLTIP_MARGIN), screenWidth - tooltipWidth - TOOLTIP_MARGIN);
 
-  // Adjust position if overflowing
-  leftPos = Math.min(Math.max(leftPos, 10), screenWidth - tooltipWidth - 10);
+  // ── Vertical: dynamic max-height + flip above cursor when needed ─────────
+  const spaceBelow = screenHeight - (clientY + 18) - TOOLTIP_MARGIN;
+  const spaceAbove = clientY - 18 - TOOLTIP_MARGIN;
+  const naturalH   = tooltipEl.scrollHeight;
 
-  tooltipEl.style.left = `${leftPos}px`;
-  tooltipEl.style.top = `${clientY + 18}px`;
+  let topPos, maxH;
+  if (naturalH <= spaceBelow || spaceBelow >= spaceAbove) {
+    // Fits below, or below has more room — anchor below cursor
+    maxH   = spaceBelow;
+    topPos = clientY + 18;
+  } else {
+    // More room above — anchor above cursor
+    maxH   = spaceAbove;
+    topPos = clientY - 18 - Math.min(naturalH, spaceAbove);
+  }
+
+  tooltipEl.style.left      = `${leftPos}px`;
+  tooltipEl.style.top       = `${Math.max(TOOLTIP_MARGIN, topPos)}px`;
+  tooltipEl.style.maxHeight = `${Math.max(0, maxH)}px`;
+  tooltipEl.style.overflowY = maxH < naturalH ? 'auto' : '';
 };
 
 const tooltipTrackMouse = e => tooltipEl && positionTooltip(e.clientX, e.clientY);
@@ -137,6 +157,13 @@ export function createCustomTooltip(element, tooltipContent, type = 'info') {
       hideTooltipElement();
       document.removeEventListener('mousemove', tooltipTrackMouse);
     });
+
+    element.addEventListener('wheel', e => {
+      if (!tooltipEl || tooltipEl.style.display === 'none') return;
+      if (tooltipEl.scrollHeight <= tooltipEl.clientHeight) return;
+      e.preventDefault();
+      tooltipEl.scrollTop += e.deltaY;
+    }, { passive: false });
   }
 }
 
