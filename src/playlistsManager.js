@@ -1048,6 +1048,38 @@ export const PlaylistsManager = {
       e.preventDefault();
       toggleBtn.click();
     }
+    if (e.key === 's' || e.key === 'S') {
+      if (document.activeElement?.matches('input, textarea')) return;
+      const popup = PlaylistsManager.popup;
+      if (!popup) return;
+
+      // Picker overlay takes priority when it's visible
+      const pickerBody = popup.querySelector('.playlist-picker-body:not(.playlist-picker-body--hidden)');
+      if (pickerBody) {
+        if (pickerBody.classList.contains('playlist-picker-body--selection')) {
+          popup.querySelector('.playlist-picker-confirm-clear')?.click();
+        } else {
+          pickerBody.classList.add('playlist-picker-body--selection');
+        }
+        return;
+      }
+
+      // Fall back to playlist entry multiselect
+      const entryList = popup.querySelector('.playlist-entries');
+      if (!entryList) return;
+      if (entryList.classList.contains('playlist-entries--selection')) {
+        entryList.querySelector('.playlist-multiselect-exit')?.click();
+      } else {
+        const block = entryList.closest('.playlist-block');
+        const playlistId = block?.dataset.playlistId;
+        if (playlistId) PlaylistsManager._selectionMode.add(playlistId);
+        entryList.classList.add('playlist-entries--selection');
+        requestAnimationFrame(() => {
+          const msBar = entryList.querySelector('.playlist-multiselect-bar');
+          if (block && msBar) block.style.setProperty('--playlist-multiselect-bar-height', `${msBar.offsetHeight}px`);
+        });
+      }
+    }
   },
 
   _startDrag(e) {
