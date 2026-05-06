@@ -470,7 +470,6 @@ export const PlaylistsManager = {
     const playlists = this.load();
     const p = playlists.find(p => p.id === playlistId);
     if (!p) return;
-    if (p.entries.some(e => e.gameId === gameId)) return;
     p.entries.push({ id: generateRandomString(), gameId, repeatCount: Math.max(1, repeatCount), params: {} });
     this.save(playlists);
   },
@@ -2926,11 +2925,22 @@ export const PlaylistsManager = {
       body.appendChild(groupHeader);
 
       group.games.forEach(game => {
-        const alreadyAdded = playlist.entries.some(e => e.gameId === game.id);
+        // Returns current in-playlist count for this game (live, reads from playlist.entries)
+        const getCount = () => playlist.entries.filter(e => e.gameId === game.id).length;
+
+        const alreadyAdded = getCount() > 0;
         const gtype   = gameTypes[game.params.gametype] || game.params.gametype;
         const name    = game.params.vocName ? `«${game.params.vocName}»` : gtype;
         const gameRow = _el('div', `playlist-picker-game-row${alreadyAdded ? ' already-added' : ''}`);
         gameRow.dataset.gameId = game.id;
+
+        // Updates the add button tooltip to reflect the current duplicate count.
+        const syncAddBtnTooltip = () => {
+          const n = getCount();
+          createCustomTooltip(addBtn, n > 0
+            ? `Добавить ещё одну копию [Уже в плейлисте] ${n} шт.`
+            : 'Добавить в плейлист');
+        };
 
         // ── Checkbox — always in DOM; CSS hides it until playlist-picker-body--selection ──
         if (!alreadyAdded) {
@@ -2953,26 +2963,27 @@ export const PlaylistsManager = {
 
         const addBtn = _el('button', 'playlist-picker-add-btn');
         addBtn.innerHTML = alreadyAdded ? icons.check : icons.plus;
-        createCustomTooltip(addBtn, alreadyAdded ? 'Уже в плейлисте' : 'Добавить в плейлист');
+        syncAddBtnTooltip();
 
-        if (!alreadyAdded) {
-          addBtn.addEventListener('click', e => {
-            e.stopPropagation();
-            const countBefore = playlist.entries.length;
-            this.addEntry(playlist.id, game.id, 1);
-            addBtn.innerHTML = icons.check;
-            addBtn.disabled  = true;
-            gameRow.classList.add('already-added');
-            const cb = gameRow.querySelector('.playlist-picker-checkbox');
-            if (cb) { cb.checked = false; cb.disabled = true; }
-            pickerSel.delete(game.id);
-            gameRow.classList.remove('picker-row--selected');
-            updateConfirmBar();
-            injectAddedEntries(picker.closest('.playlist-block'), countBefore);
-          });
-        } else {
-          addBtn.disabled = true;
-        }
+        // The add button is always enabled — even for already-added games — so
+        // the user can deliberately add duplicate entries to the playlist.
+        // The row stays visually dimmed (already-added class) but the button
+        // itself remains clickable and shows a live count tooltip.
+        addBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          const countBefore = playlist.entries.length;
+          this.addEntry(playlist.id, game.id, 1);
+          addBtn.innerHTML = icons.check;
+          gameRow.classList.add('already-added');
+          // Disable checkbox on first add (multi-select flow stays clean)
+          const cb = gameRow.querySelector('.playlist-picker-checkbox');
+          if (cb) { cb.checked = false; cb.disabled = true; }
+          pickerSel.delete(game.id);
+          gameRow.classList.remove('picker-row--selected');
+          updateConfirmBar();
+          syncAddBtnTooltip();
+          injectAddedEntries(picker.closest('.playlist-block'), countBefore);
+        });
 
         gameRow.append(nameSpan, descSpan, addBtn);
         body.appendChild(gameRow);
