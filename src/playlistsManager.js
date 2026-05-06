@@ -2939,7 +2939,7 @@ export const PlaylistsManager = {
         const syncAddBtnTooltip = () => {
           const n = getCount();
           updateTooltipContent(addBtn, n > 0
-            ? `Добавить ещё одну копию [Уже в плейлисте] ${n} шт.`
+            ? `Добавить ещё одну копию [Уже в плейлисте] ${n} шт. [Ctrl + Клик] Убрать одну копию`
             : 'Добавить в плейлист');
         };
 
@@ -2972,6 +2972,22 @@ export const PlaylistsManager = {
         // itself remains clickable and shows a live count tooltip.
         addBtn.addEventListener('click', e => {
           e.stopPropagation();
+          if (e.ctrlKey) {
+            const lastEntry = [...playlist.entries].reverse().find(en => en.gameId === game.id);
+            if (!lastEntry) return;
+            this.removeEntry(playlist.id, lastEntry.id);
+            playlist.entries.splice(playlist.entries.indexOf(lastEntry), 1);
+            const block = picker.closest('.playlist-block');
+            block?.querySelector(`.playlist-entry-row[data-entry-id="${lastEntry.id}"]`)?.remove();
+            const entryList = block?.querySelector('.playlist-entries');
+            if (entryList && !entryList.querySelector('.playlist-entry-row')) {
+              entryList.innerHTML = '';
+              entryList.appendChild(_el('div', 'playlist-entries-empty', 'Нет игр. Добавьте из групп ниже.'));
+            }
+            if (getCount() === 0) { addBtn.innerHTML = icons.plus; gameRow.classList.remove('already-added'); }
+            syncAddBtnTooltip();
+            return;
+          }
           const countBefore = playlist.entries.length;
           this.addEntry(playlist.id, game.id, 1);
           addBtn.innerHTML = icons.check;
