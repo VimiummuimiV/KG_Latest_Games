@@ -2934,7 +2934,8 @@ export const PlaylistsManager = {
         const gameRow = _el('div', `playlist-picker-game-row${alreadyAdded ? ' already-added' : ''}`);
         gameRow.dataset.gameId = game.id;
 
-        // Updates the add button tooltip to reflect the current duplicate count.
+        // Handles both init and updates — updateTooltipContent falls back to
+        // createCustomTooltip when the element has no tooltip yet.
         const syncAddBtnTooltip = () => {
           const n = getCount();
           updateTooltipContent(addBtn, n > 0
@@ -2963,11 +2964,7 @@ export const PlaylistsManager = {
 
         const addBtn = _el('button', 'playlist-picker-add-btn');
         addBtn.innerHTML = alreadyAdded ? icons.check : icons.plus;
-        // createCustomTooltip initializes the tooltip on this fresh element;
-        // all subsequent updates go through syncAddBtnTooltip -> updateTooltipContent.
-        createCustomTooltip(addBtn, getCount() > 0
-          ? `Добавить ещё одну копию [Уже в плейлисте] ${getCount()} шт.`
-          : 'Добавить в плейлист');
+        syncAddBtnTooltip();
 
         // The add button is always enabled — even for already-added games — so
         // the user can deliberately add duplicate entries to the playlist.
