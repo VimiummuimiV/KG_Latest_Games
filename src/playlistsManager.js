@@ -1076,6 +1076,16 @@ export const PlaylistsManager = {
       e.preventDefault();
       toggleBtn.click();
     }
+    if (e.code === 'KeyF') {
+      if (document.activeElement?.matches('input, textarea')) return;
+      const popup = PlaylistsManager.popup;
+      if (!popup) return;
+      // F: toggle filters chip strip in the game picker (only when picker is open).
+      const pickerBody = popup.querySelector('.playlist-picker-body:not(.playlist-picker-body--hidden)');
+      if (!pickerBody) return;
+      e.preventDefault();
+      pickerBody.querySelector('.playlist-picker-filters-btn')?.click();
+    }
     if (e.code === 'KeyS') {
       if (document.activeElement?.matches('input, textarea')) return;
       const popup = PlaylistsManager.popup;
@@ -2835,7 +2845,7 @@ export const PlaylistsManager = {
 
     const filtersBtn      = _el('button', 'playlist-picker-toggle playlist-picker-filters-btn');
     filtersBtn.innerHTML  = `<span>Фильтры</span>`;
-    createCustomTooltip(filtersBtn, '[Клик] Показать / Скрыть фильтр по группам [ЛКМ + Перетаскивание] Множественный выбор групп');
+    createCustomTooltip(filtersBtn, '[Клик / F] Показать / Скрыть фильтр по группам [ЛКМ + Перетаскивание] Множественный выбор групп');
 
     overlayFooter.append(collapseBtn, filtersBtn);
 
