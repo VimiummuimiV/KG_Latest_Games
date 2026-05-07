@@ -389,6 +389,22 @@ function _startAutoscroll(rafRef, scrollEl, clientY, onTick) {
   rafRef[0] = requestAnimationFrame(tick);
 }
 
+// One-shot scroll to make `entryEl` visible in its nearest scrollable ancestor.
+// Reuses _findScrollParent; _startAutoscroll is not reused — it drives a
+// continuous rAF loop for edge-triggered drag scrolling, wrong primitive here.
+function _scrollToEntry(entryEl) {
+  if (!entryEl) return;
+  const scrollEl = _findScrollParent(entryEl);
+  if (!scrollEl) return;
+  const pRect = scrollEl.getBoundingClientRect();
+  const eRect = entryEl.getBoundingClientRect();
+  // Center the element in the scroll parent instead of edge-aligning,
+  // so group headers above the first item in a group don't obscure it.
+  const elCenter     = eRect.top  + eRect.height  / 2;
+  const parentCenter = pRect.top  + pRect.height  / 2;
+  scrollEl.scrollBy({ top: elCenter - parentCenter, behavior: 'smooth' });
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // PlaylistsManager singleton
 // ─────────────────────────────────────────────────────────────────────────────
@@ -3037,6 +3053,68 @@ export const PlaylistsManager = {
 
     overlayFooter.append(collapseBtn, filtersBtn);
 
+    // ── Prev / next entry navigation ───────────────────────────────────────
+    // Scrolls the entries list behind the overlay so the user's scroll
+    // position is already correct when they close the picker.
+    let navIndex = -1;
+
+    // Returns only picker game rows that have already been added to the playlist.
+    const getAddedPickerRows = () => [...body.querySelectorAll('.playlist-picker-game-row.already-added')];
+
+    const navGroup   = _el('div',    'playlist-picker-nav-group');
+    const navPrevBtn = _el('button', 'playlist-picker-nav-btn');
+    const navNextBtn = _el('button', 'playlist-picker-nav-btn');
+    const navCounter = _el('span',   'playlist-picker-nav-counter');
+    navPrevBtn.innerHTML = icons.arrowUp;
+    navNextBtn.innerHTML = icons.arrowDown;
+    createCustomTooltip(navPrevBtn, '[Клик] Перейти к предыдущей добавленной игре');
+    createCustomTooltip(navNextBtn, '[Клик] Перейти к следующей добавленной игре');
+    navGroup.append(navPrevBtn, navCounter, navNextBtn);
+    overlayFooter.appendChild(navGroup);
+
+    const syncNavState = () => {
+      const n = getAddedPickerRows().length;
+      navCounter.textContent = n > 0 ? `${navIndex >= 0 ? navIndex + 1 : 0}/${n}` : '';
+      navPrevBtn.disabled    = n === 0;
+      navNextBtn.disabled    = n === 0;
+    };
+
+    const navTo = (index) => {
+      const rows = getAddedPickerRows();
+      if (!rows.length) return;
+      navIndex = ((index % rows.length) + rows.length) % rows.length;
+      const target = rows[navIndex];
+      _scrollToEntry(target);
+      // Flash-highlight the navigated-to row briefly
+      target.classList.remove('picker-row--nav-highlight');
+      void target.offsetWidth; // force reflow to restart animation
+      target.classList.add('picker-row--nav-highlight');
+      clearTimeout(target._navHighlightTimer);
+      target._navHighlightTimer = setTimeout(() => target.classList.remove('picker-row--nav-highlight'), 1000);
+      syncNavState();
+    };
+
+    this._attachButtonHold(navPrevBtn, () => {
+      const rows = getAddedPickerRows();
+      if (!rows.length) return;
+      navTo(navIndex <= 0 ? rows.length - 1 : navIndex - 1);
+    });
+    this._attachButtonHold(navNextBtn, () => {
+      navTo(navIndex < 0 ? 0 : navIndex + 1);
+    });
+
+    // Called by injectAddedEntries and doRemove to keep the counter in sync.
+    // Also accepts an optional gameId to jump navIndex to that specific added row.
+    picker._syncNavState = (jumpToGameId) => {
+      const rows = getAddedPickerRows();
+      if (jumpToGameId) {
+        const idx = rows.findIndex(r => r.dataset.gameId === jumpToGameId);
+        if (idx !== -1) navIndex = idx;
+      }
+      if (navIndex >= rows.length) navIndex = rows.length - 1;
+      syncNavState();
+    };
+
     // ── Open / close helpers ───────────────────────────────────────────────
     const _positionOverlay = () => {
       const popup = PlaylistsManager.popup;
@@ -3062,6 +3140,7 @@ export const PlaylistsManager = {
       // min-height on the popup so the picker is always usable.
       popup.style.minHeight = PICKER_POPUP_MIN_HEIGHT;
       _positionOverlay();
+      syncNavState();
       requestAnimationFrame(() => { syncHeights(); PlaylistsManager._constrain(); });
     };
 
@@ -3169,7 +3248,7 @@ export const PlaylistsManager = {
     // ── Inject newly added entries into the live entry list ────────────────
     // picker (btn-row) stays in its original DOM place even after body is
     // portaled, so picker.closest() still resolves the playlist-block correctly.
-    const injectAddedEntries = (block, countBefore) => {
+    const injectAddedEntries = (block, countBefore, jumpToGameId) => {
       const entryList = block?.querySelector('.playlist-entries');
       if (!entryList) return;
       entryList.querySelector('.playlist-entries-empty')?.remove();
@@ -3182,6 +3261,9 @@ export const PlaylistsManager = {
       });
       const sel = this._selectedEntries[playlist.id] ??= new Set();
       this._attachEntryDrag(entryList, playlist.id, sel);
+      // Pass the last-added game's id so the nav counter jumps to it in the picker.
+      const lastAdded = fresh.entries[fresh.entries.length - 1];
+      picker._syncNavState?.(jumpToGameId ?? lastAdded?.gameId);
     };
 
     confirmAddBtn.addEventListener('click', e => {
@@ -3333,7 +3415,7 @@ export const PlaylistsManager = {
           gameRow.classList.remove('picker-row--selected');
           updateConfirmBar();
           const _daBlock = picker.closest('.playlist-block');
-          injectAddedEntries(_daBlock, countBefore);
+          injectAddedEntries(_daBlock, countBefore, game.id);
           _syncGameCountChip(_daBlock, playlist, this.main);
           syncAddBtnTooltip();
           syncAddedCount();
@@ -3356,6 +3438,7 @@ export const PlaylistsManager = {
           syncAddBtnTooltip();
           syncAddedCount();
           _syncGameCountChip(block, playlist, this.main);
+          picker._syncNavState?.();
           // Flash ×-icon briefly, then settle on the correct icon
           addBtn.innerHTML = icons.x;
           addBtn.classList.add('remove-flash');

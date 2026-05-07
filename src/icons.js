@@ -425,4 +425,16 @@ export const icons = {
       <path d="M3 4H21V6H3V4ZM3 11H21V13H3V11ZM3 18H21V20H3V18Z"></path>
     </svg>
   `,
+
+  arrowUp: `
+    <svg xmlns="${SVG_NS}" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M13.0001 7.82843V20H11.0001V7.82843L5.63614 13.1924L4.22192 11.7782L12.0001 4L19.7783 11.7782L18.3641 13.1924L13.0001 7.82843Z"></path>
+    </svg>
+  `,
+
+  arrowDown: `
+    <svg xmlns="${SVG_NS}" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M13.0001 16.1716L18.3641 10.8076L19.7783 12.2218L12.0001 20L4.22192 12.2218L5.63614 10.8076L11.0001 16.1716V4H13.0001V16.1716Z"></path>
+    </svg>
+  `,
 };

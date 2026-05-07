@@ -999,6 +999,38 @@ body.playlist-drag-active * { cursor: grabbing !important; }
     z-index: 6;
   }
 
+  // ── Prev / next entry navigation ──────────────────────────────────────────
+  // Sits at the right end of the overlay footer (margin-left: auto).
+  .playlist-picker-nav-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2em;
+    margin-left: auto;
+    flex-shrink: 0;
+    padding-left: 0.5em;
+    border-left: 1px solid var(--rg-border-primary);
+  }
+
+  .playlist-picker-nav-btn {
+    @include playlist-icon-btn('--rg-popup-btn-sort', 22px, 13px, true);
+
+    &:disabled {
+      opacity: 0.25;
+      pointer-events: none;
+    }
+  }
+
+  .playlist-picker-nav-counter {
+    font-size: 0.72em;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--rg-text-secondary);
+    min-width: 2.6em;
+    text-align: center;
+    white-space: nowrap;
+    user-select: none;
+  }
+
   // ── Overlay body — floats above playlists-list, attached to popup root ──
   .playlist-picker-body {
     margin-top: 0.3em;
@@ -1243,6 +1275,16 @@ body.playlist-drag-active * { cursor: grabbing !important; }
       &:active:not(:disabled) { background: hsla(var(--rg-popup-btn-save) / 0.25); }
       &:disabled { cursor: default; opacity: 0.5; }
     }
+  }
+
+  @keyframes picker-nav-highlight {
+    0%   { background: hsla(var(--rg-popup-btn-save) / 0.25); border-color: hsl(var(--rg-popup-btn-save)); opacity: 1; }
+    60%  { background: hsla(var(--rg-popup-btn-save) / 0.12); border-color: hsla(var(--rg-popup-btn-save) / 0.6); opacity: 1; }
+    100% { background: var(--rg-bg-card); border-color: var(--rg-border-primary); opacity: 0.45; }
+  }
+
+  .playlist-picker-game-row.already-added.picker-row--nav-highlight {
+    animation: picker-nav-highlight 1s ease-out forwards;
   }
 
   .playlist-picker-empty {
