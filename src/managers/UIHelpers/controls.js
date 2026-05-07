@@ -1023,6 +1023,17 @@ export function createControls(main) {
         return;
       }
     }
+    // Q: toggle playlist manager when the panel is visible
+    if (e.code === 'KeyQ' && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+      if (document.activeElement?.matches('input, textarea')) return;
+      const container = document.getElementById('latest-games-container');
+      const panelVisible = container && container.classList.contains('visible');
+      if (panelVisible) {
+        e.preventDefault();
+        PlaylistsManager.popup ? PlaylistsManager.hide() : PlaylistsManager.showCentered();
+        return;
+      }
+    }
     // Alt+Shift+Enter: add current vocabulary to Избранные (higher priority)
     if (e.altKey && e.shiftKey && e.code === 'Enter') {
       e.preventDefault();

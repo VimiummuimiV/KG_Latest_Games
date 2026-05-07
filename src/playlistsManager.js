@@ -978,6 +978,19 @@ export const PlaylistsManager = {
     window.addEventListener('resize', this._onResize);
   },
 
+  showCentered() {
+    this.show(0, 0);
+    requestAnimationFrame(() => {
+      if (!this.popup) return;
+      const x = Math.max(0, (window.innerWidth  - this.popup.offsetWidth)  / 2);
+      const y = Math.max(0, (window.innerHeight - this.popup.offsetHeight) / 2);
+      this._intendedX = x;
+      this._intendedY = y;
+      this.popup.style.left = x + 'px';
+      this.popup.style.top  = y + 'px';
+    });
+  },
+
   hide() {
     if (this.popup) {
       document.body.removeChild(this.popup);
