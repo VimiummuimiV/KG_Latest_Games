@@ -2023,6 +2023,9 @@ export const PlaylistsManager = {
 
       startIdx = getItems().indexOf(dragGroup[0]);
 
+      // Set grabbing cursor on the whole document while dragging
+      document.body.classList.add('playlist-drag-active');
+
       if (dragGroup.length > 1) {
         // ── Group drag ───────────────────────────────────────────────────────
         // Measure every item before detaching, then use a single-row placeholder
@@ -2032,6 +2035,11 @@ export const PlaylistsManager = {
 
         placeholder = _el('div', 'playlist-entry-placeholder');
         placeholder.style.height = singleRowHeight + 'px';
+        // Stamp the group count so CSS ::after can display "×N"
+        placeholder.dataset.groupCount = dragGroup.length;
+        // CSS content: attr() only works with string attributes — set a pre-formatted label.
+        // Only show the badge for groups of 2+; ×1 is never shown (single drag).
+        placeholder.dataset.groupCountLabel = `×${dragGroup.length}`;
         container.insertBefore(placeholder, dragGroup[0]);
 
         // Items stay inside the container — position:fixed (set via CSS class)
@@ -2045,17 +2053,25 @@ export const PlaylistsManager = {
           el.style.top   = rects[i].top + 'px';
           el.style.left  = rects[i].left + 'px';
           el.style.width = rects[i].width + 'px';
+          // Stagger depth: first item floats highest, rest cascade behind
+          el.style.setProperty('--drag-stack-offset', `${i * 3}px`);
           el.classList.add('playlist-entry-row--group-dragging');
         });
       } else {
-        // ── Single drag — existing behaviour ─────────────────────────────────
-        const rect = dragEl.getBoundingClientRect();
-        dragEl.style.width = rect.width + 'px';
-        dragEl.classList.add(draggingClass);
+        // ── Single drag — fixed-position (same as group drag) ─────────────────
+        // Using position:fixed makes the element scroll-immune: no translateY
+        // compensation is needed and the runaway-autoscroll bug is impossible.
         if (onStart) onStart(dragEl);
-        // Re-measure height after onStart — it may have collapsed content (e.g. the
-        // playlist body), so the placeholder should reflect the post-collapse size.
-        const placeholderHeight = dragEl.getBoundingClientRect().height;
+        // Re-measure after onStart — it may have collapsed content (e.g. playlist body).
+        const rect = dragEl.getBoundingClientRect();
+        dragEl._dragOrigTop = rect.top;
+        dragEl.style.top   = rect.top  + 'px';
+        dragEl.style.left  = rect.left + 'px';
+        dragEl.style.width = rect.width + 'px';
+        dragEl.style.setProperty('--drag-stack-offset', '0px');
+        dragEl.classList.add(draggingClass);
+
+        const placeholderHeight = rect.height;
         placeholder = _el('div', 'playlist-entry-placeholder');
         placeholder.style.height = placeholderHeight + 'px';
         dragEl.parentNode.insertBefore(placeholder, dragEl);
@@ -2069,13 +2085,11 @@ export const PlaylistsManager = {
       if (!dragEl) return;
       const dy = e.clientY - startY;
 
+      // Both single and group drag now use position:fixed — immune to scroll.
       if (dragGroup.length > 1) {
         dragGroup.forEach(el => { el.style.top = (el._dragOrigTop + dy) + 'px'; });
       } else {
-        // Compensate for any scrollTop change since drag started so the item
-        // stays visually under the cursor even after autoscroll fires.
-        const scrollDelta = dragScrollEl ? dragScrollEl.scrollTop - dragScrollBase : 0;
-        dragEl.style.transform = `translateY(${dy + scrollDelta}px)`;
+        dragEl.style.top = (dragEl._dragOrigTop + dy) + 'px';
       }
 
       // Move placeholder to reflect drop target among non-dragged items.
@@ -2111,12 +2125,15 @@ export const PlaylistsManager = {
       document.removeEventListener('mouseup', onUp);
       cancelAnimationFrame(scrollRAF[0]);
 
+      document.body.classList.remove('playlist-drag-active');
+
       if (dragGroup.length > 1) {
         // Clear inline styles (only the measured pixel coords were set inline;
         // static visual properties are handled by the CSS class removed below).
         dragGroup.forEach(el => {
           ['top', 'left', 'width']
             .forEach(p => { el.style[p] = ''; });
+          el.style.removeProperty('--drag-stack-offset');
           el.classList.remove('playlist-entry-row--group-dragging');
           delete el._dragOrigTop;
           container.insertBefore(el, placeholder);
@@ -2129,6 +2146,10 @@ export const PlaylistsManager = {
         dragEl.classList.remove(draggingClass);
         dragEl.style.transform = '';
         dragEl.style.width     = '';
+        dragEl.style.top       = '';
+        dragEl.style.left      = '';
+        dragEl.style.removeProperty('--drag-stack-offset');
+        delete dragEl._dragOrigTop;
         placeholder.replaceWith(dragEl);
 
         const finalIdx = getItems().indexOf(dragEl);

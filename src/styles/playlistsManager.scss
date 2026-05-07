@@ -1,5 +1,10 @@
 @use 'mixins' as *;
 
+// Global drag state — applied to <body> by JS for the duration of any drag.
+// Forces grabbing cursor everywhere so it doesn't flicker when cursor leaves the handle.
+body.playlist-drag-active,
+body.playlist-drag-active * { cursor: grabbing !important; }
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Button mixins — eliminate repeated patterns across playlist buttons
 // ─────────────────────────────────────────────────────────────────────────────
@@ -747,22 +752,28 @@
     &--dragging,
     &--group-dragging {
       opacity: 0.9;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28), 0 2px 6px rgba(0, 0, 0, 0.18) !important;
     }
 
-    // Single-row drag: stays in flow (translateY), just needs stacking.
+    // Single-row drag: now also position:fixed (same as group) — scroll-immune.
+    // The stack offset is always 0 for a single item so no visual shift.
     &--dragging {
-      position: relative;
-      z-index: 100;
+      position: fixed !important;
+      margin: 0 !important;
+      z-index: 200;
+      border-color: var(--rg-border-hover) !important;
     }
 
     // Group-drag: position:fixed (set here, coords set by JS) takes items out of
     // flow without removing them from the DOM, so all existing CSS rules
     // (border, background, gametype colors…) stay in effect.
+    // Stack offset: each item in the group is shifted slightly down-right so
+    // the group reads as a "deck of cards" being dragged together.
     &--group-dragging {
       position: fixed !important;
       margin: 0 !important;
       z-index: 200;
+      border-color: hsla(var(--rg-popup-btn-save) / 0.6) !important;
     }
 
     // When the params panel is open — square the bottom corners, unify the
@@ -884,6 +895,54 @@
     border-radius: 3px !important;
     background: var(--rg-bg-hover);
     margin-top: 0.3em;
+    position: relative;
+    // Pulse animation so the drop zone is clearly alive
+    animation: playlist-placeholder-pulse 1.4s ease-in-out infinite;
+
+    // Group-drag variant: accent border + ×N badge in the center
+    &[data-group-count] {
+      border-color: hsla(var(--rg-popup-btn-save) / 0.55);
+      background: hsla(var(--rg-popup-btn-save) / 0.07);
+      animation: playlist-placeholder-pulse-group 1.4s ease-in-out infinite;
+
+      &::after {
+        content: attr(data-group-count-label);
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.15em 0.55em;
+        border-radius: 999px;
+        background: hsla(var(--rg-popup-btn-save) / 0.15);
+        border: 1px solid hsla(var(--rg-popup-btn-save) / 0.5);
+        font-size: 0.78em;
+        font-weight: 700;
+        font-family: inherit;
+        color: hsl(var(--rg-popup-btn-save));
+        letter-spacing: 0.03em;
+        pointer-events: none;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  @keyframes playlist-placeholder-pulse {
+    0%, 100% { opacity: 0.6; }
+    50%       { opacity: 1;   }
+  }
+
+  @keyframes playlist-placeholder-pulse-group {
+    0%, 100% {
+      opacity: 0.7;
+      border-color: hsla(var(--rg-popup-btn-save) / 0.45);
+    }
+    50% {
+      opacity: 1;
+      border-color: hsl(var(--rg-popup-btn-save));
+    }
   }
 
   // ── Game picker ─────────────────────────────────────────────────────────────
