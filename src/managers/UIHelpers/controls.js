@@ -1105,7 +1105,7 @@ export function createControls(main) {
         ? 'Автооткрытие'
         : 'Отключена';
     createCustomTooltip(playlistsBtn,
-      `[Клик] Открыть плейлисты
+      `[Клик / Q] Открыть плейлисты
        [Ctrl + Клик] Панель при активном плейлисте: ${stateLabel}`
     );
   };
