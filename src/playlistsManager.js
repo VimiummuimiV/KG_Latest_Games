@@ -1076,6 +1076,33 @@ export const PlaylistsManager = {
       e.preventDefault();
       toggleBtn.click();
     }
+    if (e.code === 'KeyR') {
+      if (document.activeElement?.matches('input, textarea')) return;
+      const popup = PlaylistsManager.popup;
+      if (!popup) return;
+      // R: rename the hovered playlist header (works whether expanded or not).
+      const hoveredRow = popup.querySelector('.playlist-header-row:hover');
+      if (!hoveredRow) return;
+      e.preventDefault();
+      hoveredRow.querySelector('.playlist-rename-btn')?.click();
+    }
+    if (e.code === 'KeyD') {
+      if (document.activeElement?.matches('input, textarea')) return;
+      const popup = PlaylistsManager.popup;
+      if (!popup) return;
+      // D: duplicate the hovered entry row — or the hovered playlist header when
+      // no entry row is hovered.
+      const hoveredEntry = popup.querySelector('.playlist-entry-row:hover');
+      if (hoveredEntry) {
+        e.preventDefault();
+        hoveredEntry.querySelector('.playlist-entry-duplicate-btn')?.click();
+        return;
+      }
+      const hoveredHeader = popup.querySelector('.playlist-header-row:hover');
+      if (!hoveredHeader) return;
+      e.preventDefault();
+      hoveredHeader.querySelector('.playlist-duplicate-btn')?.click();
+    }
     if (e.code === 'KeyF') {
       if (document.activeElement?.matches('input, textarea')) return;
       const popup = PlaylistsManager.popup;
@@ -1231,6 +1258,21 @@ export const PlaylistsManager = {
     header.addEventListener('mousedown', e => this._startDrag(e));
 
     const titleSpan = _el('span', 'popup-header-title', 'Плейлисты');
+
+    const hotkeysInfoBtn = _el('button', 'playlists-hotkeys-info-btn');
+    hotkeysInfoBtn.innerHTML = icons.info;
+    hotkeysInfoBtn.addEventListener('mousedown', e => e.stopPropagation());
+    hotkeysInfoBtn.addEventListener('click',     e => e.stopPropagation());
+    createCustomTooltip(hotkeysInfoBtn, [
+      '[Q] Развернуть / Свернуть плейлист под курсором',
+      '[R] Переименовать плейлист под курсором',
+      '[D] Дублировать плейлист или игру под курсором',
+      '[Tab] Открыть / Закрыть список игр для добавления',
+      '[F] Показать / Скрыть фильтры в пикере',
+      '[S] Режим выделения записей / строк пикера',
+      '[Escape] Закрыть панель плейлистов',
+    ].join(''));
+    titleSpan.appendChild(hotkeysInfoBtn);
 
     const randomBtn = _el('button', 'playlists-random-btn');
     randomBtn.innerHTML = icons.random;
@@ -1432,7 +1474,7 @@ export const PlaylistsManager = {
 
       const renameBtn = _el('button', 'playlist-rename-btn');
       renameBtn.innerHTML = icons.rename;
-      createCustomTooltip(renameBtn, 'Переименовать');
+      createCustomTooltip(renameBtn, '[Клик / R] Переименовать');
       renameBtn.addEventListener('click', e => {
         e.stopPropagation();
         const t = prompt('Новое название:', playlist.title);
@@ -1441,7 +1483,7 @@ export const PlaylistsManager = {
 
       const dupPlaylistBtn = _el('button', 'playlist-duplicate-btn');
       dupPlaylistBtn.innerHTML = icons.copy;
-      createCustomTooltip(dupPlaylistBtn, 'Дублировать плейлист');
+      createCustomTooltip(dupPlaylistBtn, '[Клик / D] Дублировать плейлист');
       dupPlaylistBtn.addEventListener('click', e => {
         e.stopPropagation();
         const copy = this.duplicatePlaylist(playlist.id);
@@ -1669,7 +1711,7 @@ export const PlaylistsManager = {
     // Ctrl+Click: open the dup bar to set a repeat count (same group awareness).
     const dupBtn = _el('button', 'playlist-entry-duplicate-btn');
     dupBtn.innerHTML = icons.copy;
-    createCustomTooltip(dupBtn, '[Клик] Дублировать в конец плейлиста [Ctrl + Клик] Задать количество копий');
+    createCustomTooltip(dupBtn, '[Клик / D] Дублировать в конец плейлиста [Ctrl + Клик] Задать количество копий');
     dupBtn.addEventListener('click', e => {
       e.stopPropagation();
       const entryList = row.closest('.playlist-entries');

@@ -228,6 +228,35 @@
 
     .popup-header-title {
       color: var(--rg-header-text);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+    }
+
+    // Small info button next to the popup title — shows all hotkeys on hover.
+    .playlists-hotkeys-info-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      padding: 0;
+      flex-shrink: 0;
+      background: transparent;
+      border: none;
+      outline: none;
+      appearance: none;
+      cursor: default;
+      color: var(--rg-text-tertiary);
+      opacity: 0.55;
+      transition: opacity 0.15s ease, color 0.15s ease;
+
+      svg { width: 13px; height: 13px; pointer-events: none; }
+
+      &:hover {
+        opacity: 1;
+        color: var(--rg-text-secondary);
+      }
     }
 
     // Groups random + Новый together flush on the right
