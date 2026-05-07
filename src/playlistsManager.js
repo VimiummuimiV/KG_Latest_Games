@@ -1053,15 +1053,24 @@ export const PlaylistsManager = {
   _keydown: e => {
     if (PlaylistsManager._isPinned()) return;
     if (e.key === 'Escape') PlaylistsManager.hide();
+    if (e.code === 'KeyQ') {
+      if (document.activeElement?.matches('input, textarea')) return;
+      const popup = PlaylistsManager.popup;
+      if (!popup) return;
+      // Q: expand/collapse the hovered playlist — layout-independent.
+      // Collapsed → hovering the header is enough.
+      // Expanded  → hovering the header OR anywhere inside the playlist-block works.
+      const hoveredHeader = popup.querySelector('.playlist-header-row:hover');
+      const hoveredBlock  = !hoveredHeader && popup.querySelector('.playlist-block:hover');
+      const targetHeader  = hoveredHeader ?? hoveredBlock?.querySelector('.playlist-header-row');
+      if (!targetHeader) return;
+      e.preventDefault();
+      targetHeader.click();
+    }
     if (e.key === 'Tab') {
       const popup = PlaylistsManager.popup;
       if (!popup) return;
-      const hoveredHeader = popup.querySelector('.playlist-header-row:hover');
-      if (hoveredHeader) {
-        e.preventDefault();
-        hoveredHeader.click();
-        return;
-      }
+      // Tab: toggle between game picker and playlist view (inside an expanded playlist).
       const toggleBtn = popup.querySelector('.playlist-picker-btn-row .playlist-picker-toggle');
       if (!toggleBtn) return;
       e.preventDefault();
