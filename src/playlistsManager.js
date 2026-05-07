@@ -213,11 +213,14 @@ function _syncParamsBtnState(paramsBtn, params) {
 }
 
 /** Rebuild the entry label tooltip to reflect current ep overrides vs game defaults. */
-function _refreshEntryLabelTooltip(label, game, ep, sessionInfo = null) {
+function _refreshEntryLabelTooltip(label, game, ep, sessionInfo = null, customLabel = null) {
   const visLabel = visibilities[ep.type ?? game.params.type] || (ep.type ?? game.params.type);
   const tmVal    = ep.timeout  ?? game.params.timeout;
   const afkVal   = ep.idletime ?? game.params.idletime;
+  const gtype    = gameTypes[game.params.gametype] || game.params.gametype;
+  const gameName = game.params.vocName ? `«${game.params.vocName}»` : gtype;
   let tip = '';
+  if (customLabel) tip += `[Название] ${customLabel}[Игра] ${gameName}`;
   if (_hasEntryParamOverrides(ep)) tip += `[Параметры] переопределены`;
   tip += `[Режим] ${visLabel}[TM] ${tmVal}`;
   if (afkVal) tip += `[AFK] ${afkVal}`;
@@ -546,6 +549,17 @@ export const PlaylistsManager = {
     const e = p.entries.find(e => e.id === entryId);
     if (!e) return;
     e.params = { ...params };
+    this.save(playlists);
+  },
+
+  setEntryLabel(playlistId, entryId, label) {
+    const playlists = this.load();
+    const p = playlists.find(p => p.id === playlistId);
+    if (!p) return;
+    const e = p.entries.find(e => e.id === entryId);
+    if (!e) return;
+    if (label && label.trim()) e.label = label.trim();
+    else delete e.label;
     this.save(playlists);
   },
 
@@ -1080,7 +1094,13 @@ export const PlaylistsManager = {
       if (document.activeElement?.matches('input, textarea')) return;
       const popup = PlaylistsManager.popup;
       if (!popup) return;
-      // R: rename the hovered playlist header (works whether expanded or not).
+      // R: rename hovered entry first, fall back to hovered playlist header.
+      const hoveredEntry = popup.querySelector('.playlist-entry-row:hover');
+      if (hoveredEntry) {
+        e.preventDefault();
+        hoveredEntry.querySelector('.playlist-entry-rename-btn')?.click();
+        return;
+      }
       const hoveredRow = popup.querySelector('.playlist-header-row:hover');
       if (!hoveredRow) return;
       e.preventDefault();
@@ -1265,11 +1285,11 @@ export const PlaylistsManager = {
     hotkeysInfoBtn.addEventListener('click',     e => e.stopPropagation());
     createCustomTooltip(hotkeysInfoBtn, [
       '[Q] Развернуть / Свернуть плейлист под курсором',
-      '[R] Переименовать плейлист под курсором',
+      '[R] Переименовать плейлист или игру под курсором',
       '[D] Дублировать плейлист или игру под курсором',
       '[Tab] Открыть / Закрыть список игр для добавления',
-      '[F] Показать / Скрыть фильтры в пикере',
-      '[S] Режим выделения записей / строк пикера',
+      '[F] Показать / Скрыть фильтры при добавлении игр',
+      '[S] Режим множественного выделения игр (плейлист или список добавления)',
       '[Escape] Закрыть панель плейлистов',
     ].join(''));
     titleSpan.appendChild(hotkeysInfoBtn);
@@ -1477,8 +1497,23 @@ export const PlaylistsManager = {
       createCustomTooltip(renameBtn, '[Клик / R] Переименовать');
       renameBtn.addEventListener('click', e => {
         e.stopPropagation();
-        const t = prompt('Новое название:', playlist.title);
-        if (t && t.trim()) { this.renamePlaylist(playlist.id, t); this.refresh(); }
+        if (row.querySelector('.playlists-create-name-row')) return; // already open
+        const titleSpan = row.querySelector('.playlist-title');
+        if (!titleSpan) return;
+        titleSpan.style.display = 'none';
+        const wrap = this._buildInlineRenameInput(
+          playlist.title,
+          'Новое название плейлиста...',
+          val => {
+            this.renamePlaylist(playlist.id, val);
+            this.refresh();
+          },
+          () => {
+            wrap.remove();
+            titleSpan.style.display = '';
+          }
+        );
+        titleSpan.insertAdjacentElement('afterend', wrap);
       });
 
       const dupPlaylistBtn = _el('button', 'playlist-duplicate-btn');
@@ -1632,13 +1667,15 @@ export const PlaylistsManager = {
     const label = _el('span', 'playlist-entry-label');
     if (game) {
       const gtype = gameTypes[game.params.gametype] || game.params.gametype;
-      const name  = game.params.vocName ? `«${game.params.vocName}»` : gtype;
-      label.textContent = name;
+      const defaultName = game.params.vocName ? `«${game.params.vocName}»` : gtype;
+      const displayName = entry.label ? entry.label : defaultName;
+      label.textContent = displayName;
+      if (entry.label) label.classList.add('playlist-entry-label--custom');
       label.classList.add(`gametype-${game.params.gametype}`);
       const sessionInfo = (isCurrentEntry && session)
         ? { played: entry.repeatCount - session.remainingRepeats, total: entry.repeatCount }
         : null;
-      _refreshEntryLabelTooltip(label, game, entry.params ?? {}, sessionInfo);
+      _refreshEntryLabelTooltip(label, game, entry.params ?? {}, sessionInfo, entry.label ?? null);
     } else {
       label.textContent = `#${entry.gameId} (удалена)`;
       label.classList.add('playlist-entry-missing');
@@ -1840,7 +1877,56 @@ export const PlaylistsManager = {
       });
     });
 
-    row.append(entryPlayBtn, handle, dupBtn, label, stepper, paramsBtn, removeBtn);
+    // Entry rename button — sets a custom display label (stored in entry.label).
+    // Does not affect the game itself or the picker. Ctrl+Click clears the label.
+    const entryRenameBtn = _el('button', 'playlist-entry-rename-btn');
+    entryRenameBtn.innerHTML = icons.rename;
+    const _syncEntryRenameBtnState = () => {
+      const hasLabel = !!entry.label;
+      entryRenameBtn.classList.toggle('has-label', hasLabel);
+      updateTooltipContent(entryRenameBtn, hasLabel
+        ? '[Клик / R] Изменить название [Ctrl + Клик] Сбросить к исходному'
+        : '[Клик / R] Задать своё название для этой игры в плейлисте');
+    };
+    _syncEntryRenameBtnState();
+    entryRenameBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (e.ctrlKey) {
+        if (!entry.label) return;
+        entry.label = undefined;
+        PlaylistsManager.setEntryLabel(playlist.id, entry.id, null);
+        const gtype = game ? (gameTypes[game.params.gametype] || game.params.gametype) : null;
+        const defaultName = game ? (game.params.vocName ? `«${game.params.vocName}»` : gtype) : label.textContent;
+        label.textContent = defaultName;
+        label.classList.remove('playlist-entry-label--custom');
+        _refreshEntryLabelTooltip(label, game, entry.params ?? {}, null, null);
+        _syncEntryRenameBtnState();
+        return;
+      }
+      if (row.querySelector('.playlists-create-name-row')) return; // already open
+      label.style.display = 'none';
+      const wrap = PlaylistsManager._buildInlineRenameInput(
+        entry.label ?? '',
+        'Новое название для игры...',
+        val => {
+          entry.label = val;
+          PlaylistsManager.setEntryLabel(playlist.id, entry.id, val);
+          label.textContent = val;
+          label.classList.add('playlist-entry-label--custom');
+          _refreshEntryLabelTooltip(label, game, entry.params ?? {}, null, val);
+          _syncEntryRenameBtnState();
+          wrap.remove();
+          label.style.display = '';
+        },
+        () => {
+          wrap.remove();
+          label.style.display = '';
+        }
+      );
+      label.insertAdjacentElement('afterend', wrap);
+    });
+
+    row.append(entryPlayBtn, handle, dupBtn, label, stepper, paramsBtn, entryRenameBtn, removeBtn);
 
     // ── Checkbox — always in DOM; CSS hides it until playlist-entries--selection ──
     {
@@ -2768,6 +2854,45 @@ export const PlaylistsManager = {
     actionRow.append(applyBtn, clearBtn, cancelBtn);
     section.appendChild(actionRow);
     return section;
+  },
+
+  // Shared inline rename input — reuses .playlists-create-name-row / .playlists-create-input
+  // styles so no extra CSS is needed.
+  // onConfirm(value) called with trimmed value on Enter or blur-with-value.
+  // onCancel() called on Escape or blur-without-change.
+  // Returns the wrapper element (playlists-create-name-row) to be inserted by caller.
+  _buildInlineRenameInput(currentValue, placeholder, onConfirm, onCancel) {
+    const wrap  = _el('div', 'playlists-create-name-row');
+    const input = _el('input', 'playlists-create-input');
+    input.type        = 'text';
+    input.placeholder = placeholder;
+    input.value       = currentValue;
+    wrap.appendChild(input);
+
+    let committed = false;
+    const commit = () => {
+      if (committed) return;
+      committed = true;
+      const val = input.value.trim();
+      if (val) onConfirm(val); else onCancel();
+    };
+    const cancel = () => {
+      if (committed) return;
+      committed = true;
+      onCancel();
+    };
+
+    input.addEventListener('keydown', e => {
+      e.stopPropagation();
+      if (e.key === 'Enter')  { e.preventDefault(); commit(); }
+      if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+    });
+    input.addEventListener('blur', () => { commit(); });
+
+    // Focus + select-all on next frame so the element is in the DOM first
+    requestAnimationFrame(() => { input.focus(); input.select(); });
+
+    return wrap;
   },
 
   _buildCreateForm(onDone) {

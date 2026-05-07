@@ -710,6 +710,32 @@
       );
     }
 
+    // Rename button — sets a custom display label for this entry in the playlist.
+    // Dimmed at rest like params-btn; accent + border when a custom label is set.
+    .playlist-entry-rename-btn {
+      @include playlist-icon-btn('--rg-popup-btn-sort', 20px, 11px);
+      flex-shrink: 0;
+      color: var(--rg-text-tertiary);
+
+      &.has-label {
+        color: hsl(var(--rg-popup-btn-sort));
+        background: hsla(var(--rg-popup-btn-sort) / 0.12);
+        border-color: hsla(var(--rg-popup-btn-sort) / 0.6);
+      }
+
+      &:hover {
+        color: hsl(var(--rg-popup-btn-sort));
+        background: hsla(var(--rg-popup-btn-sort) / 0.25);
+        border-color: hsl(var(--rg-popup-btn-sort));
+      }
+    }
+
+    // Custom label indicator — italic style to visually distinguish from the
+    // auto-generated game name, keeping gametype color intact.
+    .playlist-entry-label--custom {
+      font-style: italic;
+    }
+
     // Remove button — same 20×20 as stepper buttons
     .playlist-entry-remove {
       @include playlist-icon-btn('--rg-popup-btn-remove', 20px, 12px, true);
