@@ -211,9 +211,9 @@ export function isVocabularyRemoved(response, html) {
 // Shared by playlistsManager.js and GamesDataContainer.js
 // ─────────────────────────────────────────────────────────────────────────────
 export function formatPosition(current, total, mode) {
-  const remaining = total - current;
-  if (mode === 'remaining')          return `${remaining}`;
-  if (mode === 'remaining_fraction') return `${remaining}/${total}`;
+  if (mode === 'current')            return `${current}`;
+  if (mode === 'remaining')          return `${total - current}`;
+  if (mode === 'remaining_fraction') return `${total - current}/${total}`;
   return `${current}/${total}`;
 }
 

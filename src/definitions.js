@@ -70,15 +70,16 @@ export const timeouts = [5, 10, 20, 30, 45, 60];
 export const idleTimes = [0, 5, 10, 15, 20, 30, 45, 60, 120, 180, 300];
 
 // Modes for displaying the player's position in the playlist relative to the total number of games.
-export const POSITION_MODES = ['fraction', 'remaining', 'remaining_fraction'];
+export const POSITION_MODES = ['fraction', 'remaining_fraction', 'current', 'remaining'];
 
 export const POSITION_MODE_LABELS = {
   fraction:           'текущий/всего',
-  remaining:          'осталось',
   remaining_fraction: 'осталось/всего',
+  current:            'текущий',
+  remaining:          'осталось',
 };
 
-export const POSITION_MODE_EMOJI = ['1️⃣', '2️⃣', '3️⃣'];
+export const POSITION_MODE_EMOJI = ['1️⃣', '2️⃣', '3️⃣', '4️⃣'];
 
 // Centralized default values for LatestGamesManager and related managers
 export const DEFAULTS = {
