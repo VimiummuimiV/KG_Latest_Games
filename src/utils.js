@@ -212,8 +212,8 @@ export function isVocabularyRemoved(response, html) {
 // ─────────────────────────────────────────────────────────────────────────────
 export function formatPosition(current, total, mode) {
   if (mode === 'current')            return `${current}`;
-  if (mode === 'remaining')          return `${total - current}`;
-  if (mode === 'remaining_fraction') return `${total - current}/${total}`;
+  if (mode === 'remaining')          return `${total - current + 1}`;
+  if (mode === 'remaining_fraction') return `${total - current + 1}/${total}`;
   return `${current}/${total}`;
 }
 
