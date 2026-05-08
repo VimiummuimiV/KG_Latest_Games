@@ -1,4 +1,4 @@
-import { gameTypes } from "./definitions.js";
+import { gameTypes, POSITION_MODES, POSITION_MODE_LABELS, POSITION_MODE_EMOJI } from "./definitions.js";
 
 export function generateRandomString() {
   return Array.from(crypto.getRandomValues(new Uint8Array(32)))
@@ -204,4 +204,24 @@ export function detectGameType() {
 export function isVocabularyRemoved(response, html) {
   if (response.status === 403) return true;
   return html.includes('Словарь не найден');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Playlist position display mode helpers
+// Shared by playlistsManager.js and GamesDataContainer.js
+// ─────────────────────────────────────────────────────────────────────────────
+export function formatPosition(current, total, mode) {
+  const remaining = total - current;
+  if (mode === 'remaining')          return `${remaining}`;
+  if (mode === 'remaining_fraction') return `${remaining}/${total}`;
+  return `${current}/${total}`;
+}
+
+// Returns a one-line hint showing the current position display mode.
+// interaction — the modifier shown in brackets, e.g. 'Ctrl + Клик' or 'Клик'.
+export function positionTooltip(mode, interaction = 'Клик') {
+  const currentIndex = POSITION_MODES.indexOf(mode);
+  const emoji        = POSITION_MODE_EMOJI[currentIndex] ?? `${currentIndex + 1}.`;
+  const label        = POSITION_MODE_LABELS[mode];
+  return `[${interaction}] ${emoji} ${label}`;
 }

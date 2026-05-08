@@ -1,7 +1,8 @@
-import { createCustomTooltip } from "../tooltip.js";
+import { createCustomTooltip, updateTooltipContent } from "../tooltip.js";
 import { getActivePlaylistSession, setActivePlaylistSession, cancelActivePlaylist, getActivePlaylistUrl, PlaylistsManager } from "../playlistsManager.js";
 import { icons } from "../icons.js";
-import { getCurrentPage } from "../utils.js";
+import { getCurrentPage, formatPosition, positionTooltip } from "../utils.js";
+import { POSITION_MODES } from "../definitions.js";
 
 export class GamesDataContainer {
   constructor(main) {
@@ -268,23 +269,40 @@ export class GamesDataContainer {
   // Build/rebuild the full indicator DOM — used by both create and update.
   _renderPlaylistIndicator(indicator, playlist, position, total, remainingRepeats, repeatCount, session, totalCycles = 1, remainingCycles = 1, shuffleActive = false) {
     const isPaused = !!(session?.paused);
+    const mode = this.main?.positionDisplayMode ?? 'fraction';
     indicator.classList.toggle('playlist-progress-indicator--paused', isPaused);
-    indicator.innerHTML = this._playlistIndicatorHTML(position, total, remainingRepeats, repeatCount, isPaused, totalCycles, remainingCycles, shuffleActive);
+    indicator.innerHTML = this._playlistIndicatorHTML(position, total, remainingRepeats, repeatCount, isPaused, totalCycles, remainingCycles, shuffleActive, mode);
 
-    // Hud data zone — click opens/toggles the panel
+    // Hud data zone — click opens/toggles the panel; Ctrl+click on the counter cycles position mode.
     const hudData = indicator.querySelector('.playlist-hud-data');
     let tip = `[Плейлист] ${playlist.title}[Позиция] ${position} из ${total}`;
     if (repeatCount > 1) tip += `[Осталось повторов] ${remainingRepeats}`;
     if (totalCycles > 1) tip += `[Цикл] ${totalCycles - remainingCycles + 1} из ${totalCycles}`;
     if (shuffleActive) tip += `[Порядок] случайный`;
+    tip += positionTooltip(mode, 'Ctrl + Клик');
     createCustomTooltip(hudData, tip);
-    hudData.addEventListener('click', () => {
+    hudData.addEventListener('click', e => {
       const rect = indicator.getBoundingClientRect();
       if (this.main.playlistPanelAutoOpen === 2 && getCurrentPage() === 'game') {
         if (!PlaylistsManager.popup) PlaylistsManager.show(rect.left, rect.bottom);
       } else {
         PlaylistsManager.toggle(rect.left, rect.bottom);
       }
+    });
+
+    // Counter — Ctrl+click cycles position display mode and refreshes the tooltip hint.
+    const counterEl = indicator.querySelector('.playlist-hud-counter');
+    counterEl.style.cursor = 'pointer';
+    counterEl.addEventListener('click', e => {
+      if (!e.ctrlKey) return;
+      e.stopPropagation();
+      const cur  = this.main?.positionDisplayMode ?? 'fraction';
+      const next = POSITION_MODES[(POSITION_MODES.indexOf(cur) + 1) % POSITION_MODES.length];
+      if (this.main) {
+        this.main.positionDisplayMode = next;
+        this.main.settingsManager?.saveSettings();
+      }
+      PlaylistsManager.updatePositionDisplay();
     });
 
     // Pause button — present when active (not paused)
@@ -330,7 +348,8 @@ export class GamesDataContainer {
     }
   }
 
-  _playlistIndicatorHTML(position, total, remainingRepeats, repeatCount, isPaused = false, totalCycles = 1, remainingCycles = 1, shuffleActive = false) {
+  _playlistIndicatorHTML(position, total, remainingRepeats, repeatCount, isPaused = false, totalCycles = 1, remainingCycles = 1, shuffleActive = false, mode = 'fraction') {
+    const counterText = formatPosition(position, total, mode);
     const leftBtn = isPaused
       ? `<button class="playlist-hud-btn playlist-hud-resume">${icons.start}</button>`
       : `<button class="playlist-hud-btn playlist-hud-pause">${icons.pause}</button>`;
@@ -347,7 +366,7 @@ export class GamesDataContainer {
     return `
       ${leftBtn}
       <div class="playlist-hud-data">
-      <span class="playlist-hud-counter">${position}/${total}</span>
+      <span class="playlist-hud-counter">${counterText}</span>
       ${repeatChip}
       ${cycleChip}
       ${shuffleChip}

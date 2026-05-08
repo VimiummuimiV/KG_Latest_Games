@@ -1,7 +1,7 @@
 import { createCustomTooltip, updateTooltipContent } from './tooltip.js';
 import { icons } from './icons.js';
-import { gameTypes, visibilities, timeouts, idleTimes } from './definitions.js';
-import { generateRandomString, getCurrentPage } from './utils.js';
+import { gameTypes, visibilities, timeouts, idleTimes, POSITION_MODES } from './definitions.js';
+import { generateRandomString, getCurrentPage, formatPosition, positionTooltip } from './utils.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Storage / session keys
@@ -9,6 +9,18 @@ import { generateRandomString, getCurrentPage } from './utils.js';
 const STORAGE_KEY  = 'latestGamesPlaylists';
 const SESSION_KEY  = 'latestGames_activePlaylist';
 const SHUFFLE_KEY  = 'latestGames_randomShuffleBag';
+
+function _getPositionMode() {
+  return PlaylistsManager.main?.positionDisplayMode ?? 'fraction';
+}
+function _cyclePositionMode() {
+  const next = POSITION_MODES[(POSITION_MODES.indexOf(_getPositionMode()) + 1) % POSITION_MODES.length];
+  if (PlaylistsManager.main) {
+    PlaylistsManager.main.positionDisplayMode = next;
+    PlaylistsManager.main.settingsManager?.saveSettings();
+  }
+  return next;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Session helpers
@@ -1038,6 +1050,8 @@ export const PlaylistsManager = {
     if (this.popup) this.hide();
     else this.show(x, y);
   },
+
+  updatePositionDisplay() { _updatePlaylistHud(); },
 
   refresh() {
     if (!this.popup) return;
@@ -3619,7 +3633,9 @@ function _syncGameCountChip(block, playlist, main) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Update the HUD playlist indicator text in-place (called on stepper change)
+// Update the HUD playlist indicator text in-place (called on stepper change).
+// updatePositionDisplay is the public alias on PlaylistsManager — it syncs
+// both the HUD indicator and the active badge after a position mode change.
 // ─────────────────────────────────────────────────────────────────────────────
 function _updatePlaylistHud() {
   try {
@@ -3642,8 +3658,9 @@ function _renderActiveBadge(badge, playlist, session, entry) {
   const shuffleChip = shuffleActive
     ? `<span class="playlist-active-badge-shuffle">${icons.random}</span>`
     : '';
+  const _mode = _getPositionMode();
   badge.innerHTML = `
-    <span class="playlist-active-badge-position">${session.entryIndex + 1}/${playlist.entries.length}</span>
+    <span class="playlist-active-badge-position">${formatPosition(session.entryIndex + 1, playlist.entries.length, _mode)}</span>
     ${repeatText}
     ${cycleChip}
     ${shuffleChip}
@@ -3652,7 +3669,14 @@ function _renderActiveBadge(badge, playlist, session, entry) {
   if (entry.repeatCount > 1) tip += `[Осталось повторов] ${session.remainingRepeats}`;
   if (totalCycles > 1)       tip += `[Цикл] ${totalCycles - remainingCycles + 1} из ${totalCycles}`;
   if (shuffleActive)         tip += `[Порядок] случайный`;
+  tip += positionTooltip(_mode, 'Клик');
   updateTooltipContent(badge, tip);
+  const posEl = badge.querySelector('.playlist-active-badge-position');
+  posEl.addEventListener('click', e => {
+    e.stopPropagation();
+    _cyclePositionMode();
+    _updatePlaylistHud();
+  });
 }
 
 // Update the playlist-active-badge in the open panel in-place.
