@@ -3141,7 +3141,7 @@ export const PlaylistsManager = {
       body.style.top = top + 'px';
     };
 
-    const PICKER_POPUP_MIN_HEIGHT = '400px';
+    const PICKER_POPUP_MIN_HEIGHT = '80vh';
 
     const openPicker = () => {
       const popup = PlaylistsManager.popup;
