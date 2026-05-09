@@ -3794,8 +3794,9 @@ async function _fetchTask(dateStr) {
 }
 
 // Fetches and extracts { progress, award }.
-// Past days only: also persists onto all matching playlists in localStorage (STORAGE_KEY)
-// so presence of dailyTaskData skips all future fetches for those playlists.
+// Persists onto all matching playlists in localStorage when the data is frozen:
+// past day (immutable) or today's task fully completed (progress won't increase further).
+// Presence of dailyTaskData then skips all future fetches for those playlists.
 async function _fetchAndPersistTaskData(dateStr) {
   const taskData = await _fetchTask(dateStr);
   if (!taskData) return null;
@@ -3803,13 +3804,16 @@ async function _fetchAndPersistTaskData(dateStr) {
     progress: taskData.user?.progress ?? 0,
     award:    taskData.task?.award    ?? null,
   };
-  if (dateStr !== _getTaskDate()) {
-    const playlists = PlaylistsManager.load();
-    const targets   = playlists.filter(p => p.dailyTaskDate === dateStr);
-    if (targets.length) {
-      targets.forEach(p => { p.dailyTaskData = result; });
-      PlaylistsManager.save(playlists);
-    }
+  const isPastDay   = dateStr !== _getTaskDate();
+  const playlists   = PlaylistsManager.load();
+  const targets     = playlists.filter(p => p.dailyTaskDate === dateStr);
+  const isCompleted = p => p.dailyTaskRequire && result.progress >= p.dailyTaskRequire;
+  const toSave      = isPastDay ? targets : targets.filter(isCompleted);
+  if (toSave.length) {
+    toSave.forEach(p => {
+      p.dailyTaskData = { ...result, status: isPastDay ? 'expired' : 'completed' };
+    });
+    PlaylistsManager.save(playlists);
   }
   return result;
 }
