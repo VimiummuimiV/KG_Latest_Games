@@ -3063,7 +3063,7 @@ export const PlaylistsManager = {
   // ── Create playlist from daily task ────────────────────────────────────────
   async _createPlaylistFromDailyTask(onDone) {
     const todayStr = _getTaskDate();
-    const taskData = await _fetchDailyTask(todayStr);
+    const taskData = await _fetchTask(todayStr);
 
     if (!taskData?.task) {
       alert('⚠️ Не удалось получить данные задачи дня.');
@@ -3782,40 +3782,63 @@ function _nextTaskResetDate() {
   return reset;
 }
 
-const _taskDataCache = new Map(); // dateStr → Promise<taskData|null>
+let _todayFetch = null;           // { dateStr, promise } — today's fetch, reused for the session
+const _taskDataCache = new Map(); // dateStr → Promise — past-day in-memory cache (immutable data)
 
-async function _doFetchTask(dateStr) {
+// Raw HTTP call, returns full API response or null.
+async function _fetchTask(dateStr) {
   try {
     const res = await fetch(`https://klavogonki.ru/ajax/get-daily-task-archive?date=${dateStr}`);
     return res.ok ? await res.json() : null;
   } catch { return null; }
 }
 
-function _fetchDailyTask(dateStr) {
-  // Past-day data is immutable — cache forever.
-  // Today's data may still change (progress, not yet rolled over),
-  // so we never permanently cache it; each call re-fetches.
+// Fetches and extracts { progress, award }.
+// Past days only: also persists onto all matching playlists in localStorage (STORAGE_KEY)
+// so presence of dailyTaskData skips all future fetches for those playlists.
+async function _fetchAndPersistTaskData(dateStr) {
+  const taskData = await _fetchTask(dateStr);
+  if (!taskData) return null;
+  const result = {
+    progress: taskData.user?.progress ?? 0,
+    award:    taskData.task?.award    ?? null,
+  };
   if (dateStr !== _getTaskDate()) {
-    if (!_taskDataCache.has(dateStr)) {
-      console.log(`[DailyTask] "${dateStr}" — caching permanently (past day).`);
-      _taskDataCache.set(dateStr, _doFetchTask(dateStr));
+    const playlists = PlaylistsManager.load();
+    const targets   = playlists.filter(p => p.dailyTaskDate === dateStr);
+    if (targets.length) {
+      targets.forEach(p => { p.dailyTaskData = result; });
+      PlaylistsManager.save(playlists);
     }
+  }
+  return result;
+}
+
+// Guarded entry point — serves from playlist.dailyTaskData if present (no fetch),
+// otherwise fetches once and persists for past days, or fetches fresh for today.
+function _fetchDailyTask(dateStr, playlist = null) {
+  // dailyTaskData present — data already saved in localStorage, never fetch again.
+  if (playlist?.dailyTaskData) return Promise.resolve(playlist.dailyTaskData);
+
+  // Past day — fetch once per session, persist to localStorage on completion.
+  if (dateStr !== _getTaskDate()) {
+    if (!_taskDataCache.has(dateStr))
+      _taskDataCache.set(dateStr, _fetchAndPersistTaskData(dateStr));
     return _taskDataCache.get(dateStr);
   }
-  // Today: one fetch per task date — reused until the date rolls over.
+
+  // Today — reuse in-flight promise or fetch fresh (never persisted, progress still live).
   if (_todayFetch?.dateStr === dateStr) return _todayFetch.promise;
   const reset    = _nextTaskResetDate();
   const diff     = reset - Date.now();
   const h        = Math.floor(diff / 3600000);
   const m        = Math.floor((diff % 3600000) / 60000);
-  const s        = Math.floor((diff % 60000) / 1000);
+  const s        = Math.floor((diff % 60000)   / 1000);
   const timeLeft = `${h}h ${m}m ${s}s`;
   console.log(`[DailyTask] "${dateStr}" — fetching fresh. Becomes permanent in ${timeLeft} at ${reset.toLocaleString()} local / 04:00 Moscow.`);
-  _todayFetch    = { dateStr, promise: _doFetchTask(dateStr) };
+  _todayFetch = { dateStr, promise: _fetchAndPersistTaskData(dateStr) };
   return _todayFetch.promise;
 }
-
-let _todayFetch = null; // { dateStr, promise } — lives until the task date changes
 
 function _buildTaskRequireChipContent(playlist) {
   if (!playlist.dailyTaskRequire) return null;
@@ -3831,11 +3854,10 @@ function _buildTaskRequireChipContent(playlist) {
   return { text, tip, state };
 }
 
-// taskData is passed in from the API response — fetched once per chip render.
 function _buildTaskProgressChipContent(playlist, taskData, isArchive = false) {
   const req = playlist.dailyTaskRequire;
-  if (!req || !taskData?.user) return null;
-  const progress = taskData.user.progress ?? 0;
+  if (!req || taskData?.progress == null) return null;
+  const progress = taskData.progress;
   const pct  = Math.min(100, Math.round((progress / req) * 100));
   const archiveTip = isArchive ? `[Архив] Это архивная задача. Вы можете сыграть, но прогресс уже не изменится.` : ``;
   return {
@@ -3847,8 +3869,8 @@ function _buildTaskProgressChipContent(playlist, taskData, isArchive = false) {
 
 function _buildTaskAwardChipContent(playlist, taskData) {
   const req = playlist.dailyTaskRequire;
-  if (!req || !taskData?.task?.award) return null;
-  const { amount, type } = taskData.task.award;
+  if (!req || !taskData?.award) return null;
+  const { amount, type } = taskData.award;
   const typeLabel = type === 'score' ? 'очков' : type;
   return {
     text: `+${amount}`,
@@ -3907,7 +3929,7 @@ async function _appendTaskChips(titleSpan, playlist) {
   const isArchive = dateStr !== _getTaskDate();
   container.classList.toggle('playlist-task-chips--archive', isArchive);
 
-  const taskData = await _fetchDailyTask(dateStr);
+  const taskData = await _fetchDailyTask(dateStr, playlist);
   if (!taskData) return;
 
   const progress = _buildTaskProgressChipContent(playlist, taskData, isArchive);
