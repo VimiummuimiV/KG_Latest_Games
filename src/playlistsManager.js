@@ -505,12 +505,29 @@ export const PlaylistsManager = {
     this.save(playlists);
   },
 
-  removeEntry(playlistId, entryId) {
+  // If the playlist was created from a daily task, redistribute the total
+  // required repetitions evenly across the remaining entries so the sum of
+  // repeatCounts always equals dailyTaskRemaining (≥ 1 per entry).
+  // Call this AFTER modifying p.entries, BEFORE saving.
+  _redistributeTaskRepeats(p) {
+    const total = p.dailyTaskRemaining;
+    if (!total || !p.entries.length) return;
+    const n    = p.entries.length;
+    const base = Math.floor(total / n);
+    const rem  = total % n;
+    p.entries.forEach((e, i) => {
+      e.repeatCount = Math.max(1, base + (i === 0 ? rem : 0));
+    });
+  },
+
+  removeEntry(playlistId, entryId, syncTarget = null) {
     const playlists = this.load();
     const p = playlists.find(p => p.id === playlistId);
     if (!p) return;
     p.entries = p.entries.filter(e => e.id !== entryId);
+    this._redistributeTaskRepeats(p);
     this.save(playlists);
+    if (syncTarget) syncTarget.entries = p.entries;
   },
 
   duplicateEntry(playlistId, entryId) {
@@ -599,6 +616,7 @@ export const PlaylistsManager = {
     const p = playlists.find(p => p.id === playlistId);
     if (!p) return;
     p.entries = p.entries.filter(e => !ids.has(e.id));
+    this._redistributeTaskRepeats(p);
     this.save(playlists);
     this._selectedEntries[playlistId]?.clear();
     this._selectionMode.delete(playlistId);
@@ -1764,14 +1782,13 @@ export const PlaylistsManager = {
       // Capture DOM references BEFORE detaching the row
       const list  = row.closest('.playlist-entries');
       const block = list?.closest('.playlist-block');
-      this.removeEntry(playlist.id, entry.id);
-      const entryIdx = playlist.entries.indexOf(entry);
-      if (entryIdx !== -1) playlist.entries.splice(entryIdx, 1);
+      this.removeEntry(playlist.id, entry.id, playlist);
       row.remove();
       if (list && !list.querySelector('.playlist-entry-row')) {
         list.innerHTML = '';
         list.appendChild(_el('div', 'playlist-entries-empty', 'Нет игр. Добавьте из групп ниже.'));
       }
+      _syncEntrySteppers(list, playlist);
       _syncGameCountChip(block, playlist, PlaylistsManager.main);
       // Sync the portaled picker body via the hook exposed on the picker element.
       block?.querySelector('.playlist-game-picker')?._syncPickerRow(entry.gameId);
@@ -3565,8 +3582,7 @@ export const PlaylistsManager = {
         const doRemove = () => {
           const lastEntry = [...playlist.entries].reverse().find(en => en.gameId === game.id);
           if (!lastEntry) return;
-          this.removeEntry(playlist.id, lastEntry.id);
-          playlist.entries.splice(playlist.entries.indexOf(lastEntry), 1);
+          this.removeEntry(playlist.id, lastEntry.id, playlist);
           const block = picker.closest('.playlist-block');
           block?.querySelector(`.playlist-entry-row[data-entry-id="${lastEntry.id}"]`)?.remove();
           const entryList = block?.querySelector('.playlist-entries');
@@ -3574,6 +3590,7 @@ export const PlaylistsManager = {
             entryList.innerHTML = '';
             entryList.appendChild(_el('div', 'playlist-entries-empty', 'Нет игр. Добавьте из групп ниже.'));
           }
+          _syncEntrySteppers(entryList, playlist);
           const remaining = getCount();
           if (remaining === 0) { gameRow.classList.remove('already-added'); }
           syncAddBtnTooltip();
@@ -3747,6 +3764,17 @@ function _appendGameCountChip(titleSpan, playlist, main) {
   chip.textContent = text;
   titleSpan.appendChild(chip);
   if (tip) createCustomTooltip(chip, tip);
+}
+
+// Sync stepper countSpans on all entry rows inside entryList after a redistribution
+// changed repeatCounts — avoids a full refresh() for a surgical DOM update.
+function _syncEntrySteppers(entryList, playlist) {
+  if (!entryList) return;
+  const entryMap = new Map(playlist.entries.map(e => [e.id, e]));
+  entryList.querySelectorAll('.playlist-entry-row').forEach(r => {
+    const e = entryMap.get(r.dataset.entryId);
+    if (e) r.querySelector('.playlist-stepper-count').textContent = String(e.repeatCount);
+  });
 }
 
 // Update the chip in-place inside a playlist block — called after live add/remove
