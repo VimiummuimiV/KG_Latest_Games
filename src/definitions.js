@@ -81,6 +81,14 @@ export const POSITION_MODE_LABELS = {
 
 export const POSITION_MODE_EMOJI = ['1️⃣', '2️⃣', '3️⃣', '4️⃣'];
 
+// Default params for games auto-created from daily task conditions.
+// Mirrors the shape parseGameParams() produces; only gametype/vocId/vocName are overridden per condition.
+export const TASK_GAME_DEFAULTS = {
+  gametype: 'normal', vocName: '', vocId: '', vocType: null,
+  type: 'normal', level_from: 1, level_to: 9,
+  timeout: 10, idletime: 0, qual: 0, premium_abra: 0,
+};
+
 // Centralized default values for LatestGamesManager and related managers
 export const DEFAULTS = {
   maxGameCount: 5,

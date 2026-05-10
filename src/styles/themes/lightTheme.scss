@@ -98,5 +98,9 @@ $lightTheme: (
   "--rg-playlist-entry-skip": 30 40% 45%,
   // Playlist header
   "--rg-playlist-header-active": 120 40% 35%,
-  "--rg-playlist-header-paused": 25 50% 40%
+  "--rg-playlist-header-paused": 25 50% 40%,
+  // Daily task require chip: warning (below target), ok (exactly met), over (above target)
+  "--rg-task-chip-warning": 40 90% 40%,
+  "--rg-task-chip-ok":      130 50% 35%,
+  "--rg-task-chip-over":    0 70% 45%
 );

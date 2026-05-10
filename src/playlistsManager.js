@@ -1,7 +1,7 @@
 import { createCustomTooltip, updateTooltipContent } from './tooltip.js';
 import { icons } from './icons.js';
-import { gameTypes, visibilities, timeouts, idleTimes, POSITION_MODES } from './definitions.js';
-import { generateRandomString, getCurrentPage, formatPosition, positionTooltip } from './utils.js';
+import { gameTypes, visibilities, timeouts, idleTimes, POSITION_MODES, TASK_GAME_DEFAULTS } from './definitions.js';
+import { generateRandomString, generateUniqueId, getCurrentPage, formatPosition, positionTooltip } from './utils.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Storage / session keys
@@ -1456,6 +1456,7 @@ export const PlaylistsManager = {
 
       // Game count chip — always visible on every header (active or not)
       _appendGameCountChip(titleSpan, playlist, this.main);
+      _appendTaskRequireChip(titleSpan, playlist);
 
       const blockHandle = _el('span', 'playlist-block-drag-handle');
       blockHandle.innerHTML = icons.dragable;
@@ -1472,6 +1473,7 @@ export const PlaylistsManager = {
 
       // Game count chip — always visible on every header (active or not)
       _appendGameCountChip(titleSpan, playlist, this.main);
+      _appendTaskRequireChip(titleSpan, playlist);
 
       // Playlist-level cycle stepper — only shown when repeatCount > 1 or on hover
       const cycleCount     = playlist.repeatCount ?? 1;
@@ -1560,10 +1562,10 @@ export const PlaylistsManager = {
       createCustomTooltip(delBtn, 'Удалить плейлист');
       delBtn.addEventListener('click', e => {
         e.stopPropagation();
-        if (confirm(`Удалить плейлист «${playlist.title}»?`)) {
-          this.deletePlaylist(playlist.id);
-          this.refresh();
-        }
+        if (!confirm(`Удалить плейлист «${playlist.title}»?`)) return;
+        if (playlist.dailyTaskRequire) this._cleanTaskGroup(playlist);
+        this.deletePlaylist(playlist.id);
+        this.refresh();
       });
 
       const blockHandle = _el('span', 'playlist-block-drag-handle');
@@ -1738,6 +1740,7 @@ export const PlaylistsManager = {
       _updateEntryProgress(row, entry, playedCount, isCurrentEntry);
       const msBar = row.closest('.playlist-entries')?.querySelector('.playlist-multiselect-bar');
       if (msBar?._refreshFilterRow) msBar._refreshFilterRow();
+      _syncTaskRequireChip(row.closest('.playlist-block'), playlist);
     });
     this._attachButtonHold(incBtn, () => {
       const next = entry.repeatCount + 1;
@@ -1748,6 +1751,7 @@ export const PlaylistsManager = {
       _updateEntryProgress(row, entry, playedCount, isCurrentEntry);
       const msBar = row.closest('.playlist-entries')?.querySelector('.playlist-multiselect-bar');
       if (msBar?._refreshFilterRow) msBar._refreshFilterRow();
+      _syncTaskRequireChip(row.closest('.playlist-block'), playlist);
     });
     stepper.append(decBtn, countSpan, incBtn);
 
@@ -2967,13 +2971,24 @@ export const PlaylistsManager = {
     nameRow.append(input);
     form.appendChild(nameRow);
 
+    // ── Action buttons row (sits below the name input) ────────────────────────
+    const actionsRow = _el('div', 'playlists-create-actions-row');
+
+    const taskBtn = _el('button', 'playlists-create-task-btn');
+    taskBtn.innerHTML = `${icons.plus}<span>Из задачи</span>`;
+    createCustomTooltip(taskBtn, 'Создать плейлист из задачи дня');
+    taskBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      this._createPlaylistFromDailyTask(onDone);
+    });
+
     // ── Group shortcuts ────────────────────────────────────────────────────────
     if (this.main) {
       const groups = this.main.groupsManager.groups.filter(g => g.games.length > 0);
       if (groups.length) {
         const groupsToggle = _el('button', 'playlists-create-groups-toggle');
         groupsToggle.innerHTML = `${icons.plus}<span>Из группы</span>`;
-        form.appendChild(groupsToggle);
+        actionsRow.append(groupsToggle, taskBtn);
 
         const groupsRow = _el('div', 'playlists-create-groups-row latest-games-hidden');
 
@@ -3034,10 +3049,108 @@ export const PlaylistsManager = {
         });
 
         form.appendChild(groupsRow);
+      } else {
+        actionsRow.append(taskBtn);
       }
+    } else {
+      actionsRow.append(taskBtn);
     }
 
+    form.appendChild(actionsRow);
     return form;
+  },
+
+  // ── Create playlist from daily task ────────────────────────────────────────
+  _createPlaylistFromDailyTask(onDone) {
+    let taskData = null;
+    try { taskData = angular.element(document.body).injector().get('TaskStatus').data; } catch (_) {}
+
+    if (!taskData?.task) {
+      alert('⚠️ Не удалось получить данные задачи дня.');
+      return;
+    }
+
+    const { require = 0, conditions = [], date: dateStr = '' } = taskData.task;
+    const titleDate    = /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? dateStr.split('-').reverse().join('.') : dateStr;
+    const playlistTitle = `Задача дня ${titleDate}`;
+
+    const gm     = this.main.gamesManager;
+    const groups = this.main.groupsManager;
+    const um     = this.main.uiManager;
+
+    // Get-or-create the dedicated Задачи group.
+    let taskGroup = groups.groups.find(g => g.title === 'Задачи');
+    if (!taskGroup) {
+      taskGroup = groups.createGroup('Задачи');
+      groups.groups.push(taskGroup);
+    }
+
+    // Find a matching game across all groups, or create it in taskGroup.
+    const findOrCreate = (predicate, params) => {
+      const found = groups.groups.flatMap(g => g.games).find(predicate);
+      if (found) return found;
+      const game = { id: generateUniqueId(groups.groups), params, pin: 0 };
+      taskGroup.games.push(game);
+      return game;
+    };
+
+    const gameIds = conditions.flatMap(({ gametype, voc }) => {
+      if (gametype === 'normal')
+        return findOrCreate(g => g.params.gametype !== 'voc', { ...TASK_GAME_DEFAULTS }).id;
+      if (gametype.startsWith('voc-')) {
+        const vocId = parseInt(gametype.slice(4), 10);
+        return findOrCreate(
+          g => g.params.gametype === 'voc' && g.params.vocId == vocId,
+          { ...TASK_GAME_DEFAULTS, gametype: 'voc', vocId, vocName: voc?.name ?? '' }
+        ).id;
+      }
+      // Unknown gametype — match by key or skip silently
+      const found = groups.groups.flatMap(g => g.games).find(g => g.params.gametype === gametype);
+      return found ? found.id : [];
+    });
+
+    if (!gameIds.length) {
+      alert('⚠️ Не удалось сопоставить ни одно условие задачи.');
+      return;
+    }
+
+    gm.assignGameIds();
+    gm.saveGameData();
+    um.refreshContainer();
+
+    const base    = require > 0 ? Math.floor(require / gameIds.length) : 1;
+    const rem     = require > 0 ? require % gameIds.length : 0;
+    const repeats = gameIds.map((_, i) => Math.max(1, base + (i === 0 ? rem : 0)));
+
+    if (this.load().some(p => p.title === playlistTitle)) {
+      if (!confirm(`Плейлист «${playlistTitle}» уже существует. Создать новый?`)) return;
+    }
+
+    const created   = this.createPlaylist(playlistTitle);
+    const playlists = this.load();
+    const p         = playlists.find(pl => pl.id === created.id);
+    if (p) { p.dailyTaskRequire = require; this.save(playlists); }
+
+    gameIds.forEach((id, i) => this.addEntry(created.id, id, repeats[i]));
+    this.expandedPlaylistId = created.id;
+    onDone();
+  },
+
+  // Remove playlist's games from the Задачи group; drop the group itself if it becomes empty.
+  _cleanTaskGroup(playlist) {
+    if (!this.main) return;
+    const groups    = this.main.groupsManager;
+    const taskGroup = groups.groups.find(g => g.title === 'Задачи');
+    if (!taskGroup) return;
+    const entryIds  = new Set(playlist.entries.map(e => e.gameId));
+    taskGroup.games = taskGroup.games.filter(g => !entryIds.has(g.id));
+    if (!taskGroup.games.length) {
+      groups.groups = groups.groups.filter(g => g !== taskGroup);
+      if (groups.currentGroupId === taskGroup.id)
+        groups.currentGroupId = groups.groups[0]?.id ?? null;
+    }
+    this.main.gamesManager.saveGameData();
+    this.main.uiManager.refreshContainer();
   },
 
   _buildGamePicker(playlist) {
@@ -3630,6 +3743,45 @@ function _syncGameCountChip(block, playlist, main) {
   const { text, tip } = _buildGameCountChipContent(playlist, main);
   chip.textContent = text;
   if (tip) updateTooltipContent(chip, tip);
+  _syncTaskRequireChip(block, playlist);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Daily task require chip — appended to titleSpan when playlist.dailyTaskRequire > 0.
+// Shows how many total races the playlist currently provides vs how many are required.
+// ─────────────────────────────────────────────────────────────────────────────
+function _buildTaskRequireChipContent(playlist) {
+  const req   = playlist.dailyTaskRequire;
+  if (!req) return null;
+  const total = playlist.entries.reduce((sum, e) => sum + (e.repeatCount ?? 1), 0);
+  const state = total > req ? 'over' : total === req ? 'ok' : 'warning';
+  const text  = `${total}/${req}`;
+  const tip = `[Задача дня] ${
+    state === 'ok'   ? `Ровно ${req} — план выполнен`    :
+    state === 'over' ? `На ${total - req} больше нужного` :
+                       `На ${req - total} меньше нужного`
+  }`;
+  return { text, tip, state };
+}
+
+function _appendTaskRequireChip(titleSpan, playlist) {
+  const content = _buildTaskRequireChipContent(playlist);
+  if (!content) return;
+  const chip = _el('span', `playlist-task-require-chip playlist-task-require-chip--${content.state}`);
+  chip.textContent = content.text;
+  titleSpan.appendChild(chip);
+  createCustomTooltip(chip, content.tip);
+}
+
+function _syncTaskRequireChip(block, playlist) {
+  const chip = block?.querySelector('.playlist-task-require-chip');
+  if (!chip) return;
+  const content = _buildTaskRequireChipContent(playlist);
+  if (!content) return;
+  chip.textContent = content.text;
+  chip.classList.remove('playlist-task-require-chip--warning', 'playlist-task-require-chip--ok', 'playlist-task-require-chip--over');
+  chip.classList.add(`playlist-task-require-chip--${content.state}`);
+  updateTooltipContent(chip, content.tip);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

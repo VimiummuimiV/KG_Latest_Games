@@ -307,7 +307,19 @@ body.playlist-drag-active * { cursor: grabbing !important; }
       @include playlist-text-input();
       flex: 1;
     }
+  }
 
+  .playlists-create-actions-row {
+    display: flex;
+    gap: 0.4em;
+    align-items: center;
+  }
+
+  .playlists-create-task-btn {
+    @include playlist-labeled-btn('--rg-popup-btn-fetch', 13px);
+    padding: 0.35em 0.7em;
+    font-size: 0.8em;
+    user-select: none;
   }
 
   .playlists-create-groups-toggle {
@@ -432,6 +444,27 @@ body.playlist-drag-active * { cursor: grabbing !important; }
       flex-shrink: 0;
       font-variant-numeric: tabular-nums;
       cursor: default;
+    }
+
+    // Daily-task progress chip — "X/33 гонок".
+    // warning: below target (yellow-orange), ok: exactly met (green), over: exceeds target (red).
+    .playlist-task-require-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.1em 0.45em;
+      font-size: 0.8em;
+      font-weight: 600;
+      background: rgba(0, 0, 0, 0.22);
+      border-radius: 3px !important;
+      color: hsl(var(--rg-task-chip-warning));
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+      cursor: default;
+      transition: color 0.2s ease;
+
+      &--ok   { color: hsl(var(--rg-task-chip-ok)); }
+      &--over { color: hsl(var(--rg-task-chip-over)); }
     }
 
     .playlist-active-badge {
