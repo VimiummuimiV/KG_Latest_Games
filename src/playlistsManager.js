@@ -3062,7 +3062,7 @@ export const PlaylistsManager = {
 
   // ── Create playlist from daily task ────────────────────────────────────────
   async _createPlaylistFromDailyTask(onDone) {
-    const todayStr = _formatTaskDate();
+    const todayStr = _getTaskDate();
     const taskData = await _fetchDailyTask(todayStr);
 
     if (!taskData?.task) {
@@ -3132,9 +3132,9 @@ export const PlaylistsManager = {
     const playlists = this.load();
     const p         = playlists.find(pl => pl.id === created.id);
     if (p) {
-      p.dailyTaskRequire = require;
+      p.dailyTaskRequire   = require;
       p.dailyTaskRemaining = remaining;
-      p.dailyTaskDate = todayStr;
+      p.dailyTaskDate      = todayStr;
       this.save(playlists);
     }
 
@@ -3766,23 +3766,56 @@ function _syncGameCountChip(block, playlist, main) {
 // and award chip (+N reward).
 // ─────────────────────────────────────────────────────────────────────────────
 
-function _formatTaskDate(date = new Date()) {
-  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+// Moscow is always UTC+3, no DST. Task resets at 04:00 Moscow = 01:00 UTC.
+// Using UTC methods exclusively so the result is correct for any local timezone.
+function _getTaskDate() {
+  const moscow = new Date(Date.now() + 3 * 3600000); // shift UTC → Moscow
+  if (moscow.getUTCHours() < 4) moscow.setUTCDate(moscow.getUTCDate() - 1);
+  return `${moscow.getUTCFullYear()}-${moscow.getUTCMonth() + 1}-${moscow.getUTCDate()}`;
+}
+
+// Returns the next 04:00 Moscow reset as a real local Date (01:00 UTC).
+function _nextTaskResetDate() {
+  const reset = new Date();
+  reset.setUTCHours(1, 0, 0, 0); // 04:00 Moscow = 01:00 UTC
+  if (Date.now() >= reset.getTime()) reset.setUTCDate(reset.getUTCDate() + 1);
+  return reset;
 }
 
 const _taskDataCache = new Map(); // dateStr → Promise<taskData|null>
 
-function _fetchDailyTask(dateStr) {
-  if (!_taskDataCache.has(dateStr)) {
-    _taskDataCache.set(dateStr, (async () => {
-      try {
-        const res = await fetch(`https://klavogonki.ru/ajax/get-daily-task-archive?date=${dateStr}`);
-        return res.ok ? await res.json() : null;
-      } catch { return null; }
-    })());
-  }
-  return _taskDataCache.get(dateStr);
+async function _doFetchTask(dateStr) {
+  try {
+    const res = await fetch(`https://klavogonki.ru/ajax/get-daily-task-archive?date=${dateStr}`);
+    return res.ok ? await res.json() : null;
+  } catch { return null; }
 }
+
+function _fetchDailyTask(dateStr) {
+  // Past-day data is immutable — cache forever.
+  // Today's data may still change (progress, not yet rolled over),
+  // so we never permanently cache it; each call re-fetches.
+  if (dateStr !== _getTaskDate()) {
+    if (!_taskDataCache.has(dateStr)) {
+      console.log(`[DailyTask] "${dateStr}" — caching permanently (past day).`);
+      _taskDataCache.set(dateStr, _doFetchTask(dateStr));
+    }
+    return _taskDataCache.get(dateStr);
+  }
+  // Today: one fetch per task date — reused until the date rolls over.
+  if (_todayFetch?.dateStr === dateStr) return _todayFetch.promise;
+  const reset    = _nextTaskResetDate();
+  const diff     = reset - Date.now();
+  const h        = Math.floor(diff / 3600000);
+  const m        = Math.floor((diff % 3600000) / 60000);
+  const s        = Math.floor((diff % 60000) / 1000);
+  const timeLeft = `${h}h ${m}m ${s}s`;
+  console.log(`[DailyTask] "${dateStr}" — fetching fresh. Becomes permanent in ${timeLeft} at ${reset.toLocaleString()} local / 04:00 Moscow.`);
+  _todayFetch    = { dateStr, promise: _doFetchTask(dateStr) };
+  return _todayFetch.promise;
+}
+
+let _todayFetch = null; // { dateStr, promise } — lives until the task date changes
 
 function _buildTaskRequireChipContent(playlist) {
   if (!playlist.dailyTaskRequire) return null;
@@ -3799,14 +3832,15 @@ function _buildTaskRequireChipContent(playlist) {
 }
 
 // taskData is passed in from the API response — fetched once per chip render.
-function _buildTaskProgressChipContent(playlist, taskData) {
+function _buildTaskProgressChipContent(playlist, taskData, isArchive = false) {
   const req = playlist.dailyTaskRequire;
   if (!req || !taskData?.user) return null;
   const progress = taskData.user.progress ?? 0;
   const pct  = Math.min(100, Math.round((progress / req) * 100));
+  const archiveTip = isArchive ? `[Архив] Это архивная задача. Вы можете сыграть, но прогресс уже не изменится.` : ``;
   return {
     text: `${progress}/${req}`,
-    tip:  `[Прогресс задачи] ${progress} из ${req} гонок (${pct}%)`,
+    tip:  `[Прогресс задачи] ${progress} из ${req} гонок (${pct}%)${archiveTip}`,
     progress, req,
   };
 }
@@ -3869,11 +3903,14 @@ async function _appendTaskChips(titleSpan, playlist) {
 
   if (isNew) titleSpan.appendChild(container);
 
-  const dateStr  = playlist.dailyTaskDate ?? _formatTaskDate();
+  const dateStr  = playlist.dailyTaskDate ?? _getTaskDate();
+  const isArchive = dateStr !== _getTaskDate();
+  container.classList.toggle('playlist-task-chips--archive', isArchive);
+
   const taskData = await _fetchDailyTask(dateStr);
   if (!taskData) return;
 
-  const progress = _buildTaskProgressChipContent(playlist, taskData);
+  const progress = _buildTaskProgressChipContent(playlist, taskData, isArchive);
   const award    = _buildTaskAwardChipContent(playlist, taskData);
   _syncChip(container, '.playlist-task-require-chip--progress', progress)
     || _appendChip(container, 'playlist-task-require-chip playlist-task-require-chip--progress', progress);
