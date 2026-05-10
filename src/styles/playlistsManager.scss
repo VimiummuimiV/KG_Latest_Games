@@ -191,16 +191,39 @@ body.playlist-drag-active * { cursor: grabbing !important; }
   // --pl-bg-params     : params-color tint (entry params panel, bulk params,
   //                      params-open row/bar states)
   // --pl-bg-multiselect: popup-btn-save tint (multiselect bar resting state)
+  // --pl-bg-task-chip-warning: task chip warning tint over secondary background
+  // --pl-bg-task-chip-ok:      task chip ok tint over secondary background
+  // --pl-bg-task-chip-over:    task chip over tint over secondary background
+
   --pl-bg-params: linear-gradient(
       hsla(var(--rg-playlist-params-color) / 0.07),
       hsla(var(--rg-playlist-params-color) / 0.07)
     ),
     var(--rg-bg-primary);
+
   --pl-bg-multiselect: linear-gradient(
       hsla(var(--rg-popup-btn-save) / 0.06),
       hsla(var(--rg-popup-btn-save) / 0.06)
     ),
     var(--rg-bg-primary);
+
+  --pl-bg-task-chip-warning: linear-gradient(
+      hsla(var(--rg-task-chip-warning) / 0.12),
+      hsla(var(--rg-task-chip-warning) / 0.12)
+    ),
+    var(--rg-bg-secondary);
+
+  --pl-bg-task-chip-ok: linear-gradient(
+      hsla(var(--rg-task-chip-ok) / 0.12),
+      hsla(var(--rg-task-chip-ok) / 0.12)
+    ),
+    var(--rg-bg-secondary);
+
+  --pl-bg-task-chip-over: linear-gradient(
+      hsla(var(--rg-task-chip-over) / 0.12),
+      hsla(var(--rg-task-chip-over) / 0.12)
+    ),
+    var(--rg-bg-secondary);
 
   position: fixed;
   background: var(--rg-bg-primary);
@@ -215,7 +238,7 @@ body.playlist-drag-active * { cursor: grabbing !important; }
   border-radius: 4px !important;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3) !important;
   min-width: 400px;
-  max-width: 500px;
+  max-width: 550px;
   overflow: hidden;
 
   // ── Header ─────────────────────────────────────────────────────────────────
@@ -454,17 +477,25 @@ body.playlist-drag-active * { cursor: grabbing !important; }
       padding: 0.1em 0.45em;
       font-size: 0.8em;
       font-weight: 600;
-      background: rgba(0, 0, 0, 0.22);
       border-radius: 3px !important;
-      color: hsl(var(--rg-task-chip-warning));
       white-space: nowrap;
       flex-shrink: 0;
       font-variant-numeric: tabular-nums;
       cursor: default;
       transition: color 0.2s ease;
+    }
 
-      &--ok   { color: hsl(var(--rg-task-chip-ok)); }
-      &--over { color: hsl(var(--rg-task-chip-over)); }
+    .playlist-task-require-chip {
+      color: hsl(var(--rg-task-chip-warning));
+      background: var(--pl-bg-task-chip-warning);
+      &--ok {
+        color: hsl(var(--rg-task-chip-ok));
+        background: var(--pl-bg-task-chip-ok);
+      }
+      &--over {
+        color: hsl(var(--rg-task-chip-over));
+        background: var(--pl-bg-task-chip-over);
+      }
     }
 
     .playlist-active-badge {
