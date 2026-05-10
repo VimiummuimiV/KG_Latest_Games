@@ -504,7 +504,7 @@ body.playlist-drag-active * { cursor: grabbing !important; }
       white-space: nowrap;
       flex-shrink: 0;
       font-variant-numeric: tabular-nums;
-      cursor: default;
+      cursor: pointer;
       transition: color 0.2s ease;
     }
 

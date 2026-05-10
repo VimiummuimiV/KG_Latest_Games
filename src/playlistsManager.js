@@ -3896,7 +3896,7 @@ function _buildTaskRequireChipContent(playlist) {
     state === 'ok'   ? `Ровно ${req} — план выполнен`    :
     state === 'over' ? `На ${total - req} больше нужного` :
                        `На ${req - total} меньше нужного`
-  }`;
+  } [Клик] Перераспределить повторы`;
   return { text, tip, state };
 }
 
@@ -3964,6 +3964,22 @@ async function _appendTaskChips(titleSpan, playlist) {
     chip = _el('span', 'playlist-task-require-chip');
     container.appendChild(chip);
     createCustomTooltip(chip, content.tip);
+    
+    // Click handler: redistribute repeats evenly across remaining amount
+    chip.addEventListener('click', e => {
+      e.stopPropagation();
+      try {
+        const playlists = PlaylistsManager.load();
+        const p = playlists.find(pl => pl.id === playlist.id);
+        if (!p?.dailyTaskRequire || !p.entries?.length) return;
+        
+        PlaylistsManager._redistributeTaskRepeats(p);
+        PlaylistsManager.save(playlists);
+        if (PlaylistsManager.popup) PlaylistsManager.refresh();
+      } catch (err) {
+        console.error('[DailyTask] Redistribution error:', err);
+      }
+    });
   }
   chip.textContent = content.text;
   _setRequireChipState(chip, content.state);
