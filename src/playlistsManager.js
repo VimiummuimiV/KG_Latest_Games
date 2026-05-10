@@ -3136,14 +3136,21 @@ export const PlaylistsManager = {
     onDone();
   },
 
-  // Remove playlist's games from the Задачи group; drop the group itself if it becomes empty.
+  // Remove playlist's games from the Задачи group only if no remaining playlist still references them.
   _cleanTaskGroup(playlist) {
     if (!this.main) return;
     const groups    = this.main.groupsManager;
     const taskGroup = groups.groups.find(g => g.title === 'Задачи');
     if (!taskGroup) return;
-    const entryIds  = new Set(playlist.entries.map(e => e.gameId));
-    taskGroup.games = taskGroup.games.filter(g => !entryIds.has(g.id));
+
+    const remainingReferencedGameIds = new Set(
+      this.load()
+        .filter(p => p.id !== playlist.id)
+        .flatMap(p => p.entries.map(e => e.gameId))
+    );
+
+    taskGroup.games = taskGroup.games.filter(g => remainingReferencedGameIds.has(g.id));
+
     if (!taskGroup.games.length) {
       groups.groups = groups.groups.filter(g => g !== taskGroup);
       if (groups.currentGroupId === taskGroup.id)
