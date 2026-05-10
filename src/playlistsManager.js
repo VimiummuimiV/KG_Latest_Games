@@ -3061,10 +3061,9 @@ export const PlaylistsManager = {
   },
 
   // ── Create playlist from daily task ────────────────────────────────────────
-  _createPlaylistFromDailyTask(onDone) {
-    let taskData = null;
-    const status = _getAngularInjector()?.get('TaskStatus');
-    if (status) taskData = status.data;
+  async _createPlaylistFromDailyTask(onDone) {
+    const todayStr = _formatTaskDate();
+    const taskData = await _fetchDailyTask(todayStr);
 
     if (!taskData?.task) {
       alert('⚠️ Не удалось получить данные задачи дня.');
@@ -3119,8 +3118,10 @@ export const PlaylistsManager = {
     gm.saveGameData();
     um.refreshContainer();
 
-    const base    = require > 0 ? Math.floor(require / gameIds.length) : 1;
-    const rem     = require > 0 ? require % gameIds.length : 0;
+    const progress  = taskData.user?.progress ?? 0;
+    const remaining = Math.max(0, require - progress);
+    const base    = remaining > 0 ? Math.floor(remaining / gameIds.length) : 1;
+    const rem     = remaining > 0 ? remaining % gameIds.length : 0;
     const repeats = gameIds.map((_, i) => Math.max(1, base + (i === 0 ? rem : 0)));
 
     if (this.load().some(p => p.title === playlistTitle)) {
@@ -3130,7 +3131,12 @@ export const PlaylistsManager = {
     const created   = this.createPlaylist(playlistTitle);
     const playlists = this.load();
     const p         = playlists.find(pl => pl.id === created.id);
-    if (p) { p.dailyTaskRequire = require; this.save(playlists); }
+    if (p) {
+      p.dailyTaskRequire = require;
+      p.dailyTaskRemaining = remaining;
+      p.dailyTaskDate = todayStr;
+      this.save(playlists);
+    }
 
     gameIds.forEach((id, i) => this.addEntry(created.id, id, repeats[i]));
     this.expandedPlaylistId = created.id;
@@ -3760,26 +3766,27 @@ function _syncGameCountChip(block, playlist, main) {
 // and award chip (+N reward).
 // ─────────────────────────────────────────────────────────────────────────────
 
-function _getAngularInjector() {
-  try { return angular.element(document.body).injector(); } catch (_) { return null; }
+function _formatTaskDate(date = new Date()) {
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 }
 
-function _whenTaskDataReady(callback) {
-  const injector = _getAngularInjector();
-  if (!injector) return;
+const _taskDataCache = new Map(); // dateStr → Promise<taskData|null>
 
-  const status = injector.get('TaskStatus');
-  if (status?.data?.user != null) return callback(status.data);
-
-  const deregister = injector.get('$rootScope')?.$watch(
-    () => status.data?.user,
-    value => { if (value != null) { deregister(); callback(status.data); } }
-  );
+function _fetchDailyTask(dateStr) {
+  if (!_taskDataCache.has(dateStr)) {
+    _taskDataCache.set(dateStr, (async () => {
+      try {
+        const res = await fetch(`https://klavogonki.ru/ajax/get-daily-task-archive?date=${dateStr}`);
+        return res.ok ? await res.json() : null;
+      } catch { return null; }
+    })());
+  }
+  return _taskDataCache.get(dateStr);
 }
 
 function _buildTaskRequireChipContent(playlist) {
-  const req   = playlist.dailyTaskRequire;
-  if (!req) return null;
+  if (!playlist.dailyTaskRequire) return null;
+  const req   = playlist.dailyTaskRemaining ?? playlist.dailyTaskRequire;
   const total = playlist.entries.reduce((sum, e) => sum + (e.repeatCount ?? 1), 0);
   const state = total > req ? 'over' : total === req ? 'ok' : 'warning';
   const text  = `${total}/${req}`;
@@ -3791,8 +3798,7 @@ function _buildTaskRequireChipContent(playlist) {
   return { text, tip, state };
 }
 
-// taskData is pre-fetched by the caller (once per sync) and passed in to avoid
-// hitting the Angular injector multiple times per render.
+// taskData is passed in from the API response — fetched once per chip render.
 function _buildTaskProgressChipContent(playlist, taskData) {
   const req = playlist.dailyTaskRequire;
   if (!req || !taskData?.user) return null;
@@ -3843,7 +3849,7 @@ function _syncChip(container, selector, content) {
   return true;
 }
 
-function _appendTaskChips(titleSpan, playlist) {
+async function _appendTaskChips(titleSpan, playlist) {
   const content = _buildTaskRequireChipContent(playlist);
   if (!content) return;
 
@@ -3863,14 +3869,16 @@ function _appendTaskChips(titleSpan, playlist) {
 
   if (isNew) titleSpan.appendChild(container);
 
-  _whenTaskDataReady(taskData => {
-    const progress = _buildTaskProgressChipContent(playlist, taskData);
-    const award    = _buildTaskAwardChipContent(playlist, taskData);
-    _syncChip(container, '.playlist-task-require-chip--progress', progress)
-      || _appendChip(container, 'playlist-task-require-chip playlist-task-require-chip--progress', progress);
-    _syncChip(container, '.playlist-task-award-chip', award)
-      || _appendChip(container, 'playlist-task-award-chip', award);
-  });
+  const dateStr  = playlist.dailyTaskDate ?? _formatTaskDate();
+  const taskData = await _fetchDailyTask(dateStr);
+  if (!taskData) return;
+
+  const progress = _buildTaskProgressChipContent(playlist, taskData);
+  const award    = _buildTaskAwardChipContent(playlist, taskData);
+  _syncChip(container, '.playlist-task-require-chip--progress', progress)
+    || _appendChip(container, 'playlist-task-require-chip playlist-task-require-chip--progress', progress);
+  _syncChip(container, '.playlist-task-award-chip', award)
+    || _appendChip(container, 'playlist-task-award-chip', award);
 }
 
 function _syncTaskChips(block, playlist) {
