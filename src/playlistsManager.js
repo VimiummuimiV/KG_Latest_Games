@@ -527,7 +527,12 @@ export const PlaylistsManager = {
     p.entries = p.entries.filter(e => e.id !== entryId);
     this._redistributeTaskRepeats(p);
     this.save(playlists);
-    if (syncTarget) syncTarget.entries = p.entries;
+    if (syncTarget) {
+      const idx = syncTarget.entries.findIndex(e => e.id === entryId);
+      if (idx !== -1) syncTarget.entries.splice(idx, 1);
+      const countMap = new Map(p.entries.map(e => [e.id, e.repeatCount]));
+      syncTarget.entries.forEach(e => { e.repeatCount = countMap.get(e.id) ?? e.repeatCount; });
+    }
   },
 
   duplicateEntry(playlistId, entryId) {
