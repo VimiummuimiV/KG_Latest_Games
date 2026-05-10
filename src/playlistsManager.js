@@ -1837,10 +1837,12 @@ export const PlaylistsManager = {
         if (!fresh) return;
         entryList.querySelector('.playlist-entries-empty')?.remove();
         newEntries.forEach((ne, i) => {
-          const newRow = this._buildEntryRow(fresh, ne, null, false, fresh.entries.length - newEntries.length + i);
+          playlist.entries.push(ne);
+          const newRow = this._buildEntryRow(playlist, ne, null, false, playlist.entries.length - newEntries.length + i);
           entryList.appendChild(newRow);
         });
         this._attachEntryDrag(entryList, playlist.id, this._selectedEntries[playlist.id] ??= new Set());
+        _syncGameCountChip(entryList.closest('.playlist-block'), playlist, PlaylistsManager.main);
         return;
       }
 
@@ -1850,10 +1852,12 @@ export const PlaylistsManager = {
       const fresh = this.load().find(p => p.id === playlist.id);
       if (!fresh) return;
       if (!entryList) return;
+      playlist.entries.push(copy);
       entryList.querySelector('.playlist-entries-empty')?.remove();
-      const newRow = this._buildEntryRow(fresh, copy, null, false, fresh.entries.length - 1);
+      const newRow = this._buildEntryRow(playlist, copy, null, false, playlist.entries.length - 1);
       entryList.appendChild(newRow);
       this._attachEntryDrag(entryList, playlist.id, this._selectedEntries[playlist.id] ??= new Set());
+      _syncGameCountChip(entryList.closest('.playlist-block'), playlist, PlaylistsManager.main);
     });
 
     // Per-entry play button — starts the playlist from this entry
@@ -2685,13 +2689,15 @@ export const PlaylistsManager = {
       if (!fresh) return;
       entryList.querySelector('.playlist-entries-empty')?.remove();
       newEntries.forEach((ne, i) => {
-        const newRow = this._buildEntryRow(fresh, ne, null, false, fresh.entries.length - newEntries.length + i);
+        playlist.entries.push(ne);
+        const newRow = this._buildEntryRow(playlist, ne, null, false, playlist.entries.length - newEntries.length + i);
         entryList.appendChild(newRow);
       });
       this._attachEntryDrag(entryList, playlist.id, this._selectedEntries[playlist.id] ??= new Set());
       // Refresh the filter row chip counts in case repeat/type mix changed
       const msBar = entryList.querySelector('.playlist-multiselect-bar');
       if (msBar?._refreshFilterRow) msBar._refreshFilterRow();
+      _syncGameCountChip(entryList.closest('.playlist-block'), playlist, PlaylistsManager.main);
     });
 
     const paramsBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--params');
@@ -2851,7 +2857,8 @@ export const PlaylistsManager = {
           const fresh = this.load().find(p => p.id === playlist.id);
           if (fresh) {
             newEntries.forEach((ne, i) => {
-              const newRow = this._buildEntryRow(fresh, ne, null, false, fresh.entries.length - newEntries.length + i);
+              playlist.entries.push(ne);
+              const newRow = this._buildEntryRow(playlist, ne, null, false, playlist.entries.length - newEntries.length + i);
               entryList.appendChild(newRow);
             });
             this._attachEntryDrag(entryList, playlist.id, this._selectedEntries[playlist.id] ??= new Set());
@@ -2864,12 +2871,14 @@ export const PlaylistsManager = {
           if (!copy) break;
           const refreshed = this.load().find(p => p.id === playlist.id);
           if (!refreshed) break;
-          const newRow = this._buildEntryRow(refreshed, copy, null, false, refreshed.entries.length - 1);
+          playlist.entries.push(copy);
+          const newRow = this._buildEntryRow(playlist, copy, null, false, playlist.entries.length - 1);
           entryList.appendChild(newRow);
         }
         this._attachEntryDrag(entryList, playlist.id, this._selectedEntries[playlist.id] ??= new Set());
       }
 
+      _syncGameCountChip(entryList.closest('.playlist-block'), playlist, PlaylistsManager.main);
       bar.remove();
     });
 
