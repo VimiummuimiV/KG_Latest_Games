@@ -3763,6 +3763,13 @@ function _getTaskData() {
   try { return angular.element(document.body).injector().get('TaskStatus').data; } catch (_) { return null; }
 }
 
+function _whenTaskDataReady(callback) {
+  const isReady = d => d?.user != null;
+  const data = _getTaskData();
+  if (isReady(data)) { callback(data); return; }
+  const id = setInterval(() => { const d = _getTaskData(); if (isReady(d)) { clearInterval(id); callback(d); } }, 200);
+}
+
 function _buildTaskRequireChipContent(playlist) {
   const req   = playlist.dailyTaskRequire;
   if (!req) return null;
@@ -3802,16 +3809,6 @@ function _buildTaskAwardChipContent(playlist, taskData) {
   };
 }
 
-function _getTaskChipContents(playlist) {
-  const content = _buildTaskRequireChipContent(playlist);
-  if (!content) return null;
-  const taskData = _getTaskData();
-  return {
-    content,
-    progress: _buildTaskProgressChipContent(playlist, taskData),
-    award:    _buildTaskAwardChipContent(playlist, taskData),
-  };
-}
 
 function _setRequireChipState(chip, state) {
   chip.classList.remove(
@@ -3840,9 +3837,8 @@ function _syncChip(container, selector, content) {
 }
 
 function _appendTaskChips(titleSpan, playlist) {
-  const chips = _getTaskChipContents(playlist);
-  if (!chips) return;
-  const { content, progress, award } = chips;
+  const content = _buildTaskRequireChipContent(playlist);
+  if (!content) return;
 
   let container = titleSpan.querySelector('.playlist-task-chips');
   const isNew = !container;
@@ -3858,12 +3854,16 @@ function _appendTaskChips(titleSpan, playlist) {
   _setRequireChipState(chip, content.state);
   updateTooltipContent(chip, content.tip);
 
-  _syncChip(container, '.playlist-task-require-chip--progress', progress)
-    || _appendChip(container, 'playlist-task-require-chip playlist-task-require-chip--progress', progress);
-  _syncChip(container, '.playlist-task-award-chip', award)
-    || _appendChip(container, 'playlist-task-award-chip', award);
-
   if (isNew) titleSpan.appendChild(container);
+
+  _whenTaskDataReady(taskData => {
+    const progress = _buildTaskProgressChipContent(playlist, taskData);
+    const award    = _buildTaskAwardChipContent(playlist, taskData);
+    _syncChip(container, '.playlist-task-require-chip--progress', progress)
+      || _appendChip(container, 'playlist-task-require-chip playlist-task-require-chip--progress', progress);
+    _syncChip(container, '.playlist-task-award-chip', award)
+      || _appendChip(container, 'playlist-task-award-chip', award);
+  });
 }
 
 function _syncTaskChips(block, playlist) {
