@@ -3063,7 +3063,8 @@ export const PlaylistsManager = {
   // ── Create playlist from daily task ────────────────────────────────────────
   _createPlaylistFromDailyTask(onDone) {
     let taskData = null;
-    try { taskData = angular.element(document.body).injector().get('TaskStatus').data; } catch (_) {}
+    const status = _getAngularInjector()?.get('TaskStatus');
+    if (status) taskData = status.data;
 
     if (!taskData?.task) {
       alert('⚠️ Не удалось получить данные задачи дня.');
@@ -3759,15 +3760,21 @@ function _syncGameCountChip(block, playlist, main) {
 // and award chip (+N reward).
 // ─────────────────────────────────────────────────────────────────────────────
 
+function _getAngularInjector() {
+  try { return angular.element(document.body).injector(); } catch (_) { return null; }
+}
+
 function _whenTaskDataReady(callback) {
-  try {
-    const status = angular.element(document.body).injector().get('TaskStatus');
-    if (status.data?.user != null) return callback(status.data);
-    const deregister = angular.element(document.body).injector().get('$rootScope')?.$watch(
-      () => status.data?.user,
-      value => { if (value != null) { deregister(); callback(status.data); } }
-    );
-  } catch (_) {}
+  const injector = _getAngularInjector();
+  if (!injector) return;
+
+  const status = injector.get('TaskStatus');
+  if (status?.data?.user != null) return callback(status.data);
+
+  const deregister = injector.get('$rootScope')?.$watch(
+    () => status.data?.user,
+    value => { if (value != null) { deregister(); callback(status.data); } }
+  );
 }
 
 function _buildTaskRequireChipContent(playlist) {
