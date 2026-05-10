@@ -3759,15 +3759,15 @@ function _syncGameCountChip(block, playlist, main) {
 // and award chip (+N reward).
 // ─────────────────────────────────────────────────────────────────────────────
 
-function _getTaskData() {
-  try { return angular.element(document.body).injector().get('TaskStatus').data; } catch (_) { return null; }
-}
-
 function _whenTaskDataReady(callback) {
-  const isReady = d => d?.user != null;
-  const data = _getTaskData();
-  if (isReady(data)) { callback(data); return; }
-  const id = setInterval(() => { const d = _getTaskData(); if (isReady(d)) { clearInterval(id); callback(d); } }, 200);
+  try {
+    const status = angular.element(document.body).injector().get('TaskStatus');
+    if (status.data?.user != null) return callback(status.data);
+    const deregister = angular.element(document.body).injector().get('$rootScope')?.$watch(
+      () => status.data?.user,
+      value => { if (value != null) { deregister(); callback(status.data); } }
+    );
+  } catch (_) {}
 }
 
 function _buildTaskRequireChipContent(playlist) {
