@@ -1,7 +1,8 @@
-import { createCustomTooltip, updateTooltipContent } from './tooltip.js';
+import { createCustomTooltip, updateTooltipContent, hideTooltipElement } from './tooltip.js';
 import { icons } from './icons.js';
 import { gameTypes, visibilities, timeouts, idleTimes, POSITION_MODES, TASK_GAME_DEFAULTS } from './definitions.js';
 import { generateRandomString, generateUniqueId, getCurrentPage, formatPosition, positionTooltip } from './utils.js';
+import { fetchVocabularyData, showTooltip, startHideTimeout } from './vocabularyContent.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Storage / session keys
@@ -183,6 +184,47 @@ function _getActiveEntryIndex(playlist, session) {
 /** Returns true when the entry has at least one param override set. */
 function _hasEntryParamOverrides(params) {
   return !!(params && ('type' in params || 'timeout' in params || 'idletime' in params));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Vocabulary preview on Shift+hover via delegation
+// ─────────────────────────────────────────────────────────────────────────────
+function _attachVocabularyPreview(container, selector, getGameId) {
+  if (!container || !selector || typeof getGameId !== 'function') return;
+  
+  const tooltipCache = new Map();
+  
+  container.addEventListener('mouseover', async (e) => {
+    const target = e.target instanceof Element ? e.target.closest(selector) : null;
+    if (!target || !container.contains(target) || !e.shiftKey) return;
+    
+    const gameId = getGameId(target);
+    if (!gameId) return;
+    const game = PlaylistsManager.main?.gamesManager?.findGameById(gameId);
+    if (!game || game.params?.gametype !== 'voc' || !game.params?.vocId) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    hideTooltipElement();
+    
+    try {
+      if (!tooltipCache.has(gameId)) {
+        const content = await fetchVocabularyData(game.params.vocId);
+        tooltipCache.set(gameId, content);
+      }
+      showTooltip(target, tooltipCache.get(gameId));
+    } catch (err) {
+      console.error('Error loading vocabulary:', err);
+    }
+  });
+  
+  container.addEventListener('mouseout', (e) => {
+    const left = e.target instanceof Element ? e.target.closest(selector) : null;
+    const entered = e.relatedTarget instanceof Element ? e.relatedTarget.closest(selector) : null;
+    if (left && left !== entered) {
+      startHideTimeout();
+    }
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1621,6 +1663,7 @@ export const PlaylistsManager = {
 
     // Entry list (no search here — entries list is short)
     const entryList = _el('div', 'playlist-entries');
+    _attachVocabularyPreview(entryList, '.playlist-entry-label', target => target.closest('.playlist-entry-row')?.dataset.gameId);
     const sel = this._selectedEntries[playlist.id] ??= new Set();
 
     // Prune stale IDs that no longer exist in the playlist
@@ -1705,6 +1748,7 @@ export const PlaylistsManager = {
     ].filter(Boolean).join(' '));
     row.dataset.entryId    = entry.id;
     row.dataset.entryIndex = entryIndex;
+    row.dataset.gameId     = game?.id ?? '';
 
     // Progress fill
     if (isCurrentEntry && entry.repeatCount > 1) {
@@ -3212,6 +3256,7 @@ export const PlaylistsManager = {
 
     // ── Picker body — portaled to popup root so it floats above playlists-list
     const body = _el('div', 'playlist-picker-body playlist-picker-body--hidden playlist-picker-body--overlay');
+    _attachVocabularyPreview(body, '.playlist-picker-game-name', target => target.closest('.playlist-picker-game-row')?.dataset.gameId);
 
     // ── Dedicated close footer inside the overlay (never moves, always at bottom) ──
     const overlayFooter   = _el('div', 'playlist-picker-overlay-footer');
