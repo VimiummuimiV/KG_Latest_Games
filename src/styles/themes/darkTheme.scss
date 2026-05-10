@@ -100,7 +100,10 @@ $darkTheme: (
   "--rg-playlist-header-active": 120 40% 50%,
   "--rg-playlist-header-paused": 25 50% 50%,
   // Daily task require chip: warning (below target), ok (exactly met), over (above target)
+  // Task reward badge
   "--rg-task-chip-warning": 40 95% 60%,
   "--rg-task-chip-ok":      130 60% 55%,
-  "--rg-task-chip-over":    0 80% 65%
+  "--rg-task-chip-over":    0 80% 65%,
+  "--rg-task-chip-progress": 200 70% 60%,
+  "--rg-task-chip-award":   45 90% 65%
 );

@@ -1456,7 +1456,7 @@ export const PlaylistsManager = {
 
       // Game count chip — always visible on every header (active or not)
       _appendGameCountChip(titleSpan, playlist, this.main);
-      _appendTaskRequireChip(titleSpan, playlist);
+      _appendTaskChips(titleSpan, playlist);
 
       const blockHandle = _el('span', 'playlist-block-drag-handle');
       blockHandle.innerHTML = icons.dragable;
@@ -1473,7 +1473,7 @@ export const PlaylistsManager = {
 
       // Game count chip — always visible on every header (active or not)
       _appendGameCountChip(titleSpan, playlist, this.main);
-      _appendTaskRequireChip(titleSpan, playlist);
+      _appendTaskChips(titleSpan, playlist);
 
       // Playlist-level cycle stepper — only shown when repeatCount > 1 or on hover
       const cycleCount     = playlist.repeatCount ?? 1;
@@ -1740,7 +1740,7 @@ export const PlaylistsManager = {
       _updateEntryProgress(row, entry, playedCount, isCurrentEntry);
       const msBar = row.closest('.playlist-entries')?.querySelector('.playlist-multiselect-bar');
       if (msBar?._refreshFilterRow) msBar._refreshFilterRow();
-      _syncTaskRequireChip(row.closest('.playlist-block'), playlist);
+      _syncTaskChips(row.closest('.playlist-block'), playlist);
     });
     this._attachButtonHold(incBtn, () => {
       const next = entry.repeatCount + 1;
@@ -1751,7 +1751,7 @@ export const PlaylistsManager = {
       _updateEntryProgress(row, entry, playedCount, isCurrentEntry);
       const msBar = row.closest('.playlist-entries')?.querySelector('.playlist-multiselect-bar');
       if (msBar?._refreshFilterRow) msBar._refreshFilterRow();
-      _syncTaskRequireChip(row.closest('.playlist-block'), playlist);
+      _syncTaskChips(row.closest('.playlist-block'), playlist);
     });
     stepper.append(decBtn, countSpan, incBtn);
 
@@ -3750,13 +3750,19 @@ function _syncGameCountChip(block, playlist, main) {
   const { text, tip } = _buildGameCountChipContent(playlist, main);
   chip.textContent = text;
   if (tip) updateTooltipContent(chip, tip);
-  _syncTaskRequireChip(block, playlist);
+  _syncTaskChips(block, playlist);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Daily task require chip — appended to titleSpan when playlist.dailyTaskRequire > 0.
-// Shows how many total races the playlist currently provides vs how many are required.
+// Daily task chips — appended to titleSpan when playlist.dailyTaskRequire > 0.
+// Shows: require chip (total races vs required), progress chip (user progress),
+// and award chip (+N reward).
 // ─────────────────────────────────────────────────────────────────────────────
+
+function _getTaskData() {
+  try { return angular.element(document.body).injector().get('TaskStatus').data; } catch (_) { return null; }
+}
+
 function _buildTaskRequireChipContent(playlist) {
   const req   = playlist.dailyTaskRequire;
   if (!req) return null;
@@ -3771,24 +3777,97 @@ function _buildTaskRequireChipContent(playlist) {
   return { text, tip, state };
 }
 
-function _appendTaskRequireChip(titleSpan, playlist) {
+// taskData is pre-fetched by the caller (once per sync) and passed in to avoid
+// hitting the Angular injector multiple times per render.
+function _buildTaskProgressChipContent(playlist, taskData) {
+  const req = playlist.dailyTaskRequire;
+  if (!req || !taskData?.user) return null;
+  const progress = taskData.user.progress ?? 0;
+  const pct  = Math.min(100, Math.round((progress / req) * 100));
+  return {
+    text: `${progress}/${req}`,
+    tip:  `[Прогресс задачи] ${progress} из ${req} гонок (${pct}%)`,
+    progress, req,
+  };
+}
+
+function _buildTaskAwardChipContent(playlist, taskData) {
+  const req = playlist.dailyTaskRequire;
+  if (!req || !taskData?.task?.award) return null;
+  const { amount, type } = taskData.task.award;
+  const typeLabel = type === 'score' ? 'очков' : type;
+  return {
+    text: `+${amount}`,
+    tip:  `[Награда] +${amount} ${typeLabel}`,
+  };
+}
+
+function _getTaskChipContents(playlist) {
   const content = _buildTaskRequireChipContent(playlist);
+  if (!content) return null;
+  const taskData = _getTaskData();
+  return {
+    content,
+    progress: _buildTaskProgressChipContent(playlist, taskData),
+    award:    _buildTaskAwardChipContent(playlist, taskData),
+  };
+}
+
+function _setRequireChipState(chip, state) {
+  chip.classList.remove(
+    'playlist-task-require-chip--warning',
+    'playlist-task-require-chip--ok',
+    'playlist-task-require-chip--over',
+  );
+  chip.classList.add(`playlist-task-require-chip--${state}`);
+}
+
+function _appendChip(container, className, content) {
   if (!content) return;
-  const chip = _el('span', `playlist-task-require-chip playlist-task-require-chip--${content.state}`);
+  const chip = _el('span', className);
   chip.textContent = content.text;
-  titleSpan.appendChild(chip);
+  container.appendChild(chip);
   createCustomTooltip(chip, content.tip);
 }
 
-function _syncTaskRequireChip(block, playlist) {
-  const chip = block?.querySelector('.playlist-task-require-chip');
-  if (!chip) return;
-  const content = _buildTaskRequireChipContent(playlist);
-  if (!content) return;
+function _syncChip(container, selector, content) {
+  if (!content) return true; // nothing to do — don't append either
+  const chip = container.querySelector(selector);
+  if (!chip) return false;  // not found — caller should append
   chip.textContent = content.text;
-  chip.classList.remove('playlist-task-require-chip--warning', 'playlist-task-require-chip--ok', 'playlist-task-require-chip--over');
-  chip.classList.add(`playlist-task-require-chip--${content.state}`);
   updateTooltipContent(chip, content.tip);
+  return true;
+}
+
+function _appendTaskChips(titleSpan, playlist) {
+  const chips = _getTaskChipContents(playlist);
+  if (!chips) return;
+  const { content, progress, award } = chips;
+
+  let container = titleSpan.querySelector('.playlist-task-chips');
+  const isNew = !container;
+  if (isNew) container = _el('span', 'playlist-task-chips');
+
+  let chip = container.querySelector('.playlist-task-require-chip');
+  if (!chip) {
+    chip = _el('span', 'playlist-task-require-chip');
+    container.appendChild(chip);
+    createCustomTooltip(chip, content.tip);
+  }
+  chip.textContent = content.text;
+  _setRequireChipState(chip, content.state);
+  updateTooltipContent(chip, content.tip);
+
+  _syncChip(container, '.playlist-task-require-chip--progress', progress)
+    || _appendChip(container, 'playlist-task-require-chip playlist-task-require-chip--progress', progress);
+  _syncChip(container, '.playlist-task-award-chip', award)
+    || _appendChip(container, 'playlist-task-award-chip', award);
+
+  if (isNew) titleSpan.appendChild(container);
+}
+
+function _syncTaskChips(block, playlist) {
+  _appendTaskChips(block?.querySelector('.playlist-title'), playlist);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -225,6 +225,18 @@ body.playlist-drag-active * { cursor: grabbing !important; }
     ),
     var(--rg-bg-secondary);
 
+  --pl-bg-task-chip-progress: linear-gradient(
+      hsla(var(--rg-task-chip-progress) / 0.12),
+      hsla(var(--rg-task-chip-progress) / 0.12)
+    ),
+    var(--rg-bg-secondary);
+
+  --pl-bg-task-award-chip: linear-gradient(
+      hsla(var(--rg-task-chip-award) / 0.12),
+      hsla(var(--rg-task-chip-award) / 0.12)
+    ),
+    var(--rg-bg-secondary);
+
   position: fixed;
   background: var(--rg-bg-primary);
   color: var(--rg-text-primary);
@@ -469,6 +481,14 @@ body.playlist-drag-active * { cursor: grabbing !important; }
       cursor: default;
     }
 
+    // Column stack of all three daily-task chips (require, progress, award).
+    .playlist-task-chips {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 0.2em;
+      flex-shrink: 0;
+    }
+
     // Daily-task progress chip — "X/33 гонок".
     // warning: below target (yellow-orange), ok: exactly met (green), over: exceeds target (red).
     .playlist-task-require-chip {
@@ -496,6 +516,26 @@ body.playlist-drag-active * { cursor: grabbing !important; }
         color: hsl(var(--rg-task-chip-over));
         background: var(--pl-bg-task-chip-over);
       }
+      &--progress {
+        color: hsl(var(--rg-task-chip-progress));
+        background: var(--pl-bg-task-chip-progress);
+      }
+    }
+
+    .playlist-task-award-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.1em 0.45em;
+      font-size: 0.8em;
+      font-weight: 600;
+      border-radius: 3px !important;
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+      cursor: default;
+      transition: color 0.2s ease;
+      color: hsl(var(--rg-task-chip-award));
+      background: var(--pl-bg-task-award-chip);
     }
 
     .playlist-active-badge {
