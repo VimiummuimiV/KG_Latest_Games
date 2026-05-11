@@ -26,19 +26,7 @@ export function createGameElement(main, game, id) {
     id: `latest-game-${id}`
   });
 
-  let buttonTimeout;
   const gameActionButtons = createElement('div', { className: 'latest-game-buttons' });
-
-  li.addEventListener('mouseenter', () => {
-    buttonTimeout = setTimeout(() => {
-      gameActionButtons.style.visibility = 'visible';
-    }, 400);
-  });
-
-  li.addEventListener('mouseleave', () => {
-    clearTimeout(buttonTimeout);
-    gameActionButtons.style.visibility = 'hidden';
-  });
 
   const pinButton = createElement('div', {
     className: 'latest-game-pin',
@@ -156,6 +144,23 @@ export function attachGameHover(gamesList, main) {
     vocabulary: new Map(), // vocId  → content
     stats:      new Map(), // gameId → content
   };
+
+  let buttonTimeout;
+
+  gamesList.addEventListener('mouseenter', (e) => {
+    const li = e.target instanceof Element ? e.target.closest('.latest-game') : null;
+    if (!li || !gamesList.contains(li)) return;
+    buttonTimeout = setTimeout(() => {
+      li.querySelector('.latest-game-buttons').style.visibility = 'visible';
+    }, 400);
+  }, true);
+
+  gamesList.addEventListener('mouseleave', (e) => {
+    const li = e.target instanceof Element ? e.target.closest('.latest-game') : null;
+    if (!li || !gamesList.contains(li)) return;
+    clearTimeout(buttonTimeout);
+    li.querySelector('.latest-game-buttons').style.visibility = 'hidden';
+  }, true);
 
   gamesList.addEventListener('mouseover', async (e) => {
     const link = e.target instanceof Element ? e.target.closest('a') : null;
