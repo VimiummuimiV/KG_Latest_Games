@@ -147,20 +147,25 @@ export function attachGameHover(gamesList, main) {
 
   let buttonTimeout;
 
-  gamesList.addEventListener('mouseenter', (e) => {
+  gamesList.addEventListener('mouseover', (e) => {
     const li = e.target instanceof Element ? e.target.closest('.latest-game') : null;
     if (!li || !gamesList.contains(li)) return;
+    const entered = e.relatedTarget instanceof Element ? e.relatedTarget.closest('.latest-game') : null;
+    if (entered === li) return; // still inside the same li, ignore
+    clearTimeout(buttonTimeout);
     buttonTimeout = setTimeout(() => {
       li.querySelector('.latest-game-buttons').style.visibility = 'visible';
     }, 400);
-  }, true);
+  });
 
-  gamesList.addEventListener('mouseleave', (e) => {
+  gamesList.addEventListener('mouseout', (e) => {
     const li = e.target instanceof Element ? e.target.closest('.latest-game') : null;
     if (!li || !gamesList.contains(li)) return;
+    const entered = e.relatedTarget instanceof Element ? e.relatedTarget.closest('.latest-game') : null;
+    if (entered === li) return; // still inside the same li, ignore
     clearTimeout(buttonTimeout);
     li.querySelector('.latest-game-buttons').style.visibility = 'hidden';
-  }, true);
+  });
 
   gamesList.addEventListener('mouseover', async (e) => {
     const link = e.target instanceof Element ? e.target.closest('a') : null;
