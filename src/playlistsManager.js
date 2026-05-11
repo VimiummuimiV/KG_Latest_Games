@@ -1000,6 +1000,42 @@ export const PlaylistsManager = {
       if (!confirm(`Запущен плейлист «${existingName}». Остановить его и запустить «${playlist.title}»?`)) return;
     }
 
+    // Daily task: silently start from the correct position based on server progress.
+    // Only applies to today's active (not expired/completed) task playlists.
+    if (playlist.dailyTaskRequire && playlist.dailyTaskDate === _getTaskDate() && !playlist.dailyTaskData) {
+      _fetchDailyTask(playlist.dailyTaskDate, playlist).then(taskData => {
+        // Map server progress onto this playlist's repeat total.
+        // progress counts from 0 toward dailyTaskRequire; the playlist covers the
+        // last N of those (N = sum of entry repeatCounts). So alreadyDone is how
+        // many of *this playlist's* slots the user has already passed.
+        // If the result is <= 0 the loop won't match and we start from 0 (fresh playlist).
+        const totalReps   = playlist.entries.reduce((s, e) => s + (e.repeatCount ?? 1), 0);
+        const alreadyDone = (taskData?.progress ?? 0) - (playlist.dailyTaskRequire - totalReps);
+        let ei = 0, rr = playlist.entries[0]?.repeatCount ?? 1;
+        let cursor = 0;
+        for (let i = 0; i < playlist.entries.length; i++) {
+          const reps = playlist.entries[i].repeatCount ?? 1;
+          if (alreadyDone < cursor + reps) { ei = i; rr = (cursor + reps) - alreadyDone; break; }
+          cursor += reps;
+        }
+        const entry = playlist.entries[ei];
+        const game  = entry && this.main.gamesManager.findGameById(entry.gameId);
+        if (!game) { alert('⚠️ Игра плейлиста не найдена.'); return; }
+
+        setActivePlaylistSession({
+          playlistId,
+          entryIndex: ei,
+          remainingRepeats: rr,
+          remainingCycles: playlist.repeatCount ?? 1,
+          shuffleOrder: null,
+          shuffleActive: false
+        });
+
+        window.location.href = _generatePlaylistEntryLink(this.main, game, entry);
+      });
+      return;
+    }
+
     const shuffle = options.shuffle !== undefined ? options.shuffle : !!playlist.shuffle;
     const shuffleOrder = shuffle ? _createShuffleOrder(playlist.entries.length) : null;
     const firstEntryIndex = shuffle ? shuffleOrder[0] : 0;
