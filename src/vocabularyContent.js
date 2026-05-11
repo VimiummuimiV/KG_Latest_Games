@@ -257,7 +257,7 @@ function createVocabularyTooltip(content, metadata) {
   );
 
   if (!comments.length) {
-    tooltip.innerHTML = contentBody;
+    tooltip.innerHTML = s(`<div class="tooltip-body"><div class="tooltip-pane tooltip-pane--content">${contentBody}</div></div>`);
     document.body.appendChild(tooltip);
     return tooltip;
   }
