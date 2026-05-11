@@ -131,73 +131,88 @@ export function createGameElement(main, game, id) {
     }
   });
 
-  const tooltipCache = {
-    vocabulary: new WeakMap(),
-    stats: new WeakMap()
-  };
-
-  const defaultTooltipContent = `
-    [Удерживание ЛКМ] Создать|Сохранить игру с альтернативными параметрами
-    [ПКМ] Переместить игру в другую группу
-    [Shift + Наведение] Показать содержимое словаря
-    [Ctrl + Наведение] Показать статистику игры
-  `;
-
-  link.addEventListener('mouseover', async (e) => {
-    const isVocGame = game.params?.gametype === 'voc' && game.params?.vocId;
-    
-    // Shift + hover: vocabulary preview
-    if (e.shiftKey && isVocGame) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      hideTooltipElement(); // Only hide custom tooltip system
-      
-      try {
-        if (!tooltipCache.vocabulary.has(link)) {
-          const content = await fetchVocabularyData(game.params.vocId);
-          tooltipCache.vocabulary.set(link, content);
-        }
-        
-        showTooltip(link, tooltipCache.vocabulary.get(link));
-      } catch (err) {
-        console.error('Error loading vocabulary:', err);
-      }
-      return;
-    }
-    
-    // Ctrl + hover: stats tooltip
-    if (e.ctrlKey) {
-      hideTooltip(); // Only hide vocabulary tooltip
-      
-      updateTooltipContent(link, '[Loading] Загрузка статистики...', 'stats');
-      
-      try {
-        if (!tooltipCache.stats.has(link)) {
-          const statsContent = await gameStatsApi.getGameStats(link);
-          tooltipCache.stats.set(link, statsContent);
-        }
-        
-        updateTooltipContent(link, tooltipCache.stats.get(link), 'stats');
-      } catch (error) {
-        console.error('Error loading game stats:', error);
-        updateTooltipContent(link, '[Ошибка] Не удалось загрузить статистику', 'stats');
-      }
-      return;
-    }
-    
-    // Default tooltip
-    updateTooltipContent(link, defaultTooltipContent, 'info');
-  });
-
-  link.addEventListener('mouseleave', () => {
-    startHideTimeout();
-  });
-
   li.appendChild(gameActionButtons);
   li.appendChild(link);
 
   if (game.pin && main.enableDragging) addDragFunctionality(main, li);
 
   return li;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Delegated hover listeners for game links (Shift = vocab preview,
+// Ctrl = stats tooltip, default = info tooltip). Called once by UIManager
+// on the shared #latest-games <ul> instead of attaching per <a> element.
+// ─────────────────────────────────────────────────────────────────────────────
+const defaultTooltipContent = `
+  [Удерживание ЛКМ] Создать|Сохранить игру с альтернативными параметрами
+  [ПКМ] Переместить игру в другую группу
+  [Shift + Наведение] Показать содержимое словаря
+  [Ctrl + Наведение] Показать статистику игры
+`;
+
+export function attachGameHover(gamesList, main) {
+  const tooltipCache = {
+    vocabulary: new Map(), // vocId  → content
+    stats:      new Map(), // gameId → content
+  };
+
+  gamesList.addEventListener('mouseover', async (e) => {
+    const link = e.target instanceof Element ? e.target.closest('a') : null;
+    if (!link || !gamesList.contains(link)) return;
+
+    const li = link.closest('.latest-game');
+    if (!li) return;
+    // Extract game ID from the <li> element's ID attribute
+    const gameId = li.id.replace('latest-game-', '');
+    const game   = main.gamesManager.findGameById(gameId);
+    if (!game) return;
+
+    const isVocGame = game.params?.gametype === 'voc' && game.params?.vocId;
+
+    // Shift + hover: vocabulary preview
+    if (e.shiftKey && isVocGame) {
+      e.preventDefault();
+      e.stopPropagation();
+      hideTooltipElement();
+
+      try {
+        const vocId = game.params.vocId;
+        if (!tooltipCache.vocabulary.has(vocId)) {
+          const content = await fetchVocabularyData(vocId);
+          tooltipCache.vocabulary.set(vocId, content);
+        }
+        showTooltip(link, tooltipCache.vocabulary.get(vocId));
+      } catch (err) {
+        console.error('Error loading vocabulary:', err);
+      }
+      return;
+    }
+
+    // Ctrl + hover: stats tooltip
+    if (e.ctrlKey) {
+      hideTooltip();
+      updateTooltipContent(link, '[Loading] Загрузка статистики...', 'stats');
+      try {
+        if (!tooltipCache.stats.has(gameId)) {
+          const statsContent = await gameStatsApi.getGameStats(link);
+          tooltipCache.stats.set(gameId, statsContent);
+        }
+        updateTooltipContent(link, tooltipCache.stats.get(gameId), 'stats');
+      } catch (error) {
+        console.error('Error loading game stats:', error);
+        updateTooltipContent(link, '[Ошибка] Не удалось загрузить статистику', 'stats');
+      }
+      return;
+    }
+
+    // Default tooltip
+    updateTooltipContent(link, defaultTooltipContent, 'info');
+  });
+
+  gamesList.addEventListener('mouseout', (e) => {
+    const left    = e.target instanceof Element ? e.target.closest('a') : null;
+    const entered = e.relatedTarget instanceof Element ? e.relatedTarget.closest('a') : null;
+    if (left && left !== entered) startHideTimeout();
+  });
 }
