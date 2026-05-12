@@ -652,6 +652,13 @@ body.playlist-drag-active * { cursor: grabbing !important; }
     }
 
     &:hover .playlist-header-stepper--default { opacity: 0.8; }
+
+    .playlist-header-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+    }
   }
 
   // ── Collapsible body ────────────────────────────────────────────────────────
@@ -1809,5 +1816,23 @@ body.playlist-drag-active * { cursor: grabbing !important; }
     padding: 0.2em 0.6em;
     font-size: 0.78em;
     font-family: inherit;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Daily-task dialog — injected playlist button
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Fixed 35×35 icon-only button; color token swapped via --exists modifier.
+.dtask-inject-btn {
+  @include playlist-icon-btn('--rg-popup-btn-fetch', 35px, 20px, true);
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  outline: none;
+
+  &--exists {
+    @include playlist-icon-btn('--rg-popup-btn-save', 35px, 20px, true);
   }
 }

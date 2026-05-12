@@ -1177,6 +1177,7 @@ export const PlaylistsManager = {
     if (session) {
       requestAnimationFrame(() => this._scrollToActiveEntry());
     }
+    _dtaskSyncBtn();
   },
 
   // Only close on click that is truly outside the popup and not a prompt/confirm dialog
@@ -1672,7 +1673,9 @@ export const PlaylistsManager = {
       const blockHandle = _el('span', 'playlist-block-drag-handle');
       blockHandle.innerHTML = icons.dragable;
 
-      row.append(playBtn, blockHandle, titleSpan, cycleStepper, shufflePlayBtn, renameBtn, dupPlaylistBtn, delBtn);
+      const actions = _el('div', 'playlist-header-actions');
+      actions.append(cycleStepper, shufflePlayBtn, renameBtn, dupPlaylistBtn, delBtn);
+      row.append(playBtn, blockHandle, titleSpan, actions);
     }
 
     // Toggle expand on row click (excluding buttons)
@@ -4235,3 +4238,80 @@ function _smartChipTooltip(filterAction) {
     [Ctrl + ЛКМ + Перетаскивание] Добавить / Убрать из фильтра всё, над чем проходит курсор
   `;
 }
+// ─────────────────────────────────────────────────────────────────────────────
+// Daily-task dialog — inject playlist button into .modal2-header
+// ─────────────────────────────────────────────────────────────────────────────
+
+function _dtaskSyncBtn() {
+  const btn = document.querySelector('.dlg-dailytask-window .dtask-inject-btn');
+  if (btn) _dtaskConfigureBtn(btn);
+}
+
+function _dtaskFindTodayPlaylist() {
+  const today = _getTaskDate();
+  return PlaylistsManager.load().find(
+    p => p.dailyTaskDate === today && p.dailyTaskRequire
+  ) ?? null;
+}
+
+function _dtaskConfigureBtn(btn) {
+  const existing = _dtaskFindTodayPlaylist();
+  btn.innerHTML = existing ? icons.start : icons.plus;
+  btn.classList.toggle('dtask-inject-btn--exists', !!existing);
+
+  if (existing) {
+    updateTooltipContent(btn,
+      `[Клик] Открыть / Закрыть плейлист «${existing.title}»` +
+      `[Ctrl + Клик] Запустить плейлист`
+    );
+    btn._dtaskHandler = e => {
+      e.stopPropagation();
+      if (e.ctrlKey) {
+        PlaylistsManager.startPlaylist(existing.id);
+      } else {
+        PlaylistsManager.expandedPlaylistId = existing.id;
+        PlaylistsManager.toggle(
+          btn.getBoundingClientRect().left,
+          btn.getBoundingClientRect().bottom
+        );
+      }
+    };
+  } else {
+    updateTooltipContent(btn, 'Создать плейлист из задачи дня');
+    btn._dtaskHandler = e => {
+      e.stopPropagation();
+      PlaylistsManager._createPlaylistFromDailyTask(() => {
+        _dtaskConfigureBtn(btn);
+        if (PlaylistsManager.popup) PlaylistsManager.refresh();
+        else PlaylistsManager.showCentered();
+      });
+    };
+  }
+
+  btn.removeEventListener('click', btn._dtaskPrevHandler);
+  btn.addEventListener('click', btn._dtaskHandler);
+  btn._dtaskPrevHandler = btn._dtaskHandler;
+}
+
+function _dtaskInjectBtn(dialog) {
+  if (dialog.querySelector('.dtask-inject-btn')) return;
+  const header = dialog.querySelector('.modal2-header');
+  if (!header) return;
+
+  const btn = document.createElement('button');
+  btn.className = 'dtask-inject-btn';
+  header.appendChild(btn);
+  _dtaskConfigureBtn(btn);
+}
+
+new MutationObserver(mutations => {
+  for (const { addedNodes } of mutations) {
+    for (const node of addedNodes) {
+      if (!(node instanceof Element)) continue;
+      const dialog = node.classList.contains('dlg-dailytask-window')
+        ? node.querySelector('.modal2-dialog')
+        : node.querySelector('.dlg-dailytask-window .modal2-dialog');
+      if (dialog) requestAnimationFrame(() => _dtaskInjectBtn(dialog));
+    }
+  }
+}).observe(document.body, { childList: true, subtree: true });
