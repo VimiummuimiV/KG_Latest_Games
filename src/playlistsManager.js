@@ -4300,6 +4300,7 @@ function _dtaskInjectBtn(dialog) {
 
   const btn = document.createElement('button');
   btn.className = 'dtask-inject-btn';
+  createCustomTooltip(btn, '');
   header.appendChild(btn);
   _dtaskConfigureBtn(btn);
 }
@@ -4307,11 +4308,8 @@ function _dtaskInjectBtn(dialog) {
 new MutationObserver(mutations => {
   for (const { addedNodes } of mutations) {
     for (const node of addedNodes) {
-      if (!(node instanceof Element)) continue;
-      const dialog = node.classList.contains('dlg-dailytask-window')
-        ? node.querySelector('.modal2-dialog')
-        : node.querySelector('.dlg-dailytask-window .modal2-dialog');
-      if (dialog) requestAnimationFrame(() => _dtaskInjectBtn(dialog));
+      if (node instanceof Element && node.classList.contains('dlg-dailytask-window'))
+        requestAnimationFrame(() => _dtaskInjectBtn(node.querySelector('.modal2-dialog')));
     }
   }
 }).observe(document.body, { childList: true, subtree: true });
