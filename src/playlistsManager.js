@@ -1460,7 +1460,7 @@ export const PlaylistsManager = {
       return panel;
     }
 
-    const list = _el('div', 'playlists-list');
+    const list = _el('div', `playlists-list${session ? ' playlists-list--playing' : ''}`);
     playlists.forEach(playlist => list.appendChild(this._buildPlaylistBlock(playlist, session)));
 
     // Playlist-level drag-to-reorder — same mechanism as entry drag, no duplication

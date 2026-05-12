@@ -1820,6 +1820,18 @@ body.playlist-drag-active * { cursor: grabbing !important; }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Hide drag handles + action buttons on all blocks while a playlist is playing
+// ─────────────────────────────────────────────────────────────────────────────
+
+.playlists-list--playing {
+  .playlist-block-drag-handle,
+  .playlist-header-actions {
+    display: none !important;
+  }
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Daily-task dialog — injected playlist button
 // ─────────────────────────────────────────────────────────────────────────────
 
