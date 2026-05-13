@@ -460,9 +460,15 @@ async function showSessionTooltip() {
   try {
     const vocId = getSessionVocId();
     if (!vocId) return;
+
+    const pending = JSON.parse(sessionStorage.getItem('latestGames_pendingVocId') || '{}');
+    if (pending.tooltipShown) return;
+
     if (detectGameType().category !== 'vocabulary') return;
-   
+
     const data = await fetchVocabularyData(vocId);
+    pending.tooltipShown = true;
+    sessionStorage.setItem('latestGames_pendingVocId', JSON.stringify(pending));
     showTooltip(null, data.content, data.metadata);
     setTimeout(() => { try { startHideTimeout(); } catch (_) {} }, 5000);
   } catch (_) {}

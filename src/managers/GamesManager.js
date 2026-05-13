@@ -513,7 +513,9 @@ export class GamesManager {
     try {
       const idStr = String(vocId);
       if (!idStr) return false;
-      sessionStorage.setItem('latestGames_pendingVocId', JSON.stringify({ vocId: idStr, vocName: vocName || null, vocType: vocType || null }));
+      const existing = JSON.parse(sessionStorage.getItem('latestGames_pendingVocId') || '{}');
+      const tooltipShown = existing.vocId === idStr ? existing.tooltipShown : false;
+      sessionStorage.setItem('latestGames_pendingVocId', JSON.stringify({ vocId: idStr, vocName: vocName || null, vocType: vocType || null, tooltipShown }));
       return true;
     } catch (err) {
       return false;
