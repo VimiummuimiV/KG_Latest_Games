@@ -549,16 +549,22 @@ export const PlaylistsManager = {
 
   // If the playlist was created from a daily task, redistribute the total
   // required repetitions evenly across the remaining entries so the sum of
-  // repeatCounts always equals dailyTaskRemaining (≥ 1 per entry).
+  // repeatCounts always equals dailyTaskRemaining.
+  // When there are more entries than remaining games needed, excess entries are
+  // trimmed so we never inflate the total via a forced minimum of 1 per entry.
   // Call this AFTER modifying p.entries, BEFORE saving.
   _redistributeTaskRepeats(p) {
     const total = p.dailyTaskRemaining;
     if (!total || !p.entries.length) return;
+    // Trim excess entries when there are more entries than games still needed.
+    if (p.entries.length > total) {
+      p.entries = p.entries.slice(0, total);
+    }
     const n    = p.entries.length;
     const base = Math.floor(total / n);
     const rem  = total % n;
     p.entries.forEach((e, i) => {
-      e.repeatCount = Math.max(1, base + (i === 0 ? rem : 0));
+      e.repeatCount = base + (i === 0 ? rem : 0);
     });
   },
 
@@ -3234,9 +3240,17 @@ export const PlaylistsManager = {
 
     const progress  = taskData.user?.progress ?? 0;
     const remaining = Math.max(0, require - progress);
-    const base    = remaining > 0 ? Math.floor(remaining / gameIds.length) : 1;
-    const rem     = remaining > 0 ? remaining % gameIds.length : 0;
-    const repeats = gameIds.map((_, i) => Math.max(1, base + (i === 0 ? rem : 0)));
+
+    // When fewer games remain than there are conditions, only create as many
+    // entries as needed (1 repeat each). This avoids inflating the playlist
+    // with extra entries that carry a forced minimum of 1 repeat due to
+    // Math.max(1, 0) when base = 0.
+    const effectiveGameIds = remaining > 0 && remaining < gameIds.length
+      ? gameIds.slice(0, remaining)
+      : gameIds;
+    const base    = remaining > 0 ? Math.floor(remaining / effectiveGameIds.length) : 1;
+    const rem     = remaining > 0 ? remaining % effectiveGameIds.length : 0;
+    const repeats = effectiveGameIds.map((_, i) => base + (i === 0 ? rem : 0));
 
     if (this.load().some(p => p.title === playlistTitle)) {
       if (!confirm(`Плейлист «${playlistTitle}» уже существует. Создать новый?`)) return;
@@ -3252,7 +3266,7 @@ export const PlaylistsManager = {
       this.save(playlists);
     }
 
-    gameIds.forEach((id, i) => this.addEntry(created.id, id, repeats[i]));
+    effectiveGameIds.forEach((id, i) => this.addEntry(created.id, id, repeats[i]));
     this.expandedPlaylistId = created.id;
     onDone();
   },
