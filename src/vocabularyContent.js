@@ -461,7 +461,7 @@ export async function showSessionTooltip() {
     if (!vocId) return;
 
     const pending = JSON.parse(sessionStorage.getItem('latestGames_pendingVocId') || '{}');
-    if (pending.tooltipShown) return;
+    if (pending.vocId === vocId && pending.tooltipShown) return;
 
     if (detectGameType().category !== 'vocabulary') return;
 
