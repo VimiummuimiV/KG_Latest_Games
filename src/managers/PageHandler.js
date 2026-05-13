@@ -1,7 +1,7 @@
 import { highlightExistingVocabularies } from "../vocabularyChecker.js";
 import { attachVocabularyCreation } from "../vocabularyCreation.js";
-import { attachVocabularyParser, getSessionVocId } from "../vocabularyContent.js";
-import { sleep, generateUniqueId } from "../utils.js";
+import { attachVocabularyParser, getSessionVocId, showSessionTooltip } from "../vocabularyContent.js";
+import { sleep, generateUniqueId, getCurrentPage } from "../utils.js";
 import { isVocabularyCreationSupported } from "../vocabularyCreation.js";
 import { detectGameType } from "../utils.js";
 import { GamesDataContainer } from "./GamesDataContainer.js";
@@ -22,9 +22,8 @@ export class PageHandler {
   }
 
   handlePageSpecificLogic() {
-    const { href } = location;
 
-    if (/https?:\/\/klavogonki\.ru\/create\//.test(href)) {
+    if (getCurrentPage() === 'create') {
       const checkVocError = () => {
         const msg = document.querySelector('#content p[align="center"]');
         if (!msg) return false;
@@ -40,13 +39,14 @@ export class PageHandler {
     }
 
     // On non-game pages show the playlist indicator if the playlist is paused
-    if (!/https?:\/\/klavogonki\.ru\/g\/\?gmid=/.test(href)) {
+    if (getCurrentPage() !== 'game') {
       this.gamesDataContainer.createPausedPlaylistIndicator();
     }
 
-    if (/https?:\/\/klavogonki\.ru\/g\/\?gmid=/.test(href)) {
+    if (getCurrentPage() === 'game') {
       // Create the games data container with indicators
       this.gamesDataContainer.createGamesDataContainer();
+      showSessionTooltip();
       
       this.setupHoverListeners();
 

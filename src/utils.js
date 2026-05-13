@@ -67,6 +67,7 @@ export function getCurrentPage() {
   const pathname = window.location.pathname;
   if (pathname === '/') return 'main';
   if (pathname === '/gamelist/') return 'gamelist';
+  if (pathname === '/create/') return 'create';
   if (pathname === '/u/') return 'profile';
   if (pathname.startsWith('/chatlogs/')) return 'chatlogs';
   if (pathname.startsWith('/top/')) return 'rating';

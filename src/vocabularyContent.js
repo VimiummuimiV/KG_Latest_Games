@@ -448,15 +448,14 @@ export function attachVocabularyParser() {
   });
 }
 
-async function showSessionTooltip() {
+export async function showSessionTooltip() {
   // Fetch settings directly from localStorage
   const storedSettings = localStorage.getItem('latestGamesSettings');
   const settings = storedSettings ? JSON.parse(storedSettings) : {};
   
   if (!settings.showVocabularyData) return;
-  
+
   await new Promise(resolve => setTimeout(resolve, 500));
-  if (getCurrentPage() !== 'game') return;
   try {
     const vocId = getSessionVocId();
     if (!vocId) return;
@@ -472,5 +471,4 @@ async function showSessionTooltip() {
     showTooltip(null, data.content, data.metadata);
     setTimeout(() => { try { startHideTimeout(); } catch (_) {} }, 5000);
   } catch (_) {}
-} 
-showSessionTooltip();
+}
