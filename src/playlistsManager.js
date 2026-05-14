@@ -1205,8 +1205,9 @@ export const PlaylistsManager = {
   _keydown: e => {
     if (PlaylistsManager._isPinned()) return;
     if (e.key === 'Escape') PlaylistsManager.hide();
+    const inTextField = !!document.activeElement?.matches('input, textarea');
     if (e.code === 'KeyQ') {
-      if (document.activeElement?.matches('input, textarea')) return;
+      if (inTextField) return;
       const popup = PlaylistsManager.popup;
       if (!popup) return;
       // Q: expand/collapse the hovered playlist — layout-independent.
@@ -1229,7 +1230,7 @@ export const PlaylistsManager = {
       toggleBtn.click();
     }
     if (e.code === 'KeyR') {
-      if (document.activeElement?.matches('input, textarea')) return;
+      if (inTextField) return;
       const popup = PlaylistsManager.popup;
       if (!popup) return;
       // R: rename hovered entry first, fall back to hovered playlist header.
@@ -1245,7 +1246,7 @@ export const PlaylistsManager = {
       hoveredRow.querySelector('.playlist-rename-btn')?.click();
     }
     if (e.code === 'KeyD') {
-      if (document.activeElement?.matches('input, textarea')) return;
+      if (inTextField) return;
       const popup = PlaylistsManager.popup;
       if (!popup) return;
       // D: duplicate the hovered entry row — or the hovered playlist header when
@@ -1262,7 +1263,7 @@ export const PlaylistsManager = {
       hoveredHeader.querySelector('.playlist-duplicate-btn')?.click();
     }
     if (e.code === 'KeyF') {
-      if (document.activeElement?.matches('input, textarea')) return;
+      if (inTextField) return;
       const popup = PlaylistsManager.popup;
       if (!popup) return;
       // F: toggle filters chip strip in the game picker (only when picker is open).
@@ -1272,7 +1273,7 @@ export const PlaylistsManager = {
       pickerBody.querySelector('.playlist-picker-filters-btn')?.click();
     }
     if (e.code === 'KeyS') {
-      if (document.activeElement?.matches('input, textarea')) return;
+      if (inTextField) return;
       const popup = PlaylistsManager.popup;
       if (!popup) return;
 
@@ -1302,6 +1303,32 @@ export const PlaylistsManager = {
           if (block && msBar) block.style.setProperty('--playlist-multiselect-bar-height', `${msBar.offsetHeight}px`);
         });
       }
+    }
+    if (e.code === 'KeyA') {
+      if (inTextField) return;
+      const popup = PlaylistsManager.popup;
+      if (!popup) return;
+      e.preventDefault();
+      popup.querySelector('.playlists-add-btn')?.click();
+      popup.querySelector('.playlists-create-input')?.blur();
+    }
+    if (e.code === 'KeyT') {
+      if (inTextField) return;
+      const popup = PlaylistsManager.popup;
+      if (!popup) return;
+      const form = popup.querySelector('.playlists-create-form');
+      if (!form) return;
+      e.preventDefault();
+      form.querySelector('.playlists-create-task-btn')?.click();
+    }
+    if (e.code === 'KeyG') {
+      if (inTextField) return;
+      const popup = PlaylistsManager.popup;
+      if (!popup) return;
+      const form = popup.querySelector('.playlists-create-form');
+      if (!form) return;
+      e.preventDefault();
+      form.querySelector('.playlists-create-groups-toggle')?.click();
     }
   },
 
@@ -1425,6 +1452,9 @@ export const PlaylistsManager = {
       '[Q] Развернуть / Свернуть плейлист под курсором',
       '[R] Переименовать плейлист или игру под курсором',
       '[D] Дублировать плейлист или игру под курсором',
+      '[A] Открыть / Закрыть форму создания плейлиста',
+      '[T] Создать плейлист из задачи дня (форма открыта)',
+      '[G] Показать / Скрыть группы для создания плейлиста (форма открыта)',
       '[Tab] Открыть / Закрыть список игр для добавления',
       '[F] Показать / Скрыть фильтры при добавлении игр',
       '[S] Режим множественного выделения игр (плейлист или список добавления)',
@@ -3121,7 +3151,7 @@ export const PlaylistsManager = {
 
     const taskBtn = _el('button', 'playlists-create-task-btn');
     taskBtn.innerHTML = `${icons.plus}<span>Из задачи</span>`;
-    createCustomTooltip(taskBtn, 'Создать плейлист из задачи дня');
+    createCustomTooltip(taskBtn, '[Клик / T] Создать плейлист из задачи дня');
     taskBtn.addEventListener('click', e => {
       e.stopPropagation();
       this._createPlaylistFromDailyTask(onDone);
@@ -3133,6 +3163,7 @@ export const PlaylistsManager = {
       if (groups.length) {
         const groupsToggle = _el('button', 'playlists-create-groups-toggle');
         groupsToggle.innerHTML = `${icons.plus}<span>Из группы</span>`;
+        createCustomTooltip(groupsToggle, '[Клик / G] Показать / Скрыть группы для создания плейлиста');
         actionsRow.append(groupsToggle, taskBtn);
 
         const groupsRow = _el('div', 'playlists-create-groups-row latest-games-hidden');
