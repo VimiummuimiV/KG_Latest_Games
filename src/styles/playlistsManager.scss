@@ -461,16 +461,12 @@ body.playlist-drag-active * { cursor: grabbing !important; }
     }
 
     .playlist-title {
-      flex: 1;
       font-weight: 600;
       font-size: 0.85em;
       color: var(--rg-bg-primary);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5em;
     }
 
     // Small "N игр" badge — always visible on every playlist header row
@@ -642,6 +638,23 @@ body.playlist-drag-active * { cursor: grabbing !important; }
       }
     }
 
+    // Left-actions group: play/pause/stop + drag handle (movement controls)
+    .playlist-header-left-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2em;
+      flex-shrink: 0;
+    }
+
+    // Meta group: data representation chips (badge, game count, task chips) — not actions, not title
+    .playlist-header-meta {
+      flex: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+      flex-shrink: 0;
+    }
+
     // Drag handle — inherits color from the header row so it always contrasts
     // on both the neutral-gray (inactive) and amber/green (active) backgrounds.
     // Same grab/opacity pattern as .playlist-entry-drag-handle.
@@ -662,7 +675,8 @@ body.playlist-drag-active * { cursor: grabbing !important; }
 
     &:hover .playlist-header-stepper--default { opacity: 0.8; }
 
-    .playlist-header-actions {
+    // Right-actions group: management controls (rename, duplicate, delete, stepper, shuffle)
+    .playlist-header-right-actions {
       display: inline-flex;
       align-items: center;
       gap: 2px;
@@ -873,6 +887,22 @@ body.playlist-drag-active * { cursor: grabbing !important; }
     .playlist-entry-remove {
       @include playlist-icon-btn('--rg-popup-btn-remove', 20px, 12px, true);
       position: relative;
+      flex-shrink: 0;
+    }
+
+    // Left-actions group: movement controls (play, drag handle, duplicate)
+    .playlist-entry-left-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35em;
+      flex-shrink: 0;
+    }
+
+    // Right-actions group: management controls (stepper, params, rename, remove)
+    .playlist-entry-right-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35em;
       flex-shrink: 0;
     }
 
@@ -1833,8 +1863,7 @@ body.playlist-drag-active * { cursor: grabbing !important; }
 // ─────────────────────────────────────────────────────────────────────────────
 
 .playlists-list--playing {
-  .playlist-block-drag-handle,
-  .playlist-header-actions {
+  .playlist-header-right-actions {
     display: none !important;
   }
 }

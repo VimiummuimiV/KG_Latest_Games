@@ -1562,7 +1562,7 @@ export const PlaylistsManager = {
     const row = _el('div', `playlist-header-row${isActive ? ' playlist-header-row--active' : ''}${isActive && session?.paused ? ' playlist-header-row--paused' : ''}`);
 
     if (isActive) {
-      // Active: pause and stop buttons on the LEFT, then drag handle, then title + badge on the RIGHT
+      // Active: left-actions (pause + stop + drag handle) | title | meta (badge + chips) | no right-actions
       // (no shuffle or cycle controls since those apply to the whole playlist and are not relevant when it's already active).
       const isPaused = !!(session && session.paused);
       const pauseBtn = _el('button', 'playlist-pause-btn');
@@ -1610,23 +1610,27 @@ export const PlaylistsManager = {
       });
 
       const titleSpan = _el('span', 'playlist-title', playlist.title);
+
+      const meta = _el('div', 'playlist-header-meta');
       const entry = _getPlaylistEntry(playlist, session);
       if (entry) {
         const badge = _el('div', 'playlist-active-badge');
         _renderActiveBadge(badge, playlist, session, entry);
-        titleSpan.appendChild(badge);
+        meta.appendChild(badge);
       }
-
       // Game count chip — always visible on every header (active or not)
-      _appendGameCountChip(titleSpan, playlist, this.main);
-      _appendTaskChips(titleSpan, playlist);
+      _appendGameCountChip(meta, playlist, this.main);
+      _appendTaskChips(meta, playlist);
 
       const blockHandle = _el('span', 'playlist-block-drag-handle');
       blockHandle.innerHTML = icons.dragable;
 
-      row.append(pauseBtn, stopBtn, blockHandle, titleSpan);
+      const leftActions = _el('div', 'playlist-header-left-actions');
+      leftActions.append(pauseBtn, stopBtn, blockHandle);
+
+      row.append(leftActions, titleSpan, meta);
     } else {
-      // Inactive: play button on the LEFT, then title + badge, then cycle stepper + shuffle + rename + duplicate + delete buttons on the RIGHT.
+      // Inactive: left-actions (play + drag handle) | title | meta (chips) | right-actions (stepper + shuffle + rename + dup + del).
       const playBtn = _el('button', 'playlist-play-btn');
       playBtn.innerHTML = icons.start;
       createCustomTooltip(playBtn, `Запустить плейлист «${playlist.title}»`);
@@ -1634,9 +1638,10 @@ export const PlaylistsManager = {
 
       const titleSpan = _el('span', 'playlist-title', playlist.title);
 
+      const meta = _el('div', 'playlist-header-meta');
       // Game count chip — always visible on every header (active or not)
-      _appendGameCountChip(titleSpan, playlist, this.main);
-      _appendTaskChips(titleSpan, playlist);
+      _appendGameCountChip(meta, playlist, this.main);
+      _appendTaskChips(meta, playlist);
 
       // Playlist-level cycle stepper — only shown when repeatCount > 1 or on hover
       const cycleCount     = playlist.repeatCount ?? 1;
@@ -1734,9 +1739,13 @@ export const PlaylistsManager = {
       const blockHandle = _el('span', 'playlist-block-drag-handle');
       blockHandle.innerHTML = icons.dragable;
 
-      const actions = _el('div', 'playlist-header-actions');
-      actions.append(cycleStepper, shufflePlayBtn, renameBtn, dupPlaylistBtn, delBtn);
-      row.append(playBtn, blockHandle, titleSpan, actions);
+      const leftActions = _el('div', 'playlist-header-left-actions');
+      leftActions.append(playBtn, blockHandle);
+
+      const rightActions = _el('div', 'playlist-header-right-actions');
+      rightActions.append(cycleStepper, shufflePlayBtn, renameBtn, dupPlaylistBtn, delBtn);
+
+      row.append(leftActions, titleSpan, meta, rightActions);
     }
 
     // Toggle expand on row click (excluding buttons)
@@ -2130,7 +2139,13 @@ export const PlaylistsManager = {
       label.insertAdjacentElement('afterend', wrap);
     });
 
-    row.append(entryPlayBtn, handle, dupBtn, label, stepper, paramsBtn, entryRenameBtn, removeBtn);
+    const leftActions = _el('div', 'playlist-entry-left-actions');
+    leftActions.append(entryPlayBtn, handle, dupBtn);
+
+    const rightActions = _el('div', 'playlist-entry-right-actions');
+    rightActions.append(stepper, paramsBtn, entryRenameBtn, removeBtn);
+
+    row.append(leftActions, label, rightActions);
 
     // ── Checkbox — always in DOM; CSS hides it until playlist-entries--selection ──
     {
@@ -4157,7 +4172,7 @@ async function _appendTaskChips(titleSpan, playlist) {
 }
 
 function _syncTaskChips(block, playlist) {
-  _appendTaskChips(block?.querySelector('.playlist-title'), playlist);
+  _appendTaskChips(block?.querySelector('.playlist-header-meta'), playlist);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
