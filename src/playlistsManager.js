@@ -1472,7 +1472,7 @@ export const PlaylistsManager = {
 
     const addBtn = _el('button', 'playlists-add-btn');
     addBtn.innerHTML = `${icons.plus}<span>Новый</span>`;
-    createCustomTooltip(addBtn, 'Создать новый плейлист');
+    createCustomTooltip(addBtn, '[Клик / A] Открыть / Закрыть форму создания плейлиста');
     addBtn.addEventListener('click', e => {
       e.stopPropagation();
       const existing = panel.querySelector('.playlists-create-form');
