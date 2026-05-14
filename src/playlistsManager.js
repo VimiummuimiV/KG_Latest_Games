@@ -564,7 +564,7 @@ export const PlaylistsManager = {
     const base = Math.floor(total / n);
     const rem  = total % n;
     p.entries.forEach((e, i) => {
-      e.repeatCount = base + (i === 0 ? rem : 0);
+      e.repeatCount = base + (i < rem ? 1 : 0);
     });
   },
 
@@ -3250,7 +3250,7 @@ export const PlaylistsManager = {
       : gameIds;
     const base    = remaining > 0 ? Math.floor(remaining / effectiveGameIds.length) : 1;
     const rem     = remaining > 0 ? remaining % effectiveGameIds.length : 0;
-    const repeats = effectiveGameIds.map((_, i) => base + (i === 0 ? rem : 0));
+    const repeats = effectiveGameIds.map((_, i) => base + (i < rem ? 1 : 0));
 
     if (this.load().some(p => p.title === playlistTitle)) {
       if (!confirm(`Плейлист «${playlistTitle}» уже существует. Создать новый?`)) return;
