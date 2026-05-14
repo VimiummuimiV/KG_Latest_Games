@@ -1456,8 +1456,33 @@ export const PlaylistsManager = {
       form.querySelector('.playlists-create-input')?.focus();
     });
 
+    const clearBtn = _el('button', 'playlists-clear-btn');
+    const _syncClearBtn = () => {
+      clearBtn.innerHTML = this.load().length > 0 ? icons.trashSomething : icons.trashNothing;
+    };
+    _syncClearBtn();
+    createCustomTooltip(clearBtn,
+      '[Клик] Удалить все плейлисты задачи дня' +
+      '[Ctrl + Клик] Удалить все плейлисты'
+    );
+    clearBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (e.ctrlKey) {
+        if (!confirm('Удалить все плейлисты?')) return;
+        this.save([]);
+      } else {
+        const all = this.load();
+        const remaining = all.filter(p => !p.dailyTaskRequire);
+        if (all.length === remaining.length) return;
+        if (!confirm('Удалить все плейлисты задачи дня?')) return;
+        this.save(remaining);
+      }
+      cancelActivePlaylist();
+      this.refresh();
+    });
+
     const actions = _el('div', 'playlists-header-actions');
-    actions.append(randomBtn, addBtn);
+    actions.append(clearBtn, randomBtn, addBtn);
     header.append(titleSpan, actions);
     panel.appendChild(header);
 
