@@ -900,6 +900,37 @@ export const PlaylistsManager = {
     });
   },
 
+  // Drag-to-scrub on a stepper count span: hold LMB and drag up to increase,
+  // drag down to decrease. One step fires every PX_PER_STEP pixels of movement.
+  _attachStepperDrag(countSpan, decFn, incFn) {
+    const PX_PER_STEP = 8;
+    let startY = 0;
+    let accum  = 0;
+
+    const onMove = e => {
+      accum += startY - e.clientY;
+      startY = e.clientY;
+      while (accum >=  PX_PER_STEP) { incFn(); accum -= PX_PER_STEP; }
+      while (accum <= -PX_PER_STEP) { decFn(); accum += PX_PER_STEP; }
+    };
+
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup',   onUp);
+      document.body.style.removeProperty('cursor');
+    };
+
+    countSpan.addEventListener('mousedown', e => {
+      if (e.button !== 0) return;
+      e.preventDefault(); // prevent text selection while dragging
+      startY = e.clientY;
+      accum  = 0;
+      document.body.style.cursor = 'ns-resize';
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup',   onUp);
+    });
+  },
+
   // Attach long-press selection-mode activation to a scrollable container.
   // container       — the element to listen on (entryList or picker body)
   // rowSelector     — CSS selector to find the pressed row
@@ -1655,21 +1686,23 @@ export const PlaylistsManager = {
       createCustomTooltip(cycleStepper, 'Количество повторов всего плейлиста');
       if (cycleCount <= 1) cycleStepper.classList.add('playlist-header-stepper--default');
 
-      this._attachButtonHold(cycleDecBtn, () => {
+      const onCycleDec = () => {
         const next = Math.max(1, (playlist.repeatCount ?? 1) - 1);
         this.setPlaylistCycles(playlist.id, next);
         playlist.repeatCount = next;
         cycleCountSpan.textContent = String(next);
         cycleStepper.classList.toggle('playlist-header-stepper--default', next <= 1);
-      });
-
-      this._attachButtonHold(cycleIncBtn, () => {
+      };
+      const onCycleInc = () => {
         const next = (playlist.repeatCount ?? 1) + 1;
         this.setPlaylistCycles(playlist.id, next);
         playlist.repeatCount = next;
         cycleCountSpan.textContent = String(next);
         cycleStepper.classList.remove('playlist-header-stepper--default');
-      });
+      };
+      this._attachButtonHold(cycleDecBtn, onCycleDec);
+      this._attachButtonHold(cycleIncBtn, onCycleInc);
+      this._attachStepperDrag(cycleCountSpan, onCycleDec, onCycleInc);
 
       const shufflePlayBtn = _el('button', 'playlist-play-shuffle-btn');
       shufflePlayBtn.innerHTML = icons.random;
@@ -1907,7 +1940,7 @@ export const PlaylistsManager = {
       ? Math.max(0, entry.repeatCount - sessionAtBuild.remainingRepeats)
       : 0;
 
-    this._attachButtonHold(decBtn, () => {
+    const onEntryDec = () => {
       const next = Math.max(1, entry.repeatCount - 1);
       this.setRepeat(playlist.id, entry.id, next);
       countSpan.textContent = String(next);
@@ -1917,8 +1950,8 @@ export const PlaylistsManager = {
       const msBar = row.closest('.playlist-entries')?.querySelector('.playlist-multiselect-bar');
       if (msBar?._refreshFilterRow) msBar._refreshFilterRow();
       _syncTaskChips(row.closest('.playlist-block'), playlist);
-    });
-    this._attachButtonHold(incBtn, () => {
+    };
+    const onEntryInc = () => {
       const next = entry.repeatCount + 1;
       this.setRepeat(playlist.id, entry.id, next);
       countSpan.textContent = String(next);
@@ -1928,7 +1961,10 @@ export const PlaylistsManager = {
       const msBar = row.closest('.playlist-entries')?.querySelector('.playlist-multiselect-bar');
       if (msBar?._refreshFilterRow) msBar._refreshFilterRow();
       _syncTaskChips(row.closest('.playlist-block'), playlist);
-    });
+    };
+    this._attachButtonHold(decBtn, onEntryDec);
+    this._attachButtonHold(incBtn, onEntryInc);
+    this._attachStepperDrag(countSpan, onEntryDec, onEntryInc);
     stepper.append(decBtn, countSpan, incBtn);
 
     // Remove
@@ -2811,18 +2847,21 @@ export const PlaylistsManager = {
       }
     };
 
-    this._attachButtonHold(repDecBtn, () => {
+    const onRepDec = () => {
       if (sel.size === 0) return;
       repCount.value = Math.max(1, repCount.value - 1);
       repCountSpan.textContent = String(repCount.value);
       applyBulkRepeat();
-    });
-    this._attachButtonHold(repIncBtn, () => {
+    };
+    const onRepInc = () => {
       if (sel.size === 0) return;
       repCount.value++;
       repCountSpan.textContent = String(repCount.value);
       applyBulkRepeat();
-    });
+    };
+    this._attachButtonHold(repDecBtn, onRepDec);
+    this._attachButtonHold(repIncBtn, onRepInc);
+    this._attachStepperDrag(repCountSpan, onRepDec, onRepInc);
 
     const dupBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--copy');
     dupBtn.innerHTML = icons.copy;
@@ -2990,16 +3029,19 @@ export const PlaylistsManager = {
       return (!input.value.trim() || isNaN(v)) ? dupCount.value : Math.max(1, Math.min(DUP_MAX, v));
     };
 
-    this._attachButtonHold(decBtn, () => {
+    const onDupDec = () => {
       if (input.value.trim()) return; // input has priority — stepper is ignored
       dupCount.value = Math.max(1, dupCount.value - 1);
       stepperCountSpan.textContent = String(dupCount.value);
-    });
-    this._attachButtonHold(incBtn, () => {
+    };
+    const onDupInc = () => {
       if (input.value.trim()) return;
       dupCount.value = Math.min(DUP_MAX, dupCount.value + 1);
       stepperCountSpan.textContent = String(dupCount.value);
-    });
+    };
+    this._attachButtonHold(decBtn, onDupDec);
+    this._attachButtonHold(incBtn, onDupInc);
+    this._attachStepperDrag(stepperCountSpan, onDupDec, onDupInc);
 
     // ── Confirm ───────────────────────────────────────────────────────────
     const confirmBtn = _el('button', 'playlist-dup-confirm');
