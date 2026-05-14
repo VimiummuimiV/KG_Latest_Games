@@ -918,6 +918,9 @@ export const PlaylistsManager = {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup',   onUp);
       document.body.style.removeProperty('cursor');
+      // Swallow the trailing click so the outside-click handler doesn't close
+      // the panel when the drag ends with the mouse outside the popup.
+      document.addEventListener('click', e => e.stopPropagation(), { capture: true, once: true });
     };
 
     countSpan.addEventListener('mousedown', e => {
