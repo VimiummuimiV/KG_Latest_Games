@@ -1863,7 +1863,8 @@ body.playlist-drag-active * { cursor: grabbing !important; }
 // ─────────────────────────────────────────────────────────────────────────────
 
 .playlists-list--playing {
-  .playlist-header-right-actions {
+  .playlist-header-right-actions,
+  .playlist-entry-right-actions {
     display: none !important;
   }
 }
