@@ -1751,32 +1751,20 @@ export const PlaylistsManager = {
       createCustomTooltip(cycleStepper, `Количество повторов всего плейлиста ${STEPPER_DRAG_TIP}`);
       if (cycleCount <= 1) cycleStepper.classList.add('playlist-header-stepper--default');
 
-      const onCycleDec = () => {
-        const next = Math.max(1, (playlist.repeatCount ?? 1) - 1);
+      const setCycleCount = next => {
         this.setPlaylistCycles(playlist.id, next);
         playlist.repeatCount = next;
         cycleCountSpan.textContent = String(next);
         cycleStepper.classList.toggle('playlist-header-stepper--default', next <= 1);
       };
-      const onCycleInc = () => {
-        const next = (playlist.repeatCount ?? 1) + 1;
-        this.setPlaylistCycles(playlist.id, next);
-        playlist.repeatCount = next;
-        cycleCountSpan.textContent = String(next);
-        cycleStepper.classList.remove('playlist-header-stepper--default');
-      };
+      const onCycleDec = () => setCycleCount(Math.max(1, (playlist.repeatCount ?? 1) - 1));
+      const onCycleInc = () => setCycleCount((playlist.repeatCount ?? 1) + 1);
       this._attachButtonHold(cycleDecBtn, onCycleDec);
       this._attachButtonHold(cycleIncBtn, onCycleInc);
       this._attachStepperDrag(cycleCountSpan, onCycleDec, onCycleInc);
       this._attachCountDblClick(cycleCountSpan, {
         getValue: () => playlist.repeatCount ?? 1,
-        setValue: v => {
-          const next = Math.max(1, v);
-          this.setPlaylistCycles(playlist.id, next);
-          playlist.repeatCount = next;
-          cycleCountSpan.textContent = String(next);
-          cycleStepper.classList.toggle('playlist-header-stepper--default', next <= 1);
-        },
+        setValue: v => setCycleCount(Math.max(1, v)),
       });
 
       const shufflePlayBtn = _el('button', 'playlist-play-shuffle-btn');
@@ -2020,11 +2008,10 @@ export const PlaylistsManager = {
       ? Math.max(0, entry.repeatCount - sessionAtBuild.remainingRepeats)
       : 0;
 
-    const onEntryDec = () => {
-      const next = Math.max(1, entry.repeatCount - 1);
+    const setEntryRepeat = next => {
       this.setRepeat(playlist.id, entry.id, next);
-      countSpan.textContent = String(next);
       entry.repeatCount = next;
+      countSpan.textContent      = String(next);
       playCountBadge.textContent = `×${next}`;
       _updatePlaylistHud();
       _updateEntryProgress(row, entry, playedCount, isCurrentEntry);
@@ -2032,37 +2019,14 @@ export const PlaylistsManager = {
       if (msBar?._refreshFilterRow) msBar._refreshFilterRow();
       _syncTaskChips(row.closest('.playlist-block'), playlist);
     };
-    const onEntryInc = () => {
-      const next = entry.repeatCount + 1;
-      this.setRepeat(playlist.id, entry.id, next);
-      countSpan.textContent = String(next);
-      entry.repeatCount = next;
-      playCountBadge.textContent = `×${next}`;
-      _updatePlaylistHud();
-      _updateEntryProgress(row, entry, playedCount, isCurrentEntry);
-      const msBar = row.closest('.playlist-entries')?.querySelector('.playlist-multiselect-bar');
-      if (msBar?._refreshFilterRow) msBar._refreshFilterRow();
-      _syncTaskChips(row.closest('.playlist-block'), playlist);
-    };
+    const onEntryDec = () => setEntryRepeat(Math.max(1, entry.repeatCount - 1));
+    const onEntryInc = () => setEntryRepeat(entry.repeatCount + 1);
     this._attachButtonHold(decBtn, onEntryDec);
     this._attachButtonHold(incBtn, onEntryInc);
     this._attachStepperDrag(countSpan,      onEntryDec, onEntryInc);
     this._attachStepperDrag(playCountBadge, onEntryDec, onEntryInc);
-
-    const entrySetValue = v => {
-      const next = Math.max(1, v);
-      this.setRepeat(playlist.id, entry.id, next);
-      entry.repeatCount = next;
-      countSpan.textContent  = String(next);
-      playCountBadge.textContent = `×${next}`;
-      _updatePlaylistHud();
-      _updateEntryProgress(row, entry, playedCount, isCurrentEntry);
-      const msBar2 = row.closest('.playlist-entries')?.querySelector('.playlist-multiselect-bar');
-      if (msBar2?._refreshFilterRow) msBar2._refreshFilterRow();
-      _syncTaskChips(row.closest('.playlist-block'), playlist);
-    };
-    this._attachCountDblClick(countSpan,      { getValue: () => entry.repeatCount, setValue: entrySetValue });
-    this._attachCountDblClick(playCountBadge, { getValue: () => entry.repeatCount, setValue: entrySetValue });
+    this._attachCountDblClick(countSpan,      { getValue: () => entry.repeatCount, setValue: v => setEntryRepeat(Math.max(1, v)) });
+    this._attachCountDblClick(playCountBadge, { getValue: () => entry.repeatCount, setValue: v => setEntryRepeat(Math.max(1, v)) });
     stepper.append(decBtn, countSpan, incBtn);
 
     // Remove
