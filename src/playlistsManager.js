@@ -3376,9 +3376,12 @@ export const PlaylistsManager = {
           { ...TASK_GAME_DEFAULTS, gametype: 'voc', vocId, vocName: voc?.name ?? '' }
         ).id;
       }
-      // Unknown gametype — match by key or skip silently
-      const found = groups.groups.flatMap(g => g.games).find(g => g.params.gametype === gametype);
-      return found ? found.id : [];
+      // Known gametype (noerror, abra, marathon, etc.) — find existing or auto-create
+      if (!gameTypes[gametype]) return [];
+      return findOrCreate(
+        g => g.params.gametype === gametype,
+        { ...TASK_GAME_DEFAULTS, gametype }
+      ).id;
     });
 
     if (!gameIds.length) {
