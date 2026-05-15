@@ -1855,7 +1855,7 @@ export const PlaylistsManager = {
     // ── Long-press on any entry row to enter selection mode ──────────────
     this._attachLongPressSelection(entryList, {
       rowSelector:     '.playlist-entry-row',
-      skipSelector:    'button, input, .playlist-entry-drag-handle',
+      skipSelector:    'button, input, .playlist-entry-drag-handle, .playlist-stepper-count, .playlist-entry-play-count',
       activeClass:     'playlist-entries--selection',
       isAlreadyActive: () => entryList.classList.contains('playlist-entries--selection'),
       onActivate: row => {
