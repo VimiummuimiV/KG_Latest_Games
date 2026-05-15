@@ -63,6 +63,25 @@ body.playlist-drag-active * { cursor: grabbing !important; }
   &:hover { background: $hover-bg; }
 }
 
+// Inline ×N count badge — shared by picker's added-count and entry play-count.
+// Color: --rg-popup-btn-save. Layout/interaction properties (display, cursor,
+// user-select, flex-shrink) are set per-selector since they differ between uses.
+@mixin playlist-count-badge {
+  font-size: 0.72em;
+  font-weight: 700;
+  color: hsl(var(--rg-popup-btn-save));
+  background: hsla(var(--rg-popup-btn-save) / 0.12);
+  border: 1px solid hsla(var(--rg-popup-btn-save) / 0.4);
+  border-radius: 3px !important;
+  padding: 0 4px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+  flex-shrink: 0;
+  align-items: center;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
 // Labeled inline button (text + optional icon, card background, color accent).
 @mixin playlist-labeled-btn($color, $icon-size: 13px) {
   display: inline-flex;
@@ -890,6 +909,14 @@ body.playlist-drag-active * { cursor: grabbing !important; }
       flex-shrink: 0;
     }
 
+    // Play-count badge — hidden at rest; revealed by .playlists-list--playing.
+    // cursor:ns-resize signals that it's drag-to-scrub.
+    .playlist-entry-play-count {
+      @include playlist-count-badge;
+      display: none;
+      cursor: ns-resize;
+    }
+
     // Left-actions group: movement controls (play, drag handle, duplicate)
     .playlist-entry-left-actions {
       display: inline-flex;
@@ -1373,16 +1400,7 @@ body.playlist-drag-active * { cursor: grabbing !important; }
 
     // Live ×N counter shown next to desc when game is already in playlist
     .playlist-picker-game-added-count {
-      font-size: 0.72em;
-      font-weight: 700;
-      color: hsl(var(--rg-popup-btn-save));
-      background: hsla(var(--rg-popup-btn-save) / 0.12);
-      border: 1px solid hsla(var(--rg-popup-btn-save) / 0.4);
-      border-radius: 3px !important;
-      padding: 0 4px;
-      line-height: 1.5;
-      font-variant-numeric: tabular-nums;
-      transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+      @include playlist-count-badge;
     }
 
     // Mirror the remove tints onto the added-count badge whenever the add button
@@ -1866,6 +1884,10 @@ body.playlist-drag-active * { cursor: grabbing !important; }
   .playlist-header-right-actions,
   .playlist-entry-right-actions {
     display: none !important;
+  }
+
+  .playlist-entry-play-count {
+    display: inline-flex !important;
   }
 }
 

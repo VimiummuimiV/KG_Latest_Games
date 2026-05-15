@@ -11,6 +11,8 @@ const STORAGE_KEY  = 'latestGamesPlaylists';
 const SESSION_KEY  = 'latestGames_activePlaylist';
 const SHUFFLE_KEY  = 'latestGames_randomShuffleBag';
 
+const STEPPER_DRAG_TIP = '[ЛКМ + ↑↓] изменить [Shift + ЛКМ + ↑↓] изменить точнее';
+
 function _getPositionMode() {
   return PlaylistsManager.main?.positionDisplayMode ?? 'fraction';
 }
@@ -902,16 +904,19 @@ export const PlaylistsManager = {
 
   // Drag-to-scrub on a stepper count span: hold LMB and drag up to increase,
   // drag down to decrease. One step fires every PX_PER_STEP pixels of movement.
+  // Hold Shift while dragging for fine control (4× slower).
   _attachStepperDrag(countSpan, decFn, incFn) {
-    const PX_PER_STEP = 8;
+    const PX_PER_STEP      = 8;
+    const PX_PER_STEP_SLOW = 32; // Shift held → fine control
     let startY = 0;
     let accum  = 0;
 
     const onMove = e => {
+      const step = e.shiftKey ? PX_PER_STEP_SLOW : PX_PER_STEP;
       accum += startY - e.clientY;
       startY = e.clientY;
-      while (accum >=  PX_PER_STEP) { incFn(); accum -= PX_PER_STEP; }
-      while (accum <= -PX_PER_STEP) { decFn(); accum += PX_PER_STEP; }
+      while (accum >=  step) { incFn(); accum -= step; }
+      while (accum <= -step) { decFn(); accum += step; }
     };
 
     const onUp = () => {
@@ -1686,7 +1691,7 @@ export const PlaylistsManager = {
       const cycleIncBtn    = _el('button', 'playlist-stepper-btn');
       cycleIncBtn.innerHTML = icons.chevronRight;
       cycleStepper.append(cycleDecBtn, cycleCountSpan, cycleIncBtn);
-      createCustomTooltip(cycleStepper, 'Количество повторов всего плейлиста');
+      createCustomTooltip(cycleStepper, `Количество повторов всего плейлиста ${STEPPER_DRAG_TIP}`);
       if (cycleCount <= 1) cycleStepper.classList.add('playlist-header-stepper--default');
 
       const onCycleDec = () => {
@@ -1932,7 +1937,11 @@ export const PlaylistsManager = {
     const countSpan  = _el('span', 'playlist-stepper-count', String(entry.repeatCount));
     const incBtn     = _el('button', 'playlist-stepper-btn');
     incBtn.innerHTML = icons.chevronRight;
-    createCustomTooltip(stepper, 'Количество повторов этой игры');
+    createCustomTooltip(stepper, `Количество повторов этой игры ${STEPPER_DRAG_TIP}`);
+
+    // Play-count badge — same value as stepper, shown while playing (drag-to-scrub)
+    const playCountBadge = _el('span', 'playlist-entry-play-count', `×${entry.repeatCount}`);
+    createCustomTooltip(playCountBadge, `Количество повторов этой игры ${STEPPER_DRAG_TIP}`);
 
     // Snapshot how many plays have already happened for this entry at build time.
     // We keep this fixed so that stepper changes (which shift remainingRepeats by
@@ -1948,6 +1957,7 @@ export const PlaylistsManager = {
       this.setRepeat(playlist.id, entry.id, next);
       countSpan.textContent = String(next);
       entry.repeatCount = next;
+      playCountBadge.textContent = `×${next}`;
       _updatePlaylistHud();
       _updateEntryProgress(row, entry, playedCount, isCurrentEntry);
       const msBar = row.closest('.playlist-entries')?.querySelector('.playlist-multiselect-bar');
@@ -1959,6 +1969,7 @@ export const PlaylistsManager = {
       this.setRepeat(playlist.id, entry.id, next);
       countSpan.textContent = String(next);
       entry.repeatCount = next;
+      playCountBadge.textContent = `×${next}`;
       _updatePlaylistHud();
       _updateEntryProgress(row, entry, playedCount, isCurrentEntry);
       const msBar = row.closest('.playlist-entries')?.querySelector('.playlist-multiselect-bar');
@@ -1967,7 +1978,8 @@ export const PlaylistsManager = {
     };
     this._attachButtonHold(decBtn, onEntryDec);
     this._attachButtonHold(incBtn, onEntryInc);
-    this._attachStepperDrag(countSpan, onEntryDec, onEntryInc);
+    this._attachStepperDrag(countSpan,      onEntryDec, onEntryInc);
+    this._attachStepperDrag(playCountBadge, onEntryDec, onEntryInc);
     stepper.append(decBtn, countSpan, incBtn);
 
     // Remove
@@ -2184,7 +2196,7 @@ export const PlaylistsManager = {
     const rightActions = _el('div', 'playlist-entry-right-actions');
     rightActions.append(stepper, paramsBtn, entryRenameBtn, removeBtn);
 
-    row.append(leftActions, label, rightActions);
+    row.append(leftActions, label, rightActions, playCountBadge);
 
     // ── Checkbox — always in DOM; CSS hides it until playlist-entries--selection ──
     {
@@ -2833,7 +2845,7 @@ export const PlaylistsManager = {
     const repIncBtn     = _el('button', 'playlist-stepper-btn');
     repIncBtn.innerHTML = icons.chevronRight;
     repStepper.append(repDecBtn, repCountSpan, repIncBtn);
-    createCustomTooltip(repStepper, 'Задать повторы для выбранных');
+    createCustomTooltip(repStepper, `Задать повторы для выбранных ${STEPPER_DRAG_TIP}`);
 
     const applyBulkRepeat = () => {
       this.bulkSetRepeat(playlist.id, [...sel], repCount.value);
@@ -3025,7 +3037,7 @@ export const PlaylistsManager = {
     const incBtn        = _el('button', 'playlist-stepper-btn');
     incBtn.innerHTML    = icons.chevronRight;
     stepperWrap.append(decBtn, stepperCountSpan, incBtn);
-    createCustomTooltip(stepperWrap, `Количество копий (макс. ${DUP_MAX})`);
+    createCustomTooltip(stepperWrap, `Количество копий (макс. ${DUP_MAX}) ${STEPPER_DRAG_TIP}`);
 
     const getEffectiveCount = () => {
       const v = parseInt(input.value, 10);
