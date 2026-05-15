@@ -157,6 +157,7 @@ body.playlist-drag-active * { cursor: grabbing !important; }
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     color: $count-color;
+    cursor: ns-resize;
     user-select: none;
   }
 }
