@@ -3747,7 +3747,7 @@ export const PlaylistsManager = {
         const syncAddBtnTooltip = () => {
           const n = getCount();
           updateTooltipContent(addBtn, n > 0
-            ? `Добавить ещё одну копию [Уже в плейлисте] ${n} шт. [Ctrl + Клик] Убрать одну копию`
+            ? `[Уже в плейлисте] ${n} шт. [Клик] Добавить ещё одну копию [Ctrl + Клик] Убрать одну копию`
             : 'Добавить в плейлист');
         };
 
