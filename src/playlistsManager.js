@@ -11,7 +11,11 @@ const STORAGE_KEY  = 'latestGamesPlaylists';
 const SESSION_KEY  = 'latestGames_activePlaylist';
 const SHUFFLE_KEY  = 'latestGames_randomShuffleBag';
 
-const STEPPER_DRAG_TIP = '[ЛКМ + ↑↓] изменить [Shift + ЛКМ + ↑↓] изменить точнее';
+const STEPPER_DRAG_TIP = `
+      [ЛКМ + ↑↓] изменить
+      [Shift + ЛКМ + ↑↓] изменить точнее
+      [Двойной клик] ввести значение
+`;
 
 function _getPositionMode() {
   return PlaylistsManager.main?.positionDisplayMode ?? 'fraction';
@@ -939,6 +943,59 @@ export const PlaylistsManager = {
     });
   },
 
+  // Double-click on a stepper count span to enter a value directly.
+  // Shows a small inline input in place of the span; Esc or double-click dismisses,
+  // Enter / blur commits (clamped to [min, max]).
+  _attachCountDblClick(span, { getValue, setValue, min = 1, max = Infinity }) {
+    span.addEventListener('dblclick', e => {
+      e.stopPropagation();
+      if (span.querySelector('.playlist-stepper-inline-input')) return; // already open
+
+      const input = document.createElement('input');
+      input.type      = 'text';
+      input.inputMode = 'numeric';
+      input.className = 'playlist-stepper-inline-input';
+      input.value     = String(getValue());
+
+      input.addEventListener('keypress', e => {
+        if (e.key.length === 1 && !/\d/.test(e.key)) e.preventDefault();
+      });
+
+      const savedText = span.textContent;
+      span.textContent = '';
+      span.classList.add('playlist-stepper-count--editing');
+      span.appendChild(input);
+
+      requestAnimationFrame(() => { input.focus(); input.select(); });
+
+      let done = false;
+      const close = (commit) => {
+        if (done) return;
+        done = true;
+        // Remove input first so setValue can safely update span.textContent
+        input.remove();
+        span.classList.remove('playlist-stepper-count--editing');
+        if (commit) {
+          const v = parseInt(input.value, 10);
+          if (!isNaN(v)) setValue(Math.max(min, max < Infinity ? Math.min(max, v) : v));
+          else span.textContent = savedText;
+        } else {
+          span.textContent = savedText;
+        }
+      };
+
+      input.addEventListener('keydown', e => {
+        e.stopPropagation();
+        if (e.key === 'Enter')  { e.preventDefault(); close(true);  }
+        if (e.key === 'Escape') { e.preventDefault(); close(false); }
+      });
+      input.addEventListener('dblclick', e => { e.stopPropagation(); close(false); });
+      input.addEventListener('blur', () => close(true));
+      input.addEventListener('click',     e => e.stopPropagation());
+      input.addEventListener('mousedown', e => e.stopPropagation());
+    });
+  },
+
   // Attach long-press selection-mode activation to a scrollable container.
   // container       — the element to listen on (entryList or picker body)
   // rowSelector     — CSS selector to find the pressed row
@@ -1711,6 +1768,16 @@ export const PlaylistsManager = {
       this._attachButtonHold(cycleDecBtn, onCycleDec);
       this._attachButtonHold(cycleIncBtn, onCycleInc);
       this._attachStepperDrag(cycleCountSpan, onCycleDec, onCycleInc);
+      this._attachCountDblClick(cycleCountSpan, {
+        getValue: () => playlist.repeatCount ?? 1,
+        setValue: v => {
+          const next = Math.max(1, v);
+          this.setPlaylistCycles(playlist.id, next);
+          playlist.repeatCount = next;
+          cycleCountSpan.textContent = String(next);
+          cycleStepper.classList.toggle('playlist-header-stepper--default', next <= 1);
+        },
+      });
 
       const shufflePlayBtn = _el('button', 'playlist-play-shuffle-btn');
       shufflePlayBtn.innerHTML = icons.random;
@@ -1937,11 +2004,12 @@ export const PlaylistsManager = {
     const countSpan  = _el('span', 'playlist-stepper-count', String(entry.repeatCount));
     const incBtn     = _el('button', 'playlist-stepper-btn');
     incBtn.innerHTML = icons.chevronRight;
-    createCustomTooltip(stepper, `Количество повторов этой игры ${STEPPER_DRAG_TIP}`);
+    const ENTRY_STEPPER_TIP = `Количество повторов этой игры ${STEPPER_DRAG_TIP}`;
+    createCustomTooltip(stepper, ENTRY_STEPPER_TIP);
 
     // Play-count badge — same value as stepper, shown while playing (drag-to-scrub)
     const playCountBadge = _el('span', 'playlist-entry-play-count', `×${entry.repeatCount}`);
-    createCustomTooltip(playCountBadge, `Количество повторов этой игры ${STEPPER_DRAG_TIP}`);
+    createCustomTooltip(playCountBadge, ENTRY_STEPPER_TIP);
 
     // Snapshot how many plays have already happened for this entry at build time.
     // We keep this fixed so that stepper changes (which shift remainingRepeats by
@@ -1980,6 +2048,21 @@ export const PlaylistsManager = {
     this._attachButtonHold(incBtn, onEntryInc);
     this._attachStepperDrag(countSpan,      onEntryDec, onEntryInc);
     this._attachStepperDrag(playCountBadge, onEntryDec, onEntryInc);
+
+    const entrySetValue = v => {
+      const next = Math.max(1, v);
+      this.setRepeat(playlist.id, entry.id, next);
+      entry.repeatCount = next;
+      countSpan.textContent  = String(next);
+      playCountBadge.textContent = `×${next}`;
+      _updatePlaylistHud();
+      _updateEntryProgress(row, entry, playedCount, isCurrentEntry);
+      const msBar2 = row.closest('.playlist-entries')?.querySelector('.playlist-multiselect-bar');
+      if (msBar2?._refreshFilterRow) msBar2._refreshFilterRow();
+      _syncTaskChips(row.closest('.playlist-block'), playlist);
+    };
+    this._attachCountDblClick(countSpan,      { getValue: () => entry.repeatCount, setValue: entrySetValue });
+    this._attachCountDblClick(playCountBadge, { getValue: () => entry.repeatCount, setValue: entrySetValue });
     stepper.append(decBtn, countSpan, incBtn);
 
     // Remove
@@ -2997,10 +3080,10 @@ export const PlaylistsManager = {
 
   // groupIds: when non-null (and length > 1) the bar operates on the whole group.
   _buildDupBar(playlist, entry, entryList, groupIds = null) {
-    const DUP_MAX   = 50;
-    const isGroup   = Array.isArray(groupIds) && groupIds.length > 1;
-    const dupCount  = { value: 1 };
-    const bar       = _el('div', 'playlist-dup-bar');
+    const DUP_MAX  = 50;
+    const isGroup  = Array.isArray(groupIds) && groupIds.length > 1;
+    const dupCount = { value: 1 };
+    const bar      = _el('div', 'playlist-dup-bar');
     bar.dataset.entryId = entry.id;
 
     // ── Label — shown only for group mode so the user knows what's being duplicated
@@ -3009,61 +3092,39 @@ export const PlaylistsManager = {
       bar.appendChild(label);
     }
 
-    // ── Input — direct number entry; overrides stepper when non-empty ─────
-    const input = _el('input', 'playlist-dup-input');
-    createCustomTooltip(input, `Количество копий (макс. ${DUP_MAX})`);
-    input.type        = 'number';
-    input.min         = '1';
-    input.max         = String(DUP_MAX);
-    input.addEventListener('click',   e => e.stopPropagation());
-    input.addEventListener('keydown', e => e.stopPropagation());
-    input.addEventListener('input', e => {
-      e.stopPropagation();
-      const v = parseInt(input.value, 10);
-      // Live-clamp only on explicit out-of-range to not interfere while typing
-      if (!isNaN(v)) {
-        const clamped = Math.max(1, Math.min(DUP_MAX, v));
-        if (v !== clamped) input.value = String(clamped);
-        dupCount.value = clamped;
-        stepperCountSpan.textContent = String(clamped);
-      }
-    });
-
-    // ── Stepper — active only when input is empty ─────────────────────────
-    const stepperWrap   = _el('div', 'playlist-multiselect-stepper');
-    const decBtn        = _el('button', 'playlist-stepper-btn');
-    decBtn.innerHTML    = icons.chevronLeft;
+    // ── Stepper — drag or double-click count span to enter value directly ─
+    const stepperWrap      = _el('div', 'playlist-multiselect-stepper');
+    const decBtn           = _el('button', 'playlist-stepper-btn');
+    decBtn.innerHTML       = icons.chevronLeft;
     const stepperCountSpan = _el('span', 'playlist-stepper-count', '1');
-    const incBtn        = _el('button', 'playlist-stepper-btn');
-    incBtn.innerHTML    = icons.chevronRight;
+    const incBtn           = _el('button', 'playlist-stepper-btn');
+    incBtn.innerHTML       = icons.chevronRight;
     stepperWrap.append(decBtn, stepperCountSpan, incBtn);
     createCustomTooltip(stepperWrap, `Количество копий (макс. ${DUP_MAX}) ${STEPPER_DRAG_TIP}`);
 
-    const getEffectiveCount = () => {
-      const v = parseInt(input.value, 10);
-      return (!input.value.trim() || isNaN(v)) ? dupCount.value : Math.max(1, Math.min(DUP_MAX, v));
-    };
-
     const onDupDec = () => {
-      if (input.value.trim()) return; // input has priority — stepper is ignored
       dupCount.value = Math.max(1, dupCount.value - 1);
       stepperCountSpan.textContent = String(dupCount.value);
     };
     const onDupInc = () => {
-      if (input.value.trim()) return;
       dupCount.value = Math.min(DUP_MAX, dupCount.value + 1);
       stepperCountSpan.textContent = String(dupCount.value);
     };
     this._attachButtonHold(decBtn, onDupDec);
     this._attachButtonHold(incBtn, onDupInc);
     this._attachStepperDrag(stepperCountSpan, onDupDec, onDupInc);
+    this._attachCountDblClick(stepperCountSpan, {
+      getValue: () => dupCount.value,
+      setValue: v => { dupCount.value = v; stepperCountSpan.textContent = String(v); },
+      min: 1, max: DUP_MAX,
+    });
 
     // ── Confirm ───────────────────────────────────────────────────────────
     const confirmBtn = _el('button', 'playlist-dup-confirm');
     confirmBtn.textContent = 'Дублировать';
     confirmBtn.addEventListener('click', e => {
       e.stopPropagation();
-      const n = getEffectiveCount();
+      const n = dupCount.value;
       entryList.querySelector('.playlist-entries-empty')?.remove();
 
       if (isGroup) {
@@ -3103,13 +3164,12 @@ export const PlaylistsManager = {
     cancelBtn.textContent = 'Отмена';
     cancelBtn.addEventListener('click', e => { e.stopPropagation(); bar.remove(); });
 
-    // Enter key in input confirms
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { e.stopPropagation(); confirmBtn.click(); }
+    // Esc anywhere in the bar dismisses it
+    bar.addEventListener('keydown', e => {
       if (e.key === 'Escape') { e.stopPropagation(); bar.remove(); }
     });
 
-    bar.append(stepperWrap, input, confirmBtn, cancelBtn);
+    bar.append(stepperWrap, confirmBtn, cancelBtn);
     return bar;
   },
 

@@ -159,6 +159,11 @@ body.playlist-drag-active * { cursor: grabbing !important; }
     color: $count-color;
     cursor: ns-resize;
     user-select: none;
+
+    // While the inline input is open: cursor resets to default
+    &--editing {
+      cursor: default;
+    }
   }
 }
 
@@ -184,6 +189,21 @@ body.playlist-drag-active * { cursor: grabbing !important; }
     @if $focus-bg { background: $focus-bg; }
   }
   &::placeholder { color: var(--rg-text-tertiary); font-style: italic; }
+}
+
+// Inline direct-entry input spawned by double-clicking any stepper count span.
+// Lives outside the stepper mixin so it also matches inside .playlist-entry-play-count.
+.playlists-manager-popup .playlist-stepper-inline-input {
+  @include playlist-text-input();
+  width: 36px;
+  height: 20px;
+  line-height: 20px;
+  padding: 0 3px;
+  font-size: 0.8em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  background: var(--rg-bg-primary) !important;
 }
 
 // Shared gametype color rules — used by both .playlist-entry-label and .playlist-picker-game-name
@@ -1785,17 +1805,6 @@ body.playlist-drag-active * { cursor: grabbing !important; }
     color: hsl(var(--rg-popup-btn-copy));
     white-space: nowrap;
     flex-shrink: 0;
-  }
-
-  .playlist-dup-input {
-    @include playlist-text-input();
-    background: var(--rg-bg-primary) !important; // override text-input's default bg so it stands out as an active field in the dup bar
-    width: 52px;
-    flex-shrink: 0;
-    // hide browser spin buttons — stepper handles increment/decrement
-    appearance: textfield;
-    &::-webkit-inner-spin-button,
-    &::-webkit-outer-spin-button { display: none; }
   }
 
   .playlist-dup-confirm {
