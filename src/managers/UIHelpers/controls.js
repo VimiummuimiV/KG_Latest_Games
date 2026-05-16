@@ -1,14 +1,13 @@
-import { createElement, generateUniqueId, getCurrentPage } from "../../utils.js";
+import { createElement, generateUniqueId, getCurrentPage, _attachButtonHold, _attachStepperDrag, _attachCountDblClick } from "../../utils.js";
 import { createCustomTooltip, refreshTooltipSettings } from "../../tooltip.js";
 import { icons } from "../../icons.js";
 import { toggleSearchBox } from "./search.js";
-import { DEFAULTS } from "../../definitions.js";
+import { DEFAULTS, gameSelectors, STEPPER_DRAG_TIP } from "../../definitions.js";
 import { addGameToGroup, fetchVocabularyBasicData } from "../../vocabularyCreation.js";
 import { showMigrationPopup } from "../../vocabularyMigration.js";
 import { getSessionVocId } from "../../vocabularyContent.js";
 import { VocabulariesManager } from "../../vocabulariesManager.js";
 import { PlaylistsManager, advancePlaylist, getActivePlaylistUrl, getActivePlaylistSession, setActivePlaylistSession } from "../../playlistsManager.js";
-import { gameSelectors } from "../../definitions.js";
 import { showVocabularyTypesPopup } from "../../vocabularyType.js";
 import { runVocScan } from "../../vocabularyScanner.js";
 
@@ -43,8 +42,8 @@ export function createControls(main) {
   });
   createCustomTooltip(countDisplay,
     main.shouldAutoSave
-      ? 'Автосохранение: Включено'
-      : 'Автосохранение: Отключено'
+      ? `Автосохранение: Включено ${STEPPER_DRAG_TIP}`
+      : `Автосохранение: Отключено ${STEPPER_DRAG_TIP}`
   );
 
   countDisplay.addEventListener('click', () => {
@@ -61,8 +60,17 @@ export function createControls(main) {
   });
   createCustomTooltip(increaseBtn, 'Увеличить количество сохраняемых игр');
 
-  decreaseBtn.addEventListener('click', () => main.gamesManager.changeGameCount(-1));
-  increaseBtn.addEventListener('click', () => main.gamesManager.changeGameCount(1));
+  const dec = () => main.gamesManager.changeGameCount(-1);
+  const inc = () => main.gamesManager.changeGameCount(1);
+
+  _attachButtonHold(decreaseBtn, dec);
+  _attachButtonHold(increaseBtn, inc);
+  _attachStepperDrag(countDisplay, dec, inc);
+  _attachCountDblClick(countDisplay, {
+    getValue: () => main.maxGameCount,
+    setValue: v  => { main.gamesManager.changeGameCount(v - main.maxGameCount); },
+    min: 1,
+  });
 
   options.append(decreaseBtn, countDisplay, increaseBtn);
 

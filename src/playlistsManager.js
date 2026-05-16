@@ -1,7 +1,7 @@
 import { createCustomTooltip, updateTooltipContent, hideTooltipElement } from './tooltip.js';
 import { icons } from './icons.js';
-import { gameTypes, visibilities, timeouts, idleTimes, POSITION_MODES, TASK_GAME_DEFAULTS } from './definitions.js';
-import { generateRandomString, generateUniqueId, getCurrentPage, formatPosition, positionTooltip } from './utils.js';
+import { gameTypes, visibilities, timeouts, idleTimes, POSITION_MODES, TASK_GAME_DEFAULTS, STEPPER_DRAG_TIP } from './definitions.js';
+import { generateRandomString, generateUniqueId, getCurrentPage, formatPosition, positionTooltip, _attachButtonHold, _attachStepperDrag, _attachCountDblClick } from './utils.js';
 import { fetchVocabularyData, showTooltip, startHideTimeout } from './vocabularyContent.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -10,12 +10,6 @@ import { fetchVocabularyData, showTooltip, startHideTimeout } from './vocabulary
 const STORAGE_KEY  = 'latestGamesPlaylists';
 const SESSION_KEY  = 'latestGames_activePlaylist';
 const SHUFFLE_KEY  = 'latestGames_randomShuffleBag';
-
-const STEPPER_DRAG_TIP = `
-      [ЛКМ + ↑↓] изменить
-      [Shift + ЛКМ + ↑↓] изменить точнее
-      [Двойной клик] ввести значение
-`;
 
 function _getPositionMode() {
   return PlaylistsManager.main?.positionDisplayMode ?? 'fraction';
@@ -864,138 +858,6 @@ export const PlaylistsManager = {
     document.addEventListener('mouseup', stopDrag, { capture: true });
   },
 
-  // Attach long-press auto-repeat to a button.
-  // A single click still calls stepFn once (via the click event).
-  // Holding LMB fires stepFn after HOLD_DELAY ms, then every HOLD_INTERVAL ms.
-  // The click that fires on release after a hold is suppressed.
-  // Optional ctrlStepFn: if provided, Ctrl+Click / Ctrl+Hold calls it instead of stepFn.
-  _attachButtonHold(btn, stepFn, ctrlStepFn) {
-    const HOLD_DELAY    = 400; // ms before auto-repeat starts
-    const HOLD_INTERVAL =  120; // ms between auto-repeat ticks
-    let holdTimer = null;
-    let interval  = null;
-    let holdFired = false;
-    let activeFn  = null; // captured at mousedown so Ctrl state is stable during hold
-
-    const stop = () => {
-      clearTimeout(holdTimer);
-      clearInterval(interval);
-      holdTimer = null;
-      interval  = null;
-      activeFn  = null;
-    };
-
-    btn.addEventListener('mousedown', e => {
-      if (e.button !== 0) return;
-      activeFn  = (ctrlStepFn && e.ctrlKey) ? ctrlStepFn : stepFn;
-      holdFired = false;
-      holdTimer = setTimeout(() => {
-        holdFired = true;
-        activeFn();
-        interval = setInterval(() => activeFn(), HOLD_INTERVAL);
-      }, HOLD_DELAY);
-    });
-    btn.addEventListener('mouseup',    stop);
-    btn.addEventListener('mouseleave', stop);
-    // Single click: holdFired is false → run the appropriate fn.
-    // After a hold:  holdFired is true  → skip (hold already stepped) and reset.
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      if (holdFired) { holdFired = false; return; }
-      ((ctrlStepFn && e.ctrlKey) ? ctrlStepFn : stepFn)();
-    });
-  },
-
-  // Drag-to-scrub on a stepper count span: hold LMB and drag up to increase,
-  // drag down to decrease. One step fires every PX_PER_STEP pixels of movement.
-  // Hold Shift while dragging for fine control (4× slower).
-  _attachStepperDrag(countSpan, decFn, incFn) {
-    const PX_PER_STEP      = 8;
-    const PX_PER_STEP_SLOW = 32; // Shift held → fine control
-    let startY = 0;
-    let accum  = 0;
-
-    const onMove = e => {
-      const step = e.shiftKey ? PX_PER_STEP_SLOW : PX_PER_STEP;
-      accum += startY - e.clientY;
-      startY = e.clientY;
-      while (accum >=  step) { incFn(); accum -= step; }
-      while (accum <= -step) { decFn(); accum += step; }
-    };
-
-    const onUp = () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup',   onUp);
-      document.body.style.removeProperty('cursor');
-      // Swallow the trailing click so the outside-click handler doesn't close
-      // the panel when the drag ends with the mouse outside the popup.
-      document.addEventListener('click', e => e.stopPropagation(), { capture: true, once: true });
-    };
-
-    countSpan.addEventListener('mousedown', e => {
-      if (e.button !== 0) return;
-      e.preventDefault(); // prevent text selection while dragging
-      startY = e.clientY;
-      accum  = 0;
-      document.body.style.cursor = 'ns-resize';
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup',   onUp);
-    });
-  },
-
-  // Double-click on a stepper count span to enter a value directly.
-  // Shows a small inline input in place of the span; Esc or double-click dismisses,
-  // Enter / blur commits (clamped to [min, max]).
-  _attachCountDblClick(span, { getValue, setValue, min = 1, max = Infinity }) {
-    span.addEventListener('dblclick', e => {
-      e.stopPropagation();
-      if (span.querySelector('.playlist-stepper-inline-input')) return; // already open
-
-      const input = document.createElement('input');
-      input.type      = 'text';
-      input.inputMode = 'numeric';
-      input.className = 'playlist-stepper-inline-input';
-      input.value     = String(getValue());
-
-      input.addEventListener('keypress', e => {
-        if (e.key.length === 1 && !/\d/.test(e.key)) e.preventDefault();
-      });
-
-      const savedText = span.textContent;
-      span.textContent = '';
-      span.classList.add('playlist-stepper-count--editing');
-      span.appendChild(input);
-
-      requestAnimationFrame(() => { input.focus(); input.select(); });
-
-      let done = false;
-      const close = (commit) => {
-        if (done) return;
-        done = true;
-        // Remove input first so setValue can safely update span.textContent
-        input.remove();
-        span.classList.remove('playlist-stepper-count--editing');
-        if (commit) {
-          const v = parseInt(input.value, 10);
-          if (!isNaN(v)) setValue(Math.max(min, max < Infinity ? Math.min(max, v) : v));
-          else span.textContent = savedText;
-        } else {
-          span.textContent = savedText;
-        }
-      };
-
-      input.addEventListener('keydown', e => {
-        e.stopPropagation();
-        if (e.key === 'Enter')  { e.preventDefault(); close(true);  }
-        if (e.key === 'Escape') { e.preventDefault(); close(false); }
-      });
-      input.addEventListener('dblclick', e => { e.stopPropagation(); close(false); });
-      input.addEventListener('blur', () => close(true));
-      input.addEventListener('click',     e => e.stopPropagation());
-      input.addEventListener('mousedown', e => e.stopPropagation());
-    });
-  },
-
   // Attach long-press selection-mode activation to a scrollable container.
   // container       — the element to listen on (entryList or picker body)
   // rowSelector     — CSS selector to find the pressed row
@@ -1759,10 +1621,10 @@ export const PlaylistsManager = {
       };
       const onCycleDec = () => setCycleCount(Math.max(1, (playlist.repeatCount ?? 1) - 1));
       const onCycleInc = () => setCycleCount((playlist.repeatCount ?? 1) + 1);
-      this._attachButtonHold(cycleDecBtn, onCycleDec);
-      this._attachButtonHold(cycleIncBtn, onCycleInc);
-      this._attachStepperDrag(cycleCountSpan, onCycleDec, onCycleInc);
-      this._attachCountDblClick(cycleCountSpan, {
+      _attachButtonHold(cycleDecBtn, onCycleDec);
+      _attachButtonHold(cycleIncBtn, onCycleInc);
+      _attachStepperDrag(cycleCountSpan, onCycleDec, onCycleInc);
+      _attachCountDblClick(cycleCountSpan, {
         getValue: () => playlist.repeatCount ?? 1,
         setValue: v => setCycleCount(Math.max(1, v)),
       });
@@ -2021,12 +1883,12 @@ export const PlaylistsManager = {
     };
     const onEntryDec = () => setEntryRepeat(Math.max(1, entry.repeatCount - 1));
     const onEntryInc = () => setEntryRepeat(entry.repeatCount + 1);
-    this._attachButtonHold(decBtn, onEntryDec);
-    this._attachButtonHold(incBtn, onEntryInc);
-    this._attachStepperDrag(countSpan,      onEntryDec, onEntryInc);
-    this._attachStepperDrag(playCountBadge, onEntryDec, onEntryInc);
-    this._attachCountDblClick(countSpan,      { getValue: () => entry.repeatCount, setValue: v => setEntryRepeat(Math.max(1, v)) });
-    this._attachCountDblClick(playCountBadge, { getValue: () => entry.repeatCount, setValue: v => setEntryRepeat(Math.max(1, v)) });
+    _attachButtonHold(decBtn, onEntryDec);
+    _attachButtonHold(incBtn, onEntryInc);
+    _attachStepperDrag(countSpan,      onEntryDec, onEntryInc);
+    _attachStepperDrag(playCountBadge, onEntryDec, onEntryInc);
+    _attachCountDblClick(countSpan,      { getValue: () => entry.repeatCount, setValue: v => setEntryRepeat(Math.max(1, v)) });
+    _attachCountDblClick(playCountBadge, { getValue: () => entry.repeatCount, setValue: v => setEntryRepeat(Math.max(1, v)) });
     stepper.append(decBtn, countSpan, incBtn);
 
     // Remove
@@ -2921,9 +2783,9 @@ export const PlaylistsManager = {
       repCountSpan.textContent = String(repCount.value);
       applyBulkRepeat();
     };
-    this._attachButtonHold(repDecBtn, onRepDec);
-    this._attachButtonHold(repIncBtn, onRepInc);
-    this._attachStepperDrag(repCountSpan, onRepDec, onRepInc);
+    _attachButtonHold(repDecBtn, onRepDec);
+    _attachButtonHold(repIncBtn, onRepInc);
+    _attachStepperDrag(repCountSpan, onRepDec, onRepInc);
 
     const dupBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--copy');
     dupBtn.innerHTML = icons.copy;
@@ -3074,10 +2936,10 @@ export const PlaylistsManager = {
       dupCount.value = Math.min(DUP_MAX, dupCount.value + 1);
       stepperCountSpan.textContent = String(dupCount.value);
     };
-    this._attachButtonHold(decBtn, onDupDec);
-    this._attachButtonHold(incBtn, onDupInc);
-    this._attachStepperDrag(stepperCountSpan, onDupDec, onDupInc);
-    this._attachCountDblClick(stepperCountSpan, {
+    _attachButtonHold(decBtn, onDupDec);
+    _attachButtonHold(incBtn, onDupInc);
+    _attachStepperDrag(stepperCountSpan, onDupDec, onDupInc);
+    _attachCountDblClick(stepperCountSpan, {
       getValue: () => dupCount.value,
       setValue: v => { dupCount.value = v; stepperCountSpan.textContent = String(v); },
       min: 1, max: DUP_MAX,
@@ -3519,12 +3381,12 @@ export const PlaylistsManager = {
       syncNavState();
     };
 
-    this._attachButtonHold(navPrevBtn, () => {
+    _attachButtonHold(navPrevBtn, () => {
       const rows = getAddedPickerRows();
       if (!rows.length) return;
       navTo(navIndex <= 0 ? rows.length - 1 : navIndex - 1);
     });
-    this._attachButtonHold(navNextBtn, () => {
+    _attachButtonHold(navNextBtn, () => {
       navTo(navIndex < 0 ? 0 : navIndex + 1);
     });
 
@@ -3874,7 +3736,7 @@ export const PlaylistsManager = {
           }, 400);
         };
 
-        this._attachButtonHold(addBtn, doAdd, doRemove);
+        _attachButtonHold(addBtn, doAdd, doRemove);
 
         gameRow.append(nameSpan, descSpan, addBtn);
         body.appendChild(gameRow);

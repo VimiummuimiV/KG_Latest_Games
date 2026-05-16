@@ -226,3 +226,146 @@ export function positionTooltip(mode, interaction = 'Клик') {
   const label        = POSITION_MODE_LABELS[mode];
   return `[${interaction}] ${emoji} ${label}`;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Reusable stepper / button-hold interaction helpers
+// Used by playlistsManager.js (via PlaylistsManager methods) and controls.js.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Attach long-press auto-repeat to a button.
+ * A single click still fires stepFn once (via the click event).
+ * Holding LMB fires stepFn after HOLD_DELAY ms, then every HOLD_INTERVAL ms.
+ * The click that fires on release after a hold is suppressed.
+ * @param {HTMLElement} btn
+ * @param {Function} stepFn        — called on click / hold
+ * @param {Function} [ctrlStepFn] — called instead when Ctrl is held
+ */
+export function _attachButtonHold(btn, stepFn, ctrlStepFn) {
+  const HOLD_DELAY    = 400;
+  const HOLD_INTERVAL = 120;
+  let holdTimer = null;
+  let interval  = null;
+  let holdFired = false;
+  let activeFn  = null;
+
+  const stop = () => {
+    clearTimeout(holdTimer);
+    clearInterval(interval);
+    holdTimer = null;
+    interval  = null;
+    activeFn  = null;
+  };
+
+  btn.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    activeFn  = (ctrlStepFn && e.ctrlKey) ? ctrlStepFn : stepFn;
+    holdFired = false;
+    holdTimer = setTimeout(() => {
+      holdFired = true;
+      activeFn();
+      interval = setInterval(() => activeFn(), HOLD_INTERVAL);
+    }, HOLD_DELAY);
+  });
+  btn.addEventListener('mouseup',    stop);
+  btn.addEventListener('mouseleave', stop);
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    if (holdFired) { holdFired = false; return; }
+    ((ctrlStepFn && e.ctrlKey) ? ctrlStepFn : stepFn)();
+  });
+}
+
+/**
+ * Drag-to-scrub on a stepper span: hold LMB and drag up/down to inc/dec.
+ * One step fires every PX_PER_STEP pixels. Shift for fine control (4× slower).
+ * @param {HTMLElement} span
+ * @param {Function} decFn
+ * @param {Function} incFn
+ */
+export function _attachStepperDrag(span, decFn, incFn) {
+  const PX_PER_STEP      = 8;
+  const PX_PER_STEP_SLOW = 32;
+  let startY = 0;
+  let accum  = 0;
+
+  const onMove = e => {
+    const step = e.shiftKey ? PX_PER_STEP_SLOW : PX_PER_STEP;
+    accum += startY - e.clientY;
+    startY = e.clientY;
+    while (accum >=  step) { incFn(); accum -= step; }
+    while (accum <= -step) { decFn(); accum += step; }
+  };
+
+  const onUp = () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup',   onUp);
+    document.body.style.removeProperty('cursor');
+    document.addEventListener('click', e => e.stopPropagation(), { capture: true, once: true });
+  };
+
+  span.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    startY = e.clientY;
+    accum  = 0;
+    document.body.style.cursor = 'ns-resize';
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup',   onUp);
+  });
+}
+
+/**
+ * Double-click on a stepper span to enter a value directly via an inline input.
+ * Enter/blur commits (clamped to [min, max]); Escape or double-click discards.
+ * @param {HTMLElement} span
+ * @param {{ getValue: () => number, setValue: (v: number) => void, min?: number, max?: number }} opts
+ */
+export function _attachCountDblClick(span, { getValue, setValue, min = 1, max = Infinity }) {
+  span.addEventListener('dblclick', e => {
+    e.stopPropagation();
+    if (span.querySelector('.playlist-stepper-inline-input')) return;
+
+    const input = document.createElement('input');
+    input.type      = 'text';
+    input.inputMode = 'numeric';
+    input.className = 'playlist-stepper-inline-input';
+    input.value     = String(getValue());
+
+    input.addEventListener('keypress', e => {
+      if (e.key.length === 1 && !/\d/.test(e.key)) e.preventDefault();
+    });
+
+    const savedText = span.textContent;
+    span.textContent = '';
+    span.classList.add('playlist-stepper-count--editing');
+    span.appendChild(input);
+
+    requestAnimationFrame(() => { input.focus(); input.select(); });
+
+    let done = false;
+    const close = (commit) => {
+      if (done) return;
+      done = true;
+      input.remove();
+      span.classList.remove('playlist-stepper-count--editing');
+      if (commit) {
+        const v = parseInt(input.value, 10);
+        if (!isNaN(v)) setValue(Math.max(min, max < Infinity ? Math.min(max, v) : v));
+        else span.textContent = savedText;
+      } else {
+        span.textContent = savedText;
+      }
+    };
+
+    input.addEventListener('keydown', e => {
+      e.stopPropagation();
+      if (e.key === 'Enter')  { e.preventDefault(); close(true);  }
+      if (e.key === 'Escape') { e.preventDefault(); close(false); }
+    });
+    input.addEventListener('dblclick', e => { e.stopPropagation(); close(false); });
+    input.addEventListener('blur',     () => close(true));
+    input.addEventListener('click',     e => e.stopPropagation());
+    input.addEventListener('mousedown', e => e.stopPropagation());
+  });
+}

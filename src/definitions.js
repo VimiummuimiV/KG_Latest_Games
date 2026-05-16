@@ -81,6 +81,13 @@ export const POSITION_MODE_LABELS = {
 
 export const POSITION_MODE_EMOJI = ['1️⃣', '2️⃣', '3️⃣', '4️⃣'];
 
+// Tooltip shown on any stepper element that supports drag-to-scrub + double-click input.
+export const STEPPER_DRAG_TIP = `
+      [ЛКМ + ↑↓] изменить
+      [Shift + ЛКМ + ↑↓] изменить точнее
+      [Двойной клик] ввести значение
+`;
+
 // Default params for games auto-created from daily task conditions.
 // Mirrors the shape parseGameParams() produces; only gametype/vocId/vocName are overridden per condition.
 export const TASK_GAME_DEFAULTS = {
