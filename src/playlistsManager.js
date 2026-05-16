@@ -2707,6 +2707,23 @@ export const PlaylistsManager = {
       countSpan.textContent = '0';
     });
 
+    const invertBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--neutral');
+    invertBtn.textContent = 'Инвертировать';
+    createCustomTooltip(invertBtn, 'Инвертировать выделение');
+    invertBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      playlist.entries.forEach(en => {
+        if (sel.has(en.id)) sel.delete(en.id);
+        else sel.add(en.id);
+      });
+      entryList.querySelectorAll('.playlist-entry-checkbox').forEach(cb => {
+        const selected = sel.has(cb.dataset.entryId);
+        cb.checked = selected;
+        cb.closest('.playlist-entry-row')?.classList.toggle('playlist-entry-row--selected', selected);
+      });
+      countSpan.textContent = `${sel.size}`;
+    });
+
     // Filter button — SVG icon, toggles smart-select row
     const filterBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--neutral');
     filterBtn.innerHTML = icons.menu;
@@ -2861,7 +2878,7 @@ export const PlaylistsManager = {
     });
 
     const left = _el('div', 'playlist-multiselect-left');
-    left.append(countSpan, selAllBtn, deselBtn, filterBtn, exitBtn);
+    left.append(countSpan, selAllBtn, deselBtn, invertBtn, filterBtn, exitBtn);
     const right = _el('div', 'playlist-multiselect-right');
     right.append(repStepper, dupBtn, paramsBtn, removeBtn);
     bar.append(left, right);
