@@ -462,6 +462,15 @@ function _scrollToEntry(entryEl) {
 // ─────────────────────────────────────────────────────────────────────────────
 // PlaylistsManager singleton
 // ─────────────────────────────────────────────────────────────────────────────
+
+// Returns the best available display name for a playlist entry.
+// Prefers the custom label set by the user, then the game's vocabulary name,
+// then the game title, falling back to '?' if nothing is resolvable.
+function _entryDisplayName(entry, main) {
+  const game = main?.gamesManager?.findGameById(entry?.gameId);
+  return entry?.label || game?.params?.vocName || game?.title || '?';
+}
+
 export const PlaylistsManager = {
   popup: null,
   isDragging: false,
@@ -538,8 +547,10 @@ export const PlaylistsManager = {
   },
 
   deletePlaylist(id) {
-    this._pushUndo('Удаление плейлиста');
-    this.save(this.load().filter(p => p.id !== id));
+    const playlists = this.load();
+    const p = playlists.find(p => p.id === id);
+    this._pushUndo(`Удаление плейлиста «${p?.title ?? id}»`);
+    this.save(playlists.filter(p => p.id !== id));
     if (this.expandedPlaylistId === id) this.expandedPlaylistId = null;
   },
 
@@ -600,9 +611,11 @@ export const PlaylistsManager = {
   },
 
   removeEntry(playlistId, entryId, syncTarget = null) {
-    this._pushUndo('Удаление игры из плейлиста');
     const playlists = this.load();
     const p = playlists.find(p => p.id === playlistId);
+    const entry = p?.entries.find(e => e.id === entryId);
+    const name  = _entryDisplayName(entry, this.main);
+    this._pushUndo(`Удаление «${name}» из «${p?.title ?? playlistId}»`);
     if (!p) return;
     p.entries = p.entries.filter(e => e.id !== entryId);
     this._redistributeTaskRepeats(p);
@@ -696,11 +709,14 @@ export const PlaylistsManager = {
   // ── Bulk operations ────────────────────────────────────────────────────────
 
   bulkRemoveEntries(playlistId, entryIds) {
-    this._pushUndo('Удаление выбранных игр');
     const ids = new Set(entryIds);
     const playlists = this.load();
     const p = playlists.find(p => p.id === playlistId);
     if (!p) return;
+    const removed = p.entries.filter(e => ids.has(e.id));
+    const names = removed.slice(0, 2).map(e => _entryDisplayName(e, this.main));
+    const extra = removed.length > 2 ? ` и ещё ${removed.length - 2}` : '';
+    this._pushUndo(`Удаление ${removed.length} игр из «${p.title}»: «${names.join('», «')}»${extra}`);
     p.entries = p.entries.filter(e => !ids.has(e.id));
     this._redistributeTaskRepeats(p);
     this.save(playlists);
@@ -772,7 +788,6 @@ export const PlaylistsManager = {
   // Remainder repeats are front-loaded (e.g. 10÷3 → 4, 3, 3).
   // Replaces the selected entries in-place (at the position of the first selected entry).
   bulkConvertRepeatsToEntries(playlistId, entryIds, chunkSize) {
-    this._pushUndo(`Конвертация повторов на ${chunks} части`);
     const playlists = this.load();
     const p = playlists.find(p => p.id === playlistId);
     if (!p) return;
@@ -780,6 +795,7 @@ export const PlaylistsManager = {
     const sources = p.entries.filter(e => idSet.has(e.id));
     if (!sources.length) return;
     const chunks  = Math.max(1, chunkSize);
+    this._pushUndo(`Конвертация ${sources.length} игр из «${p.title}», разбивка на ${chunks} части`);
     const newEntries = [];
     for (let round = 0; round < chunks; round++) {
       for (const src of sources) {
@@ -1359,6 +1375,12 @@ export const PlaylistsManager = {
       e.preventDefault();
       form.querySelector('.playlists-create-groups-toggle')?.click();
     }
+    // Ctrl/Cmd+Z — undo last destructive operation.
+    if (e.code === 'KeyZ' && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
+      if (inTextField) return;
+      e.preventDefault();
+      PlaylistsManager._undo();
+    }
   },
 
   _startDrag(e) {
@@ -1532,16 +1554,16 @@ export const PlaylistsManager = {
     );
     clearBtn.addEventListener('click', e => {
       e.stopPropagation();
+      const all = this.load();
       if (e.ctrlKey) {
         if (!confirm('Удалить все плейлисты?')) return;
-        this._pushUndo('Удаление всех плейлистов');
+        this._pushUndo(`Удаление всех плейлистов (${all.length} шт.)`);
         this.save([]);
       } else {
-        const all = this.load();
         const remaining = all.filter(p => !p.dailyTaskRequire);
         if (all.length === remaining.length) return;
         if (!confirm('Удалить все плейлисты задачи дня?')) return;
-        this._pushUndo('Удаление плейлистов задачи дня');
+        this._pushUndo(`Удаление ${all.length - remaining.length} плейлистов задачи дня`);
         this.save(remaining);
       }
       cancelActivePlaylist();
