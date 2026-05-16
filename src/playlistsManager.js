@@ -486,6 +486,7 @@ export const PlaylistsManager = {
   _selectionMode: new Set(),
   // Undo stack — each entry is the raw JSON string saved before a destructive op.
   _undoStack: [],
+  _redoStack: [],
   _UNDO_LIMIT: 20,
 
   // ── Persistence ────────────────────────────────────────────────────────────
@@ -500,21 +501,27 @@ export const PlaylistsManager = {
   },
 
   // Snapshot the current playlists state before a destructive operation.
+  // Any new destructive action discards the redo stack.
   _pushUndo(label) {
     this._undoStack.push({ snapshot: localStorage.getItem(STORAGE_KEY) ?? '[]', label });
     if (this._undoStack.length > this._UNDO_LIMIT) this._undoStack.shift();
+    this._redoStack = [];
     this._syncUndoBtn();
   },
 
-  // Restore the last snapshot and re-render.
-  _undo() {
-    if (!this._undoStack.length) return;
-    try { localStorage.setItem(STORAGE_KEY, this._undoStack.pop().snapshot); } catch { }
+  // Pops from `from`, saves current state to `to`, restores the snapshot.
+  _swapState(from, to) {
+    if (!from.length) return;
+    const { snapshot, label } = from.pop();
+    to.push({ snapshot: localStorage.getItem(STORAGE_KEY) ?? '[]', label });
+    try { localStorage.setItem(STORAGE_KEY, snapshot); } catch { }
     if (this.popup) this.refresh();
   },
+  _undo() { this._swapState(this._undoStack, this._redoStack); },
+  _redo() { this._swapState(this._redoStack, this._undoStack); },
 
   // Show/hide the undo button and update its tooltip to reflect the top of the stack.
-  // Called after every push and implicitly after undo (refresh rebuilds the button fresh).
+  // Called after every push and implicitly after undo/redo (refresh rebuilds the button fresh).
   _syncUndoBtn() {
     const btn = this.popup?.querySelector('.playlists-undo-btn');
     if (!btn) return;
@@ -522,7 +529,9 @@ export const PlaylistsManager = {
     btn.classList.toggle('playlists-undo-btn--hidden', !stack.length);
     if (stack.length) {
       const lines = [...stack].reverse().map((item, i) => `[${i + 1}] ${item.label}`).join('');
-      updateTooltipContent(btn, lines + '[Ctrl + Z] Шаг назад');
+      const undo  = this._undoStack.length ? '[Ctrl + Z] Шаг назад' : '';
+      const redo  = this._redoStack.length ? '[Ctrl + Shift + Z] Шаг вперёд' : '';
+      updateTooltipContent(btn, lines + undo + redo);
     }
   },
 
@@ -1375,11 +1384,12 @@ export const PlaylistsManager = {
       e.preventDefault();
       form.querySelector('.playlists-create-groups-toggle')?.click();
     }
-    // Ctrl/Cmd+Z — undo last destructive operation.
-    if (e.code === 'KeyZ' && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
+    // Ctrl/Cmd+Z — undo. Ctrl/Cmd+Shift+Z — redo. e.code is layout-independent.
+    if (e.code === 'KeyZ' && (e.ctrlKey || e.metaKey)) {
       if (inTextField) return;
       e.preventDefault();
-      PlaylistsManager._undo();
+      if (e.shiftKey) PlaylistsManager._redo();
+      else            PlaylistsManager._undo();
     }
   },
 
@@ -2991,12 +3001,27 @@ export const PlaylistsManager = {
     chunkStepper.append(chunkDecBtn, chunkSpan, chunkIncBtn);
     createCustomTooltip(chunkStepper, `[Разбивка] На сколько частей разбить повторы при конвертации ${STEPPER_DRAG_TIP}`);
 
-    const onChunkDec = () => { chunkCount.value = Math.max(1, chunkCount.value - 1); chunkSpan.textContent = String(chunkCount.value); };
-    const onChunkInc = () => { chunkCount.value++; chunkSpan.textContent = String(chunkCount.value); };
+    // Builds the chunk stepper tooltip: static description + live per-entry preview
+    // of how the current repeatCounts would be distributed across chunks.
+    const _refreshChunkTooltip = () => {
+      const chunks   = chunkCount.value;
+      const selected = playlist.entries.filter(e => sel.has(e.id));
+      const preview  = selected.map(e => {
+        const total = e.repeatCount ?? 1;
+        const base  = Math.floor(total / chunks);
+        const rem   = total % chunks;
+        const parts = Array.from({ length: chunks }, (_, i) => base + (i < rem ? 1 : 0)).filter(n => n > 0);
+        return `[${_entryDisplayName(e, this.main)}] ${total} ÷ ${chunks} = ${parts.join(', ')}`;
+      }).join('');
+      updateTooltipContent(chunkStepper, `[Разбивка] На сколько частей разбить повторы при конвертации ${STEPPER_DRAG_TIP}${preview}`);
+    };
+    const onChunkDec = () => { chunkCount.value = Math.max(1, chunkCount.value - 1); chunkSpan.textContent = String(chunkCount.value); _refreshChunkTooltip(); };
+    const onChunkInc = () => { chunkCount.value++; chunkSpan.textContent = String(chunkCount.value); _refreshChunkTooltip(); };
     _attachButtonHold(chunkDecBtn, onChunkDec);
     _attachButtonHold(chunkIncBtn, onChunkInc);
     _attachStepperDrag(chunkSpan, onChunkDec, onChunkInc);
     _attachCountDblClick(chunkSpan, { getValue: () => chunkCount.value, setValue: v => { chunkCount.value = Math.max(1, v); chunkSpan.textContent = String(chunkCount.value); } });
+    chunkStepper.addEventListener('mouseenter', _refreshChunkTooltip);
 
     const convertBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--convert');
     convertBtn.innerHTML = icons.arrowUpDown;
