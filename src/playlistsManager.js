@@ -3007,11 +3007,13 @@ export const PlaylistsManager = {
       const chunks   = chunkCount.value;
       const selected = playlist.entries.filter(e => sel.has(e.id));
       const preview  = selected.map(e => {
-        const total = e.repeatCount ?? 1;
+        const total = e.repeatCount || 1;
         const base  = Math.floor(total / chunks);
         const rem   = total % chunks;
-        const parts = Array.from({ length: chunks }, (_, i) => base + (i < rem ? 1 : 0)).filter(n => n > 0);
-        return `[${_entryDisplayName(e, this.main)}] ${total} ÷ ${chunks} = ${parts.join(', ')}`;
+        const dist  = [...Array(chunks)].map((_, i) => base + (i < rem ? 1 : 0))
+                                        .filter(n => n > 0)
+                                        .join(', ') || '—';
+        return `[${_entryDisplayName(e, this.main)}] ${total} ÷ ${chunks} → ${dist}`;
       }).join('');
       updateTooltipContent(chunkStepper, `[Разбивка] На сколько частей разбить повторы при конвертации ${STEPPER_DRAG_TIP}${preview}`);
     };
