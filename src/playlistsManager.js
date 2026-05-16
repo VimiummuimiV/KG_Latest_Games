@@ -475,6 +475,9 @@ export const PlaylistsManager = {
   _selectedEntries: {},
   // Which playlists currently have multi-select mode active (Set<playlistId>).
   _selectionMode: new Set(),
+  // Undo stack — each entry is the raw JSON string saved before a destructive op.
+  _undoStack: [],
+  _UNDO_LIMIT: 20,
 
   // ── Persistence ────────────────────────────────────────────────────────────
   load() {
@@ -485,6 +488,33 @@ export const PlaylistsManager = {
   save(playlists) {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(playlists)); }
     catch { }
+  },
+
+  // Snapshot the current playlists state before a destructive operation.
+  _pushUndo(label) {
+    this._undoStack.push({ snapshot: localStorage.getItem(STORAGE_KEY) ?? '[]', label });
+    if (this._undoStack.length > this._UNDO_LIMIT) this._undoStack.shift();
+    this._syncUndoBtn();
+  },
+
+  // Restore the last snapshot and re-render.
+  _undo() {
+    if (!this._undoStack.length) return;
+    try { localStorage.setItem(STORAGE_KEY, this._undoStack.pop().snapshot); } catch { }
+    if (this.popup) this.refresh();
+  },
+
+  // Show/hide the undo button and update its tooltip to reflect the top of the stack.
+  // Called after every push and implicitly after undo (refresh rebuilds the button fresh).
+  _syncUndoBtn() {
+    const btn = this.popup?.querySelector('.playlists-undo-btn');
+    if (!btn) return;
+    const stack = this._undoStack;
+    btn.classList.toggle('playlists-undo-btn--hidden', !stack.length);
+    if (stack.length) {
+      const lines = [...stack].reverse().map((item, i) => `[${i + 1}] ${item.label}`).join('');
+      updateTooltipContent(btn, lines + '[Ctrl + Z] Шаг назад');
+    }
   },
 
   createPlaylist(title) {
@@ -508,6 +538,7 @@ export const PlaylistsManager = {
   },
 
   deletePlaylist(id) {
+    this._pushUndo('Удаление плейлиста');
     this.save(this.load().filter(p => p.id !== id));
     if (this.expandedPlaylistId === id) this.expandedPlaylistId = null;
   },
@@ -569,6 +600,7 @@ export const PlaylistsManager = {
   },
 
   removeEntry(playlistId, entryId, syncTarget = null) {
+    this._pushUndo('Удаление игры из плейлиста');
     const playlists = this.load();
     const p = playlists.find(p => p.id === playlistId);
     if (!p) return;
@@ -664,6 +696,7 @@ export const PlaylistsManager = {
   // ── Bulk operations ────────────────────────────────────────────────────────
 
   bulkRemoveEntries(playlistId, entryIds) {
+    this._pushUndo('Удаление выбранных игр');
     const ids = new Set(entryIds);
     const playlists = this.load();
     const p = playlists.find(p => p.id === playlistId);
@@ -731,6 +764,42 @@ export const PlaylistsManager = {
     p.entries.forEach(e => {
       if (ids.has(e.id)) e.repeatCount = newCount;
     });
+    this.save(playlists);
+  },
+
+  // Converts selected entries' repeatCounts into separate interleaved entry rows.
+  // With chunkSize=2 and entries [A×10, B×10], produces: A×5, B×5, A×5, B×5.
+  // Remainder repeats are front-loaded (e.g. 10÷3 → 4, 3, 3).
+  // Replaces the selected entries in-place (at the position of the first selected entry).
+  bulkConvertRepeatsToEntries(playlistId, entryIds, chunkSize) {
+    this._pushUndo(`Конвертация повторов на ${chunks} части`);
+    const playlists = this.load();
+    const p = playlists.find(p => p.id === playlistId);
+    if (!p) return;
+    const idSet   = new Set(entryIds);
+    const sources = p.entries.filter(e => idSet.has(e.id));
+    if (!sources.length) return;
+    const chunks  = Math.max(1, chunkSize);
+    const newEntries = [];
+    for (let round = 0; round < chunks; round++) {
+      for (const src of sources) {
+        const total = src.repeatCount ?? 1;
+        const base  = Math.floor(total / chunks);
+        const rem   = total % chunks;
+        const count = base + (round < rem ? 1 : 0);
+        if (count <= 0) continue;
+        newEntries.push({
+          id: generateRandomString(),
+          gameId: src.gameId,
+          repeatCount: count,
+          params: src.params ? { ...src.params } : {},
+          ...(src.label ? { label: src.label } : {}),
+        });
+      }
+    }
+    const firstIdx = p.entries.findIndex(e => idSet.has(e.id));
+    p.entries = p.entries.filter(e => !idSet.has(e.id));
+    p.entries.splice(firstIdx < 0 ? p.entries.length : firstIdx, 0, ...newEntries);
     this.save(playlists);
   },
 
@@ -1069,6 +1138,7 @@ export const PlaylistsManager = {
     }
     this.popup = this._buildPanel();
     document.body.appendChild(this.popup);
+    this._syncUndoBtn();
     this._intendedX = x + 20;
     this._intendedY = y + 20;
     this.popup.style.left = this._intendedX + 'px';
@@ -1128,6 +1198,7 @@ export const PlaylistsManager = {
     newPopup.style.top  = top  + 'px';
     this.popup.parentNode.replaceChild(newPopup, this.popup);
     this.popup = newPopup;
+    this._syncUndoBtn();
     this._constrain();
     // Re-register outside click after rebuild
     document.removeEventListener('click', this._outside);
@@ -1444,6 +1515,12 @@ export const PlaylistsManager = {
       form.querySelector('.playlists-create-input')?.focus();
     });
 
+    const undoBtn = _el('button', 'playlists-undo-btn playlists-undo-btn--hidden');
+    undoBtn.innerHTML = icons.arrowGoBack;
+    createCustomTooltip(undoBtn, '');
+    undoBtn.addEventListener('mousedown', e => e.stopPropagation());
+    undoBtn.addEventListener('click', e => { e.stopPropagation(); this._undo(); });
+
     const clearBtn = _el('button', 'playlists-clear-btn');
     const _syncClearBtn = () => {
       clearBtn.innerHTML = this.load().length > 0 ? icons.trashSomething : icons.trashNothing;
@@ -1457,12 +1534,14 @@ export const PlaylistsManager = {
       e.stopPropagation();
       if (e.ctrlKey) {
         if (!confirm('Удалить все плейлисты?')) return;
+        this._pushUndo('Удаление всех плейлистов');
         this.save([]);
       } else {
         const all = this.load();
         const remaining = all.filter(p => !p.dailyTaskRequire);
         if (all.length === remaining.length) return;
         if (!confirm('Удалить все плейлисты задачи дня?')) return;
+        this._pushUndo('Удаление плейлистов задачи дня');
         this.save(remaining);
       }
       cancelActivePlaylist();
@@ -1470,7 +1549,7 @@ export const PlaylistsManager = {
     });
 
     const actions = _el('div', 'playlists-header-actions');
-    actions.append(clearBtn, randomBtn, addBtn);
+    actions.append(undoBtn, clearBtn, randomBtn, addBtn);
     header.append(titleSpan, actions);
     panel.appendChild(header);
 
@@ -2771,7 +2850,7 @@ export const PlaylistsManager = {
     const repIncBtn     = _el('button', 'playlist-stepper-btn');
     repIncBtn.innerHTML = icons.chevronRight;
     repStepper.append(repDecBtn, repCountSpan, repIncBtn);
-    createCustomTooltip(repStepper, `Задать повторы для выбранных ${STEPPER_DRAG_TIP}`);
+    createCustomTooltip(repStepper, `[Повторы] Задать всем выбранным играм ${STEPPER_DRAG_TIP}`);
 
     const applyBulkRepeat = () => {
       this.bulkSetRepeat(playlist.id, [...sel], repCount.value);
@@ -2877,10 +2956,41 @@ export const PlaylistsManager = {
       this.refresh();
     });
 
+    // ── Convert repeats → interleaved entries ────────────────────────────────
+    // chunkCount: how many chunks each entry is split into.
+    // E.g. [A×10, B×10] with chunks=2 → A×5, B×5, A×5, B×5.
+    const chunkCount    = { value: 2 };
+    const chunkStepper  = _el('div', 'playlist-multiselect-stepper');
+    const chunkDecBtn   = _el('button', 'playlist-stepper-btn');
+    chunkDecBtn.innerHTML = icons.chevronLeft;
+    const chunkSpan     = _el('span', 'playlist-stepper-count', String(chunkCount.value));
+    const chunkIncBtn   = _el('button', 'playlist-stepper-btn');
+    chunkIncBtn.innerHTML = icons.chevronRight;
+    chunkStepper.append(chunkDecBtn, chunkSpan, chunkIncBtn);
+    createCustomTooltip(chunkStepper, `[Разбивка] На сколько частей разбить повторы при конвертации ${STEPPER_DRAG_TIP}`);
+
+    const onChunkDec = () => { chunkCount.value = Math.max(1, chunkCount.value - 1); chunkSpan.textContent = String(chunkCount.value); };
+    const onChunkInc = () => { chunkCount.value++; chunkSpan.textContent = String(chunkCount.value); };
+    _attachButtonHold(chunkDecBtn, onChunkDec);
+    _attachButtonHold(chunkIncBtn, onChunkInc);
+    _attachStepperDrag(chunkSpan, onChunkDec, onChunkInc);
+    _attachCountDblClick(chunkSpan, { getValue: () => chunkCount.value, setValue: v => { chunkCount.value = Math.max(1, v); chunkSpan.textContent = String(chunkCount.value); } });
+
+    const convertBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--convert');
+    convertBtn.innerHTML = icons.arrowUpDown;
+    createCustomTooltip(convertBtn, 'Разбить повторы на отдельные строки с чередованием игр');
+    convertBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (!sel.size) return;
+      this.bulkConvertRepeatsToEntries(playlist.id, [...sel], chunkCount.value);
+      this._selectionMode.delete(playlist.id);
+      this.refresh();
+    });
+
     const left = _el('div', 'playlist-multiselect-left');
     left.append(countSpan, selAllBtn, deselBtn, invertBtn, filterBtn, exitBtn);
     const right = _el('div', 'playlist-multiselect-right');
-    right.append(repStepper, dupBtn, paramsBtn, removeBtn);
+    right.append(repStepper, dupBtn, paramsBtn, chunkStepper, convertBtn, removeBtn);
     bar.append(left, right);
 
     // Expose methods so callers (long-press, entry params) can interact

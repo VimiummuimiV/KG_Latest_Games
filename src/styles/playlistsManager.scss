@@ -329,6 +329,15 @@ body.playlist-drag-active * { cursor: grabbing !important; }
       font-size: calc(0.85em / 1.1); // cancel header's 1.1em scale
     }
 
+    .playlists-undo-btn {
+      @include playlist-header-icon-btn(
+        16px, 28px,
+        hsl(var(--rg-popup-btn-save)),
+        hsla(var(--rg-popup-btn-save) / 0.15)
+      );
+      &--hidden { display: none; }
+    }
+
     .playlists-clear-btn {
       @include playlist-header-icon-btn(
         16px, 28px,
@@ -1673,6 +1682,10 @@ body.playlist-drag-active * { cursor: grabbing !important; }
         background: hsla(var(--rg-playlist-params-color) / 0.12);
         border-color: hsla(var(--rg-playlist-params-color) / 0.6);
       }
+    }
+
+    &--convert {
+      @include playlist-icon-btn('--rg-popup-btn-save', 20px, 12px);
     }
   }
 
