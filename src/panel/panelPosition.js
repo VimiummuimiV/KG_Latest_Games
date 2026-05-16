@@ -46,16 +46,16 @@ export function setupYPositioning(uiManager, container) {
 
     const enableYDrag = (e) => {
       if (e.button !== 0) return;
-      
+
       const ignoreSelectors = [
+        'a', 'button', 'input', 'select', 'textare', 'span',
         '.latest-game',
         '.group-tab',
         '.control-button',
         '.resize-handle-horizontal',
         '.resize-handle-vertical',
-        '#latest-games-search-input'
       ];
-      
+
       if (ignoreSelectors.some(selector => e.target.closest(selector))) return;
       
       isDraggingY = true;
