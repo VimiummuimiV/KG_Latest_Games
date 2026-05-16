@@ -286,29 +286,34 @@ export function _attachButtonHold(btn, stepFn, ctrlStepFn) {
 export function _attachStepperDrag(span, decFn, incFn) {
   const PX_PER_STEP      = 8;
   const PX_PER_STEP_SLOW = 32;
-  let startY = 0;
-  let accum  = 0;
+  let startY  = 0;
+  let accum   = 0;
+  let dragged = false;
 
   const onMove = e => {
     const step = e.shiftKey ? PX_PER_STEP_SLOW : PX_PER_STEP;
     accum += startY - e.clientY;
     startY = e.clientY;
-    while (accum >=  step) { incFn(); accum -= step; }
-    while (accum <= -step) { decFn(); accum += step; }
+    while (accum >=  step) { incFn(); accum -= step; dragged = true; }
+    while (accum <= -step) { decFn(); accum += step; dragged = true; }
   };
 
   const onUp = () => {
     document.removeEventListener('mousemove', onMove);
     document.removeEventListener('mouseup',   onUp);
     document.body.style.removeProperty('cursor');
-    document.addEventListener('click', e => e.stopPropagation(), { capture: true, once: true });
+    // Only suppress the trailing click when the user actually dragged
+    if (dragged) {
+      document.addEventListener('click', e => e.stopPropagation(), { capture: true, once: true });
+    }
   };
 
   span.addEventListener('mousedown', e => {
     if (e.button !== 0) return;
     e.preventDefault();
-    startY = e.clientY;
-    accum  = 0;
+    startY  = e.clientY;
+    accum   = 0;
+    dragged = false;
     document.body.style.cursor = 'ns-resize';
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup',   onUp);
@@ -322,6 +327,10 @@ export function _attachStepperDrag(span, decFn, incFn) {
  * @param {{ getValue: () => number, setValue: (v: number) => void, min?: number, max?: number, inputClass?: string, editingClass?: string }} opts
  */
 export function _attachCountDblClick(span, { getValue, setValue, min = 1, max = Infinity, inputClass = 'stepper-inline-input', editingClass = 'stepper-count--editing' }) {
+  // A dblclick is preceded by two click events that would otherwise bubble up
+  // to the playlist header and toggle expand/collapse. Stop them here.
+  span.addEventListener('click', e => e.stopPropagation());
+
   span.addEventListener('dblclick', e => {
     e.stopPropagation();
     if (span.querySelector(`.${inputClass}`)) return;
