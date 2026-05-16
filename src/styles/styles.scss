@@ -463,6 +463,12 @@
     text-align: center;
     color: var(--rg-enabled-yellow);
     cursor: pointer;
+
+    &.stepper-count--editing { color: inherit; }
+
+    .stepper-inline-input {
+      @include stepper-inline-input();
+    }
   }
 
   #latest-games-count-inc,

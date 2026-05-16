@@ -64,6 +64,42 @@
   }
 }
 
+@mixin text-input($focus-bg: null, $height: 24px) {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--rg-bg-card);
+  color: var(--rg-text-primary) !important;
+  border: 1px solid var(--rg-border-primary) !important;
+  border-radius: 3px !important;
+  height: $height;
+  line-height: $height;
+  padding: 0 0.6em;
+  font-size: 0.82em;
+  font-family: inherit;
+  transition: border-color 0.2s ease, background 0.2s ease;
+  outline: none;
+
+  &:focus {
+    border-color: var(--rg-border-hover) !important;
+    @if $focus-bg { background: $focus-bg; }
+  }
+  &::placeholder { color: var(--rg-text-tertiary); font-style: italic; }
+}
+
+// Inline direct-entry input spawned by double-clicking any stepper count span.
+@mixin stepper-inline-input() {
+  @include text-input();
+  width: 36px;
+  height: 20px;
+  line-height: 20px;
+  padding: 0 3px;
+  font-size: 0.8em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  background: var(--rg-bg-primary) !important;
+}
+
 @mixin game-action-button($bg, $hover-bg, $icon-stroke) {
   width: 24px;
   height: 24px;

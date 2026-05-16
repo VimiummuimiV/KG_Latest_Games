@@ -319,17 +319,17 @@ export function _attachStepperDrag(span, decFn, incFn) {
  * Double-click on a stepper span to enter a value directly via an inline input.
  * Enter/blur commits (clamped to [min, max]); Escape or double-click discards.
  * @param {HTMLElement} span
- * @param {{ getValue: () => number, setValue: (v: number) => void, min?: number, max?: number }} opts
+ * @param {{ getValue: () => number, setValue: (v: number) => void, min?: number, max?: number, inputClass?: string, editingClass?: string }} opts
  */
-export function _attachCountDblClick(span, { getValue, setValue, min = 1, max = Infinity }) {
+export function _attachCountDblClick(span, { getValue, setValue, min = 1, max = Infinity, inputClass = 'stepper-inline-input', editingClass = 'stepper-count--editing' }) {
   span.addEventListener('dblclick', e => {
     e.stopPropagation();
-    if (span.querySelector('.playlist-stepper-inline-input')) return;
+    if (span.querySelector(`.${inputClass}`)) return;
 
     const input = document.createElement('input');
     input.type      = 'text';
     input.inputMode = 'numeric';
-    input.className = 'playlist-stepper-inline-input';
+    input.className = inputClass;
     input.value     = String(getValue());
 
     input.addEventListener('keypress', e => {
@@ -338,7 +338,7 @@ export function _attachCountDblClick(span, { getValue, setValue, min = 1, max = 
 
     const savedText = span.textContent;
     span.textContent = '';
-    span.classList.add('playlist-stepper-count--editing');
+    span.classList.add(editingClass);
     span.appendChild(input);
 
     requestAnimationFrame(() => { input.focus(); input.select(); });
@@ -348,7 +348,7 @@ export function _attachCountDblClick(span, { getValue, setValue, min = 1, max = 
       if (done) return;
       done = true;
       input.remove();
-      span.classList.remove('playlist-stepper-count--editing');
+      span.classList.remove(editingClass);
       if (commit) {
         const v = parseInt(input.value, 10);
         if (!isNaN(v)) setValue(Math.max(min, max < Infinity ? Math.min(max, v) : v));
