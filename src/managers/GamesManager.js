@@ -328,8 +328,10 @@ export class GamesManager {
     this.mainManager.uiManager.refreshContainer();
   }
 
-  changeGameCount(delta) {
-    if (delta < 0 && this.mainManager.maxGameCount > 0) {
+  changeGameCount(delta, absolute = false) {
+    if (absolute) {
+      this.mainManager.maxGameCount = Math.max(0, delta);
+    } else if (delta < 0 && this.mainManager.maxGameCount > 0) {
       this.mainManager.maxGameCount--;
     } else if (delta > 0) {
       this.mainManager.maxGameCount++;

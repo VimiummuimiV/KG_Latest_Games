@@ -69,7 +69,7 @@ export function createControls(main) {
   _attachStepperDrag(countDisplay, dec, inc);
   _attachCountDblClick(countDisplay, {
     getValue: () => main.maxGameCount,
-    setValue: v  => { main.gamesManager.changeGameCount(v - main.maxGameCount); },
+    setValue: v  => main.gamesManager.changeGameCount(v, true),
     min: 1,
   });
 
