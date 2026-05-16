@@ -784,12 +784,13 @@ export const PlaylistsManager = {
     const ids = new Set(entryIds);
     const playlists = this.load();
     const p = playlists.find(p => p.id === playlistId);
-    if (!p) return;
+    if (!p) return 0;
     const newCount = Math.max(1, count);
     p.entries.forEach(e => {
       if (ids.has(e.id)) e.repeatCount = newCount;
     });
     this.save(playlists);
+    return newCount;
   },
 
   // Converts selected entries' repeatCounts into separate interleaved entry rows.
@@ -2464,7 +2465,9 @@ export const PlaylistsManager = {
   // entryList is passed so that select-all / deselect / exit can update
   // checkboxes and row classes in-place without a full refresh().
   _buildMultiSelectBar(playlist, sel, entryList) {
-    const bar = _el('div', 'playlist-multiselect-bar');
+    const bar           = _el('div', 'playlist-multiselect-bar');
+    // Cached once — bar and entryList are both children of this block and it never changes.
+    const playlistBlock = entryList.closest('.playlist-block');
 
     // ── Smart-select: apply a filter, select matching entries, deselect non-matching ──
     // seedEntryId     is set by onActivate (long-press); reference point for name chip.
@@ -2550,9 +2553,7 @@ export const PlaylistsManager = {
 
     const updateBarHeight = () => {
       requestAnimationFrame(() => {
-        const block = entryList.closest('.playlist-block');
-        const msBar = entryList.querySelector('.playlist-multiselect-bar');
-        if (block && msBar) block.style.setProperty('--playlist-multiselect-bar-height', `${msBar.offsetHeight}px`);
+        if (playlistBlock) playlistBlock.style.setProperty('--playlist-multiselect-bar-height', `${bar.offsetHeight}px`);
       });
     };
 
@@ -2759,8 +2760,7 @@ export const PlaylistsManager = {
       window.getSelection()?.removeAllRanges();
       // Multiselect bar is now hidden — reset its height var so the dup bar
       // (if open) re-sticks directly below the playlist header.
-      const block = entryList.closest('.playlist-block');
-      if (block) block.style.setProperty('--playlist-multiselect-bar-height', '0px');
+      if (playlistBlock) playlistBlock.style.setProperty('--playlist-multiselect-bar-height', '0px');
       entryList.querySelectorAll('.playlist-entry-checkbox').forEach(cb => { cb.checked = false; });
       entryList.querySelectorAll('.playlist-entry-row--selected').forEach(r => r.classList.remove('playlist-entry-row--selected'));
       countSpan.textContent = '0';
@@ -2887,18 +2887,18 @@ export const PlaylistsManager = {
     createCustomTooltip(repStepper, `[Повторы] Задать всем выбранным играм ${STEPPER_DRAG_TIP}`);
 
     const applyBulkRepeat = () => {
-      this.bulkSetRepeat(playlist.id, [...sel], repCount.value);
-      // Update each affected entry row's stepper count in-place without a full refresh
-      const el = repStepper.closest('.playlist-entries');
-      if (el) {
-        sel.forEach(entryId => {
-          const row  = el.querySelector(`.playlist-entry-row[data-entry-id="${entryId}"]`);
-          const span = row?.querySelector('.playlist-stepper-count');
-          if (span) span.textContent = String(repCount.value);
-        });
-        const msBar = el.querySelector('.playlist-multiselect-bar');
-        if (msBar?._refreshFilterRow) msBar._refreshFilterRow();
-      }
+      const newCount = this.bulkSetRepeat(playlist.id, [...sel], repCount.value);
+      if (!newCount) return;
+      // Single pass: sync local entries array + DOM stepper spans together,
+      // using the already-closed-over entryList instead of re-querying the DOM.
+      playlist.entries.forEach(e => {
+        if (!sel.has(e.id)) return;
+        e.repeatCount = newCount;
+        const span = entryList
+          .querySelector(`.playlist-entry-row[data-entry-id="${e.id}"] .playlist-stepper-count`);
+        if (span) span.textContent = String(newCount);
+      });
+      if (bar._refreshFilterRow) bar._refreshFilterRow();
     };
 
     const onRepDec = () => {
@@ -2937,8 +2937,6 @@ export const PlaylistsManager = {
       // Single duplicate of the whole selection, in-place (no full refresh)
       const newEntries = this.bulkDuplicateEntriesN(playlist.id, selIds, 1);
       if (!newEntries.length) return;
-      const fresh = this.load().find(p => p.id === playlist.id);
-      if (!fresh) return;
       entryList.querySelector('.playlist-entries-empty')?.remove();
       newEntries.forEach((ne, i) => {
         playlist.entries.push(ne);
@@ -2946,10 +2944,8 @@ export const PlaylistsManager = {
         entryList.appendChild(newRow);
       });
       this._attachEntryDrag(entryList, playlist.id, this._selectedEntries[playlist.id] ??= new Set());
-      // Refresh the filter row chip counts in case repeat/type mix changed
-      const msBar = entryList.querySelector('.playlist-multiselect-bar');
-      if (msBar?._refreshFilterRow) msBar._refreshFilterRow();
-      _syncGameCountChip(entryList.closest('.playlist-block'), playlist, PlaylistsManager.main);
+      if (bar._refreshFilterRow) bar._refreshFilterRow();
+      _syncGameCountChip(playlistBlock, playlist, PlaylistsManager.main);
     });
 
     const paramsBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--params');
@@ -2972,8 +2968,7 @@ export const PlaylistsManager = {
       bar.insertAdjacentElement('afterend', this._buildBulkParamsSection(playlist, [...sel]));
       bar.classList.add('playlist-multiselect-bar--params-open');
       requestAnimationFrame(() => {
-        const block = bar.closest('.playlist-block');
-        if (block) block.style.setProperty('--playlist-multiselect-bar-height', `${bar.offsetHeight}px`);
+        if (playlistBlock) playlistBlock.style.setProperty('--playlist-multiselect-bar-height', `${bar.offsetHeight}px`);
       });
     });
 
