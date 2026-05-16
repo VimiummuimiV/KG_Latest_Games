@@ -1,5 +1,6 @@
 import { icons } from '../icons.js';
 import { createElement } from '../utils.js';
+import { STEPPER_DRAG_TIP } from '../definitions.js';
 import { showMigrationPopup } from '../vocabularyMigration.js';
 import { createGamePopup } from '../gamePopup.js';
 import { setupResizeHandle } from '../panel/panelResize.js';
@@ -159,7 +160,12 @@ export class UIManager {
     if (countDisplay) {
       countDisplay.textContent = this.main.maxGameCount.toString();
       countDisplay.classList.toggle('latest-games-disabled', this.main.shouldAutoSave === false);
-      createCustomTooltip(countDisplay, this.main.shouldAutoSave ? 'Автосохранение: Включено' : 'Автосохранение: Отключено');
+      createCustomTooltip(
+        countDisplay,
+        `[Клик] Автосохранение: ${
+          this.main.shouldAutoSave ? 'Включено' : 'Отключено'
+        } ${STEPPER_DRAG_TIP}`
+      );
     }
   }
 

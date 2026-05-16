@@ -40,10 +40,11 @@ export function createControls(main) {
     className: main.shouldAutoSave === false ? 'latest-games-disabled' : '',
     textContent: main.maxGameCount.toString()
   });
-  createCustomTooltip(countDisplay,
-    main.shouldAutoSave
-      ? `Автосохранение: Включено ${STEPPER_DRAG_TIP}`
-      : `Автосохранение: Отключено ${STEPPER_DRAG_TIP}`
+  createCustomTooltip(
+    countDisplay,
+    `[Клик] Автосохранение: ${
+      main.shouldAutoSave ? 'Включено' : 'Отключено'
+    } ${STEPPER_DRAG_TIP}`
   );
 
   countDisplay.addEventListener('click', () => {
