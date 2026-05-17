@@ -347,7 +347,7 @@ export class PageHandler {
       if (randRes.mode === 'local') {
         const group = groupsManager.groups.find(g => g.games.some(game => game.id === randRes.id));
         if (group) groupsManager.selectGroup(group.id);
-        groupsManager.previousGameId = randRes.id;
+        gamesManager.previousGameId = randRes.id;
         gamesManager.saveState();
         
         targetVocId = String(randRes.game?.params?.vocId || '');
@@ -368,7 +368,7 @@ export class PageHandler {
     const currentGroup = groupsManager.getCurrentGroup(groupsManager.groups, groupsManager.currentGroupId);
     if (!currentGroup || !Array.isArray(currentGroup.games) || currentGroup.games.length === 0) return;
 
-    const prevGameId = groupsManager.previousGameId;
+    const prevGameId = gamesManager.previousGameId;
     let idx = currentGroup.games.findIndex(g => g.id === prevGameId);
     if (idx === -1) idx = 0;
     else idx = (idx + 1) % currentGroup.games.length;
@@ -376,7 +376,7 @@ export class PageHandler {
     const nextGame = currentGroup.games[idx];
     if (!nextGame) return;
 
-    groupsManager.previousGameId = nextGame.id;
+    gamesManager.previousGameId = nextGame.id;
     gamesManager.saveState();
 
     targetVocId = String(nextGame.params.vocId || '');

@@ -161,7 +161,7 @@ export function createControls(main) {
 
       // Save previous group and game IDs
       const previousGroupId = main.groupsManager.currentGroupId;
-      const previousGameId = main.groupsManager.previousGameId;
+      const previousGameId = main.gamesManager.previousGameId;
 
       // Store old IDs before regeneration
       main.groupsManager.groups.forEach(group => {
@@ -189,7 +189,7 @@ export function createControls(main) {
         for (const group of main.groupsManager.groups) {
           const found = group.games.find(g => g._oldId === previousGameId);
           if (found) {
-            main.groupsManager.previousGameId = found.id;
+            main.gamesManager.previousGameId = found.id;
             break;
           }
         }
@@ -705,7 +705,7 @@ export function createControls(main) {
 
         // Select group and persist previousGameId
         main.groupsManager.selectGroup(currentGroup.id);
-        main.groupsManager.previousGameId = nextGame.id;
+        main.gamesManager.previousGameId = nextGame.id;
         main.gamesManager.saveState();
 
         // Register pending played vocab if vocId exists
@@ -748,7 +748,7 @@ export function createControls(main) {
           }
         }
       }
-      main.groupsManager.previousGameId = res.id;
+      main.gamesManager.previousGameId = res.id;
       main.gamesManager.saveState();
 
       // Register pending played vocab if vocId exists

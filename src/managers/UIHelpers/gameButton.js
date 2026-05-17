@@ -100,7 +100,7 @@ export function createGameElement(main, game, id) {
     }
     const li = link.closest('li');
     if (li && li.id && li.id.startsWith('latest-game-')) {
-      main.groupsManager.previousGameId = li.id.replace('latest-game-', '');
+      main.gamesManager.previousGameId = li.id.replace('latest-game-', '');
       main.gamesManager.saveState();
     }
 

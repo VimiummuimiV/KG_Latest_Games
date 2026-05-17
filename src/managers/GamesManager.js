@@ -6,6 +6,7 @@ import { fetchVocabularyBasicData } from "../vocabularyCreation.js";
 export class GamesManager {
   constructor(main) {
     this.main = main;
+    this.previousGameId = null;
   }
 
   // Game parsing and generation utilities
@@ -183,7 +184,7 @@ export class GamesManager {
       const state = JSON.parse(localStorage.getItem('latestGamesState') || '{}');
       const gm = this.main.groupsManager;
       gm.currentGroupId = state.currentGroupId ?? gm.currentGroupId;
-      gm.previousGameId = state.previousGameId ?? gm.previousGameId;
+      this.previousGameId = state.previousGameId ?? this.previousGameId;
       this.latestGamesState = state;
     } catch (error) {
       console.warn('Could not load state from localStorage:', error);
@@ -204,7 +205,7 @@ export class GamesManager {
     try {
       const state = JSON.parse(localStorage.getItem('latestGamesState') || '{}');
       state.currentGroupId = this.main.groupsManager.currentGroupId;
-      state.previousGameId = this.main.groupsManager.previousGameId ?? state.previousGameId;
+      state.previousGameId = this.previousGameId ?? state.previousGameId;
       // state.latestGroupAddedGameId = this.latestGamesState ? this.latestGamesState.latestGroupAddedGameId : null;
       // state.latestGroupMigratedGameId = this.latestGamesState ? this.latestGamesState.latestGroupMigratedGameId : null;
       localStorage.setItem('latestGamesState', JSON.stringify(state));
@@ -333,7 +334,7 @@ export class GamesManager {
   }
 
   getPreviousGameId() {
-    return this.main.groupsManager.previousGameId ?? null;
+    return this.previousGameId ?? null;
   }
 
   getRandomGame() {

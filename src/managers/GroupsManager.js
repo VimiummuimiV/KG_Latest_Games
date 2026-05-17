@@ -7,7 +7,6 @@ export class GroupsManager {
     this.main = main;
     this.groups = [];
     this.currentGroupId = null;
-    this.previousGameId = null;
     this.groupViewMode = 'tabs';
   }
 
@@ -160,7 +159,7 @@ export class GroupsManager {
   // Helper to get group class string for tab/header
   getGroupClass(group, baseClass = '') {
     const isActive = group.id === this.currentGroupId;
-    const previousGameId = this.main.gamesManager.latestGamesState?.previousGameId;
+    const previousGameId = this.main.gamesManager.previousGameId;
     const hasPreviousGame = group.games.some(game => game.id === previousGameId);
     return `${baseClass}${isActive ? ' active' : ''}${hasPreviousGame && !isActive ? ' previous-game-group' : ''}`.trim();
   }
