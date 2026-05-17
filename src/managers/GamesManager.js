@@ -4,8 +4,8 @@ import { icons } from '../icons.js';
 import { fetchVocabularyBasicData } from "../vocabularyCreation.js";
 
 export class GamesManager {
-  constructor(mainManager) {
-    this.mainManager = mainManager;
+  constructor(main) {
+    this.main = main;
   }
 
   // Game parsing and generation utilities
@@ -90,7 +90,7 @@ export class GamesManager {
 
     // Only create the description span if the setting is enabled
     let descSpan = null;
-    if (this.mainManager.showButtonDescriptions) {
+    if (this.main.showButtonDescriptions) {
       descSpan = createElement('span', {
         className: 'latest-game-description'
       });
@@ -170,18 +170,18 @@ export class GamesManager {
   loadGameData() {
     try {
       const data = JSON.parse(localStorage.getItem('latestGamesData') || '{}');
-      this.mainManager.groupsManager.setGroups(Array.isArray(data.groups) ? data.groups : []);
+      this.main.groupsManager.setGroups(Array.isArray(data.groups) ? data.groups : []);
       this.assignGameIds();
     } catch (error) {
       console.warn('Could not load game data from localStorage:', error);
-      this.mainManager.groupsManager.setGroups([]);
+      this.main.groupsManager.setGroups([]);
     }
   }
 
   loadState() {
     try {
       const state = JSON.parse(localStorage.getItem('latestGamesState') || '{}');
-      const gm = this.mainManager.groupsManager;
+      const gm = this.main.groupsManager;
       gm.currentGroupId = state.currentGroupId ?? gm.currentGroupId;
       gm.previousGameId = state.previousGameId ?? gm.previousGameId;
       this.latestGamesState = state;
@@ -193,7 +193,7 @@ export class GamesManager {
   saveGameData() {
     try {
       localStorage.setItem('latestGamesData', JSON.stringify({
-        groups: this.mainManager.groupsManager.groups
+        groups: this.main.groupsManager.groups
       }));
     } catch (error) {
       console.warn('Could not save game data to localStorage:', error);
@@ -203,8 +203,8 @@ export class GamesManager {
   saveState() {
     try {
       const state = JSON.parse(localStorage.getItem('latestGamesState') || '{}');
-      state.currentGroupId = this.mainManager.groupsManager.currentGroupId;
-      state.previousGameId = this.mainManager.groupsManager.previousGameId;
+      state.currentGroupId = this.main.groupsManager.currentGroupId;
+      state.previousGameId = this.main.groupsManager.previousGameId;
       // state.latestGroupAddedGameId = this.latestGamesState ? this.latestGamesState.latestGroupAddedGameId : null;
       // state.latestGroupMigratedGameId = this.latestGamesState ? this.latestGamesState.latestGroupMigratedGameId : null;
       localStorage.setItem('latestGamesState', JSON.stringify(state));
@@ -216,16 +216,16 @@ export class GamesManager {
   assignGameIds() {
     // Collect all existing ids to avoid duplicates
     const allGameIds = new Set();
-    this.mainManager.groupsManager.groups.forEach(group => {
+    this.main.groupsManager.groups.forEach(group => {
       group.games.forEach(game => {
         if (game.id) allGameIds.add(game.id);
       });
     });
-    this.mainManager.groupsManager.groups.forEach(group => {
+    this.main.groupsManager.groups.forEach(group => {
       group.games = group.games.map(game => {
         // Only assign a new id if missing or invalid
         if (!game.id || game.id === -1) {
-          const newId = generateUniqueId(this.mainManager.groupsManager.groups);
+          const newId = generateUniqueId(this.main.groupsManager.groups);
           allGameIds.add(newId);
           return { ...game, id: newId };
         } else {
@@ -238,9 +238,9 @@ export class GamesManager {
   }
 
   updateGameOrderFromDOM() {
-    const currentGroup = this.mainManager.groupsManager.getCurrentGroup(
-      this.mainManager.groupsManager.groups,
-      this.mainManager.groupsManager.currentGroupId
+    const currentGroup = this.main.groupsManager.getCurrentGroup(
+      this.main.groupsManager.groups,
+      this.main.groupsManager.currentGroupId
     );
     if (!currentGroup) return;
 
@@ -254,7 +254,7 @@ export class GamesManager {
   }
 
   findGameIndex(id) {
-    for (const group of this.mainManager.groupsManager.groups) {
+    for (const group of this.main.groupsManager.groups) {
       const index = group.games.findIndex(game => game.id == id);
       if (index !== -1) return { group, index };
     }
@@ -262,7 +262,7 @@ export class GamesManager {
   }
 
   findGameById(id) {
-    for (const group of this.mainManager.groupsManager.groups) {
+    for (const group of this.main.groupsManager.groups) {
       const game = group.games.find(g => g.id === id);
       if (game) return game;
     }
@@ -278,7 +278,7 @@ export class GamesManager {
   findGamesByVocId(vocId) {
     const needle = String(vocId);
     const results = [];
-    for (const group of this.mainManager.groupsManager.groups) {
+    for (const group of this.main.groupsManager.groups) {
       for (const game of group.games) {
         if (game.params?.gametype === 'voc' && String(game.params?.vocId) === needle) {
           results.push(game);
@@ -297,7 +297,7 @@ export class GamesManager {
 
     this.assignGameIds();
     this.saveGameData();
-    this.mainManager.uiManager.refreshContainer();
+    this.main.uiManager.refreshContainer();
 
     return deletedGame;
   }
@@ -315,21 +315,21 @@ export class GamesManager {
 
     this.assignGameIds();
     this.saveGameData();
-    this.mainManager.uiManager.refreshContainer();
+    this.main.uiManager.refreshContainer();
   }
 
   changeGameCount(delta, absolute = false) {
     if (absolute) {
-      this.mainManager.maxGameCount = Math.max(0, delta);
-    } else if (delta < 0 && this.mainManager.maxGameCount > 0) {
-      this.mainManager.maxGameCount--;
+      this.main.maxGameCount = Math.max(0, delta);
+    } else if (delta < 0 && this.main.maxGameCount > 0) {
+      this.main.maxGameCount--;
     } else if (delta > 0) {
-      this.mainManager.maxGameCount++;
+      this.main.maxGameCount++;
     }
 
-    this.mainManager.uiManager.updateGameCountDisplay();
-    this.mainManager.settingsManager.saveSettings();
-    this.mainManager.uiManager.refreshContainer();
+    this.main.uiManager.updateGameCountDisplay();
+    this.main.settingsManager.saveSettings();
+    this.main.uiManager.refreshContainer();
   }
 
   getPreviousGameId() {
@@ -340,8 +340,8 @@ export class GamesManager {
 
   getRandomGame() {
     // Ensure validVocabularies and randomVocabulariesType are available
-    if (!(this.mainManager && this.mainManager.validVocabularies && typeof this.mainManager.validVocabularies === 'object' &&
-          this.mainManager.randomVocabulariesType && typeof this.mainManager.randomVocabulariesType === 'object')) {
+    if (!(this.main && this.main.validVocabularies && typeof this.main.validVocabularies === 'object' &&
+          this.main.randomVocabulariesType && typeof this.main.randomVocabulariesType === 'object')) {
       return null;
     }
 
@@ -374,15 +374,15 @@ export class GamesManager {
     }
 
     // Get allowed vocabulary types based on randomVocabulariesType settings (shared for both modes)
-    const allowedTypes = Object.keys(this.mainManager.randomVocabulariesType).filter(
-      type => this.mainManager.randomVocabulariesType[type] === true
+    const allowedTypes = Object.keys(this.main.randomVocabulariesType).filter(
+      type => this.main.randomVocabulariesType[type] === true
     );
 
     // Global random: generate params with a random voc id from allowed types
-    if (this.mainManager.randomGameId === 'global') {
+    if (this.main.randomGameId === 'global') {
       // Collect IDs from allowed types only, excluding banned and played
       const allIds = allowedTypes
-        .flatMap(type => this.mainManager.validVocabularies[type] || [])
+        .flatMap(type => this.main.validVocabularies[type] || [])
         .filter(id => id !== undefined && id !== null && !bannedSet.has(String(id)) && !playedSet.has(String(id)));
 
       if (allIds.length === 0) {
@@ -410,16 +410,16 @@ export class GamesManager {
     }
 
     const all = [];
-    const excludePlayed = this.mainManager.randomLocalExcludePlayed !== false;
+    const excludePlayed = this.main.randomLocalExcludePlayed !== false;
     const shouldExcludeLocal = (vocId) => {
       if (!vocId) return false;
       return bannedSet.has(vocId) || (excludePlayed && playedSet.has(vocId));
     };
 
-    const currentGroup = this.mainManager.groupsManager.getCurrentGroup();
-    const groupsToSearch = this.mainManager.randomLocalByActiveGroup && currentGroup
+    const currentGroup = this.main.groupsManager.getCurrentGroup();
+    const groupsToSearch = this.main.randomLocalByActiveGroup && currentGroup
       ? [currentGroup]
-      : this.mainManager.groupsManager.groups;
+      : this.main.groupsManager.groups;
 
     groupsToSearch.forEach(group => {
       group.games.forEach(game => {
@@ -429,7 +429,7 @@ export class GamesManager {
 
         const vocType = game.params.vocType;
         const isAllowedVoc = vocType && allowedTypes.includes(vocType);
-        const includeStandardMode = !vocType && this.mainManager.randomLocalIncludeStandardModes;
+        const includeStandardMode = !vocType && this.main.randomLocalIncludeStandardModes;
 
         if (isAllowedVoc || includeStandardMode) {
           all.push({ game, groupId: group.id });
