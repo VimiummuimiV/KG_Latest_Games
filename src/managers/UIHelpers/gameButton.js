@@ -133,11 +133,12 @@ export function createGameElement(main, game, id) {
 // Ctrl = stats tooltip, default = info tooltip). Called once by UIManager
 // on the shared #latest-games <ul> instead of attaching per <a> element.
 // ─────────────────────────────────────────────────────────────────────────────
-const buildDefaultTooltip = (main) => {
+const buildDefaultTooltip = (main, currentGroupId) => {
   const prev = getPreviousMigrationGroup(main);
+  const showCtrlHint = prev && prev.id !== currentGroupId;
   const rmbHint = `
     [ПКМ] Переместить игру в другую группу
-    ${prev ? `[Ctrl + ПКМ] Переместить в «${prev.title}»` : ''}
+    ${showCtrlHint ? `[Ctrl + ПКМ] Переместить в «${prev.title}»` : ""}
   `;
   return `
   [Удерживание ЛКМ] Создать|Сохранить игру с альтернативными параметрами
@@ -225,7 +226,8 @@ export function attachGameHover(gamesList, main) {
     }
 
     // Default tooltip
-    updateTooltipContent(link, buildDefaultTooltip(main), 'info');
+    const gameGroup = main.groupsManager.groups.find(g => g.games.some(g2 => g2.id === gameId));
+    updateTooltipContent(link, buildDefaultTooltip(main, gameGroup?.id), 'info');
   });
 
   gamesList.addEventListener('mouseout', (e) => {
