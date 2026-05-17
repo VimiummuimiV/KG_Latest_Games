@@ -333,9 +333,7 @@ export class GamesManager {
   }
 
   getPreviousGameId() {
-    return this.latestGamesState && this.latestGamesState.previousGameId
-      ? this.latestGamesState.previousGameId
-      : null;
+    return this.main.groupsManager.previousGameId ?? null;
   }
 
   getRandomGame() {

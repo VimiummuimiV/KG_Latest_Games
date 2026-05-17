@@ -705,7 +705,7 @@ export function createControls(main) {
 
         // Select group and persist previousGameId
         main.groupsManager.selectGroup(currentGroup.id);
-        main.gamesManager.latestGamesState.previousGameId = nextGame.id;
+        main.groupsManager.previousGameId = nextGame.id;
         main.gamesManager.saveState();
 
         // Register pending played vocab if vocId exists
