@@ -162,6 +162,8 @@ export function addGameToGroup(group, vocId, vocName, vocType, groups, main) {
 export function showVocabularyCreationPopup(groups, event, vocId, vocName, vocType, main) {
   hideTooltip();
 
+  const prevGroupId = (main.gamesManager.latestGamesData || {}).latestGroupAddedGameId ?? null;
+
   const buttonConfigs = groups.map(group => {
     const alreadyExists = group.games.some(game => String(game.params?.vocId) === String(vocId));
     return {
@@ -174,7 +176,7 @@ export function showVocabularyCreationPopup(groups, event, vocId, vocName, vocTy
     };
   });
 
-  createPopup(buttonConfigs, event, 'vocabulary-creation-popup', 'Добавить');
+  createPopup(buttonConfigs, event, 'vocabulary-creation-popup', 'Добавить', false, prevGroupId);
 }
 
 /**

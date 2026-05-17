@@ -2,9 +2,10 @@ import { createPopup } from './menuPopup.js';
 import { hideTooltipElement } from './tooltip.js';
 
 export function showMigrationPopup(main, groups, currentGroupId, event, gameId) {
-  hideTooltipElement(); // Hide any existing tooltip
+  hideTooltipElement();
 
-  // Create button configurations for groups (excluding current group)
+  const prevGroupId = (main.gamesManager.latestGamesData || {}).latestGroupMigratedGameId ?? null;
+
   const buttonConfigs = groups
     .filter(group => group.id !== currentGroupId)
     .map(group => ({
@@ -16,7 +17,7 @@ export function showMigrationPopup(main, groups, currentGroupId, event, gameId) 
       }
     }));
 
-  createPopup(buttonConfigs, event, 'game-migration-popup', 'Переместить');
+  createPopup(buttonConfigs, event, 'game-migration-popup', 'Переместить', false, prevGroupId);
 }
 
 export function migrateGame(main, gameId, targetGroupId) {

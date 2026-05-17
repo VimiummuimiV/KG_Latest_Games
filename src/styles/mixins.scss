@@ -51,6 +51,12 @@
     border: 2px solid var(--rg-border-pinned-normal) !important;
   }
 
+  &.last-used {
+    color: var(--rg-gametype-noerror) !important;
+    background-color: var(--rg-bg-card-pinned-noerror) !important;
+    border: 2px solid var(--rg-border-pinned-noerror) !important;
+  }
+
   &.warning {
     color: var(--rg-gametype-chars) !important;
     background-color: var(--rg-bg-card-pinned-chars) !important;

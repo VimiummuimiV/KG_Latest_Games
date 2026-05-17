@@ -10,7 +10,7 @@ import { createElement } from './utils.js';
  * @param {boolean} persistent - Whether the popup should remain open after button clicks
  * @returns {HTMLElement} The created popup element
  */
-export function createPopup(buttonConfigs, event, className = 'popup', header, persistent = false) {
+export function createPopup(buttonConfigs, event, className = 'popup', header, persistent = false, focusGroupId = null) {
   // Remove any existing popup with the same class
   const existingPopup = document.querySelector(`.${className}`);
   if (existingPopup) existingPopup.remove();
@@ -29,12 +29,13 @@ export function createPopup(buttonConfigs, event, className = 'popup', header, p
   }
 
   // Create buttons from configurations
-  buttonConfigs.forEach(config => {
+  buttonConfigs.forEach((config, index) => {
     const button = createElement('button', {
       className: config.className || 'popup-button',
       textContent: config.text,
       ...(config.dataset && { dataset: config.dataset })
     });
+    button.setAttribute('data-config-index', index);
 
     if (config.onClick) {
       button.addEventListener('click', () => {
@@ -70,6 +71,16 @@ export function createPopup(buttonConfigs, event, className = 'popup', header, p
   popup.style.left = `${left}px`;
   popup.style.top = `${top}px`;
   popup.style.visibility = 'visible';
+
+  // Highlight and scroll to previously used group
+  if (focusGroupId != null) {
+    const focusIndex = buttonConfigs.findIndex(c => String(c.dataset?.groupId) === String(focusGroupId));
+    const target = focusIndex !== -1 ? popup.querySelector(`button[data-config-index="${focusIndex}"]`) : null;
+    if (target) {
+      target.classList.add('last-used');
+      popup.scrollTop = target.offsetTop - popup.offsetTop;
+    }
+  }
 
   // Define a function to hide popup and remove event listeners
   const hidePopup = (e) => {
