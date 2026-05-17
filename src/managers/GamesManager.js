@@ -202,12 +202,9 @@ export class GamesManager {
 
   saveState() {
     try {
-      localStorage.setItem('latestGamesState', JSON.stringify({
-        currentGroupId: this.mainManager.groupsManager.currentGroupId,
-        previousGameId: this.latestGamesState?.previousGameId,
-        latestGroupAddedGameId: this.latestGamesState?.latestGroupAddedGameId,
-        latestGroupMigratedGameId: this.latestGamesState?.latestGroupMigratedGameId
-      }));
+      const state = JSON.parse(localStorage.getItem('latestGamesState') || '{}');
+      state.currentGroupId = this.mainManager.groupsManager.currentGroupId;
+      localStorage.setItem('latestGamesState', JSON.stringify(state));
     } catch (error) {
       console.warn('Could not save state to localStorage:', error);
     }
