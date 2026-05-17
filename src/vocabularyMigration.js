@@ -35,6 +35,20 @@ export function migrateGame(main, gameId, targetGroupId) {
   const [game] = sourceGroup.games.splice(gameIndex, 1);
   targetGroup.games.push(game);
 
+  // Remember the last migration target for Ctrl+RMB shortcut
+  (main.gamesManager.latestGamesData ||= {}).latestGroupMigratedGameId = targetGroupId;
+
   main.gamesManager.saveGameData();
   main.uiManager.refreshContainer();
+}
+
+export function getPreviousMigrationGroup(main) {
+  const id = (main.gamesManager.latestGamesData || {}).latestGroupMigratedGameId;
+  return id ? main.groupsManager.groups.find(g => g.id === id) || null : null;
+}
+
+export function migrateGameToPreviousGroup(main, gameId) {
+  const group = getPreviousMigrationGroup(main);
+  if (group) migrateGame(main, gameId, group.id);
+  return !!group;
 }

@@ -3,6 +3,7 @@ import { highlightExistingVocabularies } from "./vocabularyChecker.js";
 import { createPopup } from "./menuPopup.js";
 import { hideTooltip } from "./vocabularyContent.js";
 import { typeMapping } from "./definitions.js";
+import { createCustomTooltip } from "./tooltip.js";
 
 // Extracts all relevant dl fields from .user-content section of a parsed voc page document
 function extractDlFields(doc) {
@@ -203,6 +204,24 @@ function attachEventToContainer(container, groups, main) {
       return { success: false };
     }
   }
+
+  container.addEventListener('mouseover', (e) => {
+    const anchor = e.target.closest('a');
+    if (!anchor || anchor._vocTooltipAttached) return;
+    const href = anchor.getAttribute('href') || '';
+    if (!href.includes('/vocs/') && !href.includes('/create/')) return;
+    if (!extractVocabularyId(anchor)) return;
+    anchor._vocTooltipAttached = true;
+    const latestGamesData = main.gamesManager.latestGamesData || {};
+    const prevGroup = latestGamesData.latestGroupAddedGameId
+      ? main.groupsManager.groups.find(g => g.id === latestGamesData.latestGroupAddedGameId)
+      : null;
+    createCustomTooltip(anchor, prevGroup
+      ? `[ПКМ] Добавить словарь в группу. [Ctrl + ПКМ] Добавить в «${prevGroup.title}»`
+      : '[ПКМ] Добавить словарь в группу',
+      'info', 500 
+    );
+  });
 
   container.addEventListener('contextmenu', async (e) => {
     const anchor = e.target.closest('a');

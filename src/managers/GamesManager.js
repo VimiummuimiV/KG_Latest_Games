@@ -180,7 +180,11 @@ export class GamesManager {
           this.latestGamesData = {};
         } else if (data && Array.isArray(data.groups)) {
           this.mainManager.groupsManager.setGroups(data.groups, data.currentGroupId);
-          this.latestGamesData = { previousGameId: data.previousGameId, latestGroupAddedGameId: data.latestGroupAddedGameId };
+          this.latestGamesData = {
+            previousGameId: data.previousGameId,
+            latestGroupAddedGameId: data.latestGroupAddedGameId,
+            latestGroupMigratedGameId: data.latestGroupMigratedGameId
+          };
         } else {
           this.mainManager.groupsManager.setGroups([], null);
           this.latestGamesData = {};
@@ -204,7 +208,8 @@ export class GamesManager {
         groups: this.mainManager.groupsManager.groups,
         currentGroupId: this.mainManager.groupsManager.currentGroupId,
         previousGameId: this.latestGamesData?.previousGameId,
-        latestGroupAddedGameId: this.latestGamesData?.latestGroupAddedGameId
+        latestGroupAddedGameId: this.latestGamesData?.latestGroupAddedGameId,
+        latestGroupMigratedGameId: this.latestGamesData?.latestGroupMigratedGameId
       };
       localStorage.setItem('latestGamesData', JSON.stringify(data));
     } catch (error) {

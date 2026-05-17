@@ -86,7 +86,7 @@ new MutationObserver(() => {
   if (tooltipCurrentTarget && !document.contains(tooltipCurrentTarget)) hideTooltipElement();
 }).observe(document, { childList: true, subtree: true });
 
-export function createCustomTooltip(element, tooltipContent, type = 'info') {
+export function createCustomTooltip(element, tooltipContent, type = 'info', delay = null) {
   if (tooltipContent == null) return; // Skip if content is null/undefined
   
   // Check if tooltip should be shown based on type and settings
@@ -95,6 +95,7 @@ export function createCustomTooltip(element, tooltipContent, type = 'info') {
   // Always update the tooltip content stored on the element.
   element._tooltipContent = tooltipContent;
   element._tooltipType = type;
+  if (delay !== null) element._tooltipDelay = delay;
 
   // ── LIVE UPDATE ──────────────────────────────────────────────────────────────
   // If this element is currently hovered and the tooltip is visible, push the
@@ -143,7 +144,7 @@ export function createCustomTooltip(element, tooltipContent, type = 'info') {
         tooltipEl.style.opacity = '1';
       } else {
         // First appearance — fade in after delay
-        const showDelay = inExcludedContainer ? 1200 : 150;
+        const showDelay = element._tooltipDelay ?? (inExcludedContainer ? 1200 : 150);
         tooltipEl.style.opacity = '0';
         tooltipEl.offsetHeight; // force reflow for transition
         tooltipShowTimer = setTimeout(() => {

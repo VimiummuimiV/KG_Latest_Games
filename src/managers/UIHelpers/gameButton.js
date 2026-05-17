@@ -6,6 +6,7 @@ import { gameStatsApi } from '../../gameStatsApi.js';
 import { createGameInfoPopup } from '../../gameInfo.js';
 import { fetchVocabularyData, showTooltip, hideTooltip, startHideTimeout } from '../../vocabularyContent.js';
 import { setActivePlaylistSession } from '../../playlistsManager.js';
+import { getPreviousMigrationGroup } from '../../vocabularyMigration.js';
 
 export function createGameElement(main, game, id) {
   const previousGameId = main.gamesManager.getPreviousGameId();
@@ -132,12 +133,19 @@ export function createGameElement(main, game, id) {
 // Ctrl = stats tooltip, default = info tooltip). Called once by UIManager
 // on the shared #latest-games <ul> instead of attaching per <a> element.
 // ─────────────────────────────────────────────────────────────────────────────
-const defaultTooltipContent = `
+const buildDefaultTooltip = (main) => {
+  const prev = getPreviousMigrationGroup(main);
+  const rmbHint = `
+    [ПКМ] Переместить игру в другую группу
+    ${prev ? `[Ctrl + ПКМ] Переместить в «${prev.title}»` : ''}
+  `;
+  return `
   [Удерживание ЛКМ] Создать|Сохранить игру с альтернативными параметрами
-  [ПКМ] Переместить игру в другую группу
+  ${rmbHint}
   [Shift + Наведение] Показать содержимое словаря
   [Ctrl + Наведение] Показать статистику игры
 `;
+};
 
 export function attachGameHover(gamesList, main) {
   const tooltipCache = {
@@ -217,7 +225,7 @@ export function attachGameHover(gamesList, main) {
     }
 
     // Default tooltip
-    updateTooltipContent(link, defaultTooltipContent, 'info');
+    updateTooltipContent(link, buildDefaultTooltip(main), 'info');
   });
 
   gamesList.addEventListener('mouseout', (e) => {

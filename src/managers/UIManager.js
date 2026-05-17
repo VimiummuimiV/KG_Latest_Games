@@ -1,7 +1,7 @@
 import { icons } from '../icons.js';
 import { createElement } from '../utils.js';
 import { STEPPER_DRAG_TIP } from '../definitions.js';
-import { showMigrationPopup } from '../vocabularyMigration.js';
+import { showMigrationPopup, migrateGameToPreviousGroup } from '../vocabularyMigration.js';
 import { createGamePopup } from '../gamePopup.js';
 import { setupResizeHandle } from '../panel/panelResize.js';
 import { setupYPositioning } from '../panel/panelPosition.js';
@@ -105,7 +105,11 @@ export class UIManager {
       if (gameElement) {
         e.preventDefault();
         const gameId = gameElement.id.replace('latest-game-', '');
-        showMigrationPopup(this.main, this.main.groupsManager.groups, this.main.groupsManager.currentGroupId, e, gameId);
+        if (e.ctrlKey) {
+          migrateGameToPreviousGroup(this.main, gameId);
+        } else {
+          showMigrationPopup(this.main, this.main.groupsManager.groups, this.main.groupsManager.currentGroupId, e, gameId);
+        }
       }
     });
 
