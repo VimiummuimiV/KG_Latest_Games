@@ -142,10 +142,9 @@ export function addGameToGroup(group, vocId, vocName, vocType, groups, main) {
     pin: 1
   };
   group.games.push(newGame);
-  let latestGamesData = main.gamesManager.latestGamesData || {};
-  latestGamesData = { ...latestGamesData, latestGroupAddedGameId: group.id };
-  main.gamesManager.latestGamesData = latestGamesData;
+  main.groupsManager.latestGroupAddedGameId = group.id;
   main.gamesManager.saveGamesData();
+  main.gamesManager.saveState();
   main.uiManager.refreshContainer();
   highlightExistingVocabularies(groups);
 }
@@ -162,7 +161,7 @@ export function addGameToGroup(group, vocId, vocName, vocType, groups, main) {
 export function showVocabularyCreationPopup(groups, event, vocId, vocName, vocType, main) {
   hideTooltip();
 
-  const prevGroupId = (main.gamesManager.latestGamesData || {}).latestGroupAddedGameId ?? null;
+  const prevGroupId = main.groupsManager.latestGroupAddedGameId ?? null;
 
   const buttonConfigs = groups.map(group => {
     const alreadyExists = group.games.some(game => String(game.params?.vocId) === String(vocId));
@@ -214,9 +213,8 @@ function attachEventToContainer(container, groups, main) {
     if (!href.includes('/vocs/') && !href.includes('/create/')) return;
     if (!extractVocabularyId(anchor)) return;
     anchor._vocTooltipAttached = true;
-    const latestGamesData = main.gamesManager.latestGamesData || {};
-    const prevGroup = latestGamesData.latestGroupAddedGameId
-      ? main.groupsManager.groups.find(g => g.id === latestGamesData.latestGroupAddedGameId)
+    const prevGroup = main.groupsManager.latestGroupAddedGameId
+      ? main.groupsManager.groups.find(g => g.id === main.groupsManager.latestGroupAddedGameId)
       : null;
     createCustomTooltip(anchor, prevGroup
       ? `[ПКМ] Добавить словарь в группу. [Ctrl + ПКМ] Добавить в «${prevGroup.title}»`
@@ -238,11 +236,9 @@ function attachEventToContainer(container, groups, main) {
       return;
     }
 
-    let latestGamesData = main.gamesManager.latestGamesData || {};
-
     // Ctrl + right-click: add vocabulary directly to the last used group without showing the popup
     if (e.ctrlKey) {
-      const previousGroupId = latestGamesData.latestGroupAddedGameId;
+      const previousGroupId = main.groupsManager.latestGroupAddedGameId;
       if (previousGroupId) {
         const group = groups.find(g => g.id === previousGroupId);
         if (group) {

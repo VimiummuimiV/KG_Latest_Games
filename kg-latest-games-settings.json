@@ -4,7 +4,7 @@
     "currentTheme": "dark",
     "displayMode": "wrap",
     "groupViewMode": "tabs",
-    "previousScrollPosition": 0,
+    "previousScrollPosition": 20,
     "panelWidths": {
       "game": "70vw",
       "main": "70vw"
@@ -15,7 +15,7 @@
       "gamelist": "50vh"
     },
     "panelYPosition": {
-      "main": 4.5,
+      "main": 4.4,
       "gamelist": 8,
       "profile": 0,
       "chatlogs": 0,
@@ -61,7 +61,7 @@
       "url": true
     },
     "alwaysVisiblePanel": {
-      "main": false,
+      "main": true,
       "gamelist": false,
       "profile": false,
       "chatlogs": false,
@@ -71,7 +71,9 @@
       "donation": false,
       "forum": false,
       "game": false
-    }
+    },
+    "playlistPanelAutoOpen": 0,
+    "positionDisplayMode": "fraction"
   },
   "latestGamesData": {
     "groups": [
@@ -29335,202 +29337,16 @@
             "pin": 1
           }
         ]
-      },
-      {
-        "id": "z8mxopqtm61uofi6t4zwr0vdtq4quiwn",
-        "title": "Избранные",
-        "games": [
-          {
-            "id": "fylpbj1q5304kzbnmbyvwctutim44xvm",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Горизонтальная моторика",
-              "vocId": "5169",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0,
-              "vocType": "texts",
-              "vocIsPublic": true
-            },
-            "pin": 1
-          },
-          {
-            "id": "76dupzhhes15ynozvj5kl6pq1uf6hrtn",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Тренировка ва ол - \"ола\"",
-              "vocId": "248785",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0,
-              "vocType": "phrases",
-              "vocIsPublic": true
-            },
-            "pin": 1
-          },
-          {
-            "id": "t6rgzvmebnebzw9lf41hn771d523rj81",
-            "params": {
-              "gametype": "voc",
-              "vocName": "English 13.63",
-              "vocId": "40009",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0,
-              "vocType": "words",
-              "vocIsPublic": true
-            },
-            "pin": 1
-          },
-          {
-            "id": "buugibejednges038yy8mhabxy1223vh",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Частотный-3000 [English]",
-              "vocId": "31676",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0,
-              "vocType": "words",
-              "vocIsPublic": true
-            },
-            "pin": 1
-          },
-          {
-            "id": "3kd1s5ynae3jvxmoh5xx32jv34m59pb9",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Правило двух шифтов",
-              "vocId": "6436",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0,
-              "vocType": "phrases",
-              "vocIsPublic": true
-            },
-            "pin": 1
-          },
-          {
-            "id": "cxkr03zkbk097mh4jzcps9rv27aauxfq",
-            "params": {
-              "gametype": "voc",
-              "vocName": "шесть \"е\"",
-              "vocId": "222341",
-              "vocType": "words",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0,
-              "vocIsPublic": true
-            },
-            "pin": 1
-          },
-          {
-            "id": "8crb9lx3yn2d4s5qrwlzx2dsyx96pgz7",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Русский Практика: ё единственная гласная _",
-              "vocId": "229503",
-              "vocType": "words",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0,
-              "vocIsPublic": true
-            },
-            "pin": 1
-          },
-          {
-            "id": "d39gfxp1v2lm652rbs8mgds5pmurv22c",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Края. 10 букв",
-              "vocId": "123642",
-              "vocType": "texts",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0,
-              "vocIsPublic": true
-            },
-            "pin": 1
-          },
-          {
-            "id": "di1pemyyfgba9v4u3j59uj3l1lh9qan5",
-            "params": {
-              "gametype": "voc",
-              "vocName": "1Гарри Поттер и философский камень",
-              "vocId": "232197",
-              "vocType": "texts",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0,
-              "vocIsPublic": true
-            },
-            "pin": 1
-          },
-          {
-            "id": "v82blvl2gp7jnl2dpgplkixip9gt0rvv",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Соточка",
-              "vocId": "25856",
-              "vocType": "texts",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0,
-              "vocIsPublic": true
-            },
-            "pin": 1
-          },
-          {
-            "id": "nhhoff11c7vl4venjrvkftaznu16vabn",
-            "params": {
-              "gametype": "voc",
-              "vocName": "Обычный in English",
-              "vocId": "5539",
-              "vocType": "texts",
-              "type": "normal",
-              "level_from": 1,
-              "level_to": 9,
-              "timeout": 10,
-              "qual": 0,
-              "premium_abra": 0,
-              "vocIsPublic": true
-            },
-            "pin": 1
-          }
-        ]
       }
     ]
   },
+  "latestGamesState": {
+    "currentGroupId": "qucw2v2e173vlm6cxb2th01j0qro1jf9",
+    "previousGameId": "qkgtrsaqr29k6zdz43g3s337h4g479qn",
+    "latestGroupAddedGameId": "fiz3n6a7jzvbud1oc8e5lrqntumijpv4",
+    "latestGroupMigratedGameId": "60fvbi0016bg10nsifjbincej435rxjk"
+  },
+  "latestGamesPlaylists": [],
   "validVocabularies": {
     "words": [
       31,

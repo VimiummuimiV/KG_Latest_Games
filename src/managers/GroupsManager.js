@@ -7,6 +7,8 @@ export class GroupsManager {
     this.main = main;
     this.groups = [];
     this.currentGroupId = null;
+    this.latestGroupAddedGameId = null;
+    this.latestGroupMigratedGameId = null;
     this.groupViewMode = 'tabs';
   }
 

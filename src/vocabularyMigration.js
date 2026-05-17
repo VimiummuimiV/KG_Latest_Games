@@ -4,7 +4,7 @@ import { hideTooltipElement } from './tooltip.js';
 export function showMigrationPopup(main, groups, currentGroupId, event, gameId) {
   hideTooltipElement();
 
-  const prevGroupId = (main.gamesManager.latestGamesData || {}).latestGroupMigratedGameId ?? null;
+  const prevGroupId = main.groupsManager.latestGroupMigratedGameId ?? null;
 
   const buttonConfigs = groups
     .filter(group => group.id !== currentGroupId)
@@ -37,14 +37,15 @@ export function migrateGame(main, gameId, targetGroupId) {
   targetGroup.games.push(game);
 
   // Remember the last migration target for Ctrl+RMB shortcut
-  (main.gamesManager.latestGamesData ||= {}).latestGroupMigratedGameId = targetGroupId;
+  main.groupsManager.latestGroupMigratedGameId = targetGroupId;
 
   main.gamesManager.saveGamesData();
+  main.gamesManager.saveState();
   main.uiManager.refreshContainer();
 }
 
 export function getPreviousMigrationGroup(main) {
-  const id = (main.gamesManager.latestGamesData || {}).latestGroupMigratedGameId;
+  const id = main.groupsManager.latestGroupMigratedGameId;
   return id ? main.groupsManager.groups.find(g => g.id === id) || null : null;
 }
 
