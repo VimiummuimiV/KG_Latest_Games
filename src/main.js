@@ -34,7 +34,7 @@ class LatestGamesManager {
 
   init() {
     this.settingsManager.loadSettings();
-    this.gamesManager.loadGameData();
+    this.gamesManager.loadGamesData();
     this.gamesManager.loadState();
     this.groupsManager.initializeGroups();
     this.uiManager.createHoverArea();

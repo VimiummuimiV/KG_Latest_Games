@@ -39,7 +39,7 @@ export function migrateGame(main, gameId, targetGroupId) {
   // Remember the last migration target for Ctrl+RMB shortcut
   (main.gamesManager.latestGamesData ||= {}).latestGroupMigratedGameId = targetGroupId;
 
-  main.gamesManager.saveGameData();
+  main.gamesManager.saveGamesData();
   main.uiManager.refreshContainer();
 }
 

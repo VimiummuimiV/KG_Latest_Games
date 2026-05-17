@@ -327,7 +327,7 @@ export async function runVocScan(main) {
   const totalScanned = doneRef.value;
 
   try {
-    main.gamesManager.saveGameData();
+    main.gamesManager.saveGamesData();
     main.uiManager.refreshContainer();
   } catch (err) {
     console.warn('[VocScan] Could not save game data:', err);

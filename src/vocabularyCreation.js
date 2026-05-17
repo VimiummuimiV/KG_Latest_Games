@@ -145,7 +145,7 @@ export function addGameToGroup(group, vocId, vocName, vocType, groups, main) {
   let latestGamesData = main.gamesManager.latestGamesData || {};
   latestGamesData = { ...latestGamesData, latestGroupAddedGameId: group.id };
   main.gamesManager.latestGamesData = latestGamesData;
-  main.gamesManager.saveGameData();
+  main.gamesManager.saveGamesData();
   main.uiManager.refreshContainer();
   highlightExistingVocabularies(groups);
 }

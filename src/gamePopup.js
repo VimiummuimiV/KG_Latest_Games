@@ -123,7 +123,7 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
     game.params.qual = qualificationEnabled ? 1 : 0;
     game.params.idletime = selectedIdleTime;
 
-    main.gamesManager.saveGameData();
+    main.gamesManager.saveGamesData();
     main.uiManager?.refreshContainer?.();
 
     updateBadge(game.params.type, game.params.timeout, game.params.idletime);

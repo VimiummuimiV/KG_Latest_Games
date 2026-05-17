@@ -143,7 +143,7 @@ export class PageHandler {
     if (isRemoved) {
       if (games.every(g => g.params.vocIsRemoved === true)) return;
       games.forEach(g => { g.params.vocIsRemoved = true; });
-      this.main.gamesManager.saveGameData();
+      this.main.gamesManager.saveGamesData();
       this.main.uiManager.refreshContainer();
       alert(`🗑️ Словарь «${vocName}» недоступен.\n\nСловарь был удалён модераторами. Все игры с этим словарём помечены как удалённые.`);
       return;
@@ -158,7 +158,7 @@ export class PageHandler {
       g.params.vocIsPublic = false;
       if (g.params.type === 'normal') { g.params.type = 'practice'; g.params.timeout = 5; }
     });
-    this.main.gamesManager.saveGameData();
+    this.main.gamesManager.saveGamesData();
     this.main.uiManager.refreshContainer();
 
     if (confirm(
@@ -260,7 +260,7 @@ export class PageHandler {
     }
     
     this.main.gamesManager.assignGameIds();
-    this.main.gamesManager.saveGameData();
+    this.main.gamesManager.saveGamesData();
   }
 
   cancelStart() {

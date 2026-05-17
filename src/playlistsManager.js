@@ -3425,7 +3425,7 @@ export const PlaylistsManager = {
     }
 
     gm.assignGameIds();
-    gm.saveGameData();
+    gm.saveGamesData();
     um.refreshContainer();
 
     const progress  = taskData.user?.progress ?? 0;
@@ -3481,7 +3481,7 @@ export const PlaylistsManager = {
       if (groups.currentGroupId === taskGroup.id)
         groups.currentGroupId = groups.groups[0]?.id ?? null;
     }
-    this.main.gamesManager.saveGameData();
+    this.main.gamesManager.saveGamesData();
     this.main.uiManager.refreshContainer();
   },
 

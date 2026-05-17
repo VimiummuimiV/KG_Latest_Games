@@ -168,7 +168,7 @@ export class GamesManager {
   }
 
   // Game data management methods
-  loadGameData() {
+  loadGamesData() {
     try {
       const data = JSON.parse(localStorage.getItem('latestGamesData') || '{}');
       this.main.groupsManager.setGroups(Array.isArray(data.groups) ? data.groups : []);
@@ -191,7 +191,7 @@ export class GamesManager {
     }
   }
 
-  saveGameData() {
+  saveGamesData() {
     try {
       localStorage.setItem('latestGamesData', JSON.stringify({
         groups: this.main.groupsManager.groups
@@ -251,7 +251,7 @@ export class GamesManager {
       return currentGroup.games.find(g => g.id === id);
     }).filter(game => game !== undefined);
 
-    this.saveGameData();
+    this.saveGamesData();
   }
 
   findGameIndex(id) {
@@ -297,7 +297,7 @@ export class GamesManager {
     const deletedGame = group.games.splice(index, 1)[0];
 
     this.assignGameIds();
-    this.saveGameData();
+    this.saveGamesData();
     this.main.uiManager.refreshContainer();
 
     return deletedGame;
@@ -315,7 +315,7 @@ export class GamesManager {
     group.games.sort((a, b) => b.pin - a.pin);
 
     this.assignGameIds();
-    this.saveGameData();
+    this.saveGamesData();
     this.main.uiManager.refreshContainer();
   }
 

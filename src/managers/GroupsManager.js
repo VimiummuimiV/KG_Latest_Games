@@ -111,7 +111,7 @@ export class GroupsManager {
     this.groups[currentIndex] = this.groups[newIndex];
     this.groups[newIndex] = temp;
 
-    this.main.gamesManager.saveGameData();
+    this.main.gamesManager.saveGamesData();
     this.main.uiManager.refreshContainer();
   }
 
@@ -271,7 +271,7 @@ export class GroupsManager {
     const newGroup = this.createGroup(title?.trim() || null);
     this.groups.push(newGroup);
     this.currentGroupId = newGroup.id;
-    this.main.gamesManager.saveGameData();
+    this.main.gamesManager.saveGamesData();
     this.main.gamesManager.saveState();
     this.main.uiManager.refreshContainer();
   }
@@ -282,7 +282,7 @@ export class GroupsManager {
     const newTitle = prompt('Введите новое название группы:', activeGroup?.title)?.trim();
     if (newTitle) {
       this.renameGroup(this.currentGroupId, newTitle);
-      this.main.gamesManager.saveGameData();
+      this.main.gamesManager.saveGamesData();
       this.main.uiManager.refreshContainer();
     }
   }
@@ -305,7 +305,7 @@ export class GroupsManager {
       if (newIdx < 0) newIdx = 0;
     }
     this.currentGroupId = this.groups[newIdx].id;
-    this.main.gamesManager.saveGameData();
+    this.main.gamesManager.saveGamesData();
     this.main.gamesManager.saveState();
     this.main.uiManager.refreshContainer();
   }
@@ -364,7 +364,7 @@ export class GroupsManager {
     pinnedGames.sort((a, b) => this.compareGameNames(a, b));
     unpinnedGames.sort((a, b) => this.compareGameNames(a, b));
     activeGroup.games = [...pinnedGames, ...unpinnedGames];
-    this.main.gamesManager.saveGameData();
+    this.main.gamesManager.saveGamesData();
     this.main.uiManager.refreshContainer();
   }
 

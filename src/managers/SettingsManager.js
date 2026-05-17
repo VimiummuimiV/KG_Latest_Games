@@ -295,7 +295,7 @@ export class SettingsManager {
           if (data.latestGamesData) localStorage.setItem('latestGamesData', JSON.stringify(data.latestGamesData));
           if (data.latestGamesPlaylists) localStorage.setItem('latestGamesPlaylists', JSON.stringify(data.latestGamesPlaylists));
           main.settingsManager.loadSettings();
-          main.gamesManager.loadGameData();
+          main.gamesManager.loadGamesData();
           main.gamesManager.loadState();
           main.uiManager.refreshContainer();
           main.themeManager.applyTheme();
@@ -340,7 +340,7 @@ export class SettingsManager {
     localStorage.removeItem('latestGamesState');
     main.groupsManager.groups = [main.groupsManager.createGroup('Группа-1')];
     main.groupsManager.currentGroupId = main.groupsManager.groups[0].id;
-    main.gamesManager.saveGameData();
+    main.gamesManager.saveGamesData();
     main.gamesManager.saveState();
     main.uiManager.refreshContainer();
   }

@@ -199,7 +199,7 @@ export function createControls(main) {
         delete group._oldId;
         group.games.forEach(game => delete game._oldId);
       });
-      main.gamesManager.saveGameData();
+      main.gamesManager.saveGamesData();
       main.uiManager.refreshContainer();
       alert('✔️ Все ID для групп и игр были обновлены!');
     }
@@ -319,7 +319,7 @@ export function createControls(main) {
         currentGroup.games.forEach(game => game.pin = 1);
       }
     }
-    main.gamesManager.saveGameData();
+    main.gamesManager.saveGamesData();
     main.uiManager.refreshContainer();
   };
 
@@ -341,7 +341,7 @@ export function createControls(main) {
         currentGroup.games.forEach(game => game.pin = 0);
       }
     }
-    main.gamesManager.saveGameData();
+    main.gamesManager.saveGamesData();
     main.uiManager.refreshContainer();
   };
 
@@ -397,7 +397,7 @@ export function createControls(main) {
         currentGroup.games = currentGroup.games.filter(game => game.pin);
       }
     }
-    main.gamesManager.saveGameData();
+    main.gamesManager.saveGamesData();
     main.uiManager.refreshContainer();
   };
 
