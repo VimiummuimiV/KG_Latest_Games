@@ -102,9 +102,9 @@ export function createGameElement(main, game, id) {
       const li = link.closest('li');
       if (li && li.id && li.id.startsWith('latest-game-')) {
         const id = li.id.replace('latest-game-', '');
-        const data = JSON.parse(localStorage.getItem('latestGamesData')) || {};
-        data.previousGameId = id;
-        localStorage.setItem('latestGamesData', JSON.stringify(data));
+        const state = JSON.parse(localStorage.getItem('latestGamesState')) || {};
+        state.previousGameId = id;
+        localStorage.setItem('latestGamesState', JSON.stringify(state));
       }
     } catch (_) {}
 

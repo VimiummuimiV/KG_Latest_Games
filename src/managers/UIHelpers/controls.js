@@ -161,7 +161,7 @@ export function createControls(main) {
 
       // Save previous group and game IDs
       const previousGroupId = main.groupsManager.currentGroupId;
-      const previousGameId = main.gamesManager.latestGamesData?.previousGameId;
+      const previousGameId = main.gamesManager.latestGamesState?.previousGameId;
 
       // Store old IDs before regeneration
       main.groupsManager.groups.forEach(group => {
@@ -189,7 +189,7 @@ export function createControls(main) {
         for (const group of main.groupsManager.groups) {
           const found = group.games.find(g => g._oldId === previousGameId);
           if (found) {
-            main.gamesManager.latestGamesData.previousGameId = found.id;
+            main.gamesManager.latestGamesState.previousGameId = found.id;
             break;
           }
         }
@@ -705,9 +705,8 @@ export function createControls(main) {
 
         // Select group and persist previousGameId
         main.groupsManager.selectGroup(currentGroup.id);
-        main.gamesManager.latestGamesData = main.gamesManager.latestGamesData || {};
-        main.gamesManager.latestGamesData.previousGameId = nextGame.id;
-        main.gamesManager.saveGameData();
+        main.gamesManager.latestGamesState.previousGameId = nextGame.id;
+        main.gamesManager.saveState();
 
         // Register pending played vocab if vocId exists
         const vocId = String(nextGame.params?.vocId || '');
@@ -749,9 +748,8 @@ export function createControls(main) {
           }
         }
       }
-      main.gamesManager.latestGamesData = main.gamesManager.latestGamesData || {};
-      main.gamesManager.latestGamesData.previousGameId = res.id;
-      main.gamesManager.saveGameData();
+      main.gamesManager.latestGamesState.previousGameId = res.id;
+      main.gamesManager.saveState();
 
       // Register pending played vocab if vocId exists
       const vocId = String(res.game.params.vocId || '');

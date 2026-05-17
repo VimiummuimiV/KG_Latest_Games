@@ -58,9 +58,8 @@ export class GroupsManager {
   }
 
   // Set groups data
-  setGroups(groups, currentGroupId) {
+  setGroups(groups) {
     this.groups = groups;
-    this.currentGroupId = currentGroupId;
   }
 
   // Set group view mode
@@ -160,7 +159,7 @@ export class GroupsManager {
   // Helper to get group class string for tab/header
   getGroupClass(group, baseClass = '') {
     const isActive = group.id === this.currentGroupId;
-    const previousGameId = this.main.gamesManager.latestGamesData?.previousGameId;
+    const previousGameId = this.main.gamesManager.latestGamesState?.previousGameId;
     const hasPreviousGame = group.games.some(game => game.id === previousGameId);
     return `${baseClass}${isActive ? ' active' : ''}${hasPreviousGame && !isActive ? ' previous-game-group' : ''}`.trim();
   }

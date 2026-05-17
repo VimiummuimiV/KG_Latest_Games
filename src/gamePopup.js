@@ -257,9 +257,9 @@ export function createGamePopup(game, event, main, className = 'game-popup') {
         } else {
           // Mark this game as the previous game so .previous-game is applied on reload
           try {
-            const data = JSON.parse(localStorage.getItem('latestGamesData')) || {};
-            data.previousGameId = game.id;
-            localStorage.setItem('latestGamesData', JSON.stringify(data));
+            const state = JSON.parse(localStorage.getItem('latestGamesState')) || {};
+            state.previousGameId = game.id;
+            localStorage.setItem('latestGamesState', JSON.stringify(state));
           } catch (_) {}
           window.location.href = link;
         }
