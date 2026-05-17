@@ -368,7 +368,7 @@ export class PageHandler {
     const currentGroup = groupsManager.getCurrentGroup(groupsManager.groups, groupsManager.currentGroupId);
     if (!currentGroup || !Array.isArray(currentGroup.games) || currentGroup.games.length === 0) return;
 
-    const prevGameId = gamesManager.latestGamesState?.previousGameId;
+    const prevGameId = groupsManager.previousGameId;
     let idx = currentGroup.games.findIndex(g => g.id === prevGameId);
     if (idx === -1) idx = 0;
     else idx = (idx + 1) % currentGroup.games.length;
