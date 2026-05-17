@@ -98,15 +98,11 @@ export function createGameElement(main, game, id) {
     if (activeSession && !activeSession.paused) {
       setActivePlaylistSession({ ...activeSession, paused: true });
     }
-    try {
-      const li = link.closest('li');
-      if (li && li.id && li.id.startsWith('latest-game-')) {
-        const id = li.id.replace('latest-game-', '');
-        const state = JSON.parse(localStorage.getItem('latestGamesState')) || {};
-        state.previousGameId = id;
-        localStorage.setItem('latestGamesState', JSON.stringify(state));
-      }
-    } catch (_) {}
+    const li = link.closest('li');
+    if (li && li.id && li.id.startsWith('latest-game-')) {
+      main.groupsManager.previousGameId = li.id.replace('latest-game-', '');
+      main.gamesManager.saveState();
+    }
 
     const vocId = String(game.params.vocId || '');
     if (vocId) {

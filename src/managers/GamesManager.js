@@ -181,9 +181,9 @@ export class GamesManager {
   loadState() {
     try {
       const state = JSON.parse(localStorage.getItem('latestGamesState') || '{}');
-      if (state.currentGroupId) {
-        this.mainManager.groupsManager.currentGroupId = state.currentGroupId;
-      }
+      const gm = this.mainManager.groupsManager;
+      gm.currentGroupId = state.currentGroupId ?? gm.currentGroupId;
+      gm.previousGameId = state.previousGameId ?? gm.previousGameId;
       this.latestGamesState = state;
     } catch (error) {
       console.warn('Could not load state from localStorage:', error);
@@ -204,6 +204,9 @@ export class GamesManager {
     try {
       const state = JSON.parse(localStorage.getItem('latestGamesState') || '{}');
       state.currentGroupId = this.mainManager.groupsManager.currentGroupId;
+      state.previousGameId = this.mainManager.groupsManager.previousGameId;
+      // state.latestGroupAddedGameId = this.latestGamesState ? this.latestGamesState.latestGroupAddedGameId : null;
+      // state.latestGroupMigratedGameId = this.latestGamesState ? this.latestGamesState.latestGroupMigratedGameId : null;
       localStorage.setItem('latestGamesState', JSON.stringify(state));
     } catch (error) {
       console.warn('Could not save state to localStorage:', error);
