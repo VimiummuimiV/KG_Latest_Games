@@ -204,7 +204,7 @@ export class GamesManager {
     try {
       const state = JSON.parse(localStorage.getItem('latestGamesState') || '{}');
       state.currentGroupId = this.main.groupsManager.currentGroupId;
-      state.previousGameId = this.main.groupsManager.previousGameId;
+      state.previousGameId = this.main.groupsManager.previousGameId ?? state.previousGameId;
       // state.latestGroupAddedGameId = this.latestGamesState ? this.latestGamesState.latestGroupAddedGameId : null;
       // state.latestGroupMigratedGameId = this.latestGamesState ? this.latestGamesState.latestGroupMigratedGameId : null;
       localStorage.setItem('latestGamesState', JSON.stringify(state));
