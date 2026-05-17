@@ -202,9 +202,7 @@ export class GamesManager {
 
   saveState() {
     try {
-      const existing = JSON.parse(localStorage.getItem('latestGamesState') || '{}');
       localStorage.setItem('latestGamesState', JSON.stringify({
-        ...existing,
         currentGroupId: this.mainManager.groupsManager.currentGroupId,
         previousGameId: this.latestGamesState?.previousGameId,
         latestGroupAddedGameId: this.latestGamesState?.latestGroupAddedGameId,

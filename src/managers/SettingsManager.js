@@ -296,6 +296,7 @@ export class SettingsManager {
           if (data.latestGamesPlaylists) localStorage.setItem('latestGamesPlaylists', JSON.stringify(data.latestGamesPlaylists));
           main.settingsManager.loadSettings();
           main.gamesManager.loadGameData();
+          main.gamesManager.loadState();
           main.uiManager.refreshContainer();
           main.themeManager.applyTheme();
         } else {
