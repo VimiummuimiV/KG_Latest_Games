@@ -247,7 +247,7 @@ export class GroupsManager {
   selectGroup(id) {
     if (this.groups.some(group => group.id === id)) {
       this.currentGroupId = id;
-      this.main.gamesManager.saveGameData();
+      this.main.gamesManager.saveState();
       this.updateActiveGroup();
       this.main.uiManager.refreshContainer();
     }
@@ -273,6 +273,7 @@ export class GroupsManager {
     this.groups.push(newGroup);
     this.currentGroupId = newGroup.id;
     this.main.gamesManager.saveGameData();
+    this.main.gamesManager.saveState();
     this.main.uiManager.refreshContainer();
   }
 
@@ -306,6 +307,7 @@ export class GroupsManager {
     }
     this.currentGroupId = this.groups[newIdx].id;
     this.main.gamesManager.saveGameData();
+    this.main.gamesManager.saveState();
     this.main.uiManager.refreshContainer();
   }
 

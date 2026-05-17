@@ -169,63 +169,52 @@ export class GamesManager {
   // Game data management methods
   loadGameData() {
     try {
-      let data = localStorage.getItem('latestGamesData');
-      if (data) {
-        data = JSON.parse(data);
-        if (Array.isArray(data)) {
-          const groupId = generateUniqueId(data);
-          const groups = [{ id: groupId, title: 'Группа-1', games: data }];
-          const currentGroupId = groups[0].id;
-          this.mainManager.groupsManager.setGroups(groups, currentGroupId);
-          this.latestGamesData = {};
-        } else if (data && Array.isArray(data.groups)) {
-          this.mainManager.groupsManager.setGroups(data.groups, data.currentGroupId);
-          this.latestGamesData = {
-            previousGameId: data.previousGameId,
-            latestGroupAddedGameId: data.latestGroupAddedGameId,
-            latestGroupMigratedGameId: data.latestGroupMigratedGameId
-          };
-        } else {
-          this.mainManager.groupsManager.setGroups([], null);
-          this.latestGamesData = {};
-        }
-      } else {
-        this.mainManager.groupsManager.setGroups([], null);
-        this.latestGamesData = {};
-      }
-      this.migrateOldGameData();
+      const data = JSON.parse(localStorage.getItem('latestGamesData') || '{}');
+      this.mainManager.groupsManager.setGroups(Array.isArray(data.groups) ? data.groups : []);
       this.assignGameIds();
     } catch (error) {
       console.warn('Could not load game data from localStorage:', error);
-      this.mainManager.groupsManager.setGroups([], null);
-      this.latestGamesData = {};
+      this.mainManager.groupsManager.setGroups([]);
+    }
+  }
+
+  loadState() {
+    try {
+      const state = JSON.parse(localStorage.getItem('latestGamesState') || '{}');
+      if (state.currentGroupId) {
+        this.mainManager.groupsManager.currentGroupId = state.currentGroupId;
+      }
+      this.latestGamesData = {
+        previousGameId: state.previousGameId,
+        latestGroupAddedGameId: state.latestGroupAddedGameId,
+        latestGroupMigratedGameId: state.latestGroupMigratedGameId
+      };
+    } catch (error) {
+      console.warn('Could not load state from localStorage:', error);
     }
   }
 
   saveGameData() {
     try {
-      const data = {
-        groups: this.mainManager.groupsManager.groups,
-        currentGroupId: this.mainManager.groupsManager.currentGroupId,
-        previousGameId: this.latestGamesData?.previousGameId,
-        latestGroupAddedGameId: this.latestGamesData?.latestGroupAddedGameId,
-        latestGroupMigratedGameId: this.latestGamesData?.latestGroupMigratedGameId
-      };
-      localStorage.setItem('latestGamesData', JSON.stringify(data));
+      localStorage.setItem('latestGamesData', JSON.stringify({
+        groups: this.mainManager.groupsManager.groups
+      }));
     } catch (error) {
       console.warn('Could not save game data to localStorage:', error);
     }
   }
 
-  migrateOldGameData() {
-    this.mainManager.groupsManager.groups.forEach(group => {
-      group.games = group.games.map(game => {
-        if (game.params.qual === 'on' || game.params.qual === '') {
-          game.params.qual = game.params.qual === 'on' ? 1 : 0;
-        }
-        return game;
-      });
-    });
+  saveState() {
+    try {
+      localStorage.setItem('latestGamesState', JSON.stringify({
+        currentGroupId: this.mainManager.groupsManager.currentGroupId,
+        previousGameId: this.latestGamesData?.previousGameId,
+        latestGroupAddedGameId: this.latestGamesData?.latestGroupAddedGameId,
+        latestGroupMigratedGameId: this.latestGamesData?.latestGroupMigratedGameId
+      }));
+    } catch (error) {
+      console.warn('Could not save state to localStorage:', error);
+    }
   }
 
   assignGameIds() {

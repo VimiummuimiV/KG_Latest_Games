@@ -291,6 +291,7 @@ export class SettingsManager {
           if (data.bannedVocabularies) localStorage.setItem('bannedVocabularies', JSON.stringify(data.bannedVocabularies));
           if (data.playedVocabularies) localStorage.setItem('playedVocabularies', JSON.stringify(data.playedVocabularies));
           if (data.latestGamesSettings) localStorage.setItem('latestGamesSettings', JSON.stringify(data.latestGamesSettings));
+          if (data.latestGamesState) localStorage.setItem('latestGamesState', JSON.stringify(data.latestGamesState));
           if (data.latestGamesData) localStorage.setItem('latestGamesData', JSON.stringify(data.latestGamesData));
           if (data.latestGamesPlaylists) localStorage.setItem('latestGamesPlaylists', JSON.stringify(data.latestGamesPlaylists));
           main.settingsManager.loadSettings();
@@ -312,7 +313,8 @@ export class SettingsManager {
   exportSettings(main) {
     const all = {
       latestGamesSettings: JSON.parse(localStorage.getItem('latestGamesSettings') || '{}'),
-      latestGamesData: { groups: main.groupsManager.groups, currentGroupId: main.groupsManager.currentGroupId },
+      latestGamesData: JSON.parse(localStorage.getItem('latestGamesData') || '{}'),
+      latestGamesState: JSON.parse(localStorage.getItem('latestGamesState') || '{}'),
       latestGamesPlaylists: JSON.parse(localStorage.getItem('latestGamesPlaylists') || '[]'),
       validVocabularies: JSON.parse(localStorage.getItem('validVocabularies') || '[]'),
       bannedVocabularies: JSON.parse(localStorage.getItem('bannedVocabularies') || '[]'),
@@ -334,9 +336,11 @@ export class SettingsManager {
   removeAllSettings(main) {
     localStorage.removeItem('latestGamesSettings');
     localStorage.removeItem('latestGamesData');
+    localStorage.removeItem('latestGamesState');
     main.groupsManager.groups = [main.groupsManager.createGroup('Группа-1')];
     main.groupsManager.currentGroupId = main.groupsManager.groups[0].id;
     main.gamesManager.saveGameData();
+    main.gamesManager.saveState();
     main.uiManager.refreshContainer();
   }
 }
