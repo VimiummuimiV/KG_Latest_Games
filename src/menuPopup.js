@@ -59,6 +59,10 @@ export function createPopup(buttonConfigs, event, className = 'popup', header, p
     isEllipsed && createCustomTooltip(btn, btn.textContent);
   });
 
+  popup.querySelectorAll('button.active').forEach(btn =>
+    createCustomTooltip(btn, 'Словарь уже существует в группе: ' + btn.textContent)
+  );
+
   // Calculate and set position
   const popupRect = popup.getBoundingClientRect();
   const viewportWidth = window.innerWidth;
@@ -78,6 +82,7 @@ export function createPopup(buttonConfigs, event, className = 'popup', header, p
     const target = focusIndex !== -1 ? popup.querySelector(`button[data-config-index="${focusIndex}"]`) : null;
     if (target) {
       target.classList.add('last-used');
+      createCustomTooltip(target, 'Последняя использованная группа');
       popup.scrollTop = target.offsetTop - popup.offsetTop;
     }
   }
