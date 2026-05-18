@@ -4483,9 +4483,17 @@ function _smartChipTooltip(filterAction) {
 // document.body (where bottom:0 has nothing to clamp against), then moves it
 // to the popup with the correct min-height already set.
 function _fitOverlayPopup(popup, overlayEl) {
+  // Hide existing overlays and list so they don't affect measurement
+  const hidden = [...popup.querySelectorAll('.playlist-picker-overlay--overlay, .playlists-list')];
+  hidden.forEach(el => { el.style.display = 'none'; });
+
+  overlayEl.style.width = popup.offsetWidth + 'px';
   document.body.appendChild(overlayEl);
   const contentH = overlayEl.scrollHeight;
+  overlayEl.style.width = '';
   popup.appendChild(overlayEl);
+
+  hidden.forEach(el => { el.style.display = ''; });
 
   const topOffset = parseInt(overlayEl.style.top, 10) || 0;
   const maxH = window.innerHeight * 0.80;
@@ -4509,10 +4517,6 @@ function _fitOverlayPopup(popup, overlayEl) {
 function _showTaskGameSelectOverlay(candidates, onConfirm) {
   if (!PlaylistsManager.popup) PlaylistsManager.showCentered();
   const popup = PlaylistsManager.popup;
-
-  // Hide the list content so the popup sizes to the overlay only
-  const list = popup.querySelector('.playlists-list');
-  if (list) list.style.display = 'none';
 
   const sel = new Set(); // nothing pre-selected — user decides what to add
 
@@ -4612,7 +4616,6 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
   // ── Close / confirm ───────────────────────────────────────────────────────
   const close = () => {
     overlay.remove();
-    if (list) list.style.display = '';
     if (PlaylistsManager.popup) PlaylistsManager.popup.style.minHeight = '';
   };
   cancelBtn.addEventListener('click',  e => { e.stopPropagation(); close(); });
