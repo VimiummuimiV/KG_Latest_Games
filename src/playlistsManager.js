@@ -4483,21 +4483,13 @@ function _smartChipTooltip(filterAction) {
 // document.body (where bottom:0 has nothing to clamp against), then moves it
 // to the popup with the correct min-height already set.
 function _fitOverlayPopup(popup, overlayEl) {
-  // Hide existing overlays and list so they don't affect measurement
-  const hidden = [...popup.querySelectorAll('.playlist-picker-overlay--overlay, .playlists-list')];
-  hidden.forEach(el => { el.style.display = 'none'; });
-
-  overlayEl.style.width = popup.offsetWidth + 'px';
-  document.body.appendChild(overlayEl);
-  const contentH = overlayEl.scrollHeight;
-  overlayEl.style.width = '';
+  // Insert at natural (unconstrained) popup size, measure, then set minHeight
+  popup.style.minHeight = '';
   popup.appendChild(overlayEl);
-
-  hidden.forEach(el => { el.style.display = ''; });
 
   const topOffset = parseInt(overlayEl.style.top, 10) || 0;
   const maxH = window.innerHeight * 0.80;
-  popup.style.minHeight = Math.min(contentH + topOffset, maxH) + 'px';
+  popup.style.minHeight = Math.min(overlayEl.scrollHeight + topOffset, maxH) + 'px';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
