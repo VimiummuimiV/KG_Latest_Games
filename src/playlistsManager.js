@@ -3394,42 +3394,27 @@ export const PlaylistsManager = {
     const groups = this.main.groupsManager;
     const um     = this.main.uiManager;
 
-    // Get-or-create the dedicated Задачи group.
-    let taskGroup = groups.groups.find(g => g.title === 'Задачи');
-    if (!taskGroup) {
-      taskGroup = groups.createGroup('Задачи');
-      groups.groups.push(taskGroup);
-    }
-
-    // Find a matching game across all groups, or create it in taskGroup.
-    // Returns the full game object so candidates carry names for the selection overlay.
-    const findOrCreate = (predicate, params) => {
-      const found = groups.groups.flatMap(g => g.games).find(predicate);
-      if (found) return found;
-      const game = { id: generateUniqueId(groups.groups), params, pin: 0 };
-      taskGroup.games.push(game);
-      return game;
-    };
-
-    const resolvedGames = conditions.flatMap(({ gametype, voc }) => {
-      if (gametype === 'normal')
-        return findOrCreate(g => g.params.gametype !== 'voc', { ...TASK_GAME_DEFAULTS });
-      if (gametype.startsWith('voc-')) {
+    // Read-only lookup per condition — no group mutation yet.
+    // Existing games are reused as-is; new ones get a stub { id: null } just for display.
+    const candidates = conditions.flatMap(({ gametype, voc }) => {
+      let predicate, params;
+      if (gametype === 'normal') {
+        predicate = g => g.params.gametype !== 'voc';
+        params    = { ...TASK_GAME_DEFAULTS };
+      } else if (gametype.startsWith('voc-')) {
         const vocId = parseInt(gametype.slice(4), 10);
-        return findOrCreate(
-          g => g.params.gametype === 'voc' && g.params.vocId == vocId,
-          { ...TASK_GAME_DEFAULTS, gametype: 'voc', vocId, vocName: voc?.name ?? '' }
-        );
+        predicate = g => g.params.gametype === 'voc' && g.params.vocId == vocId;
+        params    = { ...TASK_GAME_DEFAULTS, gametype: 'voc', vocId, vocName: voc?.name ?? '' };
+      } else {
+        if (!gameTypes[gametype]) return [];
+        predicate = g => g.params.gametype === gametype;
+        params    = { ...TASK_GAME_DEFAULTS, gametype };
       }
-      // Known gametype (noerror, abra, marathon, etc.) — find existing or auto-create
-      if (!gameTypes[gametype]) return [];
-      return findOrCreate(
-        g => g.params.gametype === gametype,
-        { ...TASK_GAME_DEFAULTS, gametype }
-      );
+      const existing = groups.groups.flatMap(g => g.games).find(predicate);
+      return [{ game: existing ?? { id: null, params, pin: 0 }, predicate, params }];
     });
 
-    if (!resolvedGames.length) {
+    if (!candidates.length) {
       alert('⚠️ Не удалось сопоставить ни одно условие задачи.');
       return;
     }
@@ -3439,16 +3424,16 @@ export const PlaylistsManager = {
 
     // When fewer games remain than there are conditions, only show as many
     // candidates as needed (avoids entries with 0 repeats).
-    const effectiveGames = remaining > 0 && remaining < resolvedGames.length
-      ? resolvedGames.slice(0, remaining)
-      : resolvedGames;
-    const base = remaining > 0 ? Math.floor(remaining / effectiveGames.length) : 1;
-    const rem  = remaining > 0 ? remaining % effectiveGames.length : 0;
+    const effective = remaining > 0 && remaining < candidates.length
+      ? candidates.slice(0, remaining)
+      : candidates;
+    const base = remaining > 0 ? Math.floor(remaining / effective.length) : 1;
+    const rem  = remaining > 0 ? remaining % effective.length : 0;
 
-    // Build candidates for the selection overlay.
-    const candidates = effectiveGames.map((game, i) => ({
-      gameId:      game.id,
-      game,
+    // Attach repeatCount and a stable gameId for the overlay (stub games use index).
+    const pickerCandidates = effective.map((c, i) => ({
+      ...c,
+      gameId: c.game.id ?? `preview-${i}`,
       repeatCount: base + (i < rem ? 1 : 0),
     }));
 
@@ -3460,8 +3445,23 @@ export const PlaylistsManager = {
         if (!confirm(`Плейлист «${playlistTitle}» уже существует. Создать новый?`)) return;
       }
 
-      // Persist the group/games only now that the user confirmed — not before,
-      // so cancelling the picker leaves groupsManager and gamesManager untouched.
+      // Get-or-create the Задачи group and resolve/create games only for confirmed selection.
+      let taskGroup = groups.groups.find(g => g.title === 'Задачи');
+      if (!taskGroup) {
+        taskGroup = groups.createGroup('Задачи');
+        groups.groups.push(taskGroup);
+      }
+
+      const findOrCreate = (predicate, params) => {
+        const found = groups.groups.flatMap(g => g.games).find(predicate);
+        if (found) return found;
+        const game = { id: generateUniqueId(groups.groups), params, pin: 0 };
+        taskGroup.games.push(game);
+        return game;
+      };
+
+      const selectedGames = selected.map(c => findOrCreate(c.predicate, c.params));
+
       gm.assignGameIds();
       gm.saveGamesData();
       um.refreshContainer();
@@ -3478,19 +3478,19 @@ export const PlaylistsManager = {
 
       // Redistribute repeat counts across the selected subset so they still sum
       // to `remaining` — same logic as _redistributeTaskRepeats.
-      const n       = selected.length;
+      const n       = selectedGames.length;
       const selBase = remaining > 0 ? Math.floor(remaining / n) : 1;
       const selRem  = remaining > 0 ? remaining % n : 0;
-      selected.forEach(({ gameId }, i) => this.addEntry(created.id, gameId, selBase + (i < selRem ? 1 : 0)));
+      selectedGames.forEach((game, i) => this.addEntry(created.id, game.id, selBase + (i < selRem ? 1 : 0)));
 
       this.expandedPlaylistId = created.id;
       onDone();
     };
 
     if (showPicker) {
-      _showTaskGameSelectOverlay(candidates, doCreate);
+      _showTaskGameSelectOverlay(pickerCandidates, doCreate);
     } else {
-      doCreate(candidates);
+      doCreate(pickerCandidates);
     }
   },
 
