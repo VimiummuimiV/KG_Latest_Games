@@ -4489,7 +4489,9 @@ function _fitOverlayPopup(popup, overlayEl) {
 
   const topOffset = parseInt(overlayEl.style.top, 10) || 0;
   const maxH = window.innerHeight * 0.80;
-  popup.style.minHeight = Math.min(overlayEl.scrollHeight + topOffset, maxH) + 'px';
+  // +2 absorbs the subpixel rounding gap between scrollHeight (integer) and the
+  // actual fractional layout height, which otherwise leaves 1-2px of spurious scroll.
+  popup.style.minHeight = Math.min(overlayEl.scrollHeight + topOffset + 2, maxH) + 'px';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
