@@ -3393,6 +3393,7 @@ export const PlaylistsManager = {
     }
 
     // Find a matching game across all groups, or create it in taskGroup.
+    // Returns the full game object so candidates carry names for the selection overlay.
     const findOrCreate = (predicate, params) => {
       const found = groups.groups.flatMap(g => g.games).find(predicate);
       if (found) return found;
@@ -3401,25 +3402,25 @@ export const PlaylistsManager = {
       return game;
     };
 
-    const gameIds = conditions.flatMap(({ gametype, voc }) => {
+    const resolvedGames = conditions.flatMap(({ gametype, voc }) => {
       if (gametype === 'normal')
-        return findOrCreate(g => g.params.gametype !== 'voc', { ...TASK_GAME_DEFAULTS }).id;
+        return findOrCreate(g => g.params.gametype !== 'voc', { ...TASK_GAME_DEFAULTS });
       if (gametype.startsWith('voc-')) {
         const vocId = parseInt(gametype.slice(4), 10);
         return findOrCreate(
           g => g.params.gametype === 'voc' && g.params.vocId == vocId,
           { ...TASK_GAME_DEFAULTS, gametype: 'voc', vocId, vocName: voc?.name ?? '' }
-        ).id;
+        );
       }
       // Known gametype (noerror, abra, marathon, etc.) — find existing or auto-create
       if (!gameTypes[gametype]) return [];
       return findOrCreate(
         g => g.params.gametype === gametype,
         { ...TASK_GAME_DEFAULTS, gametype }
-      ).id;
+      );
     });
 
-    if (!gameIds.length) {
+    if (!resolvedGames.length) {
       alert('⚠️ Не удалось сопоставить ни одно условие задачи.');
       return;
     }
@@ -3431,34 +3432,49 @@ export const PlaylistsManager = {
     const progress  = taskData.user?.progress ?? 0;
     const remaining = Math.max(0, require - progress);
 
-    // When fewer games remain than there are conditions, only create as many
-    // entries as needed (1 repeat each). This avoids inflating the playlist
-    // with extra entries that carry a forced minimum of 1 repeat due to
-    // Math.max(1, 0) when base = 0.
-    const effectiveGameIds = remaining > 0 && remaining < gameIds.length
-      ? gameIds.slice(0, remaining)
-      : gameIds;
-    const base    = remaining > 0 ? Math.floor(remaining / effectiveGameIds.length) : 1;
-    const rem     = remaining > 0 ? remaining % effectiveGameIds.length : 0;
-    const repeats = effectiveGameIds.map((_, i) => base + (i < rem ? 1 : 0));
+    // When fewer games remain than there are conditions, only show as many
+    // candidates as needed (avoids entries with 0 repeats).
+    const effectiveGames = remaining > 0 && remaining < resolvedGames.length
+      ? resolvedGames.slice(0, remaining)
+      : resolvedGames;
+    const base = remaining > 0 ? Math.floor(remaining / effectiveGames.length) : 1;
+    const rem  = remaining > 0 ? remaining % effectiveGames.length : 0;
 
-    if (this.load().some(p => p.title === playlistTitle)) {
-      if (!confirm(`Плейлист «${playlistTitle}» уже существует. Создать новый?`)) return;
-    }
+    // Build candidates for the selection overlay — all pre-selected.
+    const candidates = effectiveGames.map((game, i) => ({
+      gameId:      game.id,
+      game,
+      repeatCount: base + (i < rem ? 1 : 0),
+    }));
 
-    const created   = this.createPlaylist(playlistTitle);
-    const playlists = this.load();
-    const p         = playlists.find(pl => pl.id === created.id);
-    if (p) {
-      p.dailyTaskRequire   = require;
-      p.dailyTaskRemaining = remaining;
-      p.dailyTaskDate      = todayStr;
-      this.save(playlists);
-    }
+    // Show the overlay so the user can deselect games before the playlist is created.
+    _showTaskGameSelectOverlay(candidates, (selected) => {
+      if (!selected.length) return;
 
-    effectiveGameIds.forEach((id, i) => this.addEntry(created.id, id, repeats[i]));
-    this.expandedPlaylistId = created.id;
-    onDone();
+      if (this.load().some(p => p.title === playlistTitle)) {
+        if (!confirm(`Плейлист «${playlistTitle}» уже существует. Создать новый?`)) return;
+      }
+
+      const created   = this.createPlaylist(playlistTitle);
+      const playlists = this.load();
+      const p         = playlists.find(pl => pl.id === created.id);
+      if (p) {
+        p.dailyTaskRequire   = require;
+        p.dailyTaskRemaining = remaining;
+        p.dailyTaskDate      = todayStr;
+        this.save(playlists);
+      }
+
+      // Redistribute repeat counts across the selected subset so they still sum
+      // to `remaining` — same logic as _redistributeTaskRepeats.
+      const n       = selected.length;
+      const selBase = remaining > 0 ? Math.floor(remaining / n) : 1;
+      const selRem  = remaining > 0 ? remaining % n : 0;
+      selected.forEach(({ gameId }, i) => this.addEntry(created.id, gameId, selBase + (i < selRem ? 1 : 0)));
+
+      this.expandedPlaylistId = created.id;
+      onDone();
+    });
   },
 
   // Remove playlist's games from the Задачи group only if no remaining playlist still references them.
@@ -3508,7 +3524,7 @@ export const PlaylistsManager = {
     createCustomTooltip(collapseBtn, '[Клик / Tab] Закрыть список игр и вернуться к плейлисту');
 
     const filtersBtn      = _el('button', 'playlist-picker-toggle playlist-picker-filters-btn');
-    filtersBtn.innerHTML  = `<span>Фильтры</span>`;
+    filtersBtn.innerHTML  = `${icons.filter}<span>Фильтры</span>`;
     createCustomTooltip(filtersBtn, '[Клик / F] Показать / Скрыть фильтр по группам [ЛКМ + Перетаскивание] Множественный выбор групп');
 
     overlayFooter.append(collapseBtn, filtersBtn);
@@ -3587,21 +3603,18 @@ export const PlaylistsManager = {
       body.style.top = top + 'px';
     };
 
-    const PICKER_POPUP_MIN_HEIGHT = '80vh';
-
     const openPicker = () => {
       const popup = PlaylistsManager.popup;
       if (!popup) return;
-      if (!popup.contains(body)) popup.appendChild(body);
       body.classList.remove('playlist-picker-body--hidden');
       toggleBtn.innerHTML = `${icons.chevronLeft}<span>Свернуть</span>`;
-      // When the playlist is empty the popup is very short, which leaves almost
-      // no room for the absolute-positioned overlay (top → bottom:0). Force a
-      // min-height on the popup so the picker is always usable.
-      popup.style.minHeight = PICKER_POPUP_MIN_HEIGHT;
+      _fitOverlayPopup(popup, body);
       _positionOverlay();
       syncNavState();
-      requestAnimationFrame(() => { syncHeights(); PlaylistsManager._constrain(); });
+      requestAnimationFrame(() => {
+        syncHeights();
+        PlaylistsManager._constrain();
+      });
     };
 
     const closePicker = () => {
@@ -3663,9 +3676,9 @@ export const PlaylistsManager = {
     const confirmBar      = _el('div', 'playlist-picker-confirm-bar playlist-picker-confirm-bar--hidden');
     const confirmCount    = _el('span', 'playlist-picker-confirm-count', '');
     const confirmAddBtn   = _el('button', 'playlist-picker-confirm-btn');
-    confirmAddBtn.textContent  = 'Добавить';
+    confirmAddBtn.innerHTML = `${icons.check}<span>Добавить</span>`;
     const confirmClearBtn = _el('button', 'playlist-picker-confirm-clear');
-    confirmClearBtn.textContent = 'Снять';
+    confirmClearBtn.innerHTML = `${icons.x}<span>Снять</span>`;
     confirmBar.append(confirmCount, confirmAddBtn, confirmClearBtn);
 
     // ── Sync CSS vars for sticky top offsets ──────────────────────────────
@@ -4387,17 +4400,26 @@ function _el(tag, className, text) {
  * @param {string}      [selectTip]   — tooltip for the ✓ button
  * @returns {Function} sync — call after any chip state change to update disabled states
  */
-function _buildChipStripActions(container, chipSel, onDeselect, onSelectAll,
-  deselectTip = 'Снять все', selectTip = 'Выбрать все') {
+/**
+ * Build [✕ deselect-all] [✓ select-all] icon buttons inside a chip-strip-actions
+ * wrapper. Returns { wrap, deselectBtn, selectBtn } — callers wire click handlers
+ * and disabled sync themselves.
+ */
+function _buildSelectAllBtns(deselectTip = 'Снять все', selectTip = 'Выбрать все') {
   const wrap        = _el('div', 'playlist-chip-strip-actions');
-  const deselectBtn = _el('button', 'playlist-chip-action-btn');
-  const selectBtn   = _el('button', 'playlist-chip-action-btn');
+  const deselectBtn = _el('button', 'playlist-chip-action-btn deselect');
+  const selectBtn   = _el('button', 'playlist-chip-action-btn select');
   deselectBtn.innerHTML = icons.x;
-  deselectBtn.classList.add('deselect');
   selectBtn.innerHTML   = icons.check;
-  selectBtn.classList.add('select');
   createCustomTooltip(deselectBtn, deselectTip);
   createCustomTooltip(selectBtn,   selectTip);
+  wrap.append(deselectBtn, selectBtn);
+  return { wrap, deselectBtn, selectBtn };
+}
+
+function _buildChipStripActions(container, chipSel, onDeselect, onSelectAll,
+  deselectTip = 'Снять все', selectTip = 'Выбрать все') {
+  const { wrap, deselectBtn, selectBtn } = _buildSelectAllBtns(deselectTip, selectTip);
 
   const allChips = () => [...container.querySelectorAll(chipSel)];
   const sync = () => {
@@ -4419,7 +4441,6 @@ function _buildChipStripActions(container, chipSel, onDeselect, onSelectAll,
     sync();
   });
 
-  wrap.append(deselectBtn, selectBtn);
   container.prepend(wrap);
   sync();
   return sync;
@@ -4442,6 +4463,149 @@ function _smartChipTooltip(filterAction) {
     [Ctrl + ЛКМ + Перетаскивание] Добавить / Убрать из фильтра всё, над чем проходит курсор
   `;
 }
+// Shared helper — sets popup min-height so an absolute-positioned overlay fits.
+// Measures the overlay's natural content height by briefly attaching it to
+// document.body (where bottom:0 has nothing to clamp against), then moves it
+// to the popup with the correct min-height already set.
+function _fitOverlayPopup(popup, overlayEl, fitOnly = false) {
+  document.body.appendChild(overlayEl);
+  const contentH = overlayEl.offsetHeight;
+  popup.appendChild(overlayEl);
+
+  const maxH = window.innerHeight * 0.80;
+  popup.style.minHeight = (!fitOnly && contentH >= maxH) ? '80vh' : contentH + 'px';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Daily-task game-selection overlay
+// Shown before creating a playlist from a daily task so the user can pick
+// which candidate games to include. All games are pre-selected by default.
+//
+// Reuses heavily:
+//   - .playlist-picker-body--overlay + --selection  container styling & checkbox visibility
+//   - .playlist-picker-game-row / -checkbox / -game-name / -game-desc  row markup
+//   - .playlist-picker-confirm-count                count badge in the header
+//   - _buildSelectAllBtns()                         ✕/✓ header buttons
+//   - PlaylistsManager._attachDragSelect()          LMB drag to (de)select rows
+//   - .playlist-picker-overlay-footer               sticky bottom strip
+//   - .playlist-picker-toggle / -confirm-btn        cancel / confirm buttons
+// ─────────────────────────────────────────────────────────────────────────────
+function _showTaskGameSelectOverlay(candidates, onConfirm) {
+  if (!PlaylistsManager.popup) PlaylistsManager.showCentered();
+  const popup = PlaylistsManager.popup;
+
+  const sel = new Set(candidates.map(c => c.gameId)); // all pre-selected
+
+  // ── Overlay container ─────────────────────────────────────────────────────
+  // --overlay  : absolute positioning over the popup, z-index 50, full-height scroll
+  // --selection: makes .playlist-picker-checkbox elements visible (existing CSS rule)
+  const overlay = _el('div', 'playlist-picker-body playlist-picker-body--overlay playlist-picker-body--selection');
+  const popupHeader = popup.querySelector('.popup-header');
+  overlay.style.top = popupHeader
+    ? Math.round(popupHeader.getBoundingClientRect().bottom - popup.getBoundingClientRect().top) + 'px'
+    : '0';
+
+  // ── Sticky header: title | count | ✕ / ✓ buttons ─────────────────────────
+  const header = _el('div', 'dtask-select-header');
+  const titleSpan    = _el('span', 'dtask-select-title', 'Выберите игры для плейлиста');
+  const countSpan    = _el('span', 'playlist-picker-confirm-count'); // reuse existing badge style
+  // _buildSelectAllBtns returns the same wrap + buttons used by all chip-strip bars
+  const { wrap: btnsWrap, deselectBtn, selectBtn } = _buildSelectAllBtns();
+  header.append(titleSpan, countSpan, btnsWrap);
+  overlay.appendChild(header);
+
+  // ── Game rows — identical markup to the regular game picker ───────────────
+  candidates.forEach(({ gameId, game }) => {
+    const gtype    = gameTypes[game.params.gametype] || game.params.gametype;
+    const name     = game.params.vocName ? `«${game.params.vocName}»` : gtype;
+    const visLabel = visibilities[game.params.type] || game.params.type;
+
+    const gameRow  = _el('div', 'playlist-picker-game-row picker-row--selected');
+    gameRow.dataset.gameId = gameId;
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.className = 'playlist-picker-checkbox';
+    cb.checked = true; cb.dataset.gameId = gameId;
+
+    const nameSpan = _el('span', `playlist-picker-game-name gametype-${game.params.gametype}`, name);
+    const descSpan = _el('span', 'playlist-picker-game-desc');
+    descSpan.appendChild(_el('span', 'playlist-picker-game-desc-text', `${visLabel} · TM ${game.params.timeout}`));
+
+    gameRow.append(cb, nameSpan, descSpan);
+    overlay.appendChild(gameRow);
+  });
+
+  // ── Sticky footer: cancel + confirm ──────────────────────────────────────
+  const footer    = _el('div', 'playlist-picker-overlay-footer');
+  const cancelBtn = _el('button', 'playlist-picker-toggle');
+  cancelBtn.innerHTML = `${icons.chevronLeft}<span>Отмена</span>`;
+  createCustomTooltip(cancelBtn, 'Отменить создание плейлиста');
+  const confirmBtn = _el('button', 'playlist-picker-confirm-btn');
+  confirmBtn.innerHTML = `${icons.check}<span>Создать</span>`;
+  createCustomTooltip(confirmBtn, 'Подтвердить выбор и создать плейлист');
+  footer.append(cancelBtn, confirmBtn);
+  overlay.appendChild(footer);
+
+  // ── LMB drag-to-select — reuse existing method verbatim ──────────────────
+  // activeClass 'playlist-picker-body--selection' is already on the overlay,
+  // so _attachDragSelect will handle row-level click and drag out of the box.
+  PlaylistsManager._attachDragSelect(overlay, '.playlist-picker-checkbox', (cb, checked) => {
+    const gameId = cb.dataset.gameId;
+    checked ? sel.add(gameId) : sel.delete(gameId);
+    cb.closest('.playlist-picker-game-row')?.classList.toggle('picker-row--selected', checked);
+    syncState();
+  }, {
+    rowSelector:  '.playlist-picker-game-row',
+    activeClass:  'playlist-picker-body--selection',
+    skipSelector: 'button',
+  });
+
+  // ── Sync helper: count badge + button disabled states ────────────────────
+  const syncState = () => {
+    countSpan.textContent = `${sel.size} / ${candidates.length}`;
+    deselectBtn.disabled  = sel.size === 0;
+    selectBtn.disabled    = sel.size === candidates.length;
+    confirmBtn.disabled   = sel.size === 0;
+  };
+  syncState();
+
+  deselectBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    sel.clear();
+    overlay.querySelectorAll('.playlist-picker-checkbox').forEach(cb => {
+      cb.checked = false;
+      cb.closest('.playlist-picker-game-row')?.classList.remove('picker-row--selected');
+    });
+    syncState();
+  });
+
+  selectBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    candidates.forEach(c => sel.add(c.gameId));
+    overlay.querySelectorAll('.playlist-picker-checkbox').forEach(cb => {
+      cb.checked = true;
+      cb.closest('.playlist-picker-game-row')?.classList.add('picker-row--selected');
+    });
+    syncState();
+  });
+
+  // ── Close / confirm ───────────────────────────────────────────────────────
+  const close = () => {
+    overlay.remove();
+    if (PlaylistsManager.popup) PlaylistsManager.popup.style.minHeight = '';
+  };
+  cancelBtn.addEventListener('click',  e => { e.stopPropagation(); close(); });
+  confirmBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    if (!sel.size) return;
+    close();
+    onConfirm(candidates.filter(c => sel.has(c.gameId)));
+  });
+
+  _fitOverlayPopup(popup, overlay, true);
+  requestAnimationFrame(() => { PlaylistsManager._constrain(); });
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Daily-task dialog — inject playlist button into .modal2-header
 // ─────────────────────────────────────────────────────────────────────────────
