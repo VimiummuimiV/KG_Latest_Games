@@ -246,6 +246,7 @@ const BTN_TOOLTIPS = {
   },
   createTaskBtn: {
     default: {
+      clickLabel: 'Клик / T',
       click: 'Создать плейлист из задачи дня',
       ctrl:  'Выбрать игры перед созданием плейлиста',
     },
@@ -256,7 +257,7 @@ function buildBtnTooltip(button, state = 'default') {
   const t = BTN_TOOLTIPS[button]?.[state];
   if (!t) return '';
   const lines = [];
-  if (t.click)     lines.push(`[Клик] ${t.click}`);
+  if (t.click)     lines.push(`[${t.clickLabel ?? 'Клик'}] ${t.click}`);
   if (t.shift)     lines.push(`[Shift + Клик] ${t.shift}`);
   if (t.ctrl)      lines.push(`[Ctrl + Клик] ${t.ctrl}`);
   if (t.alt)       lines.push(`[Alt + Клик] ${t.alt}`);
