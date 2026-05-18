@@ -247,8 +247,8 @@ const BTN_TOOLTIPS = {
   createTaskBtn: {
     default: {
       clickLabel: 'Клик / T',
-      click: 'Создать плейлист из задачи дня',
-      ctrl:  'Выбрать игры перед созданием плейлиста',
+      click: 'Выбрать игры перед созданием плейлиста',
+      ctrl:  'Создать плейлист из задачи дня',
     },
   },
 };
@@ -3292,7 +3292,7 @@ export const PlaylistsManager = {
     createCustomTooltip(taskBtn, buildBtnTooltip('createTaskBtn'));
     taskBtn.addEventListener('click', e => {
       e.stopPropagation();
-      this._createPlaylistFromDailyTask(onDone, e.ctrlKey);
+      this._createPlaylistFromDailyTask(onDone, !e.ctrlKey);
     });
 
     // ── Group shortcuts ────────────────────────────────────────────────────────
@@ -4667,7 +4667,7 @@ function _dtaskConfigureBtn(btn) {
         _dtaskConfigureBtn(btn);
         if (PlaylistsManager.popup) PlaylistsManager.refresh();
         else PlaylistsManager.showCentered();
-      }, e.ctrlKey);
+      }, !e.ctrlKey);
     };
   }
 
