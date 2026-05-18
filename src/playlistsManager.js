@@ -3432,7 +3432,7 @@ export const PlaylistsManager = {
 
     const pickerCandidates = effective.map((c, i) => ({
       ...c,
-      gameId:      c.game.id,
+      gameId:      c.game.id ?? String(i),
       repeatCount: base + (i < rem ? 1 : 0),
     }));
 
