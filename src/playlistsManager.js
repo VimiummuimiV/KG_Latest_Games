@@ -3434,10 +3434,6 @@ export const PlaylistsManager = {
       return;
     }
 
-    gm.assignGameIds();
-    gm.saveGamesData();
-    um.refreshContainer();
-
     const progress  = taskData.user?.progress ?? 0;
     const remaining = Math.max(0, require - progress);
 
@@ -3463,6 +3459,12 @@ export const PlaylistsManager = {
       if (this.load().some(p => p.title === playlistTitle)) {
         if (!confirm(`Плейлист «${playlistTitle}» уже существует. Создать новый?`)) return;
       }
+
+      // Persist the group/games only now that the user confirmed — not before,
+      // so cancelling the picker leaves groupsManager and gamesManager untouched.
+      gm.assignGameIds();
+      gm.saveGamesData();
+      um.refreshContainer();
 
       const created   = this.createPlaylist(playlistTitle);
       const playlists = this.load();
