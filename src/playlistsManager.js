@@ -961,7 +961,7 @@ export const PlaylistsManager = {
   },
 
   // Attach long-press selection-mode activation to a scrollable container.
-  // container       — the element to listen on (entryList or picker body)
+  // container       — the element to listen on (entryList or picker overlay)
   // rowSelector     — CSS selector to find the pressed row
   // skipSelector    — elements that should NOT start a long press
   // activeClass     — CSS class toggled on container to enter selection mode
@@ -1329,10 +1329,10 @@ export const PlaylistsManager = {
       const popup = PlaylistsManager.popup;
       if (!popup) return;
       // F: toggle filters chip strip in the game picker (only when picker is open).
-      const pickerBody = popup.querySelector('.playlist-picker-body:not(.playlist-picker-body--hidden)');
-      if (!pickerBody) return;
+      const pickerOverlay = popup.querySelector('.playlist-picker-overlay:not(.playlist-picker-overlay--hidden)');
+      if (!pickerOverlay) return;
       e.preventDefault();
-      pickerBody.querySelector('.playlist-picker-filters-btn')?.click();
+      pickerOverlay.querySelector('.playlist-picker-filters-btn')?.click();
     }
     if (e.code === 'KeyS') {
       if (inTextField) return;
@@ -1340,12 +1340,12 @@ export const PlaylistsManager = {
       if (!popup) return;
 
       // Picker overlay takes priority when it's visible
-      const pickerBody = popup.querySelector('.playlist-picker-body:not(.playlist-picker-body--hidden)');
-      if (pickerBody) {
-        if (pickerBody.classList.contains('playlist-picker-body--selection')) {
+      const pickerOverlay = popup.querySelector('.playlist-picker-overlay:not(.playlist-picker-overlay--hidden)');
+      if (pickerOverlay) {
+        if (pickerOverlay.classList.contains('playlist-picker-overlay--selection')) {
           popup.querySelector('.playlist-picker-confirm-clear')?.click();
         } else {
-          pickerBody.classList.add('playlist-picker-body--selection');
+          pickerOverlay.classList.add('playlist-picker-overlay--selection');
         }
         return;
       }
@@ -1610,17 +1610,17 @@ export const PlaylistsManager = {
       draggingClass:  'playlist-block--dragging',
       onReorder: (from, to) => this.reorderPlaylists(from, to),
       onStart: block => {
-        const body = block.querySelector('.playlist-body');
-        if (body) {
-          block.dataset.dragBodyHidden = '1';
-          body.style.display = 'none';
+        const content = block.querySelector('.playlist-content');
+        if (content) {
+          block.dataset.dragContentHidden = '1';
+          content.style.display = 'none';
         }
       },
       onEnd: block => {
-        if (block.dataset.dragBodyHidden) {
-          const body = block.querySelector('.playlist-body');
-          if (body) body.style.display = '';
-          delete block.dataset.dragBodyHidden;
+        if (block.dataset.dragContentHidden) {
+          const content = block.querySelector('.playlist-content');
+          if (content) content.style.display = '';
+          delete block.dataset.dragContentHidden;
         }
       },
     });
@@ -1846,8 +1846,8 @@ export const PlaylistsManager = {
 
     if (!isExpanded) return block;
 
-    // Collapsible body
-    const body = _el('div', 'playlist-body');
+    // Collapsible content
+    const content = _el('div', 'playlist-content');
 
     // Entry list (no search here — entries list is short)
     const entryList = _el('div', 'playlist-entries');
@@ -1921,9 +1921,9 @@ export const PlaylistsManager = {
       },
     });
 
-    body.appendChild(entryList);
-    body.appendChild(this._buildGamePicker(playlist));
-    block.appendChild(body);
+    content.appendChild(entryList);
+    content.appendChild(this._buildGamePicker(playlist));
+    block.appendChild(content);
     return block;
   },
 
@@ -2029,7 +2029,7 @@ export const PlaylistsManager = {
       }
       _syncEntrySteppers(list, playlist);
       _syncGameCountChip(block, playlist, PlaylistsManager.main);
-      // Sync the portaled picker body via the hook exposed on the picker element.
+      // Sync the portaled picker overlay via the hook exposed on the picker element.
       block?.querySelector('.playlist-game-picker')?._syncPickerRow(entry.gameId);
     });
 
@@ -2362,7 +2362,7 @@ export const PlaylistsManager = {
         // Using position:fixed makes the element scroll-immune: no translateY
         // compensation is needed and the runaway-autoscroll bug is impossible.
         if (onStart) onStart(dragEl);
-        // Re-measure after onStart — it may have collapsed content (e.g. playlist body).
+        // Re-measure after onStart — it may have collapsed content (e.g. playlist content).
         const rect = dragEl.getBoundingClientRect();
         dragEl._dragOrigTop = rect.top;
         dragEl.style.top   = rect.top  + 'px';
@@ -3528,9 +3528,9 @@ export const PlaylistsManager = {
     btnRow.append(toggleBtn);
     picker.appendChild(btnRow);
 
-    // ── Picker body — portaled to popup root so it floats above playlists-list
-    const body = _el('div', 'playlist-picker-body playlist-picker-body--hidden playlist-picker-body--overlay');
-    _attachVocabularyPreview(body, '.playlist-picker-game-name', target => target.closest('.playlist-picker-game-row')?.dataset.gameId);
+    // ── Picker overlay — portaled to popup root so it floats above playlists-list
+    const overlay = _el('div', 'playlist-picker-overlay playlist-picker-overlay--hidden playlist-picker-overlay--overlay');
+    _attachVocabularyPreview(overlay, '.playlist-picker-game-name', target => target.closest('.playlist-picker-game-row')?.dataset.gameId);
 
     // ── Dedicated close footer inside the overlay (never moves, always at bottom) ──
     const overlayFooter   = _el('div', 'playlist-picker-overlay-footer');
@@ -3550,7 +3550,7 @@ export const PlaylistsManager = {
     let navIndex = -1;
 
     // Returns only picker game rows that have already been added to the playlist.
-    const getAddedPickerRows = () => [...body.querySelectorAll('.playlist-picker-game-row.already-added')];
+    const getAddedPickerRows = () => [...overlay.querySelectorAll('.playlist-picker-game-row.already-added')];
 
     const navGroup   = _el('div',    'playlist-picker-nav-group');
     const navPrevBtn = _el('button', 'playlist-picker-nav-btn');
@@ -3609,22 +3609,22 @@ export const PlaylistsManager = {
     // ── Open / close helpers ───────────────────────────────────────────────
     const _positionOverlay = () => {
       const popup = PlaylistsManager.popup;
-      if (!popup || body.classList.contains('playlist-picker-body--hidden')) return;
+      if (!popup || overlay.classList.contains('playlist-picker-overlay--hidden')) return;
       const header = popup.querySelector('.popup-header');
       const pr = popup.getBoundingClientRect();
       const top = header
         ? Math.round(header.getBoundingClientRect().bottom - pr.top)
         : 0;
-      body.style.top = top + 'px';
+      overlay.style.top = top + 'px';
     };
 
     const openPicker = () => {
       const popup = PlaylistsManager.popup;
       if (!popup) return;
-      body.classList.remove('playlist-picker-body--hidden');
+      overlay.classList.remove('playlist-picker-overlay--hidden');
       toggleBtn.innerHTML = `${icons.chevronLeft}<span>Свернуть</span>`;
-      _fitOverlayPopup(popup, body);
       _positionOverlay();
+      _fitOverlayPopup(popup, overlay);
       syncNavState();
       requestAnimationFrame(() => {
         syncHeights();
@@ -3634,13 +3634,13 @@ export const PlaylistsManager = {
 
     const closePicker = () => {
       // Exit picker selection mode and clear all row selections on close
-      body.classList.remove('playlist-picker-body--selection');
+      overlay.classList.remove('playlist-picker-overlay--selection');
       window.getSelection()?.removeAllRanges();
       pickerSel.clear();
-      body.querySelectorAll('.playlist-picker-checkbox').forEach(cb => { cb.checked = false; });
-      body.querySelectorAll('.playlist-picker-game-row').forEach(r => r.classList.remove('picker-row--selected'));
+      overlay.querySelectorAll('.playlist-picker-checkbox').forEach(cb => { cb.checked = false; });
+      overlay.querySelectorAll('.playlist-picker-game-row').forEach(r => r.classList.remove('picker-row--selected'));
       updateConfirmBar();
-      body.classList.add('playlist-picker-body--hidden');
+      overlay.classList.add('playlist-picker-overlay--hidden');
       toggleBtn.innerHTML = `${icons.plus}<span>Добавить игры</span>`;
       // Remove the min-height we forced on the popup when opening, so the popup
       // shrinks back to its natural content height after the picker is hidden.
@@ -3651,7 +3651,7 @@ export const PlaylistsManager = {
     // toggleBtn in picker (sticky bottom of playlists-list) — always visible
     toggleBtn.addEventListener('click', e => {
       e.stopPropagation();
-      body.classList.contains('playlist-picker-body--hidden') ? openPicker() : closePicker();
+      overlay.classList.contains('playlist-picker-overlay--hidden') ? openPicker() : closePicker();
     });
 
     // collapseBtn in overlay footer — mirrors the same action
@@ -3662,7 +3662,7 @@ export const PlaylistsManager = {
 
     // filtersBtn wired after groupFilterRow is defined (see below)
 
-    if (!this.main) { picker.append(body); return picker; }
+    if (!this.main) { picker.append(overlay); return picker; }
 
     // ── Search ─────────────────────────────────────────────────────────────
     const searchWrap  = _el('div', 'playlist-picker-search-wrap');
@@ -3702,11 +3702,11 @@ export const PlaylistsManager = {
         const sh = searchWrap.offsetHeight;
         const filterVisible = !groupFilterRow.classList.contains('playlist-picker-group-filter--hidden');
         const gh = filterVisible ? groupFilterRow.offsetHeight : 0;
-        body.style.setProperty('--picker-search-height',       `${sh}px`);
-        body.style.setProperty('--picker-group-filter-height', `${gh}px`);
+        overlay.style.setProperty('--picker-search-height',       `${sh}px`);
+        overlay.style.setProperty('--picker-group-filter-height', `${gh}px`);
         const ch = confirmBar.classList.contains('playlist-picker-confirm-bar--hidden')
           ? 0 : confirmBar.offsetHeight;
-        body.style.setProperty('--picker-confirm-height', `${ch}px`);
+        overlay.style.setProperty('--picker-confirm-height', `${ch}px`);
       });
     };
 
@@ -3720,7 +3720,7 @@ export const PlaylistsManager = {
         gameRow.style.display = show ? '' : 'none';
         if (show) visibleHeaders.add(groupHeader);
       });
-      body.querySelectorAll('.playlist-picker-group-header').forEach(h => {
+      overlay.querySelectorAll('.playlist-picker-group-header').forEach(h => {
         h.style.display = visibleHeaders.has(h) ? '' : 'none';
       });
     };
@@ -3734,7 +3734,7 @@ export const PlaylistsManager = {
     };
 
     // ── Inject newly added entries into the live entry list ────────────────
-    // picker (btn-row) stays in its original DOM place even after body is
+    // picker (btn-row) stays in its original DOM place even after overlay is
     // portaled, so picker.closest() still resolves the playlist-block correctly.
     const injectAddedEntries = (block, countBefore, jumpToGameId) => {
       const entryList = block?.querySelector('.playlist-entries');
@@ -3759,7 +3759,7 @@ export const PlaylistsManager = {
       const countBefore = playlist.entries.length;
       pickerSel.forEach(gameId => {
         this.addEntry(playlist.id, gameId, 1);
-        const gameRow = body.querySelector(`.playlist-picker-game-row[data-game-id="${gameId}"]`);
+        const gameRow = overlay.querySelector(`.playlist-picker-game-row[data-game-id="${gameId}"]`);
         if (gameRow) {
           gameRow.classList.add('already-added');
           const cb = gameRow.querySelector('.playlist-picker-checkbox');
@@ -3771,7 +3771,7 @@ export const PlaylistsManager = {
       });
       pickerSel.clear();
       // Exit picker selection mode after bulk-add
-      body.classList.remove('playlist-picker-body--selection');
+      overlay.classList.remove('playlist-picker-overlay--selection');
       window.getSelection()?.removeAllRanges();
       updateConfirmBar();
       const _caBlock = picker.closest('.playlist-block');
@@ -3783,10 +3783,10 @@ export const PlaylistsManager = {
       e.stopPropagation();
       pickerSel.clear();
       // Exit picker selection mode on clear
-      body.classList.remove('playlist-picker-body--selection');
+      overlay.classList.remove('playlist-picker-overlay--selection');
       window.getSelection()?.removeAllRanges();
-      body.querySelectorAll('.playlist-picker-checkbox').forEach(cb => { cb.checked = false; });
-      body.querySelectorAll('.playlist-picker-game-row').forEach(r => r.classList.remove('picker-row--selected'));
+      overlay.querySelectorAll('.playlist-picker-checkbox').forEach(cb => { cb.checked = false; });
+      overlay.querySelectorAll('.playlist-picker-game-row').forEach(r => r.classList.remove('picker-row--selected'));
       updateConfirmBar();
     });
 
@@ -3796,7 +3796,7 @@ export const PlaylistsManager = {
       if (!group.games.length) return;
 
       const groupHeader = _el('div', 'playlist-picker-group-header', group.title);
-      body.appendChild(groupHeader);
+      overlay.appendChild(groupHeader);
 
       group.games.forEach(game => {
         // Returns current in-playlist count for this game (live, reads from playlist.entries)
@@ -3817,7 +3817,7 @@ export const PlaylistsManager = {
             : 'Добавить в плейлист');
         };
 
-        // ── Checkbox — always in DOM; CSS hides it until playlist-picker-body--selection ──
+        // ── Checkbox — always in DOM; CSS hides it until playlist-picker-overlay--selection ──
         if (!alreadyAdded) {
           const pickerCb = document.createElement('input');
           pickerCb.type      = 'checkbox';
@@ -3940,13 +3940,13 @@ export const PlaylistsManager = {
         _attachButtonHold(addBtn, doAdd, doRemove);
 
         gameRow.append(nameSpan, descSpan, addBtn);
-        body.appendChild(gameRow);
+        overlay.appendChild(gameRow);
         allRows.push({ gameRow, groupHeader, name: name.toLowerCase(), groupTitle: group.title });
       });
     });
 
     // ── Drag-to-select on game rows — always attached; checkboxes always in DOM ──
-    this._attachDragSelect(body, '.playlist-picker-checkbox', (cb, checked) => {
+    this._attachDragSelect(overlay, '.playlist-picker-checkbox', (cb, checked) => {
       const gameId  = cb.dataset.gameId;
       const gameRow = cb.closest('.playlist-picker-game-row');
       checked ? pickerSel.add(gameId) : pickerSel.delete(gameId);
@@ -3954,16 +3954,16 @@ export const PlaylistsManager = {
       updateConfirmBar();
     }, {
       rowSelector:  '.playlist-picker-game-row',
-      activeClass:  'playlist-picker-body--selection',
+      activeClass:  'playlist-picker-overlay--selection',
       skipSelector: 'button, input',
     });
 
     // ── Long-press on any game row to enter picker selection mode ──────────
-    this._attachLongPressSelection(body, {
+    this._attachLongPressSelection(overlay, {
       rowSelector:     '.playlist-picker-game-row',
       skipSelector:    'button, input',
-      activeClass:     'playlist-picker-body--selection',
-      isAlreadyActive: () => body.classList.contains('playlist-picker-body--selection'),
+      activeClass:     'playlist-picker-overlay--selection',
+      isAlreadyActive: () => overlay.classList.contains('playlist-picker-overlay--selection'),
       onActivate: row => {
         if (row.classList.contains('already-added')) return;
         const gameId = row.dataset.gameId;
@@ -3977,7 +3977,7 @@ export const PlaylistsManager = {
       },
     });
 
-    if (!allRows.length) body.appendChild(_el('div', 'playlist-picker-empty', 'Нет доступных игр'));
+    if (!allRows.length) overlay.appendChild(_el('div', 'playlist-picker-empty', 'Нет доступных игр'));
 
     // ── Build group chips (one per unique group that has games) ───────────
     const groupsWithGames = [...new Set(allRows.map(r => r.groupTitle))];
@@ -4036,18 +4036,18 @@ export const PlaylistsManager = {
 
     searchInput.addEventListener('input', () => applyFilter());
 
-    // ── Assemble body (prepend sticky controls, game rows already appended)
+    // ── Assemble overlay (prepend sticky controls, game rows already appended)
     // Final DOM order: searchWrap → groupFilterRow → confirmBar → [rows] → overlayFooter
-    body.prepend(confirmBar);
-    if (groupsWithGames.length > 0) body.prepend(groupFilterRow);
-    body.prepend(searchWrap);
-    body.append(overlayFooter);
+    overlay.prepend(confirmBar);
+    if (groupsWithGames.length > 0) overlay.prepend(groupFilterRow);
+    overlay.prepend(searchWrap);
+    overlay.append(overlayFooter);
 
     // Expose a sync function on the picker element so that code outside the
     // picker closure (e.g. entry-row remove button) can update a game row in
-    // the portaled body without needing a DOM reference to body itself.
+    // the portaled overlay without needing a DOM reference to overlay itself.
     picker._syncPickerRow = (gameId) => {
-      const gameRow = body.querySelector(`.playlist-picker-game-row[data-game-id="${gameId}"]`);
+      const gameRow = overlay.querySelector(`.playlist-picker-game-row[data-game-id="${gameId}"]`);
       if (!gameRow) return;
       if (gameRow._syncAddedCount)   gameRow._syncAddedCount();
       if (gameRow._syncAddBtnTooltip) gameRow._syncAddBtnTooltip();
@@ -4057,7 +4057,7 @@ export const PlaylistsManager = {
       if (btn) btn.innerHTML = remaining > 0 ? icons.check : icons.plus;
     };
 
-    // body stays detached until openPicker() portals it to the popup root.
+    // overlay stays detached until openPicker() portals it to the popup root.
     // picker only ever contains btnRow (sticky bottom of playlists-list).
     return picker;
   }
@@ -4482,13 +4482,14 @@ function _smartChipTooltip(filterAction) {
 // Measures the overlay's natural content height by briefly attaching it to
 // document.body (where bottom:0 has nothing to clamp against), then moves it
 // to the popup with the correct min-height already set.
-function _fitOverlayPopup(popup, overlayEl, fitOnly = false) {
+function _fitOverlayPopup(popup, overlayEl) {
   document.body.appendChild(overlayEl);
-  const contentH = overlayEl.offsetHeight;
+  const contentH = overlayEl.scrollHeight;
   popup.appendChild(overlayEl);
 
+  const topOffset = parseInt(overlayEl.style.top, 10) || 0;
   const maxH = window.innerHeight * 0.80;
-  popup.style.minHeight = (!fitOnly && contentH >= maxH) ? '80vh' : contentH + 'px';
+  popup.style.minHeight = Math.min(contentH + topOffset, maxH) + 'px';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4497,7 +4498,7 @@ function _fitOverlayPopup(popup, overlayEl, fitOnly = false) {
 // which candidate games to include. No games are pre-selected — user picks freely.
 //
 // Reuses heavily:
-//   - .playlist-picker-body--overlay + --selection  container styling & checkbox visibility
+//   - .playlist-picker-overlay--overlay + --selection  container styling & checkbox visibility
 //   - .playlist-picker-game-row / -checkbox / -game-name / -game-desc  row markup
 //   - .playlist-picker-confirm-count                count badge in the header
 //   - _buildSelectAllBtns()                         ✕/✓ header buttons
@@ -4509,12 +4510,16 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
   if (!PlaylistsManager.popup) PlaylistsManager.showCentered();
   const popup = PlaylistsManager.popup;
 
+  // Hide the list content so the popup sizes to the overlay only
+  const list = popup.querySelector('.playlists-list');
+  if (list) list.style.display = 'none';
+
   const sel = new Set(); // nothing pre-selected — user decides what to add
 
   // ── Overlay container ─────────────────────────────────────────────────────
   // --overlay  : absolute positioning over the popup, z-index 50, full-height scroll
   // --selection: makes .playlist-picker-checkbox elements visible (existing CSS rule)
-  const overlay = _el('div', 'playlist-picker-body playlist-picker-body--overlay playlist-picker-body--selection');
+  const overlay = _el('div', 'playlist-picker-overlay playlist-picker-overlay--overlay playlist-picker-overlay--selection');
   const popupHeader = popup.querySelector('.popup-header');
   overlay.style.top = popupHeader
     ? Math.round(popupHeader.getBoundingClientRect().bottom - popup.getBoundingClientRect().top) + 'px'
@@ -4562,7 +4567,7 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
   overlay.appendChild(footer);
 
   // ── LMB drag-to-select — reuse existing method verbatim ──────────────────
-  // activeClass 'playlist-picker-body--selection' is already on the overlay,
+  // activeClass 'playlist-picker-overlay--selection' is already on the overlay,
   // so _attachDragSelect will handle row-level click and drag out of the box.
   PlaylistsManager._attachDragSelect(overlay, '.playlist-picker-checkbox', (cb, checked) => {
     const gameId = cb.dataset.gameId;
@@ -4571,7 +4576,7 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
     syncState();
   }, {
     rowSelector:  '.playlist-picker-game-row',
-    activeClass:  'playlist-picker-body--selection',
+    activeClass:  'playlist-picker-overlay--selection',
     skipSelector: 'button',
   });
 
@@ -4607,6 +4612,7 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
   // ── Close / confirm ───────────────────────────────────────────────────────
   const close = () => {
     overlay.remove();
+    if (list) list.style.display = '';
     if (PlaylistsManager.popup) PlaylistsManager.popup.style.minHeight = '';
   };
   cancelBtn.addEventListener('click',  e => { e.stopPropagation(); close(); });
@@ -4617,7 +4623,7 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
     onConfirm(candidates.filter(c => sel.has(c.gameId)));
   });
 
-  _fitOverlayPopup(popup, overlay, true);
+  _fitOverlayPopup(popup, overlay);
   requestAnimationFrame(() => { PlaylistsManager._constrain(); });
 }
 

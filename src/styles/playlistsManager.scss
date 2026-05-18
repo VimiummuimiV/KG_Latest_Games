@@ -703,7 +703,7 @@ body.playlist-drag-active * { cursor: grabbing !important; }
   }
 
   // ── Collapsible body ────────────────────────────────────────────────────────
-  .playlist-body {
+  .playlist-content {
     display: flex;
     flex-direction: column;
     gap: 0;
@@ -1216,7 +1216,7 @@ body.playlist-drag-active * { cursor: grabbing !important; }
   }
 
   // ── Overlay body — floats above playlists-list, attached to popup root ──
-  .playlist-picker-body {
+  .playlist-picker-overlay {
     margin-top: 0.3em;
     max-height: 40vh;
     overflow-y: auto;
@@ -1804,7 +1804,7 @@ body.playlist-drag-active * { cursor: grabbing !important; }
   }
 
   // ── Picker checkbox + confirm bar ──────────────────────────────────────────
-  // Checkbox always in DOM; hidden until playlist-picker-body--selection is active.
+  // Checkbox always in DOM; hidden until playlist-picker-overlay--selection is active.
   .playlist-picker-checkbox {
     flex-shrink: 0;
     width: 14px;
@@ -1816,7 +1816,7 @@ body.playlist-drag-active * { cursor: grabbing !important; }
     &:disabled { cursor: default; }
   }
 
-  .playlist-picker-body--selection {
+  .playlist-picker-overlay--selection {
     .playlist-picker-checkbox:not(:disabled) { display: block; }
 
     // Make the whole row feel clickable and prevent accidental text selection
@@ -1868,7 +1868,7 @@ body.playlist-drag-active * { cursor: grabbing !important; }
   }
 
   // ── Task game-selection overlay header ─────────────────────────────────────
-  // The overlay reuses .playlist-picker-body--overlay + --selection (positioning,
+  // The overlay reuses .playlist-picker-overlay--overlay + --selection (positioning,
   // scrolling, checkbox visibility) and all picker row / footer classes verbatim.
   // Only the sticky header strip is new.
   .dtask-select-header {
