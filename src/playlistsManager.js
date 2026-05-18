@@ -244,6 +244,12 @@ const BTN_TOOLTIPS = {
       ctrl:  'Сбросить все переопределения',
     },
   },
+  createTaskBtn: {
+    default: {
+      click: 'Создать плейлист из задачи дня',
+      ctrl:  'Выбрать игры перед созданием плейлиста',
+    },
+  },
 };
 
 function buildBtnTooltip(button, state = 'default') {
@@ -3282,10 +3288,10 @@ export const PlaylistsManager = {
 
     const taskBtn = _el('button', 'playlists-create-task-btn');
     taskBtn.innerHTML = `${icons.plus}<span>Из задачи</span>`;
-    createCustomTooltip(taskBtn, '[Клик / T] Создать плейлист из задачи дня');
+    createCustomTooltip(taskBtn, buildBtnTooltip('createTaskBtn'));
     taskBtn.addEventListener('click', e => {
       e.stopPropagation();
-      this._createPlaylistFromDailyTask(onDone);
+      this._createPlaylistFromDailyTask(onDone, e.ctrlKey);
     });
 
     // ── Group shortcuts ────────────────────────────────────────────────────────
@@ -3368,7 +3374,9 @@ export const PlaylistsManager = {
   },
 
   // ── Create playlist from daily task ────────────────────────────────────────
-  async _createPlaylistFromDailyTask(onDone) {
+  // showPicker=true  → show the game-selection overlay (Ctrl+click flow)
+  // showPicker=false → create directly from all resolved games (plain click flow)
+  async _createPlaylistFromDailyTask(onDone, showPicker = false) {
     const todayStr = _getTaskDate();
     const taskData = await _fetchTask(todayStr);
 
@@ -3440,7 +3448,7 @@ export const PlaylistsManager = {
     const base = remaining > 0 ? Math.floor(remaining / effectiveGames.length) : 1;
     const rem  = remaining > 0 ? remaining % effectiveGames.length : 0;
 
-    // Build candidates for the selection overlay — all pre-selected.
+    // Build candidates for the selection overlay.
     const candidates = effectiveGames.map((game, i) => ({
       gameId:      game.id,
       game,
@@ -3448,7 +3456,7 @@ export const PlaylistsManager = {
     }));
 
     // Show the overlay so the user can deselect games before the playlist is created.
-    _showTaskGameSelectOverlay(candidates, (selected) => {
+    const doCreate = (selected) => {
       if (!selected.length) return;
 
       if (this.load().some(p => p.title === playlistTitle)) {
@@ -3474,7 +3482,13 @@ export const PlaylistsManager = {
 
       this.expandedPlaylistId = created.id;
       onDone();
-    });
+    };
+
+    if (showPicker) {
+      _showTaskGameSelectOverlay(candidates, doCreate);
+    } else {
+      doCreate(candidates);
+    }
   },
 
   // Remove playlist's games from the Задачи group only if no remaining playlist still references them.
@@ -4479,7 +4493,7 @@ function _fitOverlayPopup(popup, overlayEl, fitOnly = false) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Daily-task game-selection overlay
 // Shown before creating a playlist from a daily task so the user can pick
-// which candidate games to include. All games are pre-selected by default.
+// which candidate games to include. No games are pre-selected — user picks freely.
 //
 // Reuses heavily:
 //   - .playlist-picker-body--overlay + --selection  container styling & checkbox visibility
@@ -4494,7 +4508,7 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
   if (!PlaylistsManager.popup) PlaylistsManager.showCentered();
   const popup = PlaylistsManager.popup;
 
-  const sel = new Set(candidates.map(c => c.gameId)); // all pre-selected
+  const sel = new Set(); // nothing pre-selected — user decides what to add
 
   // ── Overlay container ─────────────────────────────────────────────────────
   // --overlay  : absolute positioning over the popup, z-index 50, full-height scroll
@@ -4520,12 +4534,12 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
     const name     = game.params.vocName ? `«${game.params.vocName}»` : gtype;
     const visLabel = visibilities[game.params.type] || game.params.type;
 
-    const gameRow  = _el('div', 'playlist-picker-game-row picker-row--selected');
+    const gameRow  = _el('div', 'playlist-picker-game-row');
     gameRow.dataset.gameId = gameId;
 
     const cb = document.createElement('input');
     cb.type = 'checkbox'; cb.className = 'playlist-picker-checkbox';
-    cb.checked = true; cb.dataset.gameId = gameId;
+    cb.checked = false; cb.dataset.gameId = gameId;
 
     const nameSpan = _el('span', `playlist-picker-game-name gametype-${game.params.gametype}`, name);
     const descSpan = _el('span', 'playlist-picker-game-desc');
@@ -4645,14 +4659,14 @@ function _dtaskConfigureBtn(btn) {
       }
     };
   } else {
-    updateTooltipContent(btn, 'Создать плейлист из задачи дня');
+    updateTooltipContent(btn, buildBtnTooltip('createTaskBtn'));
     btn._dtaskHandler = e => {
       e.stopPropagation();
       PlaylistsManager._createPlaylistFromDailyTask(() => {
         _dtaskConfigureBtn(btn);
         if (PlaylistsManager.popup) PlaylistsManager.refresh();
         else PlaylistsManager.showCentered();
-      });
+      }, e.ctrlKey);
     };
   }
 
