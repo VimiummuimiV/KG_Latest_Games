@@ -3430,10 +3430,9 @@ export const PlaylistsManager = {
     const base = remaining > 0 ? Math.floor(remaining / effective.length) : 1;
     const rem  = remaining > 0 ? remaining % effective.length : 0;
 
-    // Attach repeatCount and a stable gameId for the overlay (stub games use index).
     const pickerCandidates = effective.map((c, i) => ({
       ...c,
-      gameId: c.game.id ?? `preview-${i}`,
+      gameId:      c.game.id,
       repeatCount: base + (i < rem ? 1 : 0),
     }));
 
@@ -4514,7 +4513,7 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
   if (!PlaylistsManager.popup) PlaylistsManager.showCentered();
   const popup = PlaylistsManager.popup;
 
-  const sel = new Set(); // nothing pre-selected — user decides what to add
+  const sel = new Set(); // selected indices into candidates[]
 
   // ── Overlay container ─────────────────────────────────────────────────────
   // --overlay  : absolute positioning over the popup, z-index 50, full-height scroll
