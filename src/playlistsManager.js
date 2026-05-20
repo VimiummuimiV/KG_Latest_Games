@@ -853,6 +853,7 @@ export const PlaylistsManager = {
           repeatCount: count,
           params: src.params ? { ...src.params } : {},
           ...(src.label ? { label: src.label } : {}),
+          ...(src.repeatLocked ? { repeatLocked: true } : {}),
         });
       }
     }
