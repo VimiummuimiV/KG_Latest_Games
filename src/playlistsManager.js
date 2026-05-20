@@ -612,6 +612,14 @@ export const PlaylistsManager = {
   // When there are more entries than remaining games needed, excess entries are
   // trimmed so we never inflate the total via a forced minimum of 1 per entry.
   // Call this AFTER modifying p.entries, BEFORE saving.
+  // Returns the max repeatCount allowed for a locked entry in a task playlist,
+  // reserving the other locked sums + 1 per unlocked entry.
+  _lockedEntryCap(p, entryId) {
+    const otherLockedSum = p.entries.reduce((s, x) => s + (x.repeatLocked && x.id !== entryId ? (x.repeatCount ?? 1) : 0), 0);
+    const unlockedCount  = p.entries.filter(x => !x.repeatLocked).length;
+    return Math.max(1, p.dailyTaskRemaining - otherLockedSum - unlockedCount);
+  },
+
   _redistributeTaskRepeats(p) {
     const total = p.dailyTaskRemaining;
     if (!total || !p.entries.length) return;
@@ -668,12 +676,8 @@ export const PlaylistsManager = {
     const e = p.entries.find(e => e.id === entryId);
     if (!e) return;
     const oldCount = e.repeatCount;
-    // For task playlists, cap a locked entry so every other entry still has at least 1 repeat.
-    let newCount = Math.max(1, count);
-    if (p.dailyTaskRemaining && e.repeatLocked) {
-      const otherCount = p.entries.length - 1;
-      newCount = Math.min(newCount, Math.max(1, p.dailyTaskRemaining - otherCount));
-    }
+    const cap = (p.dailyTaskRemaining && e.repeatLocked) ? this._lockedEntryCap(p, e.id) : Infinity;
+    const newCount = Math.min(Math.max(1, count), cap);
     e.repeatCount = newCount;
     this.save(playlists);
     // If this entry is the currently active one, update sessionStorage immediately.
@@ -2024,10 +2028,7 @@ export const PlaylistsManager = {
       if (msBar?._refreshFilterRow) msBar._refreshFilterRow();
       _syncTaskChips(row.closest('.playlist-block'), playlist);
     };
-    // For locked entries in a task playlist, cap so every other entry keeps at least 1 repeat.
-    const entryRepeatMax = () => (playlist.dailyTaskRemaining && entry.repeatLocked)
-      ? Math.max(1, playlist.dailyTaskRemaining - (playlist.entries.length - 1))
-      : Infinity;
+    const entryRepeatMax = () => (playlist.dailyTaskRemaining && entry.repeatLocked) ? PlaylistsManager._lockedEntryCap(playlist, entry.id) : Infinity;
 
     const onEntryDec = () => setEntryRepeat(Math.max(1, entry.repeatCount - 1));
     const onEntryInc = () => setEntryRepeat(Math.min(entryRepeatMax(), entry.repeatCount + 1));
