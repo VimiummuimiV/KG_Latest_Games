@@ -4326,22 +4326,19 @@ async function _appendTaskChips(titleSpan, playlist) {
 
   let container = titleSpan.querySelector('.playlist-task-chips');
   const isNew = !container;
-  if (isNew) container = _el('span', 'playlist-task-chips');
+  if (isNew) {
+    container = _el('span', 'playlist-task-chips');
 
-  let chip = container.querySelector('.playlist-task-require-chip');
-  if (!chip) {
-    chip = _el('span', 'playlist-task-require-chip');
-    container.appendChild(chip);
-    createCustomTooltip(chip, content.tip);
-    
-    // Click handler: redistribute repeats evenly across remaining amount
-    chip.addEventListener('click', e => {
+    // Click anywhere in the chips zone triggers redistribution.
+    // stopPropagation prevents the click from reaching the playlist header
+    // and accidentally collapsing it when the user misses the small chip.
+    container.addEventListener('click', e => {
       e.stopPropagation();
       try {
         const playlists = PlaylistsManager.load();
         const p = playlists.find(pl => pl.id === playlist.id);
         if (!p?.dailyTaskRequire || !p.entries?.length) return;
-        
+
         PlaylistsManager._redistributeTaskRepeats(p);
         PlaylistsManager.save(playlists);
         if (PlaylistsManager.popup) PlaylistsManager.refresh();
@@ -4349,6 +4346,13 @@ async function _appendTaskChips(titleSpan, playlist) {
         console.error('[DailyTask] Redistribution error:', err);
       }
     });
+  }
+
+  let chip = container.querySelector('.playlist-task-require-chip');
+  if (!chip) {
+    chip = _el('span', 'playlist-task-require-chip');
+    container.appendChild(chip);
+    createCustomTooltip(chip, content.tip);
   }
   chip.textContent = content.text;
   _setRequireChipState(chip, content.state);
