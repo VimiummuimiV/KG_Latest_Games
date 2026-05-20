@@ -873,6 +873,11 @@ body.playlist-drag-active * { cursor: grabbing !important; }
         $btn-border-hover: var(--rg-border-hover),
         $count-color:      var(--rg-text-primary)
       );
+
+      // Locked state: yellow tint on count only, no extra content
+      &--locked .playlist-stepper-count {
+        color: var(--rg-enabled-yellow) !important;
+      }
     }
 
     // Rename button — sets a custom display label for this entry in the playlist.

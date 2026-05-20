@@ -588,6 +588,7 @@ export const PlaylistsManager = {
         gameId: e.gameId,
         repeatCount: e.repeatCount,
         params: e.params ? { ...e.params } : {},
+        ...(e.repeatLocked ? { repeatLocked: true } : {}),
       })),
       shuffle: source.shuffle,
       repeatCount: source.repeatCount,
@@ -614,16 +615,13 @@ export const PlaylistsManager = {
   _redistributeTaskRepeats(p) {
     const total = p.dailyTaskRemaining;
     if (!total || !p.entries.length) return;
-    // Trim excess entries when there are more entries than games still needed.
-    if (p.entries.length > total) {
-      p.entries = p.entries.slice(0, total);
-    }
-    const n    = p.entries.length;
-    const base = Math.floor(total / n);
-    const rem  = total % n;
-    p.entries.forEach((e, i) => {
-      e.repeatCount = base + (i < rem ? 1 : 0);
-    });
+    const lockedSum = p.entries.reduce((s, e) => s + (e.repeatLocked ? (e.repeatCount ?? 1) : 0), 0);
+    const unlocked  = p.entries.filter(e => !e.repeatLocked).slice(0, Math.max(0, total - lockedSum));
+    if (!unlocked.length) return;
+    const base = Math.floor((total - lockedSum) / unlocked.length);
+    const rem  = (total - lockedSum) % unlocked.length;
+    unlocked.forEach((e, i) => { e.repeatCount = base + (i < rem ? 1 : 0); });
+    p.entries = p.entries.filter(e => e.repeatLocked || unlocked.includes(e));
   },
 
   removeEntry(playlistId, entryId, syncTarget = null) {
@@ -650,7 +648,13 @@ export const PlaylistsManager = {
     if (!p) return null;
     const source = p.entries.find(e => e.id === entryId);
     if (!source) return null;
-    const copy = { id: generateRandomString(), gameId: source.gameId, repeatCount: source.repeatCount, params: source.params ? { ...source.params } : {} };
+    const copy = {
+      id: generateRandomString(),
+      gameId: source.gameId,
+      repeatCount: source.repeatCount,
+      params: source.params ? { ...source.params } : {},
+      ...(source.repeatLocked ? { repeatLocked: true } : {}),
+    };
     p.entries.push(copy);
     this.save(playlists);
     return copy;
@@ -683,6 +687,17 @@ export const PlaylistsManager = {
         }
       }
     }
+  },
+
+  setEntryRepeatLock(playlistId, entryId, locked) {
+    const playlists = this.load();
+    const p = playlists.find(p => p.id === playlistId);
+    if (!p) return;
+    const e = p.entries.find(e => e.id === entryId);
+    if (!e) return;
+    if (locked) e.repeatLocked = true;
+    else delete e.repeatLocked;
+    this.save(playlists);
   },
 
   setPlaylistCycles(playlistId, count) {
@@ -760,6 +775,7 @@ export const PlaylistsManager = {
         gameId: e.gameId,
         repeatCount: e.repeatCount,
         params: e.params ? { ...e.params } : {},
+        ...(e.repeatLocked ? { repeatLocked: true } : {}),
       }));
       p.entries.push(...copies);
       allNew.push(...copies);
@@ -2011,6 +2027,27 @@ export const PlaylistsManager = {
     _attachCountDblClick(countSpan,      { getValue: () => entry.repeatCount, setValue: v => setEntryRepeat(Math.max(1, v)) });
     _attachCountDblClick(playCountBadge, { getValue: () => entry.repeatCount, setValue: v => setEntryRepeat(Math.max(1, v)) });
     stepper.append(decBtn, countSpan, incBtn);
+
+    // ── RMB context menu: lock / unlock repeat count ─────────────────────────
+    if (playlist.dailyTaskRequire) {
+      const syncLockState = () => {
+        stepper.classList.toggle('playlist-entry-stepper--locked', !!entry.repeatLocked);
+        const tip = entry.repeatLocked
+          ? `${ENTRY_STEPPER_TIP}[ПКМ] Разблокировать — повторы снова участвуют в перераспределении`
+          : `${ENTRY_STEPPER_TIP}[ПКМ] Заблокировать — зафиксировать это значение при перераспределении`;
+        updateTooltipContent(stepper, tip);
+        updateTooltipContent(playCountBadge, tip);
+      };
+      syncLockState();
+
+      stepper.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        entry.repeatLocked = !entry.repeatLocked;
+        PlaylistsManager.setEntryRepeatLock(playlist.id, entry.id, entry.repeatLocked);
+        syncLockState();
+      });
+    }
 
     // Remove
     const removeBtn = _el('button', 'playlist-entry-remove');
@@ -4209,11 +4246,13 @@ function _buildTaskRequireChipContent(playlist) {
   const total = playlist.entries.reduce((sum, e) => sum + (e.repeatCount ?? 1), 0);
   const state = total > req ? 'over' : total === req ? 'ok' : 'warning';
   const text  = `${total}/${req}`;
+  const lockedCount = playlist.entries.filter(e => e.repeatLocked).length;
+  const lockNote    = lockedCount > 0 ? ` [Заблокировано: ${lockedCount}]` : '';
   const tip = `[Задача дня] ${
     state === 'ok'   ? `Ровно ${req} — план выполнен`    :
     state === 'over' ? `На ${total - req} больше нужного` :
                        `На ${req - total} меньше нужного`
-  } [Клик] Перераспределить повторы`;
+  }${lockNote} [Клик] Перераспределить повторы`;
   return { text, tip, state };
 }
 
