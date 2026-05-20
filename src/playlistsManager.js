@@ -616,12 +616,13 @@ export const PlaylistsManager = {
     const total = p.dailyTaskRemaining;
     if (!total || !p.entries.length) return;
     const lockedSum = p.entries.reduce((s, e) => s + (e.repeatLocked ? (e.repeatCount ?? 1) : 0), 0);
-    const unlocked  = p.entries.filter(e => !e.repeatLocked).slice(0, Math.max(0, total - lockedSum));
+    const unlocked  = p.entries.filter(e => !e.repeatLocked);
     if (!unlocked.length) return;
-    const base = Math.floor((total - lockedSum) / unlocked.length);
-    const rem  = (total - lockedSum) % unlocked.length;
-    unlocked.forEach((e, i) => { e.repeatCount = base + (i < rem ? 1 : 0); });
-    p.entries = p.entries.filter(e => e.repeatLocked || unlocked.includes(e));
+    // Each unlocked entry gets at least 1; distribute the remainder evenly.
+    const available = Math.max(0, total - lockedSum - unlocked.length);
+    const base = Math.floor(available / unlocked.length);
+    const rem  = available % unlocked.length;
+    unlocked.forEach((e, i) => { e.repeatCount = 1 + base + (i < rem ? 1 : 0); });
   },
 
   removeEntry(playlistId, entryId, syncTarget = null) {
@@ -667,7 +668,12 @@ export const PlaylistsManager = {
     const e = p.entries.find(e => e.id === entryId);
     if (!e) return;
     const oldCount = e.repeatCount;
-    const newCount = Math.max(1, count);
+    // For task playlists, cap a locked entry so every other entry still has at least 1 repeat.
+    let newCount = Math.max(1, count);
+    if (p.dailyTaskRemaining && e.repeatLocked) {
+      const otherCount = p.entries.length - 1;
+      newCount = Math.min(newCount, Math.max(1, p.dailyTaskRemaining - otherCount));
+    }
     e.repeatCount = newCount;
     this.save(playlists);
     // If this entry is the currently active one, update sessionStorage immediately.
@@ -2018,14 +2024,20 @@ export const PlaylistsManager = {
       if (msBar?._refreshFilterRow) msBar._refreshFilterRow();
       _syncTaskChips(row.closest('.playlist-block'), playlist);
     };
+    // For locked entries in a task playlist, cap so every other entry keeps at least 1 repeat.
+    const entryRepeatMax = () => (playlist.dailyTaskRemaining && entry.repeatLocked)
+      ? Math.max(1, playlist.dailyTaskRemaining - (playlist.entries.length - 1))
+      : Infinity;
+
     const onEntryDec = () => setEntryRepeat(Math.max(1, entry.repeatCount - 1));
-    const onEntryInc = () => setEntryRepeat(entry.repeatCount + 1);
+    const onEntryInc = () => setEntryRepeat(Math.min(entryRepeatMax(), entry.repeatCount + 1));
     _attachButtonHold(decBtn, onEntryDec);
     _attachButtonHold(incBtn, onEntryInc);
     _attachStepperDrag(countSpan,      onEntryDec, onEntryInc);
     _attachStepperDrag(playCountBadge, onEntryDec, onEntryInc);
-    _attachCountDblClick(countSpan,      { getValue: () => entry.repeatCount, setValue: v => setEntryRepeat(Math.max(1, v)) });
-    _attachCountDblClick(playCountBadge, { getValue: () => entry.repeatCount, setValue: v => setEntryRepeat(Math.max(1, v)) });
+    const dblClickOpts = { getValue: () => entry.repeatCount, setValue: v => setEntryRepeat(Math.min(entryRepeatMax(), Math.max(1, v))) };
+    _attachCountDblClick(countSpan,      dblClickOpts);
+    _attachCountDblClick(playCountBadge, dblClickOpts);
     stepper.append(decBtn, countSpan, incBtn);
 
     // ── RMB context menu: lock / unlock repeat count ─────────────────────────
