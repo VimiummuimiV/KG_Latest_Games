@@ -2030,6 +2030,7 @@ export const PlaylistsManager = {
     // Play-count badge — same value as stepper, shown while playing (drag-to-scrub)
     const playCountBadge = _el('span', 'playlist-entry-play-count', `×${entry.repeatCount}`);
     createCustomTooltip(playCountBadge, ENTRY_STEPPER_TIP);
+    if (entry.repeatLocked)  playCountBadge.classList.add('playlist-entry-play-count--locked');
 
     // Snapshot how many plays have already happened for this entry at build time.
     // We keep this fixed so that stepper changes (which shift remainingRepeats by

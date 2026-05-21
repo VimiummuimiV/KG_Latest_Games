@@ -915,10 +915,18 @@ body.playlist-drag-active * { cursor: grabbing !important; }
 
     // Play-count badge — hidden at rest; revealed by .playlists-list--playing.
     // cursor:ns-resize signals that it's drag-to-scrub.
+    // --locked (repeat count is locked): yellow — same as locked stepper counter.
+    // default: save color.
     .playlist-entry-play-count {
       @include playlist-count-badge;
       display: none;
       cursor: ns-resize;
+
+      &--locked {
+        color: var(--rg-enabled-yellow);
+        background: color-mix(in srgb, var(--rg-enabled-yellow) 12%, transparent);
+        border-color: color-mix(in srgb, var(--rg-enabled-yellow) 40%, transparent);
+      }
     }
 
     // Left-actions group: movement controls (play, drag handle, duplicate)
