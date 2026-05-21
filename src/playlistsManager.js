@@ -679,6 +679,9 @@ export const PlaylistsManager = {
     const cap = (p.dailyTaskRemaining && e.repeatLocked) ? this._lockedEntryCap(p, e.id) : Infinity;
     const newCount = Math.min(Math.max(1, count), cap);
     e.repeatCount = newCount;
+    // For daily-task playlists, changing a locked entry's value must redistribute
+    // the remaining budget across all unlocked entries so the total stays consistent.
+    if (p.dailyTaskRemaining && e.repeatLocked) this._redistributeTaskRepeats(p);
     this.save(playlists);
     // If this entry is the currently active one, update sessionStorage immediately.
     // remainingRepeats shifts by the same delta so the user gets exactly the
@@ -2025,8 +2028,14 @@ export const PlaylistsManager = {
       playCountBadge.textContent = `×${next}`;
       _updatePlaylistHud();
       _updateEntryProgress(row, entry, playedCount, isCurrentEntry);
-      const msBar = row.closest('.playlist-entries')?.querySelector('.playlist-multiselect-bar');
+      const entryList = row.closest('.playlist-entries');
+      const msBar = entryList?.querySelector('.playlist-multiselect-bar');
       if (msBar?._refreshFilterRow) msBar._refreshFilterRow();
+      if (playlist.dailyTaskRemaining && entry.repeatLocked) {
+        const saved = PlaylistsManager.load().find(p => p.id === playlist.id);
+        if (saved) playlist.entries = saved.entries;
+      }
+      _syncEntrySteppers(entryList, playlist);
       _syncTaskChips(row.closest('.playlist-block'), playlist);
     };
     const entryRepeatMax = () => (playlist.dailyTaskRemaining && entry.repeatLocked) ? PlaylistsManager._lockedEntryCap(playlist, entry.id) : Infinity;
@@ -2059,7 +2068,8 @@ export const PlaylistsManager = {
         e.stopPropagation();
         entry.repeatLocked = !entry.repeatLocked;
         PlaylistsManager.setEntryRepeatLock(playlist.id, entry.id, entry.repeatLocked);
-        syncLockState();
+        if (PlaylistsManager.popup) PlaylistsManager.refresh();
+        else syncLockState();
       });
     }
 
