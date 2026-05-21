@@ -2078,21 +2078,28 @@ export const PlaylistsManager = {
     if (playlist.dailyTaskRequire) {
       const syncLockState = () => {
         stepper.classList.toggle('playlist-entry-stepper--locked', !!entry.repeatLocked);
+        
         const tip = entry.repeatLocked
           ? `${ENTRY_STEPPER_TIP}[ПКМ] Разблокировать — повторы снова участвуют в перераспределении`
           : `${ENTRY_STEPPER_TIP}[ПКМ] Заблокировать — зафиксировать это значение при перераспределении`;
+        
         updateTooltipContent(stepper, tip);
         updateTooltipContent(playCountBadge, tip);
       };
       syncLockState();
 
-      stepper.addEventListener('contextmenu', e => {
+      const toggleLock = (e) => {
         e.preventDefault();
         e.stopPropagation();
         entry.repeatLocked = !entry.repeatLocked;
         PlaylistsManager.setEntryRepeatLock(playlist.id, entry.id, entry.repeatLocked);
+        
         if (PlaylistsManager.popup) PlaylistsManager.refresh(playlist.id);
         else syncLockState();
+      };
+
+      [stepper, playCountBadge].forEach(el => {
+        el.addEventListener('contextmenu', toggleLock);
       });
     }
 
