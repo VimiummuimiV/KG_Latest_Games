@@ -1878,6 +1878,7 @@ export const PlaylistsManager = {
     // Toggle expand on row click (excluding buttons)
     row.addEventListener('click', e => {
       if (e.target.closest('button')) return;
+      e.stopPropagation();
       this.expandedPlaylistId = isExpanded && !isActive ? null : playlist.id;
       this.refresh(playlist.id);
     });
