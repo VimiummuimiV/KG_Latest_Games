@@ -4188,7 +4188,10 @@ function _syncEntrySteppers(entryList, playlist) {
   const entryMap = new Map(playlist.entries.map(e => [e.id, e]));
   entryList.querySelectorAll('.playlist-entry-row').forEach(r => {
     const e = entryMap.get(r.dataset.entryId);
-    if (e) r.querySelector('.playlist-stepper-count').textContent = String(e.repeatCount);
+    if (!e) return;
+    r.querySelector('.playlist-stepper-count').textContent = String(e.repeatCount);
+    const badge = r.querySelector('.playlist-entry-play-count');
+    if (badge) badge.textContent = `×${e.repeatCount}`;
   });
 }
 
