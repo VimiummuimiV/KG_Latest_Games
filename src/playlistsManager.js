@@ -1251,8 +1251,26 @@ export const PlaylistsManager = {
 
   updatePositionDisplay() { _updatePlaylistHud(); },
 
-  refresh() {
+  refresh(playlistId) {
     if (!this.popup) return;
+
+    // Partial refresh: rebuild only the one playlist block that changed.
+    // Falls back to full rebuild if the block isn't found (e.g. it was just deleted).
+    if (playlistId) {
+      const oldBlock = this.popup.querySelector(`.playlist-block[data-playlist-id="${playlistId}"]`);
+      if (oldBlock) {
+        const session  = getActivePlaylistSession();
+        const playlist = this.load().find(p => p.id === playlistId);
+        if (playlist) {
+          const newBlock = this._buildPlaylistBlock(playlist, session);
+          oldBlock.parentNode.replaceChild(newBlock, oldBlock);
+          _dtaskSyncBtn();
+          return;
+        }
+      }
+    }
+
+    // Full panel rebuild (structure changed: playlist added/removed/reordered, undo/redo, etc.)
     const newPopup = this._buildPanel();
     // Restore intended position (may differ from displayed if viewport shrank)
     const left = this._intendedX !== null ? this._intendedX : this.popup.getBoundingClientRect().left;
@@ -1696,7 +1714,7 @@ export const PlaylistsManager = {
           if (game) {
             window.location.href = this.main.gamesManager.generateGameLink(game);
           } else {
-            this.refresh();
+            this.refresh(playlist.id);
           }
         } else {
           // Pausing: set the flag AND cancel any active replay countdown so
@@ -1704,7 +1722,7 @@ export const PlaylistsManager = {
           setActivePlaylistSession({ ...current, paused: true });
           try { this.main.pageHandler?.cancelReplay(true); } catch (_) {}
           _updatePlaylistHud();
-          this.refresh();
+          this.refresh(playlist.id);
         }
       });
 
@@ -1715,7 +1733,7 @@ export const PlaylistsManager = {
         e.stopPropagation();
         cancelActivePlaylist();
         _updatePlaylistHud();
-        this.refresh();
+        this.refresh(playlist.id);
       });
 
       const titleSpan = _el('span', 'playlist-title', playlist.title);
@@ -1815,7 +1833,7 @@ export const PlaylistsManager = {
           'Новое название плейлиста...',
           val => {
             this.renamePlaylist(playlist.id, val);
-            this.refresh();
+            this.refresh(playlist.id);
           },
           () => {
             wrap.remove();
@@ -1861,7 +1879,7 @@ export const PlaylistsManager = {
     row.addEventListener('click', e => {
       if (e.target.closest('button')) return;
       this.expandedPlaylistId = isExpanded && !isActive ? null : playlist.id;
-      this.refresh();
+      this.refresh(playlist.id);
     });
 
     block.appendChild(row);
@@ -2068,7 +2086,7 @@ export const PlaylistsManager = {
         e.stopPropagation();
         entry.repeatLocked = !entry.repeatLocked;
         PlaylistsManager.setEntryRepeatLock(playlist.id, entry.id, entry.repeatLocked);
-        if (PlaylistsManager.popup) PlaylistsManager.refresh();
+        if (PlaylistsManager.popup) PlaylistsManager.refresh(playlist.id);
         else syncLockState();
       });
     }
@@ -3050,7 +3068,7 @@ export const PlaylistsManager = {
       const word = n === 1 ? 'игру' : n < 5 ? 'игры' : 'игр';
       if (!confirm(`Убрать ${n} ${word} из плейлиста?`)) return;
       this.bulkRemoveEntries(playlist.id, [...sel]);
-      this.refresh();
+      this.refresh(playlist.id);
     });
 
     // ── Convert repeats → interleaved entries ────────────────────────────────
@@ -3098,7 +3116,7 @@ export const PlaylistsManager = {
       if (!sel.size) return;
       this.bulkConvertRepeatsToEntries(playlist.id, [...sel], chunkCount.value);
       this._selectionMode.delete(playlist.id);
-      this.refresh();
+      this.refresh(playlist.id);
     });
 
     const left = _el('div', 'playlist-multiselect-left');
@@ -3265,7 +3283,7 @@ export const PlaylistsManager = {
       e.stopPropagation();
       if (!Object.keys(ep).length) { closePanel(); return; }
       this.bulkSetParams(playlist.id, entryIds, ep);
-      this.refresh();
+      this.refresh(playlist.id);
     });
 
     const clearBtn = _el('button', 'playlist-bulk-params-clear');
@@ -3273,7 +3291,7 @@ export const PlaylistsManager = {
     clearBtn.addEventListener('click', e => {
       e.stopPropagation();
       this.bulkSetParams(playlist.id, entryIds, { type: null, timeout: null, idletime: null });
-      this.refresh();
+      this.refresh(playlist.id);
     });
 
     const cancelBtn = _el('button', 'playlist-bulk-params-cancel');
@@ -4352,7 +4370,7 @@ async function _appendTaskChips(titleSpan, playlist) {
 
         PlaylistsManager._redistributeTaskRepeats(p);
         PlaylistsManager.save(playlists);
-        if (PlaylistsManager.popup) PlaylistsManager.refresh();
+        if (PlaylistsManager.popup) PlaylistsManager.refresh(playlist.id);
       } catch (err) {
         console.error('[DailyTask] Redistribution error:', err);
       }
