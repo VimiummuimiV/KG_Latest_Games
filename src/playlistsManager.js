@@ -1733,7 +1733,10 @@ export const PlaylistsManager = {
         e.stopPropagation();
         cancelActivePlaylist();
         _updatePlaylistHud();
+        const list = this.popup.querySelector('.playlists-list');
+        list?.classList.remove('playlists-list--playing');
         this.refresh(playlist.id);
+        this._constrain();
       });
 
       const titleSpan = _el('span', 'playlist-title', playlist.title);
