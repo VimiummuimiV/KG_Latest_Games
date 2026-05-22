@@ -1,10 +1,21 @@
 import { createElement, getCurrentPage } from '../../utils.js';
 
 export function createHoverArea(main) {
+  if (!main.hoverAreaEnabled) return;
   const hoverArea = createElement('div', { id: 'latest-games-hover-area' });
   hoverArea.addEventListener('mouseenter', () => showContainer(main));
   hoverArea.addEventListener('mouseleave', () => hideContainer(main));
   document.body.appendChild(hoverArea);
+}
+
+export function toggleHoverArea(main) {
+  main.hoverAreaEnabled = !main.hoverAreaEnabled;
+  if (main.hoverAreaEnabled) {
+    createHoverArea(main);
+  } else {
+    document.getElementById('latest-games-hover-area')?.remove();
+  }
+  main.settingsManager.saveSettings();
 }
 
 export function showContainer(main) {

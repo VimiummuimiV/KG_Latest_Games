@@ -15,6 +15,7 @@ export class SettingsManager {
       this.main.enableDragging = settings.enableDragging ?? this.main.enableDragging;
       this.main.shouldAutoSave = settings.shouldAutoSave ?? this.main.shouldAutoSave;
       this.main.hidePanelDelay = settings.hidePanelDelay ?? this.main.hidePanelDelay;
+      this.main.hoverAreaEnabled = settings.hoverAreaEnabled ?? this.main.hoverAreaEnabled;
       this.main.shouldStart = settings.shouldStart ?? this.main.shouldStart;
       this.main.startDelay = settings.startDelay ?? this.main.startDelay;
       this.main.shouldReplay = settings.shouldReplay ?? this.main.shouldReplay;
@@ -243,6 +244,7 @@ export class SettingsManager {
         enableDragging: this.main.enableDragging,
         shouldAutoSave: this.main.shouldAutoSave,
         hidePanelDelay: this.main.hidePanelDelay,
+        hoverAreaEnabled: this.main.hoverAreaEnabled,
         shouldStart: this.main.shouldStart,
         startDelay: this.main.startDelay,
         shouldReplay: this.main.shouldReplay,

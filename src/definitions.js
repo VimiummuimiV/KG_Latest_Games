@@ -112,6 +112,7 @@ export const DEFAULTS = {
   wasDragging: false,
   shouldAutoSave: true,
   hidePanelDelay: 1000,
+  hoverAreaEnabled: true,
   shouldStart: false,
   startDelay: 1000,
   shouldReplay: false,

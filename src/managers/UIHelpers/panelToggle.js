@@ -2,6 +2,7 @@ import { createElement, getCurrentPage } from '../../utils.js';
 import { createCustomTooltip, updateTooltipContent } from '../../tooltip.js';
 import { icons } from '../../icons.js';
 import { DEFAULTS } from '../../definitions.js';
+import { toggleHoverArea } from './visibility.js';
 
 function generatePanelToggleTooltipText(main) {
   const container = document.getElementById('latest-games-container');
@@ -15,6 +16,7 @@ function generatePanelToggleTooltipText(main) {
     [Shift + Клик] ${pinUnpinText} панель
     [Ctrl + Клик] Изменить задержку скрытия панели
     (${main.hidePanelDelay ?? DEFAULTS.hidePanelDelay} мс)
+    [Alt + Клик] Зона наведения: ${main.hoverAreaEnabled ? 'Включена' : 'Отключена'}
   `;
 }
 
@@ -54,6 +56,12 @@ export function createPanelToggleButton(main) {
     if (!container) return;
     
     const currentPage = getCurrentPage();
+    if (e.altKey) {
+      toggleHoverArea(main);
+      updatePanelToggleTooltip();
+      return;
+    }
+
     if (e.ctrlKey) {
       const currentDelay = main.hidePanelDelay ?? DEFAULTS.hidePanelDelay;
       const input = prompt('Изменить задержку автоскрытия панели в миллисекундах:', currentDelay);
