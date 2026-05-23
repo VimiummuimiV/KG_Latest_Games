@@ -2608,7 +2608,7 @@ export const PlaylistsManager = {
           cb.checked = false;
           cb.closest('.playlist-entry-row')?.classList.remove('playlist-entry-row--selected');
         });
-        countSpan.textContent = '0';
+        syncCount();
         return;
       }
       sel.clear();
@@ -2636,7 +2636,7 @@ export const PlaylistsManager = {
         cb.checked = match;
         cb.closest('.playlist-entry-row')?.classList.toggle('playlist-entry-row--selected', match);
       });
-      countSpan.textContent = `${sel.size}`;
+      syncCount();
     };
 
     const updateBarHeight = () => {
@@ -2851,7 +2851,7 @@ export const PlaylistsManager = {
       if (playlistBlock) playlistBlock.style.setProperty('--playlist-multiselect-bar-height', '0px');
       entryList.querySelectorAll('.playlist-entry-checkbox').forEach(cb => { cb.checked = false; });
       entryList.querySelectorAll('.playlist-entry-row--selected').forEach(r => r.classList.remove('playlist-entry-row--selected'));
-      countSpan.textContent = '0';
+      syncCount();
       // Also close the bulk params panel if it was open
       const bulkParams = entryList.querySelector('.playlist-bulk-params');
       if (bulkParams) {
@@ -2886,6 +2886,11 @@ export const PlaylistsManager = {
     const { wrap: btnsWrap, deselectBtn: deselBtn, selectBtn: selAllBtn } =
       _buildSelectAllBtns('Снять выделение', 'Выбрать все');
 
+    const syncCount = () => {
+      countSpan.textContent = `${sel.size}`;
+    };
+    syncCount();
+
     selAllBtn.addEventListener('click', e => {
       e.stopPropagation();
       playlist.entries.forEach(en => sel.add(en.id));
@@ -2894,7 +2899,7 @@ export const PlaylistsManager = {
         cb.checked = true;
         cb.closest('.playlist-entry-row')?.classList.add('playlist-entry-row--selected');
       });
-      countSpan.textContent = `${sel.size}`;
+      syncCount();
     });
 
     deselBtn.addEventListener('click', e => {
@@ -2902,7 +2907,7 @@ export const PlaylistsManager = {
       sel.clear();
       entryList.querySelectorAll('.playlist-entry-checkbox').forEach(cb => { cb.checked = false; });
       entryList.querySelectorAll('.playlist-entry-row--selected').forEach(r => r.classList.remove('playlist-entry-row--selected'));
-      countSpan.textContent = '0';
+      syncCount();
     });
 
     const invertBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--neutral');
@@ -2919,7 +2924,7 @@ export const PlaylistsManager = {
         cb.checked = selected;
         cb.closest('.playlist-entry-row')?.classList.toggle('playlist-entry-row--selected', selected);
       });
-      countSpan.textContent = `${sel.size}`;
+      syncCount();
     });
 
     // Filter button — SVG icon, toggles smart-select row

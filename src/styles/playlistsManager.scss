@@ -1650,6 +1650,8 @@ body.playlist-drag-active * { cursor: grabbing !important; }
     align-items: center;
     gap: 0.3em;
     flex-shrink: 0;
+
+    .playlist-chip-action-btn { width: 20px; height: 20px; }
   }
 
   .playlist-multiselect-count {
