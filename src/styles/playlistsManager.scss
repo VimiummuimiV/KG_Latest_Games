@@ -1173,7 +1173,7 @@ body.playlist-drag-active * { cursor: grabbing !important; }
     display: flex;
     flex-wrap: wrap;
     gap: 0.3em;
-    padding: 0 0.5em 0.45em;
+    padding: 0.5em 0;
     position: sticky;
     top: var(--picker-search-height, 36px);
     background: var(--rg-bg-primary);
@@ -1909,6 +1909,11 @@ body.playlist-drag-active * { cursor: grabbing !important; }
     // Push the ✕/✓ strip to the far right; suppress its right-side divider
     // border — nothing sits to its right inside the header.
     .playlist-chip-strip-actions { margin-left: auto; border-right: none; }
+  }
+
+  // In the dtask picker the group filter sits below dtask-select-header, not the search bar.
+  .playlist-picker-overlay:has(.dtask-select-header) .playlist-picker-group-filter {
+    top: var(--dtask-header-height, 0px);
   }
 
   .dtask-select-title {

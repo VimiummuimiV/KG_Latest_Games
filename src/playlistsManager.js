@@ -2886,10 +2886,7 @@ export const PlaylistsManager = {
     const { wrap: btnsWrap, deselectBtn: deselBtn, selectBtn: selAllBtn } =
       _buildSelectAllBtns('Снять выделение', 'Выбрать все');
 
-    const syncCount = () => {
-      countSpan.textContent = `${sel.size}`;
-    };
-    syncCount();
+    const syncCount = () => { countSpan.textContent = `${sel.size}`; };
 
     selAllBtn.addEventListener('click', e => {
       e.stopPropagation();
@@ -4762,7 +4759,10 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
 
     overlay.insertBefore(typeFilterRow, overlay.querySelector('.playlist-picker-game-row'));
     _fitOverlayPopup(popup, overlay);
-    requestAnimationFrame(() => { PlaylistsManager._constrain(); });
+    requestAnimationFrame(() => {
+      overlay.style.setProperty('--dtask-header-height', `${header.offsetHeight}px`);
+      PlaylistsManager._constrain();
+    });
   });
 
   deselectBtn.addEventListener('click', e => {
@@ -4799,7 +4799,10 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
   });
 
   _fitOverlayPopup(popup, overlay);
-  requestAnimationFrame(() => { PlaylistsManager._constrain(); });
+  requestAnimationFrame(() => {
+    overlay.style.setProperty('--dtask-header-height', `${header.offsetHeight}px`);
+    PlaylistsManager._constrain();
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
