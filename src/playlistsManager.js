@@ -2958,7 +2958,7 @@ export const PlaylistsManager = {
     });
 
     const exitBtn = _el('button', 'playlist-multiselect-exit');
-    exitBtn.innerHTML = icons.x;
+    exitBtn.innerHTML = icons.logout;
     createCustomTooltip(exitBtn, 'Выйти из режима выбора');
     exitBtn.addEventListener('click', e => {
       e.stopPropagation();
