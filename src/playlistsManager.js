@@ -2639,27 +2639,6 @@ export const PlaylistsManager = {
       countSpan.textContent = `${sel.size}`;
     };
 
-    // Shared drag-to-toggle for chip strips — same pattern as playlist-picker-group-chip.
-    // chipDragState is local to each strip so multiple strips don't interfere.
-    const attachChipDrag = (strip, chipSelector, onToggle) => {
-      let chipDragState = null;
-      strip.addEventListener('mousedown', e => {
-        const chip = e.target.closest(chipSelector);
-        if (!chip || chip.disabled) return;
-        e.preventDefault();
-        chipDragState = !chip.classList.contains('active');
-        onToggle(chip, chipDragState, e.ctrlKey); // ctrlKey → additive multi-select
-      });
-      strip.addEventListener('mouseover', e => {
-        if (chipDragState === null || e.buttons !== 1) { chipDragState = null; return; }
-        const chip = e.target.closest(chipSelector);
-        if (chip && !chip.disabled && chip.classList.contains('active') !== chipDragState) {
-          onToggle(chip, chipDragState, true); // drag is always additive
-        }
-      });
-      document.addEventListener('mouseup', () => { chipDragState = null; }, { capture: true });
-    };
-
     const updateBarHeight = () => {
       requestAnimationFrame(() => {
         if (playlistBlock) playlistBlock.style.setProperty('--playlist-multiselect-bar-height', `${bar.offsetHeight}px`);
@@ -2816,7 +2795,7 @@ export const PlaylistsManager = {
         'Выбрать все фильтры',
       );
 
-      attachChipDrag(row, '.playlist-smartselect-chip', (chip, active, isMulti) => {
+      _attachChipDrag(row, '.playlist-smartselect-chip', (chip, active, isMulti) => {
         const key   = chip.dataset.filterKey;
         const raw   = chip.dataset.filterValue;
         const value = (key === 'timeout' || key === 'idletime' || key === 'repeat') ? Number(raw) : raw;
@@ -3778,7 +3757,6 @@ export const PlaylistsManager = {
     // ── Group filter chip strip — always visible when picker is open ──────
     const groupFilterRow = _el('div', 'playlist-picker-group-filter playlist-picker-group-filter--hidden');
     const activeGroups   = new Set();
-    let   chipDragState  = null;
 
     // filtersBtn toggles the chip strip; active state mirrors strip visibility
     filtersBtn.addEventListener('click', e => {
@@ -4108,35 +4086,16 @@ export const PlaylistsManager = {
       'Выбрать все группы',
     );
 
-    // Drag-to-toggle chips — LMB down sets intent, mouseover spreads it.
-    // Single click = exclusive (deselect all others, select clicked).
-    // Ctrl+Click  = additive toggle (multi-select, keeps others).
-    // Drag        = always additive.
-    groupFilterRow.addEventListener('mousedown', e => {
-      const chip = e.target.closest('.playlist-picker-group-chip');
-      if (!chip) return;
-      e.preventDefault();
-      chipDragState = !chip.classList.contains('active');
-      if (!e.ctrlKey && chipDragState) {
-        // Exclusive: deselect all other active chips before activating this one
+    _attachChipDrag(groupFilterRow, '.playlist-picker-group-chip', (chip, active, isMulti) => {
+      if (!isMulti && active) {
         groupFilterRow.querySelectorAll('.playlist-picker-group-chip.active').forEach(c => {
           if (c !== chip) applyChipState(c, false);
         });
       }
-      applyChipState(chip, chipDragState);
+      applyChipState(chip, active);
       applyFilter();
       syncGfActions();
     });
-    groupFilterRow.addEventListener('mouseover', e => {
-      if (chipDragState === null || e.buttons !== 1) { chipDragState = null; return; }
-      const chip = e.target.closest('.playlist-picker-group-chip');
-      if (chip && chip.classList.contains('active') !== chipDragState) {
-        applyChipState(chip, chipDragState);
-        applyFilter();
-        syncGfActions();
-      }
-    });
-    document.addEventListener('mouseup', () => { chipDragState = null; }, { capture: true });
 
     searchInput.addEventListener('input', () => applyFilter());
 
@@ -4533,6 +4492,26 @@ function _el(tag, className, text) {
  * wrapper. Returns { wrap, deselectBtn, selectBtn } — callers wire click handlers
  * and disabled sync themselves.
  */
+// Drag-to-toggle chips — LMB down sets intent, mouseover spreads it.
+// onToggle(chip, active, isMulti): isMulti=true on drag or Ctrl+click → caller handles exclusivity.
+function _attachChipDrag(strip, chipSelector, onToggle) {
+  let dragState = null;
+  strip.addEventListener('mousedown', e => {
+    const chip = e.target.closest(chipSelector);
+    if (!chip || chip.disabled) return;
+    e.preventDefault();
+    dragState = !chip.classList.contains('active');
+    onToggle(chip, dragState, e.ctrlKey);
+  });
+  strip.addEventListener('mouseover', e => {
+    if (dragState === null || e.buttons !== 1) { dragState = null; return; }
+    const chip = e.target.closest(chipSelector);
+    if (chip && !chip.disabled && chip.classList.contains('active') !== dragState)
+      onToggle(chip, dragState, true); // drag is always additive
+  });
+  document.addEventListener('mouseup', () => { dragState = null; }, { capture: true });
+}
+
 function _buildSelectAllBtns(deselectTip = 'Снять все', selectTip = 'Выбрать все') {
   const wrap        = _el('div', 'playlist-chip-strip-actions');
   const deselectBtn = _el('button', 'playlist-chip-action-btn deselect');
@@ -4717,6 +4696,72 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
     confirmBtn.disabled   = sel.size === 0;
   };
   syncState();
+
+  // ── Voc-type filter chips — built async once types resolve ───────────────
+  // The row loop above already called _fetchVocBasicData for each voc game,
+  // so Promise.all resolves from cache — no extra network requests.
+  Promise.all(candidates.map(async ({ gameId, game }) => {
+    if (game.params.gametype !== 'voc' || !game.params.vocId) return [gameId, null];
+    let key = game.params.vocType;
+    if (!key || !gameCategories[key]) {
+      const data = await _fetchVocBasicData(game.params.vocId);
+      const raw  = data?.vocabularyType;
+      key = gameCategories[raw] ? raw : typeMapping[raw];
+    }
+    return [gameId, key && gameCategories[key] ? key : null];
+  })).then(results => {
+    const resolvedTypes = new Map(results.filter(([, k]) => k)); // gameId → typeKey
+    const typeMap = new Map(); // typeKey → label (unique)
+    resolvedTypes.forEach(key => { if (!typeMap.has(key)) typeMap.set(key, gameCategories[key]); });
+    if (typeMap.size < 2) return;
+    btnsWrap.remove();
+
+    const activeTypes   = new Set();
+    const typeFilterRow = _el('div', 'playlist-picker-group-filter');
+
+    typeMap.forEach((label, key) => {
+      const chip = _el('button', 'playlist-picker-group-chip');
+      chip.textContent         = label;
+      chip.dataset.filterValue = key;
+      chip.classList.add(`voctype-${key}`);
+      createCustomTooltip(chip, _smartChipTooltip(`Выбрать все «${label}»`));
+      typeFilterRow.appendChild(chip);
+    });
+
+    const applyTypeFilter = () => {
+      sel.clear();
+      if (activeTypes.size)
+        resolvedTypes.forEach((key, gameId) => { if (activeTypes.has(key)) sel.add(gameId); });
+      overlay.querySelectorAll('.playlist-picker-checkbox').forEach(cb => {
+        const match = sel.has(cb.dataset.gameId);
+        cb.checked = match;
+        cb.closest('.playlist-picker-game-row')?.classList.toggle('picker-row--selected', match);
+      });
+      syncState();
+    };
+
+    _buildChipStripActions(
+      typeFilterRow, '.playlist-picker-group-chip',
+      chips => { chips.forEach(c => { c.classList.remove('active'); activeTypes.delete(c.dataset.filterValue); }); applyTypeFilter(); },
+      chips => { chips.forEach(c => { c.classList.add('active');    activeTypes.add(c.dataset.filterValue);    }); applyTypeFilter(); },
+      'Снять все типы', 'Выбрать все типы',
+    );
+
+    _attachChipDrag(typeFilterRow, '.playlist-picker-group-chip', (chip, active, isMulti) => {
+      if (!isMulti && active) {
+        typeFilterRow.querySelectorAll('.playlist-picker-group-chip.active').forEach(c => {
+          c.classList.remove('active'); activeTypes.delete(c.dataset.filterValue);
+        });
+      }
+      chip.classList.toggle('active', active);
+      active ? activeTypes.add(chip.dataset.filterValue) : activeTypes.delete(chip.dataset.filterValue);
+      applyTypeFilter();
+    });
+
+    overlay.insertBefore(typeFilterRow, overlay.querySelector('.playlist-picker-game-row'));
+    _fitOverlayPopup(popup, overlay);
+    requestAnimationFrame(() => { PlaylistsManager._constrain(); });
+  });
 
   deselectBtn.addEventListener('click', e => {
     e.stopPropagation();
