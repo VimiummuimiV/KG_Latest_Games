@@ -1893,7 +1893,7 @@ export const PlaylistsManager = {
       if (e.target.closest('button')) return;
       e.stopPropagation();
       this.expandedPlaylistId = isExpanded && !isActive ? null : playlist.id;
-      this.refresh(playlist.id);
+      this.refresh();
     });
 
     block.appendChild(row);
