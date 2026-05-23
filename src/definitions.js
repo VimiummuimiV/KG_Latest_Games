@@ -22,7 +22,7 @@ export const gameCategories = {
   words: 'Слова',
   phrases: 'Фразы',
   texts: 'Тексты',
-  book: 'Книги'
+  book: 'Книга'
 };
 
 // Map Russian vocabularies type names to English constants
@@ -30,7 +30,7 @@ export const typeMapping = {
   'Слова': 'words',
   'Фразы': 'phrases',
   'Тексты': 'texts',
-  'Книга': 'books',
+  'Книга': 'book',
   'Генератор': 'generator'
 };
 
@@ -128,7 +128,7 @@ export const DEFAULTS = {
     words: true,
     phrases: true,
     texts: true,
-    books: true,
+    book: true,
     generator: true
   },
   showSearchBox: false,

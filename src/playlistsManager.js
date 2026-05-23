@@ -1,8 +1,9 @@
 import { createCustomTooltip, updateTooltipContent, hideTooltipElement } from './tooltip.js';
 import { icons } from './icons.js';
-import { gameTypes, visibilities, timeouts, idleTimes, POSITION_MODES, TASK_GAME_DEFAULTS, STEPPER_DRAG_TIP } from './definitions.js';
+import { gameTypes, gameCategories, typeMapping, visibilities, timeouts, idleTimes, POSITION_MODES, TASK_GAME_DEFAULTS, STEPPER_DRAG_TIP } from './definitions.js';
 import { generateRandomString, generateUniqueId, getCurrentPage, formatPosition, positionTooltip, _attachButtonHold, _attachStepperDrag, _attachCountDblClick } from './utils.js';
 import { fetchVocabularyData, showTooltip, startHideTimeout } from './vocabularyContent.js';
+import { fetchVocabularyBasicData } from './vocabularyCreation.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Storage / session keys
@@ -184,6 +185,17 @@ function _getActiveEntryIndex(playlist, session) {
 /** Returns true when the entry has at least one param override set. */
 function _hasEntryParamOverrides(params) {
   return !!(params && ('type' in params || 'timeout' in params || 'idletime' in params));
+}
+
+// Cache for vocabulary basic data to avoid redundant fetches during daily task games review before playlist creation.
+const _vocBasicDataCache = new Map();
+
+function _fetchVocBasicData(vocId) {
+  const key = String(vocId);
+  if (!_vocBasicDataCache.has(key)) {
+    _vocBasicDataCache.set(key, fetchVocabularyBasicData(key).catch(() => null));
+  }
+  return _vocBasicDataCache.get(key);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4649,7 +4661,19 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
 
     const nameSpan = _el('span', `playlist-picker-game-name gametype-${game.params.gametype}`, name);
     const descSpan = _el('span', 'playlist-picker-game-desc');
-    descSpan.appendChild(_el('span', 'playlist-picker-game-desc-text', `${visLabel} · TM ${game.params.timeout}`));
+    const descText = _el('span', 'playlist-picker-game-desc-text', `${visLabel} · TM ${game.params.timeout}`);
+    descSpan.appendChild(descText);
+
+    if (game.params.gametype === 'voc' && game.params.vocId) {
+      const knownType = game.params.vocType && gameCategories[game.params.vocType];
+      const applyLabel = label => { if (label) descText.textContent = `${label} · ${descText.textContent}`; };
+      if (knownType) applyLabel(knownType);
+      else _fetchVocBasicData(game.params.vocId).then(data => {
+        const raw = data?.vocabularyType;
+        const key = gameCategories[raw] ? raw : typeMapping[raw];
+        applyLabel(key && gameCategories[key]);
+      });
+    }
 
     gameRow.append(cb, nameSpan, descSpan);
     overlay.appendChild(gameRow);
