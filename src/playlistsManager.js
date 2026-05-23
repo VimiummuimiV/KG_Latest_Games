@@ -189,8 +189,8 @@ function _hasEntryParamOverrides(params) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Vocabulary preview on Shift+hover via delegation
 // ─────────────────────────────────────────────────────────────────────────────
-function _attachVocabularyPreview(container, selector, getGameId) {
-  if (!container || !selector || typeof getGameId !== 'function') return;
+function _attachVocabularyPreview(container, selector) {
+  if (!container || !selector) return;
   
   const tooltipCache = new Map();
   
@@ -198,21 +198,19 @@ function _attachVocabularyPreview(container, selector, getGameId) {
     const target = e.target instanceof Element ? e.target.closest(selector) : null;
     if (!target || !container.contains(target) || !e.shiftKey) return;
     
-    const gameId = getGameId(target);
-    if (!gameId) return;
-    const game = PlaylistsManager.main?.gamesManager?.findGameById(gameId);
-    if (!game || game.params?.gametype !== 'voc' || !game.params?.vocId) return;
-    
+    const vocId = target.closest('[data-voc-id]')?.dataset.vocId;
+    if (!vocId) return;
+
     e.preventDefault();
     e.stopPropagation();
     hideTooltipElement();
-    
+
     try {
-      if (!tooltipCache.has(gameId)) {
-        const content = await fetchVocabularyData(game.params.vocId);
-        tooltipCache.set(gameId, content);
+      if (!tooltipCache.has(vocId)) {
+        const content = await fetchVocabularyData(vocId);
+        tooltipCache.set(vocId, content);
       }
-      showTooltip(target, tooltipCache.get(gameId));
+      showTooltip(target, tooltipCache.get(vocId));
     } catch (err) {
       console.error('Error loading vocabulary:', err);
     }
@@ -1903,7 +1901,7 @@ export const PlaylistsManager = {
 
     // Entry list (no search here — entries list is short)
     const entryList = _el('div', 'playlist-entries');
-    _attachVocabularyPreview(entryList, '.playlist-entry-label', target => target.closest('.playlist-entry-row')?.dataset.gameId);
+    _attachVocabularyPreview(entryList, '.playlist-entry-label');
     const sel = this._selectedEntries[playlist.id] ??= new Set();
 
     // Prune stale IDs that no longer exist in the playlist
@@ -1989,6 +1987,7 @@ export const PlaylistsManager = {
     row.dataset.entryId    = entry.id;
     row.dataset.entryIndex = entryIndex;
     row.dataset.gameId     = game?.id ?? '';
+    if (game?.params?.gametype === 'voc' && game.params.vocId) row.dataset.vocId = game.params.vocId;
 
     // Progress fill
     if (isCurrentEntry && entry.repeatCount > 1) {
@@ -3622,7 +3621,7 @@ export const PlaylistsManager = {
 
     // ── Picker overlay — portaled to popup root so it floats above playlists-list
     const overlay = _el('div', 'playlist-picker-overlay playlist-picker-overlay--hidden playlist-picker-overlay--overlay');
-    _attachVocabularyPreview(overlay, '.playlist-picker-game-name', target => target.closest('.playlist-picker-game-row')?.dataset.gameId);
+    _attachVocabularyPreview(overlay, '.playlist-picker-game-name');
 
     // ── Dedicated close footer inside the overlay (never moves, always at bottom) ──
     const overlayFooter   = _el('div', 'playlist-picker-overlay-footer');
@@ -3899,6 +3898,7 @@ export const PlaylistsManager = {
         const name    = game.params.vocName ? `«${game.params.vocName}»` : gtype;
         const gameRow = _el('div', `playlist-picker-game-row${alreadyAdded ? ' already-added' : ''}`);
         gameRow.dataset.gameId = game.id;
+        if (game.params.gametype === 'voc' && game.params.vocId) gameRow.dataset.vocId = game.params.vocId;
 
         // Handles both init and updates — updateTooltipContent falls back to
         // createCustomTooltip when the element has no tooltip yet.
@@ -4641,6 +4641,7 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
 
     const gameRow  = _el('div', 'playlist-picker-game-row');
     gameRow.dataset.gameId = gameId;
+    if (game.params.vocId) gameRow.dataset.vocId = game.params.vocId;
 
     const cb = document.createElement('input');
     cb.type = 'checkbox'; cb.className = 'playlist-picker-checkbox';
@@ -4655,6 +4656,7 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
   });
 
   // ── Sticky footer: cancel + confirm ──────────────────────────────────────
+  _attachVocabularyPreview(overlay, '.playlist-picker-game-name');
   const footer    = _el('div', 'playlist-picker-overlay-footer');
   const cancelBtn = _el('button', 'playlist-picker-toggle');
   cancelBtn.innerHTML = `${icons.chevronLeft}<span>Отмена</span>`;
