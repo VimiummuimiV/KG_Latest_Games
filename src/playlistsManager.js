@@ -1263,6 +1263,7 @@ export const PlaylistsManager = {
 
   refresh(playlistId) {
     if (!this.popup) return;
+    this.popup.classList.remove('playlist-picker-open');
 
     // Partial refresh: rebuild only the one playlist block that changed.
     // Falls back to full rebuild if the block isn't found (e.g. it was just deleted).
@@ -3726,7 +3727,10 @@ export const PlaylistsManager = {
       toggleBtn.innerHTML = `${icons.plus}<span>Добавить игры</span>`;
       // Remove the min-height we forced on the popup when opening, so the popup
       // shrinks back to its natural content height after the picker is hidden.
-      if (PlaylistsManager.popup) PlaylistsManager.popup.classList.remove('playlist-picker-open');
+      if (PlaylistsManager.popup) {
+        PlaylistsManager.popup.classList.remove('playlist-picker-open');
+        PlaylistsManager.popup.style.minHeight = '';
+      }
       requestAnimationFrame(() => PlaylistsManager._constrain());
     };
 
