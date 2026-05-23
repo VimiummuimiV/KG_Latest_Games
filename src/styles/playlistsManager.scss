@@ -422,6 +422,10 @@ body.playlist-drag-active * { cursor: grabbing !important; }
     padding: 1em 0;
   }
 
+  // Hide playlist blocks while any game-picker overlay is open so the popup
+  // doesn't grow tall and leave a gap below the overlay content.
+  &.playlist-picker-open .playlist-block { display: none; }
+
   // ── Scrollable list — same as .vocab-list but taller (80vh scroll area) ────
   .playlists-list {
     display: flex;

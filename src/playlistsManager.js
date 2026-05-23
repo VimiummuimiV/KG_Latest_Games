@@ -3702,6 +3702,7 @@ export const PlaylistsManager = {
     const openPicker = () => {
       const popup = PlaylistsManager.popup;
       if (!popup) return;
+      popup.classList.add('playlist-picker-open');
       overlay.classList.remove('playlist-picker-overlay--hidden');
       toggleBtn.innerHTML = `${icons.chevronLeft}<span>Свернуть</span>`;
       _positionOverlay();
@@ -3725,7 +3726,7 @@ export const PlaylistsManager = {
       toggleBtn.innerHTML = `${icons.plus}<span>Добавить игры</span>`;
       // Remove the min-height we forced on the popup when opening, so the popup
       // shrinks back to its natural content height after the picker is hidden.
-      if (PlaylistsManager.popup) PlaylistsManager.popup.style.minHeight = '';
+      if (PlaylistsManager.popup) PlaylistsManager.popup.classList.remove('playlist-picker-open');
       requestAnimationFrame(() => PlaylistsManager._constrain());
     };
 
@@ -4788,7 +4789,8 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
   // ── Close / confirm ───────────────────────────────────────────────────────
   const close = () => {
     overlay.remove();
-    if (PlaylistsManager.popup) PlaylistsManager.popup.style.minHeight = '';
+    if (PlaylistsManager.popup) PlaylistsManager.popup.classList.remove('playlist-picker-open');
+    requestAnimationFrame(() => PlaylistsManager._constrain());
   };
   cancelBtn.addEventListener('click',  e => { e.stopPropagation(); close(); });
   confirmBtn.addEventListener('click', e => {
@@ -4798,6 +4800,7 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
     onConfirm(candidates.filter(c => sel.has(c.gameId)));
   });
 
+  popup.classList.add('playlist-picker-open');
   _fitOverlayPopup(popup, overlay);
   requestAnimationFrame(() => {
     overlay.style.setProperty('--dtask-header-height', `${header.offsetHeight}px`);
