@@ -1410,6 +1410,15 @@ body.playlist-drag-active * { cursor: grabbing !important; }
       color: var(--rg-text-tertiary);
     }
 
+    .playlist-picker-game-voc-type {
+      font-size: 0.75em;
+      font-weight: 600;
+      &.voctype-words   { color: var(--rg-voctype-words); }
+      &.voctype-phrases { color: var(--rg-voctype-phrases); }
+      &.voctype-texts   { color: var(--rg-voctype-texts); }
+      &.voctype-book    { color: var(--rg-voctype-book); }
+    }
+
     // Live ×N counter shown next to desc when game is already in playlist
     .playlist-picker-game-added-count {
       @include playlist-count-badge;

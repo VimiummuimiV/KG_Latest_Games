@@ -4665,13 +4665,17 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
     descSpan.appendChild(descText);
 
     if (game.params.gametype === 'voc' && game.params.vocId) {
+      const applyLabel = (label, key) => {
+        if (!label) return;
+        const typeSpan = _el('span', `playlist-picker-game-voc-type voctype-${key}`, label);
+        descSpan.insertBefore(typeSpan, descText);
+      };
       const knownType = game.params.vocType && gameCategories[game.params.vocType];
-      const applyLabel = label => { if (label) descText.textContent = `${label} · ${descText.textContent}`; };
-      if (knownType) applyLabel(knownType);
+      if (knownType) applyLabel(knownType, game.params.vocType);
       else _fetchVocBasicData(game.params.vocId).then(data => {
         const raw = data?.vocabularyType;
         const key = gameCategories[raw] ? raw : typeMapping[raw];
-        applyLabel(key && gameCategories[key]);
+        applyLabel(key && gameCategories[key], key);
       });
     }
 

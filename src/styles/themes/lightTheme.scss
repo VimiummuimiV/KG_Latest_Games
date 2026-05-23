@@ -24,6 +24,11 @@ $lightTheme: (
   "--rg-gametype-chars": hsl(35, 100%, 30%),
   "--rg-gametype-digits": hsl(0, 0%, 50%),
   "--rg-gametype-sprint": hsl(5, 40%, 40%),
+  // Vocab types
+  "--rg-voctype-words":   hsl(170, 50%, 35%),
+  "--rg-voctype-phrases": hsl(270, 45%, 45%),
+  "--rg-voctype-texts":   hsl(30, 80%, 40%),
+  "--rg-voctype-book":    hsl(340, 50%, 40%),
   "--rg-icon-primary": currentColor,
   // Game action buttons
   // Delete
