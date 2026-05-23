@@ -2883,9 +2883,9 @@ export const PlaylistsManager = {
     // ── Left side: count + select-all + deselect + smart-filter + exit ───────
     const countSpan = _el('span', 'playlist-multiselect-count', `${sel.size}`);
 
-    const selAllBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--neutral');
-    selAllBtn.textContent = 'Все';
-    createCustomTooltip(selAllBtn, 'Выбрать все');
+    const { wrap: btnsWrap, deselectBtn: deselBtn, selectBtn: selAllBtn } =
+      _buildSelectAllBtns('Снять выделение', 'Выбрать все');
+
     selAllBtn.addEventListener('click', e => {
       e.stopPropagation();
       playlist.entries.forEach(en => sel.add(en.id));
@@ -2897,9 +2897,6 @@ export const PlaylistsManager = {
       countSpan.textContent = `${sel.size}`;
     });
 
-    const deselBtn = _el('button', 'playlist-multiselect-btn playlist-multiselect-btn--neutral');
-    deselBtn.textContent = 'Снять';
-    createCustomTooltip(deselBtn, 'Снять выделение');
     deselBtn.addEventListener('click', e => {
       e.stopPropagation();
       sel.clear();
@@ -3122,7 +3119,7 @@ export const PlaylistsManager = {
     });
 
     const left = _el('div', 'playlist-multiselect-left');
-    left.append(countSpan, selAllBtn, deselBtn, invertBtn, filterBtn, exitBtn);
+    left.append(countSpan, btnsWrap, invertBtn, filterBtn, exitBtn);
     const right = _el('div', 'playlist-multiselect-right');
     right.append(repStepper, dupBtn, paramsBtn, chunkStepper, convertBtn, removeBtn);
     bar.append(left, right);
