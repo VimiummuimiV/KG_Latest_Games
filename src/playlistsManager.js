@@ -1323,6 +1323,17 @@ export const PlaylistsManager = {
     PlaylistsManager.hide();
   },
 
+  // Returns the button that opens/closes whichever picker is currently active:
+  // the daily-task overlay's cancel, or the regular picker toggle.
+  _pickerToggleBtn() {
+    const popup = PlaylistsManager.popup;
+    if (!popup) return null;
+    const visibleOverlay = popup.querySelector('.playlist-picker-overlay--overlay:not(.playlist-picker-overlay--hidden)');
+    return visibleOverlay && !visibleOverlay.closest('.playlist-game-picker')
+      ? visibleOverlay.querySelector('.playlist-picker-overlay-footer .playlist-picker-toggle')
+      : popup.querySelector('.playlist-picker-btn-row .playlist-picker-toggle');
+  },
+
   _keydown: e => {
     if (PlaylistsManager._isPinned()) return;
     if (e.key === 'Escape') PlaylistsManager.hide();
@@ -1342,15 +1353,7 @@ export const PlaylistsManager = {
       targetHeader.click();
     }
     if (e.key === 'Tab') {
-      const popup = PlaylistsManager.popup;
-      if (!popup) return;
-      // Tab: toggle the game picker, or close the daily-task overlay via its own cancel.
-      // Daily-task overlay: --overlay without a .playlist-game-picker ancestor, never --hidden.
-      // Regular picker overlay: --overlay inside .playlist-game-picker, toggles --hidden.
-      const visibleOverlay = popup.querySelector('.playlist-picker-overlay--overlay:not(.playlist-picker-overlay--hidden)');
-      const target = visibleOverlay && !visibleOverlay.closest('.playlist-game-picker')
-        ? visibleOverlay.querySelector('.playlist-picker-overlay-footer .playlist-picker-toggle')
-        : popup.querySelector('.playlist-picker-btn-row .playlist-picker-toggle');
+      const target = PlaylistsManager._pickerToggleBtn();
       if (!target) return;
       e.preventDefault();
       target.click();
