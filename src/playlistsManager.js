@@ -4798,7 +4798,10 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
   // ── Close / confirm ───────────────────────────────────────────────────────
   const close = () => {
     overlay.remove();
-    if (PlaylistsManager.popup) PlaylistsManager.popup.classList.remove('playlist-picker-open');
+    if (PlaylistsManager.popup) {
+      PlaylistsManager.popup.classList.remove('playlist-picker-open');
+      PlaylistsManager.popup.style.minHeight = '';
+    }
     requestAnimationFrame(() => PlaylistsManager._constrain());
   };
   cancelBtn.addEventListener('click',  e => { e.stopPropagation(); close(); });
