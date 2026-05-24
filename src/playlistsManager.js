@@ -1344,11 +1344,16 @@ export const PlaylistsManager = {
     if (e.key === 'Tab') {
       const popup = PlaylistsManager.popup;
       if (!popup) return;
-      // Tab: toggle between game picker and playlist view (inside an expanded playlist).
-      const toggleBtn = popup.querySelector('.playlist-picker-btn-row .playlist-picker-toggle');
-      if (!toggleBtn) return;
+      // Tab: toggle the game picker, or close the daily-task overlay via its own cancel.
+      // Daily-task overlay: --overlay without a .playlist-game-picker ancestor, never --hidden.
+      // Regular picker overlay: --overlay inside .playlist-game-picker, toggles --hidden.
+      const visibleOverlay = popup.querySelector('.playlist-picker-overlay--overlay:not(.playlist-picker-overlay--hidden)');
+      const target = visibleOverlay && !visibleOverlay.closest('.playlist-game-picker')
+        ? visibleOverlay.querySelector('.playlist-picker-overlay-footer .playlist-picker-toggle')
+        : popup.querySelector('.playlist-picker-btn-row .playlist-picker-toggle');
+      if (!target) return;
       e.preventDefault();
-      toggleBtn.click();
+      target.click();
     }
     if (e.code === 'KeyR') {
       if (inTextField) return;
@@ -4671,7 +4676,7 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
   const footer    = _el('div', 'playlist-picker-overlay-footer');
   const cancelBtn = _el('button', 'playlist-picker-toggle');
   cancelBtn.innerHTML = `${icons.chevronLeft}<span>Отмена</span>`;
-  createCustomTooltip(cancelBtn, 'Отменить создание плейлиста');
+  createCustomTooltip(cancelBtn, '[Клик / Tab] Отменить создание плейлиста');
   const confirmBtn = _el('button', 'playlist-picker-confirm-btn');
   confirmBtn.innerHTML = `${icons.check}<span>Создать</span>`;
   createCustomTooltip(confirmBtn, 'Подтвердить выбор и создать плейлист');
