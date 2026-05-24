@@ -1614,7 +1614,15 @@ export const PlaylistsManager = {
     addBtn.addEventListener('click', e => {
       e.stopPropagation();
       const existing = panel.querySelector('.playlists-create-form');
-      if (existing) { existing.remove(); return; }
+      // Only close the form if we are already on the playlists list (no picker was
+      // just closed by the capturing listener above). If a picker was open, the
+      // capturing listener already closed it — keep the form visible.
+      const closedPicker = actions._closedPicker;
+      actions._closedPicker = false;
+      if (existing) {
+        if (!closedPicker) existing.remove();
+        return;
+      }
       const form = this._buildCreateForm(() => {
         panel.querySelector('.playlists-create-form')?.remove();
         this.refresh();
@@ -1659,6 +1667,13 @@ export const PlaylistsManager = {
 
     const actions = _el('div', 'playlists-header-actions');
     actions.append(undoBtn, clearBtn, randomBtn, addBtn);
+    // If any picker is open when a header action is clicked, close it first so the
+    // user lands back on the playlists list before the button's own handler runs.
+    actions.addEventListener('click', () => {
+      if (!PlaylistsManager.popup?.classList.contains('playlist-picker-open')) return;
+      actions._closedPicker = true;
+      PlaylistsManager._pickerToggleBtn()?.click();
+    }, true);
     header.append(titleSpan, actions);
     panel.appendChild(header);
 
