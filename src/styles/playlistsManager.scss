@@ -1185,6 +1185,25 @@ body.playlist-drag-active * { cursor: grabbing !important; }
     border-bottom: 1px solid var(--rg-border-primary);
 
     &--hidden { display: none; }
+
+    // Vertical separator between group chips and voc-type chips
+    .playlist-picker-filter-divider {
+      width: 1px;
+      min-height: 1.6em;
+      align-self: center;
+      background: var(--rg-border-primary);
+      margin: 0 0.3em;
+      flex-shrink: 0;
+    }
+
+    // Voc-type chips: active state uses the type colour
+    @each $t in words, phrases, texts, book {
+      .voctype-chip.voctype-#{$t}.active {
+        color: var(--rg-voctype-#{$t}) !important;
+        border-color: var(--rg-voctype-#{$t}) !important;
+        background: color-mix(in srgb, var(--rg-voctype-#{$t}) 15%, transparent) !important;
+      }
+    }
   }
 
   // Overlay footer: buttons left-aligned
@@ -1221,7 +1240,8 @@ body.playlist-drag-active * { cursor: grabbing !important; }
     }
   }
 
-  .playlist-picker-nav-counter {
+  .playlist-picker-nav-counter,
+  .playlist-picker-item-count {
     font-size: 0.72em;
     font-weight: 600;
     font-variant-numeric: tabular-nums;

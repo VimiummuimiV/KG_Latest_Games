@@ -3675,8 +3675,10 @@ export const PlaylistsManager = {
     navNextBtn.innerHTML = icons.arrowDown;
     createCustomTooltip(navPrevBtn, '[Клик] Перейти к предыдущей добавленной игре');
     createCustomTooltip(navNextBtn, '[Клик] Перейти к следующей добавленной игре');
+    const gfCounter = _el('span', 'playlist-picker-item-count');
+    createCustomTooltip(gfCounter, 'Количество игр, соответствующих текущим фильтрам');
     navGroup.append(navPrevBtn, navCounter, navNextBtn);
-    overlayFooter.appendChild(navGroup);
+    overlayFooter.append(gfCounter, navGroup);
 
     const syncNavState = () => {
       const n = getAddedPickerRows().length;
@@ -3828,19 +3830,25 @@ export const PlaylistsManager = {
       });
     };
 
-    // ── Combined filter: text + group chips ────────────────────────────────
+    // ── Combined filter: text + group chips + voc-type chips ──────────────
+    const activeTypes = new Set(); // typeKey → active
     const applyFilter = () => {
       const term    = searchInput.value.toLowerCase().trim();
       const byGroup = activeGroups.size > 0;
+      const byType  = activeTypes.size > 0;
       const visibleHeaders = new Set();
       allRows.forEach(({ gameRow, groupHeader, name, groupTitle }) => {
-        const show = (!term || name.includes(term)) && (!byGroup || activeGroups.has(groupTitle));
+        const typeKey  = gameRow.dataset.vocTypeKey || null;
+        const typeMatch = !byType || (typeKey ? activeTypes.has(typeKey) : false);
+        const show = (!term || name.includes(term)) && (!byGroup || activeGroups.has(groupTitle)) && typeMatch;
         gameRow.style.display = show ? '' : 'none';
         if (show) visibleHeaders.add(groupHeader);
       });
       overlay.querySelectorAll('.playlist-picker-group-header').forEach(h => {
         h.style.display = visibleHeaders.has(h) ? '' : 'none';
       });
+      const visible = allRows.filter(r => r.gameRow.style.display !== 'none').length;
+      if (gfCounter) gfCounter.textContent = visible < allRows.length ? `${visible}/${allRows.length}` : allRows.length;
     };
 
     // ── Confirm bar update ─────────────────────────────────────────────────
@@ -4060,7 +4068,7 @@ export const PlaylistsManager = {
 
         gameRow.append(nameSpan, descSpan, addBtn);
         overlay.appendChild(gameRow);
-        allRows.push({ gameRow, groupHeader, name: name.toLowerCase(), groupTitle: group.title });
+        allRows.push({ gameRow, groupHeader, name: name.toLowerCase(), groupTitle: group.title, game, gameId: game.id });
       });
     });
 
@@ -4098,6 +4106,12 @@ export const PlaylistsManager = {
 
     if (!allRows.length) overlay.appendChild(_el('div', 'playlist-picker-empty', 'Нет доступных игр'));
 
+    // Chip state helper
+    const applyChipState = (chip, state) => {
+      chip.classList.toggle('active', state);
+      state ? activeGroups.add(chip.dataset.groupTitle) : activeGroups.delete(chip.dataset.groupTitle);
+    };
+
     // ── Build group chips (one per unique group that has games) ───────────
     const groupsWithGames = [...new Set(allRows.map(r => r.groupTitle))];
     groupsWithGames.forEach(groupTitle => {
@@ -4108,12 +4122,6 @@ export const PlaylistsManager = {
       groupFilterRow.appendChild(chip);
     });
 
-    // Chip state helper
-    const applyChipState = (chip, state) => {
-      chip.classList.toggle('active', state);
-      state ? activeGroups.add(chip.dataset.groupTitle) : activeGroups.delete(chip.dataset.groupTitle);
-    };
-
     // ── Group filter action buttons ────────────────────────────────────────
     const syncGfActions = _buildChipStripActions(
       groupFilterRow, '.playlist-picker-group-chip',
@@ -4123,7 +4131,9 @@ export const PlaylistsManager = {
       'Выбрать все группы',
     );
 
-    _attachChipDrag(groupFilterRow, '.playlist-picker-group-chip', (chip, active, isMulti) => {
+    applyFilter(); // set initial counter value
+
+    _attachChipDrag(groupFilterRow, '.playlist-picker-group-chip:not(.voctype-chip)', (chip, active, isMulti) => {
       if (!isMulti && active) {
         groupFilterRow.querySelectorAll('.playlist-picker-group-chip.active').forEach(c => {
           if (c !== chip) applyChipState(c, false);
@@ -4135,6 +4145,44 @@ export const PlaylistsManager = {
     });
 
     searchInput.addEventListener('input', () => applyFilter());
+
+    // ── Voc-type chips — injected async once types resolve ─────────────────
+    Promise.all(allRows.map(async ({ game, gameRow }) => {
+      if (game.params.gametype !== 'voc' || !game.params.vocId) return null;
+      let key = game.params.vocType;
+      if (!key || !gameCategories[key]) {
+        const raw = (await _fetchVocBasicData(game.params.vocId))?.vocabularyType;
+        key = gameCategories[raw] ? raw : typeMapping[raw];
+      }
+      const resolved = key && gameCategories[key] ? key : null;
+      if (resolved) gameRow.dataset.vocTypeKey = resolved;
+      return resolved;
+    })).then(keys => {
+      const typeMap = new Map();
+      keys.forEach(k => { if (k && !typeMap.has(k)) typeMap.set(k, gameCategories[k]); });
+      if (typeMap.size < 2) return;
+
+      groupFilterRow.appendChild(_el('div', 'playlist-picker-filter-divider'));
+      typeMap.forEach((label, key) => {
+        const chip = _el('button', `playlist-picker-group-chip voctype-chip voctype-${key}`);
+        chip.textContent        = label;
+        chip.dataset.vocTypeKey = key;
+        createCustomTooltip(chip, _smartChipTooltip(`Показать только «${label}»`));
+        groupFilterRow.appendChild(chip);
+      });
+
+      _attachChipDrag(groupFilterRow, '.voctype-chip', (chip, active, isMulti) => {
+        if (!isMulti && active)
+          groupFilterRow.querySelectorAll('.voctype-chip.active').forEach(c => {
+            c.classList.remove('active'); activeTypes.delete(c.dataset.vocTypeKey);
+          });
+        chip.classList.toggle('active', active);
+        active ? activeTypes.add(chip.dataset.vocTypeKey) : activeTypes.delete(chip.dataset.vocTypeKey);
+        applyFilter();
+      });
+
+      syncHeights();
+    });
 
     // ── Assemble overlay (prepend sticky controls, game rows already appended)
     // Final DOM order: searchWrap → groupFilterRow → confirmBar → [rows] → overlayFooter
