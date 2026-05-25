@@ -8,9 +8,20 @@ import { fetchVocabularyBasicData } from './vocabularyCreation.js';
 // ─────────────────────────────────────────────────────────────────────────────
 // Storage / session keys
 // ─────────────────────────────────────────────────────────────────────────────
-const STORAGE_KEY  = 'latestGamesPlaylists';
-const SESSION_KEY  = 'latestGames_activePlaylist';
-const SHUFFLE_KEY  = 'latestGames_randomShuffleBag';
+const STORAGE_KEY    = 'latestGamesPlaylists';
+const SESSION_KEY    = 'latestGames_activePlaylist';
+const SHUFFLE_KEY    = 'latestGames_randomShuffleBag';
+const DTASK_PREF_KEY = 'latestGames_dtaskTypePrefs';
+
+function _getDtaskTypePrefs() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(DTASK_PREF_KEY) || '{}');
+    return { favorites: new Set(raw.favorites || []), blocked: new Set(raw.blocked || []) };
+  } catch { return { favorites: new Set(), blocked: new Set() }; }
+}
+function _saveDtaskTypePrefs(prefs) {
+  try { localStorage.setItem(DTASK_PREF_KEY, JSON.stringify({ favorites: [...prefs.favorites], blocked: [...prefs.blocked] })); } catch {}
+}
 
 function _getPositionMode() {
   return PlaylistsManager.main?.positionDisplayMode ?? 'fraction';
@@ -33,7 +44,6 @@ export function getActivePlaylistSession() {
     return raw ? JSON.parse(raw) : null;
   } catch { return null; }
 }
-
 export function setActivePlaylistSession(data) {
   try {
     if (data) localStorage.setItem(SESSION_KEY, JSON.stringify(data));
@@ -4525,7 +4535,7 @@ function _attachChipDrag(strip, chipSelector, onToggle) {
   let dragState = null;
   strip.addEventListener('mousedown', e => {
     const chip = e.target.closest(chipSelector);
-    if (!chip || chip.disabled) return;
+    if (!chip || chip.disabled || e.button !== 0) return;
     e.preventDefault();
     dragState = !chip.classList.contains('active');
     onToggle(chip, dragState, e.ctrlKey);
@@ -4743,23 +4753,62 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
     if (typeMap.size < 2) return;
     btnsWrap.remove();
 
-    const activeTypes   = new Set();
+    const prefs       = _getDtaskTypePrefs();
+    const activeTypes = new Set();
     const typeFilterRow = _el('div', 'playlist-picker-group-filter');
+
+    // Apply blocked state to a row (or unblock it).
+    const applyBlockedRow = (gameId, block) => {
+      const row = overlay.querySelector(`.playlist-picker-game-row[data-game-id="${gameId}"]`);
+      if (!row) return;
+      row.classList.toggle('not-available', block);
+      const cb = row.querySelector('.playlist-picker-checkbox');
+      if (cb) { cb.disabled = block; if (block) cb.checked = false; }
+      if (block) sel.delete(gameId);
+    };
+
+    // Seed blocked rows before chips are shown.
+    resolvedTypes.forEach((key, gameId) => { if (prefs.blocked.has(key)) applyBlockedRow(gameId, true); });
+    syncState();
 
     typeMap.forEach((label, key) => {
       const chip = _el('button', 'playlist-picker-group-chip');
       chip.textContent         = label;
       chip.dataset.filterValue = key;
       chip.classList.add(`voctype-${key}`);
-      createCustomTooltip(chip, _smartChipTooltip(`Выбрать все «${label}»`));
+      if (prefs.favorites.has(key)) chip.classList.add('active', 'dtask-chip--favorite');
+      if (prefs.blocked.has(key))   chip.classList.add('dtask-chip--blocked');
+      createCustomTooltip(chip, _smartChipTooltip(`Выбрать все «${label}»`) +
+        '[ПКМ] Избранное / Заблокировать тип');
+
+      // Right-click cycles: normal → favorite → blocked → normal
+      chip.addEventListener('contextmenu', e => {
+        e.preventDefault(); e.stopPropagation();
+        const wasFav = prefs.favorites.has(key), wasBlocked = prefs.blocked.has(key);
+        prefs.favorites.delete(key); prefs.blocked.delete(key);
+        if (!wasFav && !wasBlocked) prefs.favorites.add(key);
+        else if (wasFav)            prefs.blocked.add(key);
+        _saveDtaskTypePrefs(prefs);
+        chip.classList.toggle('dtask-chip--favorite', prefs.favorites.has(key));
+        chip.classList.toggle('dtask-chip--blocked',  prefs.blocked.has(key));
+        // Sync active state: blocked chips can't be active
+        if (prefs.blocked.has(key)) { chip.classList.remove('active'); activeTypes.delete(key); }
+        resolvedTypes.forEach((rKey, gameId) => { if (rKey === key) applyBlockedRow(gameId, prefs.blocked.has(key)); });
+        syncState();
+        applyTypeFilter();
+      });
+
       typeFilterRow.appendChild(chip);
     });
 
     const applyTypeFilter = () => {
       sel.clear();
       if (activeTypes.size)
-        resolvedTypes.forEach((key, gameId) => { if (activeTypes.has(key)) sel.add(gameId); });
+        resolvedTypes.forEach((key, gameId) => {
+          if (activeTypes.has(key) && !prefs.blocked.has(key)) sel.add(gameId);
+        });
       overlay.querySelectorAll('.playlist-picker-checkbox').forEach(cb => {
+        if (cb.disabled) return; // blocked rows stay unchecked
         const match = sel.has(cb.dataset.gameId);
         cb.checked = match;
         cb.closest('.playlist-picker-game-row')?.classList.toggle('picker-row--selected', match);
@@ -4767,14 +4816,22 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
       syncState();
     };
 
+    // Auto-activate favorites on open
+    if (prefs.favorites.size) {
+      typeFilterRow.querySelectorAll('.playlist-picker-group-chip').forEach(c => {
+        if (prefs.favorites.has(c.dataset.filterValue)) activeTypes.add(c.dataset.filterValue);
+      });
+      applyTypeFilter();
+    }
+
     _buildChipStripActions(
-      typeFilterRow, '.playlist-picker-group-chip',
+      typeFilterRow, '.playlist-picker-group-chip:not(.dtask-chip--blocked)',
       chips => { chips.forEach(c => { c.classList.remove('active'); activeTypes.delete(c.dataset.filterValue); }); applyTypeFilter(); },
       chips => { chips.forEach(c => { c.classList.add('active');    activeTypes.add(c.dataset.filterValue);    }); applyTypeFilter(); },
       'Снять все типы', 'Выбрать все типы',
     );
 
-    _attachChipDrag(typeFilterRow, '.playlist-picker-group-chip', (chip, active, isMulti) => {
+    _attachChipDrag(typeFilterRow, '.playlist-picker-group-chip:not(.dtask-chip--blocked)', (chip, active, isMulti) => {
       if (!isMulti && active) {
         typeFilterRow.querySelectorAll('.playlist-picker-group-chip.active').forEach(c => {
           c.classList.remove('active'); activeTypes.delete(c.dataset.filterValue);

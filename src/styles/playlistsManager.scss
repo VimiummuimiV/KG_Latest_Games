@@ -1306,6 +1306,17 @@ body.playlist-drag-active * { cursor: grabbing !important; }
 
       &:hover { background: hsla(var(--rg-popup-btn-sort) / 0.25) !important; }
     }
+
+    &.dtask-chip--favorite {
+      color: hsl(var(--rg-chip-favorite));
+      background: hsla(var(--rg-chip-favorite) / 0.12);
+      &:hover { border-color: hsl(var(--rg-chip-favorite)); }
+    }
+    &.dtask-chip--blocked  {
+      color: hsl(var(--rg-chip-blocked));
+      background: hsla(var(--rg-chip-blocked) / 0.12);
+      &:hover { border-color: hsl(var(--rg-chip-blocked)); }
+    }
   }
 
   // ── Strip action buttons shared by group-filter and smartselect strips ──
@@ -1384,7 +1395,8 @@ body.playlist-drag-active * { cursor: grabbing !important; }
     margin-top: 0.3em;
 
     &:hover { background: var(--rg-bg-hover); border-color: var(--rg-border-hover); }
-    &.already-added {
+    &.already-added,
+    &.not-available {
       opacity: 0.45;
       &:hover { opacity: 1; }
     }

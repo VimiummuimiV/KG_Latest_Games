@@ -110,5 +110,8 @@ $lightTheme: (
   "--rg-task-chip-ok":      130 50% 35%,
   "--rg-task-chip-over":    0 70% 45%,
   "--rg-task-chip-progress": 200 60% 40%,
-  "--rg-task-chip-award":   45 85% 45%
+  "--rg-task-chip-award":   45 85% 45%,
+  // Dtask type chip states
+  "--rg-chip-favorite": 45 85% 45%,
+  "--rg-chip-blocked":  355 60% 45%
 );

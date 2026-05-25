@@ -110,5 +110,8 @@ $darkTheme: (
   "--rg-task-chip-ok":      130 60% 55%,
   "--rg-task-chip-over":    0 80% 65%,
   "--rg-task-chip-progress": 200 70% 60%,
-  "--rg-task-chip-award":   45 90% 65%
+  "--rg-task-chip-award":   45 90% 65%,
+  // Dtask type chip states
+  "--rg-chip-favorite": 45 90% 65%,
+  "--rg-chip-blocked":  355 70% 60%
 );
