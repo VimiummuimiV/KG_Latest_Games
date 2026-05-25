@@ -4641,7 +4641,8 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
   if (!PlaylistsManager.popup) PlaylistsManager.showCentered();
   const popup = PlaylistsManager.popup;
 
-  const sel = new Set(); // selected indices into candidates[]
+  const sel     = new Set(); // selected gameIds
+  const blocked = new Set(); // blocked gameIds (derived from prefs, kept in sync)
 
   // ── Overlay container ─────────────────────────────────────────────────────
   // --overlay  : absolute positioning over the popup, z-index 50, full-height scroll
@@ -4727,9 +4728,10 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
 
   // ── Sync helper: count badge + button disabled states ────────────────────
   const syncState = () => {
-    countSpan.textContent = `${sel.size} / ${candidates.length}`;
+    const available = candidates.length - blocked.size;
+    countSpan.textContent = `${sel.size} / ${available}`;
     deselectBtn.disabled  = sel.size === 0;
-    selectBtn.disabled    = sel.size === candidates.length;
+    selectBtn.disabled    = sel.size === available;
     confirmBtn.disabled   = sel.size === 0;
   };
   syncState();
@@ -4759,6 +4761,7 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
 
     // Apply blocked state to a row (or unblock it).
     const applyBlockedRow = (gameId, block) => {
+      block ? blocked.add(gameId) : blocked.delete(gameId);
       const row = overlay.querySelector(`.playlist-picker-game-row[data-game-id="${gameId}"]`);
       if (!row) return;
       row.classList.toggle('not-available', block);
@@ -4778,8 +4781,12 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
       chip.classList.add(`voctype-${key}`);
       if (prefs.favorites.has(key)) chip.classList.add('active', 'dtask-chip--favorite');
       if (prefs.blocked.has(key))   chip.classList.add('dtask-chip--blocked');
-      createCustomTooltip(chip, _smartChipTooltip(`Выбрать все «${label}»`) +
-        '[ПКМ] Избранное / Заблокировать тип');
+      const syncChipTooltip = () => {
+        const state = prefs.favorites.has(key) ? 'Избранное' : prefs.blocked.has(key) ? 'Заблокировано' : 'Доступно';
+        updateTooltipContent(chip, _smartChipTooltip(`Выбрать все «${label}»`) +
+          `[ПКМ] Тип: ${state}`);
+      };
+      syncChipTooltip();
 
       // Right-click cycles: normal → favorite → blocked → normal
       chip.addEventListener('contextmenu', e => {
@@ -4791,6 +4798,7 @@ function _showTaskGameSelectOverlay(candidates, onConfirm) {
         _saveDtaskTypePrefs(prefs);
         chip.classList.toggle('dtask-chip--favorite', prefs.favorites.has(key));
         chip.classList.toggle('dtask-chip--blocked',  prefs.blocked.has(key));
+        syncChipTooltip();
         // Sync active state: blocked chips can't be active
         if (prefs.blocked.has(key)) { chip.classList.remove('active'); activeTypes.delete(key); }
         resolvedTypes.forEach((rKey, gameId) => { if (rKey === key) applyBlockedRow(gameId, prefs.blocked.has(key)); });
