@@ -4662,7 +4662,9 @@ function _smartChipTooltip(filterAction) {
 // document.body (where bottom:0 has nothing to clamp against), then moves it
 // to the popup with the correct min-height already set.
 function _fitOverlayPopup(popup, overlayEl) {
+  if (!popup) return;
   popup.style.minHeight = '';
+  // Avoid reparenting if already in place — moving an attached overlay resets DOM order and closes the picker.
   if (overlayEl.parentNode !== popup) popup.appendChild(overlayEl);
 
   const topOffset = parseInt(overlayEl.style.top, 10) || 0;
