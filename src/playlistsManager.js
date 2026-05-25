@@ -3849,6 +3849,8 @@ export const PlaylistsManager = {
       });
       const visible = allRows.filter(r => r.gameRow.style.display !== 'none').length;
       if (gfCounter) gfCounter.textContent = visible < allRows.length ? `${visible}/${allRows.length}` : allRows.length;
+      _fitOverlayPopup(PlaylistsManager.popup, overlay);
+      requestAnimationFrame(() => PlaylistsManager._constrain());
     };
 
     // ── Confirm bar update ─────────────────────────────────────────────────
@@ -4660,9 +4662,8 @@ function _smartChipTooltip(filterAction) {
 // document.body (where bottom:0 has nothing to clamp against), then moves it
 // to the popup with the correct min-height already set.
 function _fitOverlayPopup(popup, overlayEl) {
-  // Insert at natural (unconstrained) popup size, measure, then set minHeight
   popup.style.minHeight = '';
-  popup.appendChild(overlayEl);
+  if (overlayEl.parentNode !== popup) popup.appendChild(overlayEl);
 
   const topOffset = parseInt(overlayEl.style.top, 10) || 0;
   const maxH = window.innerHeight * 0.80;
