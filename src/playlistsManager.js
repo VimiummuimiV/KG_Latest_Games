@@ -1064,23 +1064,20 @@ export const PlaylistsManager = {
   // Atomically saves a fully reordered entry list (used by group drag-and-drop).
   // newEntryIds is the complete ordered array of entry IDs as reflected in the DOM.
   reorderEntriesOrder(playlistId, newEntryIds) {
-    const playlists = this.load();
-    const p = playlists.find(p => p.id === playlistId);
-    if (!p) return;
-    // Capture the active entry ID before modifying so we can update the session index.
     const session = getActivePlaylistSession();
     let activeEntryId = null;
-    if (session && session.playlistId === playlistId && !session.shuffleOrder) {
-      activeEntryId = p.entries[session.entryIndex]?.id ?? null;
-    }
-    const map = new Map(p.entries.map(e => [e.id, e]));
-    p.entries = newEntryIds.map(id => map.get(id)).filter(Boolean);
-    this.save(playlists);
-    if (activeEntryId) {
-      const newIdx = p.entries.findIndex(e => e.id === activeEntryId);
-      if (newIdx !== -1 && newIdx !== session.entryIndex) {
-        setActivePlaylistSession({ ...session, entryIndex: newIdx });
+    let newIdx = null;
+    this._updatePlaylist(playlistId, p => {
+      // Capture the active entry ID before modifying so we can update the session index.
+      if (session && session.playlistId === playlistId && !session.shuffleOrder) {
+        activeEntryId = p.entries[session.entryIndex]?.id ?? null;
       }
+      const map = new Map(p.entries.map(e => [e.id, e]));
+      p.entries = newEntryIds.map(id => map.get(id)).filter(Boolean);
+      if (activeEntryId) newIdx = p.entries.findIndex(e => e.id === activeEntryId);
+    });
+    if (newIdx !== null && newIdx !== -1 && newIdx !== session.entryIndex) {
+      setActivePlaylistSession({ ...session, entryIndex: newIdx });
     }
   },
 
