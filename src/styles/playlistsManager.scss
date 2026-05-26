@@ -376,19 +376,17 @@ body.playlist-drag-active * { cursor: grabbing !important; }
     align-items: center;
   }
 
-  .playlists-create-task-btn {
-    @include playlist-labeled-btn('--rg-popup-btn-fetch', 13px);
+  .playlists-create-task-btn,
+  .playlists-create-groups-toggle,
+  .playlists-create-confirm-btn {
     padding: 0.35em 0.7em;
     font-size: 0.8em;
     user-select: none;
   }
 
-  .playlists-create-groups-toggle {
-    @include playlist-labeled-btn('--rg-popup-btn-sort', 13px);
-    padding: 0.35em 0.7em;
-    font-size: 0.8em;
-    user-select: none;
-  }
+  .playlists-create-task-btn      { @include playlist-labeled-btn('--rg-popup-btn-fetch', 13px); }
+  .playlists-create-groups-toggle { @include playlist-labeled-btn('--rg-popup-btn-sort',  13px); }
+  .playlists-create-confirm-btn   { @include playlist-labeled-btn('--rg-popup-btn-save', 13px); }
 
   .playlists-create-groups-row {
     display: flex;

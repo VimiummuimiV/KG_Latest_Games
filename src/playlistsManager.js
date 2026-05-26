@@ -3377,6 +3377,16 @@ export const PlaylistsManager = {
     // ── Action buttons row (sits below the name input) ────────────────────────
     const actionsRow = _el('div', 'playlists-create-actions-row');
 
+    const createBtn = _el('button', 'playlists-create-confirm-btn');
+    createBtn.innerHTML = `${icons.plus}<span>Создать</span>`;
+    createBtn.addEventListener('click', e => { e.stopPropagation(); doCreate(); });
+
+    input.addEventListener('input', () => {
+      const hasText = input.value.trim().length > 0;
+      if (hasText && !actionsRow.contains(createBtn)) actionsRow.append(createBtn);
+      else if (!hasText) createBtn.remove();
+    });
+
     const taskBtn = _el('button', 'playlists-create-task-btn');
     taskBtn.innerHTML = `${icons.plus}<span>Из задачи</span>`;
     createCustomTooltip(taskBtn, buildBtnTooltip('createTaskBtn'));
