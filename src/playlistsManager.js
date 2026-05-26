@@ -2184,8 +2184,6 @@ export const PlaylistsManager = {
         // Group duplicate — one copy of the whole contiguous selected run
         const newEntries = this.bulkDuplicateEntriesN(playlist.id, groupIds, 1);
         if (!newEntries.length) return;
-        const fresh = this.load().find(p => p.id === playlist.id);
-        if (!fresh) return;
         entryList.querySelector('.playlist-entries-empty')?.remove();
         newEntries.forEach((ne, i) => {
           playlist.entries.push(ne);
@@ -2200,8 +2198,6 @@ export const PlaylistsManager = {
       // Single-entry duplicate (original behaviour)
       const copy = this.duplicateEntry(playlist.id, entry.id);
       if (!copy) return;
-      const fresh = this.load().find(p => p.id === playlist.id);
-      if (!fresh) return;
       if (!entryList) return;
       playlist.entries.push(copy);
       entryList.querySelector('.playlist-entries-empty')?.remove();
@@ -3232,27 +3228,21 @@ export const PlaylistsManager = {
         // Duplicate the whole group N times
         const newEntries = this.bulkDuplicateEntriesN(playlist.id, groupIds, n);
         if (newEntries.length) {
-          const fresh = this.load().find(p => p.id === playlist.id);
-          if (fresh) {
-            newEntries.forEach((ne, i) => {
-              playlist.entries.push(ne);
-              const newRow = this._buildEntryRow(playlist, ne, null, false, playlist.entries.length - newEntries.length + i);
-              entryList.appendChild(newRow);
-            });
-            this._attachEntryDrag(entryList, playlist.id, this._selectedEntries[playlist.id] ??= new Set());
-          }
+          newEntries.forEach((ne, i) => {
+            playlist.entries.push(ne);
+            const newRow = this._buildEntryRow(playlist, ne, null, false, playlist.entries.length - newEntries.length + i);
+            entryList.appendChild(newRow);
+          });
+          this._attachEntryDrag(entryList, playlist.id, this._selectedEntries[playlist.id] ??= new Set());
         }
       } else {
-        // Single-entry duplicate N times (original behaviour)
-        for (let i = 0; i < n; i++) {
-          const copy = this.duplicateEntry(playlist.id, entry.id);
-          if (!copy) break;
-          const refreshed = this.load().find(p => p.id === playlist.id);
-          if (!refreshed) break;
+        // Single-entry duplicate N times via bulk helper (one save instead of N)
+        const newEntries = this.bulkDuplicateEntriesN(playlist.id, [entry.id], n);
+        newEntries.forEach((copy, i) => {
           playlist.entries.push(copy);
-          const newRow = this._buildEntryRow(playlist, copy, null, false, playlist.entries.length - 1);
+          const newRow = this._buildEntryRow(playlist, copy, null, false, playlist.entries.length - newEntries.length + i);
           entryList.appendChild(newRow);
-        }
+        });
         this._attachEntryDrag(entryList, playlist.id, this._selectedEntries[playlist.id] ??= new Set());
       }
 
