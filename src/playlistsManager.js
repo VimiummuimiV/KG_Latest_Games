@@ -517,6 +517,19 @@ export const PlaylistsManager = {
   _UNDO_LIMIT: 20,
 
   // ── Persistence ────────────────────────────────────────────────────────────
+
+  // Load → find playlist by id → call fn(playlist, allPlaylists) → save → return fn's result.
+  // Returns undefined (and skips save) when the playlist is not found.
+  // Use for any mutation that targets a single playlist identified by playlistId.
+  _updatePlaylist(playlistId, fn) {
+    const playlists = this.load();
+    const p = playlists.find(p => p.id === playlistId);
+    if (!p) return undefined;
+    const result = fn(p, playlists);
+    this.save(playlists);
+    return result;
+  },
+
   load() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
     catch { return []; }
@@ -577,9 +590,8 @@ export const PlaylistsManager = {
   },
 
   renamePlaylist(id, newTitle) {
-    const playlists = this.load();
-    const p = playlists.find(p => p.id === id);
-    if (p && newTitle.trim()) { p.title = newTitle.trim(); this.save(playlists); }
+    if (!newTitle.trim()) return;
+    this._updatePlaylist(id, p => { p.title = newTitle.trim(); });
   },
 
   deletePlaylist(id) {
@@ -619,11 +631,9 @@ export const PlaylistsManager = {
   },
 
   addEntry(playlistId, gameId, repeatCount = 1) {
-    const playlists = this.load();
-    const p = playlists.find(p => p.id === playlistId);
-    if (!p) return;
-    p.entries.push({ id: generateRandomString(), gameId, repeatCount: Math.max(1, repeatCount), params: {} });
-    this.save(playlists);
+    this._updatePlaylist(playlistId, p => {
+      p.entries.push({ id: generateRandomString(), gameId, repeatCount: Math.max(1, repeatCount), params: {} });
+    });
   },
 
   // If the playlist was created from a daily task, redistribute the total
@@ -672,74 +682,65 @@ export const PlaylistsManager = {
   },
 
   duplicateEntry(playlistId, entryId) {
-    const playlists = this.load();
-    const p = playlists.find(p => p.id === playlistId);
-    if (!p) return null;
-    const source = p.entries.find(e => e.id === entryId);
-    if (!source) return null;
-    const copy = {
-      id: generateRandomString(),
-      gameId: source.gameId,
-      repeatCount: source.repeatCount,
-      params: source.params ? { ...source.params } : {},
-      ...(source.repeatLocked ? { repeatLocked: true } : {}),
-    };
-    p.entries.push(copy);
-    this.save(playlists);
-    return copy;
+    return this._updatePlaylist(playlistId, p => {
+      const source = p.entries.find(e => e.id === entryId);
+      if (!source) return null;
+      const copy = {
+        id: generateRandomString(),
+        gameId: source.gameId,
+        repeatCount: source.repeatCount,
+        params: source.params ? { ...source.params } : {},
+        ...(source.repeatLocked ? { repeatLocked: true } : {}),
+      };
+      p.entries.push(copy);
+      return copy;
+    }) ?? null;
   },
 
   setRepeat(playlistId, entryId, count) {
-    const playlists = this.load();
-    const p = playlists.find(p => p.id === playlistId);
-    if (!p) return;
-    const e = p.entries.find(e => e.id === entryId);
-    if (!e) return;
-    const oldCount = e.repeatCount;
-    const cap = (p.dailyTaskRemaining && e.repeatLocked) ? this._lockedEntryCap(p, e.id) : Infinity;
-    const newCount = Math.min(Math.max(1, count), cap);
-    e.repeatCount = newCount;
-    // For daily-task playlists, changing a locked entry's value must redistribute
-    // the remaining budget across all unlocked entries so the total stays consistent.
-    if (p.dailyTaskRemaining && e.repeatLocked) this._redistributeTaskRepeats(p);
-    this.save(playlists);
+    const session = getActivePlaylistSession();
+    let oldCount, newCount, isActiveEntry;
+    this._updatePlaylist(playlistId, p => {
+      const e = p.entries.find(e => e.id === entryId);
+      if (!e) return;
+      oldCount = e.repeatCount;
+      const cap = (p.dailyTaskRemaining && e.repeatLocked) ? this._lockedEntryCap(p, e.id) : Infinity;
+      newCount = Math.min(Math.max(1, count), cap);
+      e.repeatCount = newCount;
+      // For daily-task playlists, changing a locked entry's value must redistribute
+      // the remaining budget across all unlocked entries so the total stays consistent.
+      if (p.dailyTaskRemaining && e.repeatLocked) this._redistributeTaskRepeats(p);
+      isActiveEntry = session?.playlistId === playlistId &&
+        p.entries.findIndex(e => e.id === entryId) === _getActiveEntryIndex(p, session);
+    });
+    if (newCount === undefined) return;
     // If this entry is the currently active one, update sessionStorage immediately.
     // remainingRepeats shifts by the same delta so the user gets exactly the
     // extra (or fewer) repeats they just dialled in.
-    const session = getActivePlaylistSession();
-    if (session && session.playlistId === playlistId) {
-      const freshPlaylists = this.load();
-      const freshP = freshPlaylists.find(fp => fp.id === playlistId);
-      if (freshP) {
-        const entryIdx = freshP.entries.findIndex(fe => fe.id === entryId);
-        if (entryIdx === _getActiveEntryIndex(freshP, session)) {
-          const delta = newCount - oldCount;
-          const newRemaining = Math.min(newCount, Math.max(1, session.remainingRepeats + delta));
-          setActivePlaylistSession({ ...session, remainingRepeats: newRemaining });
-          _updatePlaylistHud();
-        }
-      }
+    if (isActiveEntry) {
+      const delta = newCount - oldCount;
+      const newRemaining = Math.min(newCount, Math.max(1, session.remainingRepeats + delta));
+      setActivePlaylistSession({ ...session, remainingRepeats: newRemaining });
+      _updatePlaylistHud();
     }
   },
 
   setEntryRepeatLock(playlistId, entryId, locked) {
-    const playlists = this.load();
-    const p = playlists.find(p => p.id === playlistId);
-    if (!p) return;
-    const e = p.entries.find(e => e.id === entryId);
-    if (!e) return;
-    if (locked) e.repeatLocked = true;
-    else delete e.repeatLocked;
-    this.save(playlists);
+    this._updatePlaylist(playlistId, p => {
+      const e = p.entries.find(e => e.id === entryId);
+      if (!e) return;
+      if (locked) e.repeatLocked = true;
+      else delete e.repeatLocked;
+    });
+  },
+
+  setShuffle(playlistId, enabled) {
+    this._updatePlaylist(playlistId, p => { p.shuffle = enabled; });
   },
 
   setPlaylistCycles(playlistId, count) {
-    const playlists = this.load();
-    const p = playlists.find(p => p.id === playlistId);
-    if (!p) return;
     const newCount = Math.max(1, count);
-    p.repeatCount = newCount;
-    this.save(playlists);
+    this._updatePlaylist(playlistId, p => { p.repeatCount = newCount; });
     // Sync session remainingCycles by the same delta so in-flight runs adjust correctly
     const session = getActivePlaylistSession();
     if (session && session.playlistId === playlistId && newCount > 1) {
@@ -750,24 +751,19 @@ export const PlaylistsManager = {
   },
 
   setEntryParams(playlistId, entryId, params) {
-    const playlists = this.load();
-    const p = playlists.find(p => p.id === playlistId);
-    if (!p) return;
-    const e = p.entries.find(e => e.id === entryId);
-    if (!e) return;
-    e.params = { ...params };
-    this.save(playlists);
+    this._updatePlaylist(playlistId, p => {
+      const e = p.entries.find(e => e.id === entryId);
+      if (e) e.params = { ...params };
+    });
   },
 
   setEntryLabel(playlistId, entryId, label) {
-    const playlists = this.load();
-    const p = playlists.find(p => p.id === playlistId);
-    if (!p) return;
-    const e = p.entries.find(e => e.id === entryId);
-    if (!e) return;
-    if (label && label.trim()) e.label = label.trim();
-    else delete e.label;
-    this.save(playlists);
+    this._updatePlaylist(playlistId, p => {
+      const e = p.entries.find(e => e.id === entryId);
+      if (!e) return;
+      if (label && label.trim()) e.label = label.trim();
+      else delete e.label;
+    });
   },
 
   // ── Bulk operations ────────────────────────────────────────────────────────
@@ -794,58 +790,50 @@ export const PlaylistsManager = {
   // Returns the flat array of all newly created entry objects.
   bulkDuplicateEntriesN(playlistId, entryIds, n) {
     if (!n || n < 1) return [];
-    const playlists = this.load();
-    const p = playlists.find(p => p.id === playlistId);
-    if (!p) return [];
-    // Preserve the order from p.entries, not from the entryIds array.
-    const idSet   = new Set(entryIds);
-    const sources = p.entries.filter(e => idSet.has(e.id));
-    if (!sources.length) return [];
-    const allNew = [];
-    for (let i = 0; i < n; i++) {
-      const copies = sources.map(e => ({
-        id: generateRandomString(),
-        gameId: e.gameId,
-        repeatCount: e.repeatCount,
-        params: e.params ? { ...e.params } : {},
-        ...(e.repeatLocked ? { repeatLocked: true } : {}),
-      }));
-      p.entries.push(...copies);
-      allNew.push(...copies);
-    }
-    this.save(playlists);
-    return allNew;
+    const idSet = new Set(entryIds);
+    return this._updatePlaylist(playlistId, p => {
+      // Preserve the order from p.entries, not from the entryIds array.
+      const sources = p.entries.filter(e => idSet.has(e.id));
+      if (!sources.length) return [];
+      const allNew = [];
+      for (let i = 0; i < n; i++) {
+        const copies = sources.map(e => ({
+          id: generateRandomString(),
+          gameId: e.gameId,
+          repeatCount: e.repeatCount,
+          params: e.params ? { ...e.params } : {},
+          ...(e.repeatLocked ? { repeatLocked: true } : {}),
+        }));
+        p.entries.push(...copies);
+        allNew.push(...copies);
+      }
+      return allNew;
+    }) ?? [];
   },
 
   // Merges params onto each selected entry. null value removes that key.
   bulkSetParams(playlistId, entryIds, params) {
     const ids = new Set(entryIds);
-    const playlists = this.load();
-    const p = playlists.find(p => p.id === playlistId);
-    if (!p) return;
-    p.entries.forEach(e => {
-      if (!ids.has(e.id)) return;
-      e.params = e.params ? { ...e.params } : {};
-      Object.entries(params).forEach(([k, v]) => {
-        if (v == null) delete e.params[k];
-        else e.params[k] = v;
+    this._updatePlaylist(playlistId, p => {
+      p.entries.forEach(e => {
+        if (!ids.has(e.id)) return;
+        e.params = e.params ? { ...e.params } : {};
+        Object.entries(params).forEach(([k, v]) => {
+          if (v == null) delete e.params[k];
+          else e.params[k] = v;
+        });
       });
     });
-    this.save(playlists);
     this._selectedEntries[playlistId]?.clear();
     this._selectionMode.delete(playlistId);
   },
 
   bulkSetRepeat(playlistId, entryIds, count) {
     const ids = new Set(entryIds);
-    const playlists = this.load();
-    const p = playlists.find(p => p.id === playlistId);
-    if (!p) return 0;
     const newCount = Math.max(1, count);
-    p.entries.forEach(e => {
-      if (ids.has(e.id)) e.repeatCount = newCount;
+    this._updatePlaylist(playlistId, p => {
+      p.entries.forEach(e => { if (ids.has(e.id)) e.repeatCount = newCount; });
     });
-    this.save(playlists);
     return newCount;
   },
 
@@ -1058,12 +1046,10 @@ export const PlaylistsManager = {
 
   reorderEntries(playlistId, fromIndex, toIndex) {
     if (fromIndex === toIndex) return;
-    const playlists = this.load();
-    const p = playlists.find(p => p.id === playlistId);
-    if (!p) return;
-    const [moved] = p.entries.splice(fromIndex, 1);
-    p.entries.splice(toIndex, 0, moved);
-    this.save(playlists);
+    this._updatePlaylist(playlistId, p => {
+      const [moved] = p.entries.splice(fromIndex, 1);
+      p.entries.splice(toIndex, 0, moved);
+    });
     // Update session entryIndex if active
     const session = getActivePlaylistSession();
     if (session && session.playlistId === playlistId) {
@@ -1858,12 +1844,10 @@ export const PlaylistsManager = {
 
       shufflePlayBtn.addEventListener('click', e => {
         e.stopPropagation();
-        const playlists = this.load();
-        const current = playlists.find(p => p.id === playlist.id);
-        if (!current) return;
-        current.shuffle = !current.shuffle;
-        this.save(playlists);
-        updateShuffleBtn(current.shuffle);
+        const next = !playlist.shuffle;
+        this.setShuffle(playlist.id, next);
+        playlist.shuffle = next;
+        updateShuffleBtn(next);
       });
 
       const renameBtn = _el('button', 'playlist-rename-btn');
@@ -3579,15 +3563,12 @@ export const PlaylistsManager = {
       gm.saveGamesData();
       um.refreshContainer();
 
-      const created   = this.createPlaylist(playlistTitle);
-      const playlists = this.load();
-      const p         = playlists.find(pl => pl.id === created.id);
-      if (p) {
+      const created = this.createPlaylist(playlistTitle);
+      this._updatePlaylist(created.id, p => {
         p.dailyTaskRequire   = require;
         p.dailyTaskRemaining = remaining;
         p.dailyTaskDate      = todayStr;
-        this.save(playlists);
-      }
+      });
 
       // Redistribute repeat counts across the selected subset so they still sum
       // to `remaining` — same logic as _redistributeTaskRepeats.
