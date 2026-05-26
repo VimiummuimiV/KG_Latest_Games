@@ -3,6 +3,7 @@ import { createCustomTooltip, updateTooltipContent } from '../../tooltip.js';
 import { icons } from '../../icons.js';
 import { DEFAULTS } from '../../definitions.js';
 import { toggleHoverArea } from './visibility.js';
+import { PlaylistsManager } from '../../playlistsManager.js';
 
 function generatePanelToggleTooltipText(main) {
   const container = document.getElementById('latest-games-container');
@@ -17,6 +18,7 @@ function generatePanelToggleTooltipText(main) {
     [Ctrl + Клик] Изменить задержку скрытия панели
     (${main.hidePanelDelay ?? DEFAULTS.hidePanelDelay} мс)
     [Alt + Клик] Зона наведения: ${main.hoverAreaEnabled ? 'Включена' : 'Отключена'}
+    [ПКМ] Открыть плейлисты
   `;
 }
 
@@ -40,6 +42,11 @@ export function createPanelToggleButton(main) {
   };
   
   btn.addEventListener('mouseenter', updatePanelToggleTooltip);
+
+  btn.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    PlaylistsManager.showCentered();
+  });
   
   createCustomTooltip(btn, generatePanelToggleTooltipText(main));
   
