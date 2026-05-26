@@ -842,36 +842,41 @@ export const PlaylistsManager = {
   // Remainder repeats are front-loaded (e.g. 10÷3 → 4, 3, 3).
   // Replaces the selected entries in-place (at the position of the first selected entry).
   bulkConvertRepeatsToEntries(playlistId, entryIds, chunkSize) {
-    const playlists = this.load();
-    const p = playlists.find(p => p.id === playlistId);
-    if (!p) return;
-    const idSet   = new Set(entryIds);
-    const sources = p.entries.filter(e => idSet.has(e.id));
-    if (!sources.length) return;
-    const chunks  = Math.max(1, chunkSize);
-    this._pushUndo(`Конвертация ${sources.length} игр из «${p.title}», разбивка на ${chunks} части`);
-    const newEntries = [];
-    for (let round = 0; round < chunks; round++) {
-      for (const src of sources) {
-        const total = src.repeatCount ?? 1;
-        const base  = Math.floor(total / chunks);
-        const rem   = total % chunks;
-        const count = base + (round < rem ? 1 : 0);
-        if (count <= 0) continue;
-        newEntries.push({
-          id: generateRandomString(),
-          gameId: src.gameId,
-          repeatCount: count,
-          params: src.params ? { ...src.params } : {},
-          ...(src.label ? { label: src.label } : {}),
-          ...(src.repeatLocked ? { repeatLocked: true } : {}),
-        });
+    const chunks = Math.max(1, chunkSize);
+    const idSet = new Set(entryIds);
+
+    this._updatePlaylist(playlistId, p => {
+      const sources = p.entries.filter(e => idSet.has(e.id));
+      if (!sources.length) return;
+
+      this._pushUndo(`Конвертация ${sources.length} игр из «${p.title}», разбивка на ${chunks} части`);
+
+      const newEntries = [];
+
+      for (let round = 0; round < chunks; round++) {
+        for (const src of sources) {
+          const total = src.repeatCount ?? 1;
+          const base  = Math.floor(total / chunks);
+          const rem   = total % chunks;
+          const count = base + (round < rem ? 1 : 0);
+
+          if (count <= 0) continue;
+
+          newEntries.push({
+            id: generateRandomString(),
+            gameId: src.gameId,
+            repeatCount: count,
+            params: src.params ? { ...src.params } : {},
+            ...(src.label ? { label: src.label } : {}),
+            ...(src.repeatLocked ? { repeatLocked: true } : {}),
+          });
+        }
       }
-    }
-    const firstIdx = p.entries.findIndex(e => idSet.has(e.id));
-    p.entries = p.entries.filter(e => !idSet.has(e.id));
-    p.entries.splice(firstIdx < 0 ? p.entries.length : firstIdx, 0, ...newEntries);
-    this.save(playlists);
+
+      const firstIdx = p.entries.findIndex(e => idSet.has(e.id));
+      p.entries = p.entries.filter(e => !idSet.has(e.id));
+      p.entries.splice(firstIdx < 0 ? p.entries.length : firstIdx, 0, ...newEntries);
+    });
   },
 
   // ── Shared helpers ─────────────────────────────────────────────────────────
