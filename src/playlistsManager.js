@@ -1334,7 +1334,7 @@ export const PlaylistsManager = {
 
   _keydown: e => {
     if (PlaylistsManager._isPinned()) return;
-    if (e.key === 'Escape') PlaylistsManager.hide();
+    if (e.key === 'Escape' && !document.activeElement?.matches('input, textarea')) PlaylistsManager.hide();
     const inTextField = !!document.activeElement?.matches('input, textarea');
     if (e.code === 'KeyQ') {
       if (inTextField) return;
@@ -3339,6 +3339,7 @@ export const PlaylistsManager = {
     const cancel = () => {
       if (committed) return;
       committed = true;
+      input.value = currentValue;
       onCancel();
     };
 
@@ -3348,7 +3349,7 @@ export const PlaylistsManager = {
       if (e.key === 'Escape') { e.preventDefault(); cancel(); }
     });
     wrap.addEventListener('click', e => e.stopPropagation());
-    input.addEventListener('blur', () => { commit(); });
+    input.addEventListener('blur', () => cancel());
 
     // Focus + select-all on next frame so the element is in the DOM first
     requestAnimationFrame(() => { input.focus(); input.select(); });
