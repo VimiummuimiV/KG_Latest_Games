@@ -803,7 +803,7 @@ export const VocabulariesManager = {
         this.removeAll(currentStatusFilter, currentTypeFilter, isSearchActive ? currentFilteredVocabs : null);
       });
 
-      attachInputClearButton(searchInput, searchInput.parentElement, applyFilters);
+      searchInput.addEventListener('input', applyFilters);
 
       statusFilterContainer.addEventListener('click', (e) => {
         if (!e.target.classList.contains('filter-btn')) return;
@@ -863,6 +863,7 @@ export const VocabulariesManager = {
     }
 
     container.appendChild(list);
+    attachInputClearButton(searchInput, searchInput.parentElement);
     return container;
   },
 
