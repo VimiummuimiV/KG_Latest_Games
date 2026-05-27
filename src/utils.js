@@ -1,4 +1,5 @@
 import { gameTypes, POSITION_MODES, POSITION_MODE_LABELS, POSITION_MODE_EMOJI } from "./definitions.js";
+import { icons } from "./icons.js";
 
 export function generateRandomString() {
   return Array.from(crypto.getRandomValues(new Uint8Array(32)))
@@ -380,8 +381,8 @@ export function _attachCountDblClick(span, { getValue, setValue, min = 1, max = 
 }
 
 // Appends a clear (×) button to `container` (needs position:relative).
-export function attachInputClearButton(input, container, iconHTML, onChange) {
-  const btn = createElement('div', { className: 'input-clear-btn', innerHTML: iconHTML });
+export function attachInputClearButton(input, container, onChange) {
+  const btn = createElement('div', { className: 'input-clear-btn', innerHTML: icons.x });
 
   const MIN_LEFT = 6;
 

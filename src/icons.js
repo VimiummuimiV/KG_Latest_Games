@@ -23,14 +23,6 @@ export const icons = {
     </svg>
   `,
 
-  delete: `
-    <svg xmlns="${SVG_NS}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="18" y1="6" x2="6" y2="18"></line>
-      <line x1="6" y1="6" x2="18" y2="18"></line>
-    </svg>
-  `,
-
   chevronLeft: `
     <svg xmlns="${SVG_NS}" viewBox="0 0 24 24">
       <path d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z" fill="currentColor"/>

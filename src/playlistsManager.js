@@ -2136,7 +2136,7 @@ export const PlaylistsManager = {
 
     // Remove
     const removeBtn = _el('button', 'playlist-entry-remove');
-    removeBtn.innerHTML = icons.delete;
+    removeBtn.innerHTML = icons.x;
     createCustomTooltip(removeBtn, 'Убрать из плейлиста');
     removeBtn.addEventListener('click', e => {
       e.stopPropagation();
@@ -3076,7 +3076,7 @@ export const PlaylistsManager = {
     });
 
     const removeBtn = _el('button', 'playlist-multiselect-remove');
-    removeBtn.innerHTML = icons.delete;
+    removeBtn.innerHTML = icons.x;
     createCustomTooltip(removeBtn, 'Убрать выбранные из плейлиста');
     removeBtn.addEventListener('click', e => {
       e.stopPropagation();
@@ -3327,7 +3327,7 @@ export const PlaylistsManager = {
     input.value       = currentValue;
     wrap.appendChild(input);
 
-    attachInputClearButton(input, wrap, icons.delete, null);
+    attachInputClearButton(input, wrap);
 
     let committed = false;
     const commit = () => {
@@ -3374,7 +3374,7 @@ export const PlaylistsManager = {
     input.addEventListener('keydown', e => { if (e.key === 'Enter') doCreate(); });
 
     nameRow.append(input);
-    attachInputClearButton(input, nameRow, icons.delete, null);
+    attachInputClearButton(input, nameRow);
     form.appendChild(nameRow);
 
     // ── Action buttons row (sits below the name input) ────────────────────────

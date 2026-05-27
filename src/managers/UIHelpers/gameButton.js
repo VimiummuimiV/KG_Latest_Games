@@ -49,7 +49,7 @@ export function createGameElement(main, game, id) {
 
   const deleteButton = createElement('div', {
     className: 'latest-game-delete',
-    innerHTML: icons.delete
+    innerHTML: icons.x
   });
 
   createCustomTooltip(

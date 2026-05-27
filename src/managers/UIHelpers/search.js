@@ -1,4 +1,3 @@
-import { icons } from '../../icons.js';
 import { createElement, attachInputClearButton } from '../../utils.js';
 import { createCustomTooltip } from '../../tooltip.js';
 
@@ -89,7 +88,7 @@ export function createSearchBox(main) {
   });
 
   // Attach shared clear button; onChange fires when the button is clicked
-  attachInputClearButton(searchInput, searchContainer, icons.delete, (value) => {
+  attachInputClearButton(searchInput, searchContainer, (value) => {
     handleSearch(main, value);
     if (!value) clearSavedSearchQuery();
   });
