@@ -3779,7 +3779,6 @@ export const PlaylistsManager = {
     searchInput.type        = 'text';
     searchInput.placeholder = 'Поиск по названию...';
     searchWrap.appendChild(searchInput);
-    searchInput.addEventListener('click', e => e.stopPropagation());
 
     // ── Group filter chip strip — always visible when picker is open ──────
     const groupFilterRow = _el('div', 'playlist-picker-group-filter playlist-picker-group-filter--hidden');
@@ -4134,7 +4133,9 @@ export const PlaylistsManager = {
       syncGfActions();
     });
 
+    searchInput.addEventListener('click', e => e.stopPropagation());
     searchInput.addEventListener('input', () => applyFilter());
+    attachInputClearButton(searchInput, searchWrap, applyFilter);
 
     // ── Voc-type chips — injected async once types resolve ─────────────────
     Promise.all(allRows.map(async ({ game, gameRow }) => {
