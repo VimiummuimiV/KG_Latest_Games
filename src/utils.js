@@ -378,3 +378,35 @@ export function _attachCountDblClick(span, { getValue, setValue, min = 1, max = 
     input.addEventListener('mousedown', e => e.stopPropagation());
   });
 }
+
+// Appends a clear (×) button to `container` (needs position:relative).
+export function attachInputClearButton(input, container, iconHTML, onChange) {
+  const btn = createElement('div', { className: 'input-clear-btn', innerHTML: iconHTML });
+
+  const MIN_LEFT = 6;
+
+  const _canvas = document.createElement('canvas');
+  const _ctx = _canvas.getContext('2d');
+
+  function _updateFollowPosition() {
+    const s = window.getComputedStyle(input);
+    _ctx.font = `${s.fontWeight} ${s.fontSize} ${s.fontFamily}`;
+    const left = _ctx.measureText(input.value).width + (parseFloat(s.paddingLeft) || 0) + MIN_LEFT;
+    if (left + btn.offsetWidth > input.offsetWidth - 8) btn.classList.remove('input-clear-btn--visible');
+    else btn.style.left = `${left}px`;
+  }
+
+  const update = () => {
+    const hasValue = !!input.value;
+    btn.classList.toggle('input-clear-btn--visible', hasValue);
+    hasValue ? _updateFollowPosition() : (btn.style.left = `${MIN_LEFT}px`);
+  }
+
+  input.addEventListener('input', () => { update(); onChange?.(input.value); });
+  btn.addEventListener('mousedown', e => e.preventDefault());
+  btn.addEventListener('click', () => { input.value = ''; input.focus(); update(); onChange?.(''); });
+
+  container.appendChild(btn);
+  requestAnimationFrame(update);
+  return btn;
+}

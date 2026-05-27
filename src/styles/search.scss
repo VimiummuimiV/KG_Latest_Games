@@ -45,35 +45,6 @@
       color: var(--rg-text-primary);
     }
   }
-  
-  // Clear button styling
-  .latest-games-clear-btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 24px;
-    height: 24px;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.15s ease;
-    z-index: 1;
-
-    svg {
-      width: 14px;
-      height: 14px;
-    }
-    
-    &.visible {
-      opacity: 1;
-      visibility: visible;
-    }
-  }
 }
 
 .latest-games-search-noresults {

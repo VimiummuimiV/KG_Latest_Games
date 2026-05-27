@@ -1,7 +1,7 @@
 import { createCustomTooltip, updateTooltipContent, hideTooltipElement } from './tooltip.js';
 import { icons } from './icons.js';
 import { gameTypes, gameCategories, typeMapping, visibilities, timeouts, idleTimes, POSITION_MODES, TASK_GAME_DEFAULTS, STEPPER_DRAG_TIP } from './definitions.js';
-import { generateRandomString, generateUniqueId, getCurrentPage, formatPosition, positionTooltip, _attachButtonHold, _attachStepperDrag, _attachCountDblClick } from './utils.js';
+import { generateRandomString, generateUniqueId, getCurrentPage, formatPosition, positionTooltip, _attachButtonHold, _attachStepperDrag, _attachCountDblClick, attachInputClearButton } from './utils.js';
 import { fetchVocabularyData, showTooltip, startHideTimeout } from './vocabularyContent.js';
 import { fetchVocabularyBasicData } from './vocabularyCreation.js';
 
@@ -3327,6 +3327,8 @@ export const PlaylistsManager = {
     input.value       = currentValue;
     wrap.appendChild(input);
 
+    attachInputClearButton(input, wrap, icons.delete, null);
+
     let committed = false;
     const commit = () => {
       if (committed) return;
@@ -3372,6 +3374,7 @@ export const PlaylistsManager = {
     input.addEventListener('keydown', e => { if (e.key === 'Enter') doCreate(); });
 
     nameRow.append(input);
+    attachInputClearButton(input, nameRow, icons.delete, null);
     form.appendChild(nameRow);
 
     // ── Action buttons row (sits below the name input) ────────────────────────

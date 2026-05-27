@@ -1,5 +1,5 @@
 import { icons } from '../../icons.js';
-import { createElement } from '../../utils.js';
+import { createElement, attachInputClearButton } from '../../utils.js';
 import { createCustomTooltip } from '../../tooltip.js';
 
 const SEARCH_STORAGE_KEY = 'latestGamesSearchQuery';
@@ -52,126 +52,49 @@ function clearSavedSearchQuery() {
   }
 }
 
-// Function to calculate text width
-function getTextWidth(text, font) {
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d');
-  context.font = font;
-  return context.measureText(text).width;
-}
-
-// Function to get computed font style from element
-function getFontStyle(element) {
-  const style = window.getComputedStyle(element);
-  return `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-}
-
-// Function to update clear button position
-function updateClearButtonPosition(searchBox, clearButton) {
-  const text = searchBox.value;
-  if (!text) {
-    clearButton.style.left = '';
-    return;
-  }
-
-  const font = getFontStyle(searchBox);
-  const textWidth = getTextWidth(text, font);
-
-  const marginLeft = 20;
-
-  // Position the clear button at the end of the text
-  const leftPosition = textWidth + marginLeft;
-  clearButton.style.left = `${leftPosition}px`;
-
-  // Get the actual width of the clear button
-  const buttonWidth = clearButton.offsetWidth || 24; // fallback to 24px if not rendered yet
-
-  // Calculate if the button would fit within the input boundaries
-  const inputWidth = searchBox.offsetWidth;
-  // Assume paddingRight and borderRight are small/fixed, or set a safe value
-  const inputContentEnd = inputWidth - 8;
-  const buttonEndPosition = leftPosition + buttonWidth;
-
-  // Hide button if it would extend beyond the input's content area
-  if (buttonEndPosition > inputContentEnd) {
-    clearButton.classList.remove('visible');
-  }
-}
-
 export function createSearchBox(main) {
   const searchContainer = createElement('div', {
     className: `latest-games-search-container ${main.showSearchBox ? '' : 'latest-games-hidden'}`
   });
 
-  const searchBox = createElement('input', {
+  const searchInput = createElement('input', {
     type: 'search',
     id: 'latest-games-search-input',
   });
 
-  const clearButton = createElement('div', {
-    id: 'latest-games-clear-button',
-    className: 'latest-games-clear-btn',
-    innerHTML: icons.delete
-  });
-
-  // Make sure the search container has relative positioning for absolute positioning of clear button
-  searchContainer.style.position = 'relative';
+  searchContainer.appendChild(searchInput);
 
   // Restore saved search query on creation
   const savedQuery = loadSearchQuery();
   if (savedQuery) {
-    searchBox.value = savedQuery;
+    searchInput.value = savedQuery;
     requestAnimationFrame(() => {
-      updateClearButtonVisibility(clearButton, savedQuery);
-      updateClearButtonPosition(searchBox, clearButton);
       handleSearch(main, savedQuery);
     });
   }
 
-  // Handle input events
-  searchBox.addEventListener('input', (e) => {
+  // Handle input events (separate from the clear-button onChange so we can
+  // also react to keyboard input and save/search accordingly)
+  searchInput.addEventListener('input', (e) => {
     const value = e.target.value.trim();
     handleSearch(main, value);
-    updateClearButtonVisibility(clearButton, value);
-    updateClearButtonPosition(searchBox, clearButton);
-
-    // Save search query (or remove if empty)
     saveSearchQuery(value);
   });
 
-  // Handle clear button click
-  clearButton.addEventListener('click', () => {
-    searchBox.value = '';
-    searchBox.focus();
-    handleSearch(main, '');
-    updateClearButtonVisibility(clearButton, '');
-    updateClearButtonPosition(searchBox, clearButton);
-
-    // Clear saved search query when explicitly cleared
-    clearSavedSearchQuery();
-  });
-
-  // Handle keyboard events to detect explicit clearing
-  searchBox.addEventListener('keydown', (e) => {
-    // If backspace or delete is pressed and the input becomes empty, clear saved query
-    if ((e.key === 'Backspace' || e.key === 'Delete') && searchBox.value.length === 1) {
-      // The input will be empty after this keypress
-      if (!searchBox.value.trim()) clearSavedSearchQuery();
+  // Handle keyboard events to detect explicit clearing via Backspace/Delete
+  searchInput.addEventListener('keydown', (e) => {
+    if ((e.key === 'Backspace' || e.key === 'Delete') && searchInput.value.length === 1) {
+      if (!searchInput.value.trim()) clearSavedSearchQuery();
     }
   });
 
-  // Initial setup
-  updateClearButtonVisibility(clearButton, searchBox.value);
-  updateClearButtonPosition(searchBox, clearButton);
-
-  searchContainer.appendChild(searchBox);
-  searchContainer.appendChild(clearButton);
+  // Attach shared clear button; onChange fires when the button is clicked
+  attachInputClearButton(searchInput, searchContainer, icons.delete, (value) => {
+    handleSearch(main, value);
+    if (!value) clearSavedSearchQuery();
+  });
 
   return searchContainer;
-}
-
-function updateClearButtonVisibility(clearButton, value) {
-  clearButton.classList.toggle('visible', !!value);
 }
 
 export function handleSearch(main, query, showAll = false) {
@@ -253,10 +176,10 @@ export function toggleSearchBox(main) {
   }
 
   if (!isHidden) {
-    const searchBox = document.getElementById('latest-games-search-input');
-    if (searchBox) {
-      searchBox.focus();
-      searchBox.select();
+    const searchInput = document.getElementById('latest-games-search-input');
+    if (searchInput) {
+      searchInput.focus();
+      searchInput.select();
     }
   }
 }

@@ -363,6 +363,7 @@ body.playlist-drag-active * { cursor: grabbing !important; }
     gap: 0.4em;
     align-items: center;
     width: 100%;
+    position: relative;
 
     .playlists-create-input {
       @include text-input();
