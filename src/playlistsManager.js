@@ -1863,7 +1863,7 @@ export const PlaylistsManager = {
         titleSpan.style.display = 'none';
         const wrap = this._buildInlineRenameInput(
           playlist.title,
-          'Новое название плейлиста...',
+          'Название плейлиста',
           val => {
             this.renamePlaylist(playlist.id, val);
             this.refresh(playlist.id);
@@ -2319,7 +2319,7 @@ export const PlaylistsManager = {
       label.style.display = 'none';
       const wrap = PlaylistsManager._buildInlineRenameInput(
         entry.label ?? '',
-        'Новое название для игры...',
+        'Название игры',
         val => {
           entry.label = val;
           PlaylistsManager.setEntryLabel(playlist.id, entry.id, val);
