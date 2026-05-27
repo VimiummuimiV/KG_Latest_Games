@@ -405,7 +405,13 @@ export function attachInputClearButton(input, container, onChange) {
 
   input.addEventListener('input', () => { update(); onChange?.(input.value); });
   btn.addEventListener('mousedown', e => e.preventDefault());
-  btn.addEventListener('click', () => { input.value = ''; input.focus(); update(); onChange?.(''); });
+  btn.addEventListener('click', () => {
+    input.value = '';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.focus();
+    update();
+    onChange?.('');
+  });
 
   container.appendChild(btn);
   requestAnimationFrame(update);
