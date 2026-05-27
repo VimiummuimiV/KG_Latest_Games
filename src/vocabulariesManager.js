@@ -4,6 +4,7 @@ import { createCustomTooltip } from "./tooltip";
 import { icons } from './icons.js';
 import { typeMapping } from "./definitions";
 import { createGameInfoPopup } from "./gameInfo.js";
+import { attachInputClearButton } from './utils.js';
 
 export const VocabulariesManager = {
   popup: null,
@@ -330,11 +331,16 @@ export const VocabulariesManager = {
     const searchSection = document.createElement('div');
     searchSection.className = 'popup-search-filters';
 
+    const searchWrap = document.createElement('div');
+    searchWrap.className = 'search-input-wrap';
+
     const searchInput = Object.assign(document.createElement('input'), {
       type: 'text',
       placeholder: 'Поиск по ID, названию или автору...',
       className: 'search-input'
     });
+
+    searchWrap.appendChild(searchInput);
 
     const statusFilterContainer = document.createElement('div');
     statusFilterContainer.className = 'filter-buttons';
@@ -423,9 +429,12 @@ export const VocabulariesManager = {
 
     typeFilterContainer.append(allTypesBtn, wordsBtn, phrasesBtn, textsBtn, urlBtn, booksBtn, generatorBtn);
 
-    searchSection.append(searchInput, statusFilterContainer, typeFilterContainer);
+    searchSection.append(searchWrap, statusFilterContainer, typeFilterContainer);
 
-    return { searchSection, searchInput, statusFilterContainer, typeFilterContainer };
+    searchSection.searchInput = searchInput;
+    searchSection.statusFilterContainer = statusFilterContainer;
+    searchSection.typeFilterContainer = typeFilterContainer;
+    return searchSection;
   },
 
   // Create a vocab item DOM node. count is optional (used for played count badges).
@@ -617,8 +626,7 @@ export const VocabulariesManager = {
    
     container.appendChild(actions);
 
-    const { searchSection, searchInput, statusFilterContainer, typeFilterContainer } = this.createSearchAndFilterSection();
-    container.appendChild(searchSection);
+    const { searchInput, statusFilterContainer, typeFilterContainer } = container.appendChild(this.createSearchAndFilterSection());
 
     const list = document.createElement('div');
     list.className = 'vocab-list';
@@ -795,7 +803,7 @@ export const VocabulariesManager = {
         this.removeAll(currentStatusFilter, currentTypeFilter, isSearchActive ? currentFilteredVocabs : null);
       });
 
-      searchInput.addEventListener('input', applyFilters);
+      attachInputClearButton(searchInput, searchInput.parentElement, applyFilters);
 
       statusFilterContainer.addEventListener('click', (e) => {
         if (!e.target.classList.contains('filter-btn')) return;

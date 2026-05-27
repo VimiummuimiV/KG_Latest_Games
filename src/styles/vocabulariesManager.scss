@@ -156,6 +156,10 @@
     flex-direction: column;
     gap: 0.6em;
 
+    .search-input-wrap {
+      position: relative;
+    }
+
     .search-input {
       width: 100%;
       background: var(--rg-bg-card);
