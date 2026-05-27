@@ -3347,6 +3347,7 @@ export const PlaylistsManager = {
       if (e.key === 'Enter')  { e.preventDefault(); commit(); }
       if (e.key === 'Escape') { e.preventDefault(); cancel(); }
     });
+    wrap.addEventListener('click', e => e.stopPropagation());
     input.addEventListener('blur', () => { commit(); });
 
     // Focus + select-all on next frame so the element is in the DOM first
