@@ -774,6 +774,8 @@ $gametypes: (
         background: color-mix(in srgb, var(--pl-entry-color) 25%, transparent) !important;
         border-color: var(--pl-entry-color) !important;
       }
+      // Boost label brightness so it stays readable against the tinted background.
+      .playlist-entry-label { filter: brightness(1.4); }
     }
 
     // Passed (already played) entries — dimmed via background, never opacity,
