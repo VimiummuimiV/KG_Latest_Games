@@ -175,16 +175,24 @@ body.playlist-drag-active * { cursor: grabbing !important; }
   @include stepper-inline-input();
 }
 
+// All known game types mapped to their theme CSS variable.
+// Used for label colors, and for active/progress row tints below.
+$gametypes: (
+  'voc':      '--rg-gametype-voc',
+  'normal':   '--rg-gametype-normal',
+  'abra':     '--rg-gametype-abra',
+  'noerror':  '--rg-gametype-noerror',
+  'marathon': '--rg-gametype-marathon',
+  'chars':    '--rg-gametype-chars',
+  'digits':   '--rg-gametype-digits',
+  'sprint':   '--rg-gametype-sprint',
+);
+
 // Shared gametype color rules — used by both .playlist-entry-label and .playlist-picker-game-name
 %gametype-colors {
-  &.gametype-voc      { color: var(--rg-gametype-voc) !important; }
-  &.gametype-normal   { color: var(--rg-gametype-normal) !important; }
-  &.gametype-abra     { color: var(--rg-gametype-abra) !important; }
-  &.gametype-noerror  { color: var(--rg-gametype-noerror) !important; }
-  &.gametype-marathon { color: var(--rg-gametype-marathon) !important; }
-  &.gametype-chars    { color: var(--rg-gametype-chars) !important; }
-  &.gametype-digits   { color: var(--rg-gametype-digits) !important; }
-  &.gametype-sprint   { color: var(--rg-gametype-sprint) !important; }
+  @each $type, $var in $gametypes {
+    &.gametype-#{$type} { color: var(#{$var}) !important; }
+  }
 }
 
 .playlists-manager-popup {
@@ -747,12 +755,24 @@ body.playlist-drag-active * { cursor: grabbing !important; }
 
     &:hover { background: var(--rg-bg-hover); border-color: var(--rg-border-hover); }
 
+    // Active and progress rows use the gametype color of their entry label.
+    // --pl-entry-color is set per-row via :has(.gametype-X) and consumed by
+    // both --active background/border and --progress::before fill.
+    &--active,
+    &--progress {
+      --pl-entry-color: hsl(var(--rg-popup-item-new)); // fallback: original color
+
+      @each $type, $var in $gametypes {
+        &:has(.gametype-#{$type}) { --pl-entry-color: var(#{$var}); }
+      }
+    }
+
     &--active {
-      background: hsla(var(--rg-popup-item-new) / 0.15) !important;
-      border: 1px solid hsla(var(--rg-popup-item-new) / 0.6) !important;
+      background: color-mix(in srgb, var(--pl-entry-color) 15%, transparent) !important;
+      border: 1px solid color-mix(in srgb, var(--pl-entry-color) 60%, transparent) !important;
       &:hover {
-        background: hsla(var(--rg-popup-item-new) / 0.25) !important;
-        border-color: hsl(var(--rg-popup-item-new)) !important;
+        background: color-mix(in srgb, var(--pl-entry-color) 25%, transparent) !important;
+        border-color: var(--pl-entry-color) !important;
       }
     }
 
@@ -811,7 +831,7 @@ body.playlist-drag-active * { cursor: grabbing !important; }
       position: absolute;
       inset: 0;
       width: var(--playlist-progress, 0%);
-      background: hsla(var(--rg-popup-item-new) / 0.18);
+      background: color-mix(in srgb, var(--pl-entry-color) 18%, transparent);
       pointer-events: none;
       // Bouncy transition — cubic-bezier overshoots slightly then settles
       transition: width 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
