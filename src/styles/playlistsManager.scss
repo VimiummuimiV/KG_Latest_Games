@@ -774,8 +774,25 @@ $gametypes: (
         background: color-mix(in srgb, var(--pl-entry-color) 25%, transparent) !important;
         border-color: var(--pl-entry-color) !important;
       }
-      // Boost label brightness so it stays readable against the tinted background.
-      .playlist-entry-label { filter: brightness(1.4); }
+      // Tint play-state elements with the gametype color and boost brightness
+      // for contrast against the tinted background.
+      // playlist-entry-play-count is intentionally excluded — it has its own
+      // locked/default color states that must not be overridden.
+      .playlist-entry-label,
+      .playlist-entry-play-btn,
+      .playlist-entry-drag-handle,
+      .playlist-entry-duplicate-btn {
+        color: var(--pl-entry-color) !important;
+        filter: brightness(1.4);
+      }
+      .playlist-entry-play-btn,
+      .playlist-entry-duplicate-btn {
+        &:hover {
+          color: var(--pl-entry-color) !important;
+          background: color-mix(in srgb, var(--pl-entry-color) 15%, transparent) !important;
+          border-color: var(--pl-entry-color) !important;
+        }
+      }
     }
 
     // Passed (already played) entries — dimmed via background, never opacity,
