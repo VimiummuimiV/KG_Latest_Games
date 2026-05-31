@@ -163,43 +163,38 @@ export function createControls(main) {
       const previousGroupId = main.groupsManager.currentGroupId;
       const previousGameId = main.gamesManager.previousGameId;
 
-      // Store old IDs before regeneration
+      // Build old→new ID maps before regeneration
+      const gameIdMap = new Map();
+      const groupIdMap = new Map();
+
       main.groupsManager.groups.forEach(group => {
-        group._oldId = group.id;
+        const newGroupId = generateUniqueId(main.groupsManager.groups);
+        groupIdMap.set(group.id, newGroupId);
         group.games.forEach(game => {
-          game._oldId = game.id;
+          const newGameId = generateUniqueId(main.groupsManager.groups);
+          gameIdMap.set(game.id, newGameId);
+          game.id = newGameId;
         });
+        group.id = newGroupId;
       });
 
-      // Regenerate all IDs
-      main.groupsManager.groups.forEach(group => {
-        group.id = generateUniqueId(main.groupsManager.groups);
-        group.games.forEach(game => {
-          game.id = generateUniqueId(main.groupsManager.groups);
+      // Restore currentGroupId and previousGameId using the maps
+      if (previousGroupId && groupIdMap.has(previousGroupId))
+        main.groupsManager.currentGroupId = groupIdMap.get(previousGroupId);
+      if (previousGameId && gameIdMap.has(previousGameId))
+        main.gamesManager.previousGameId = gameIdMap.get(previousGameId);
+
+      // Update playlist entries to reference the new game IDs
+      const playlists = PlaylistsManager.load();
+      playlists.forEach(playlist => {
+        playlist.entries.forEach(entry => {
+          if (gameIdMap.has(entry.gameId)) entry.gameId = gameIdMap.get(entry.gameId);
         });
       });
+      PlaylistsManager.save(playlists);
 
-      // Restore currentGroupId if possible
-      if (previousGroupId) {
-        const foundGroup = main.groupsManager.groups.find(g => g._oldId === previousGroupId);
-        if (foundGroup) main.groupsManager.currentGroupId = foundGroup.id;
-      }
-      // Restore previousGameId if possible
-      if (previousGameId) {
-        for (const group of main.groupsManager.groups) {
-          const found = group.games.find(g => g._oldId === previousGameId);
-          if (found) {
-            main.gamesManager.previousGameId = found.id;
-            break;
-          }
-        }
-      }
-      // Remove temporary _oldId properties
-      main.groupsManager.groups.forEach(group => {
-        delete group._oldId;
-        group.games.forEach(game => delete game._oldId);
-      });
       main.gamesManager.saveGamesData();
+      main.gamesManager.saveState();
       main.uiManager.refreshContainer();
       alert('✔️ Все ID для групп и игр были обновлены!');
     }
