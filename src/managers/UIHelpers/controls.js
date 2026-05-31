@@ -1147,6 +1147,7 @@ export function createControls(main) {
   // Sync all stateful button visuals to current main.* values.
   // Called after import/reset so buttons reflect the loaded state without a page reload.
   main.applyButtonStates = () => {
+    closeMore();
     // setupControlButton buttons: re-apply disabled class + tooltip
     playBtn.classList.toggle('latest-games-disabled', !main.shouldStart);
     updateTooltip(playBtn, main.shouldStart, playBtnTexts, main.startDelay);
