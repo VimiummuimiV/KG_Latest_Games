@@ -444,14 +444,8 @@ export function createControls(main) {
     innerHTML: icons.help
   });
   const updateHelpTooltip = () => {
-    createCustomTooltip(
-      helpToggleBtn,
-      main.showHelpTooltips
-        ? 'Скрыть подсказки'
-        : 'Показать подсказки',
-      'help'
-    );
     helpToggleBtn.classList.toggle('latest-games-disabled', !main.showHelpTooltips);
+    createCustomTooltip(helpToggleBtn, main.showHelpTooltips ? 'Скрыть подсказки' : 'Показать подсказки', 'help');
   }
   updateHelpTooltip();
   helpToggleBtn.addEventListener('click', () => {
@@ -469,13 +463,8 @@ export function createControls(main) {
     innerHTML: icons.search
   });
   const updateSearchTooltip = () => {
-    createCustomTooltip(
-      searchBtn,
-      main.showSearchBox
-        ? '[Ctrl + F] Скрыть поисковую строку'
-        : '[Ctrl + F] Показать поисковую строку'
-    );
     searchBtn.classList.toggle('latest-games-disabled', !main.showSearchBox);
+    createCustomTooltip(searchBtn, main.showSearchBox ? '[Ctrl + F] Скрыть поисковую строку' : '[Ctrl + F] Показать поисковую строку');
   };
   updateSearchTooltip();
   searchBtn.addEventListener('click', () => {
@@ -1059,13 +1048,8 @@ export function createControls(main) {
   });
 
   const updateVocabularyDataTooltip = () => {
-    createCustomTooltip(
-      vocabularyDataBtn,
-      main.showVocabularyData
-        ? 'Скрыть содержимое словаря'
-        : 'Показать содержимое словаря'
-    );
     vocabularyDataBtn.classList.toggle('latest-games-disabled', !main.showVocabularyData);
+    createCustomTooltip(vocabularyDataBtn, main.showVocabularyData ? 'Скрыть содержимое словаря' : 'Показать содержимое словаря');
   };
 
   updateVocabularyDataTooltip();
