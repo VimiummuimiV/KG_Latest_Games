@@ -1,6 +1,7 @@
 import { icons } from '../icons.js';
 import { createElement, generateUniqueId } from '../utils.js';
 import { createCustomTooltip } from '../tooltip.js';
+import { DEFAULTS } from '../definitions.js';
 
 export class GroupsManager {
   constructor(main) {
@@ -9,7 +10,7 @@ export class GroupsManager {
     this.currentGroupId = null;
     this.latestGroupAddedGameId = null;
     this.latestGroupMigratedGameId = null;
-    this.groupViewMode = 'tabs';
+    this.groupViewMode = DEFAULTS.groupViewMode;
   }
 
   createGroup(title) {
@@ -67,6 +68,13 @@ export class GroupsManager {
   // Set group view mode
   setGroupViewMode(mode) {
     this.groupViewMode = mode;
+  }
+
+  // Reset own defaults (called on full settings reset)
+  reset() {
+    this.groupViewMode = DEFAULTS.groupViewMode;
+    this.groups = [this.createGroup('Группа-1')];
+    this.currentGroupId = this.groups[0].id;
   }
 
   // Get group view mode

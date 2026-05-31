@@ -234,11 +234,12 @@ export function createControls(main) {
     className: 'latest-games-play control-button',
     innerHTML: icons.play
   });
-  setupControlButton(playBtn, main, 'shouldStart', 'startDelay', {
+  const playBtnTexts = {
     click: (isEnabled) => `Автозапуск игры: ${isEnabled ? 'Включено' : 'Отключено'}`,
     shift: () => 'Изменить задержку автозапуска',
     delayErrorText: 'Пожалуйста, введите корректное значение задержки автозапуска.'
-  });
+  };
+  setupControlButton(playBtn, main, 'shouldStart', 'startDelay', playBtnTexts);
 
   // Add button to toggle replay in game
   const getReplayIcon = () => main.replayWithoutWaiting ? icons.replayImmediately : icons.replay;
@@ -248,13 +249,14 @@ export function createControls(main) {
       + (main.replayWithoutWaiting ? ' replay-without-waiting' : ''),
     innerHTML: getReplayIcon()
   });
-  setupControlButton(replayBtn, main, 'shouldReplay', 'replayDelay', {
+  const replayBtnTexts = {
     click: (isEnabled) => `Автосоздание игры: ${isEnabled ? 'Включено' : 'Отключено'}`,
     shift: () => 'Изменить задержку автосоздания',
     ctrl: () => `Режим автосоздания: ${main.replayNextGame ? 'Следующая️' : 'Текущая'}`,
     alt: () => `Ожидание игроков: ${main.replayWithoutWaiting ? 'Отключено' : 'Включено'}`,
     delayErrorText: 'Пожалуйста, введите корректное значение задержки автосоздания.'
-  });
+  };
+  setupControlButton(replayBtn, main, 'shouldReplay', 'replayDelay', replayBtnTexts);
 
   // Add button to toggle replay more functionality with count setting
   const replayMoreBtn = createElement('span', {
@@ -401,24 +403,16 @@ export function createControls(main) {
     className: 'latest-games-drag-toggle control-button',
     innerHTML: icons.drag
   });
-  createCustomTooltip(
-    dragToggleBtn,
-    main.enableDragging
-      ? 'Перетаскивание: Включено'
-      : 'Перетаскивание: Отключено'
-  );
-  dragToggleBtn.classList.toggle('latest-games-disabled', !main.enableDragging);
+  const updateDragToggle = () => {
+    dragToggleBtn.classList.toggle('latest-games-disabled', !main.enableDragging);
+    createCustomTooltip(dragToggleBtn, main.enableDragging ? 'Перетаскивание: Включено' : 'Перетаскивание: Отключено');
+  };
+  updateDragToggle();
   dragToggleBtn.onclick = () => {
     main.enableDragging = !main.enableDragging;
     main.settingsManager.saveSettings();
     main.uiManager.refreshContainer();
-    createCustomTooltip(
-      dragToggleBtn,
-      main.enableDragging
-        ? 'Перетаскивание: Включено'
-        : 'Перетаскивание: Отключено'
-    );
-    dragToggleBtn.classList.toggle('latest-games-disabled', !main.enableDragging);
+    updateDragToggle();
   };
 
   // Add description toggle button
@@ -426,24 +420,15 @@ export function createControls(main) {
     className: 'latest-games-desc-toggle control-button',
     innerHTML: icons.info
   });
-  createCustomTooltip(
-    descToggleBtn,
-    main.showButtonDescriptions
-      ? 'Скрыть описания кнопок'
-      : 'Показать описания кнопок'
-  );
-  descToggleBtn.classList.toggle('latest-games-disabled', !main.showButtonDescriptions);
-
+  const updateDescToggle = () => {
+    descToggleBtn.classList.toggle('latest-games-disabled', !main.showButtonDescriptions);
+    createCustomTooltip(descToggleBtn, main.showButtonDescriptions ? 'Скрыть описания кнопок' : 'Показать описания кнопок');
+  };
+  updateDescToggle();
   descToggleBtn.onclick = () => {
     main.showButtonDescriptions = !main.showButtonDescriptions;
     main.settingsManager.saveSettings();
-    descToggleBtn.classList.toggle('latest-games-disabled', !main.showButtonDescriptions);
-    createCustomTooltip(
-      descToggleBtn,
-      main.showButtonDescriptions
-        ? 'Скрыть описания кнопок'
-        : 'Показать описания кнопок'
-    );
+    updateDescToggle();
     // Refresh the container so that game descriptions are re-rendered according to the setting
     main.uiManager.refreshContainer();
     // Scroll controls to bottom after refresh to ensure all buttons are accessible
@@ -1173,6 +1158,34 @@ export function createControls(main) {
     e.stopPropagation();
     if (moreButtons.classList.contains('open')) closeMore(); else openMore();
   });
+
+  // Sync all stateful button visuals to current main.* values.
+  // Called after import/reset so buttons reflect the loaded state without a page reload.
+  main.applyButtonStates = () => {
+    // setupControlButton buttons: re-apply disabled class + tooltip
+    playBtn.classList.toggle('latest-games-disabled', !main.shouldStart);
+    updateTooltip(playBtn, main.shouldStart, playBtnTexts, main.startDelay);
+
+    replayBtn.classList.toggle('latest-games-disabled', !main.shouldReplay);
+    replayBtn.classList.toggle('replay-next-game', main.replayNextGame);
+    replayBtn.classList.toggle('replay-without-waiting', main.replayWithoutWaiting);
+    replayBtn.innerHTML = getReplayIcon();
+    updateTooltip(replayBtn, main.shouldReplay, replayBtnTexts, main.replayDelay);
+
+    // buttons with their own named updaters
+    replayMoreBtn.classList.toggle('latest-games-disabled', !main.shouldReplayMore);
+    updateReplayMoreTooltip();
+    updateRandomTooltip();
+    updateDragToggle();
+    updateDescToggle();
+    updateHelpTooltip();
+    updateSearchTooltip();
+    toggleSearchBox(main, main.showSearchBox);
+    updateVocabularyDataTooltip();
+    updatePlaylistsBtnTooltip();
+
+    main.uiManager.updateGameCountDisplay();
+  };
 
   return controlsContainer;
 }

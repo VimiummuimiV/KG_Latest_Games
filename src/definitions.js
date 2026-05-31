@@ -101,6 +101,7 @@ export const DEFAULTS = {
   maxGameCount: 5,
   currentTheme: 'light',
   displayMode: 'scroll',
+  groupViewMode: 'tabs',
   previousScrollPosition: 0,
   panelWidth: '70vw',
   panelHeight: '40vh',

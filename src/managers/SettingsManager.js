@@ -1,3 +1,5 @@
+import { DEFAULTS } from '../definitions.js';
+
 export class SettingsManager {
   constructor(main) {
     this.main = main;
@@ -7,85 +9,53 @@ export class SettingsManager {
     try {
       const settings = JSON.parse(localStorage.getItem('latestGamesSettings') || '{}');
 
-      this.main.maxGameCount = settings.maxGameCount ?? this.main.maxGameCount;
-      this.main.currentTheme = settings.currentTheme ?? this.main.currentTheme;
-      this.main.displayMode = settings.displayMode ?? this.main.displayMode;
-      this.main.groupsManager.groupViewMode = settings.groupViewMode ?? this.main.groupsManager.groupViewMode;
-      this.main.previousScrollPosition = settings.previousScrollPosition ?? this.main.previousScrollPosition;
-      this.main.enableDragging = settings.enableDragging ?? this.main.enableDragging;
-      this.main.shouldAutoSave = settings.shouldAutoSave ?? this.main.shouldAutoSave;
-      this.main.hidePanelDelay = settings.hidePanelDelay ?? this.main.hidePanelDelay;
-      this.main.hoverAreaEnabled = settings.hoverAreaEnabled ?? this.main.hoverAreaEnabled;
-      this.main.shouldStart = settings.shouldStart ?? this.main.shouldStart;
-      this.main.startDelay = settings.startDelay ?? this.main.startDelay;
-      this.main.shouldReplay = settings.shouldReplay ?? this.main.shouldReplay;
-      this.main.replayDelay = settings.replayDelay ?? this.main.replayDelay;
-      this.main.replayNextGame = settings.replayNextGame ?? this.main.replayNextGame;
-      this.main.shouldReplayMore = settings.shouldReplayMore ?? this.main.shouldReplayMore;
-      this.main.replayNextGameCount = settings.replayNextGameCount ?? this.main.replayNextGameCount;
+      this.main.maxGameCount = settings.maxGameCount ?? DEFAULTS.maxGameCount;
+      this.main.currentTheme = settings.currentTheme ?? DEFAULTS.currentTheme;
+      this.main.displayMode = settings.displayMode ?? DEFAULTS.displayMode;
+      this.main.groupsManager.groupViewMode = settings.groupViewMode ?? DEFAULTS.groupViewMode;
+      this.main.previousScrollPosition = settings.previousScrollPosition ?? DEFAULTS.previousScrollPosition;
+      this.main.enableDragging = settings.enableDragging ?? DEFAULTS.enableDragging;
+      this.main.shouldAutoSave = settings.shouldAutoSave ?? DEFAULTS.shouldAutoSave;
+      this.main.hidePanelDelay = settings.hidePanelDelay ?? DEFAULTS.hidePanelDelay;
+      this.main.hoverAreaEnabled = settings.hoverAreaEnabled ?? DEFAULTS.hoverAreaEnabled;
+      this.main.shouldStart = settings.shouldStart ?? DEFAULTS.shouldStart;
+      this.main.startDelay = settings.startDelay ?? DEFAULTS.startDelay;
+      this.main.shouldReplay = settings.shouldReplay ?? DEFAULTS.shouldReplay;
+      this.main.replayDelay = settings.replayDelay ?? DEFAULTS.replayDelay;
+      this.main.replayNextGame = settings.replayNextGame ?? DEFAULTS.replayNextGame;
+      this.main.shouldReplayMore = settings.shouldReplayMore ?? DEFAULTS.shouldReplayMore;
+      this.main.replayNextGameCount = settings.replayNextGameCount ?? DEFAULTS.replayNextGameCount;
 
       // Replay more counter for the next game
       this.main.remainingReplayCount =
         settings.remainingReplayCount != null
           ? settings.remainingReplayCount
-          : this.main.replayNextGameCount;
+          : DEFAULTS.replayNextGameCount;
 
-      this.main.replayWithoutWaiting = settings.replayWithoutWaiting ?? this.main.replayWithoutWaiting;
-      this.main.showSearchBox = settings.showSearchBox ?? this.main.showSearchBox;
-      this.main.showButtonDescriptions = settings.showButtonDescriptions ?? this.main.showButtonDescriptions;
-      this.main.showHelpTooltips = settings.showHelpTooltips ?? this.main.showHelpTooltips;
-      this.main.randomGameId = settings.randomGameId ?? this.main.randomGameId;
-      this.main.randomLocalExcludePlayed = settings.randomLocalExcludePlayed ?? this.main.randomLocalExcludePlayed;
-      this.main.randomLocalByActiveGroup = settings.randomLocalByActiveGroup ?? this.main.randomLocalByActiveGroup;
-      this.main.randomLocalIncludeStandardModes = settings.randomLocalIncludeStandardModes ?? this.main.randomLocalIncludeStandardModes;
-      this.main.qualificationEnabled = settings.qualificationEnabled ?? this.main.qualificationEnabled;
-      this.main.saveModeEnabled = settings.saveModeEnabled ?? this.main.saveModeEnabled;
-      this.main.rankRange = settings.rankRange ?? this.main.rankRange;
-      this.main.showVocabularyData = settings.showVocabularyData ?? this.main.showVocabularyData;
-      this.main.playlistPanelAutoOpen = settings.playlistPanelAutoOpen ?? this.main.playlistPanelAutoOpen;
-      this.main.positionDisplayMode = settings.positionDisplayMode ?? this.main.positionDisplayMode;
+      this.main.replayWithoutWaiting = settings.replayWithoutWaiting ?? DEFAULTS.replayWithoutWaiting;
+      this.main.showSearchBox = settings.showSearchBox ?? DEFAULTS.showSearchBox;
+      this.main.showButtonDescriptions = settings.showButtonDescriptions ?? DEFAULTS.showButtonDescriptions;
+      this.main.showHelpTooltips = settings.showHelpTooltips ?? DEFAULTS.showHelpTooltips;
+      this.main.randomGameId = settings.randomGameId ?? DEFAULTS.randomGameId;
+      this.main.randomLocalExcludePlayed = settings.randomLocalExcludePlayed ?? DEFAULTS.randomLocalExcludePlayed;
+      this.main.randomLocalByActiveGroup = settings.randomLocalByActiveGroup ?? DEFAULTS.randomLocalByActiveGroup;
+      this.main.randomLocalIncludeStandardModes = settings.randomLocalIncludeStandardModes ?? DEFAULTS.randomLocalIncludeStandardModes;
+      this.main.qualificationEnabled = settings.qualificationEnabled ?? DEFAULTS.qualificationEnabled;
+      this.main.saveModeEnabled = settings.saveModeEnabled ?? DEFAULTS.saveModeEnabled;
+      this.main.rankRange = settings.rankRange ?? DEFAULTS.rankRange;
+      this.main.showVocabularyData = settings.showVocabularyData ?? DEFAULTS.showVocabularyData;
+      this.main.playlistPanelAutoOpen = settings.playlistPanelAutoOpen ?? DEFAULTS.playlistPanelAutoOpen;
+      this.main.positionDisplayMode = settings.positionDisplayMode ?? DEFAULTS.positionDisplayMode;
 
       // Load persisted validVocabularies into runtime state
       this.loadValidVocabularies();
 
-      // Handle randomVocabulariesType state
-      if (settings.randomVocabulariesType && typeof settings.randomVocabulariesType === 'object') {
-        this.main.randomVocabulariesType = {
-          ...this.main.randomVocabulariesType,
-          ...settings.randomVocabulariesType
-        };
-      }
-
-      // Handle panelYPosition and alwaysVisiblePanel as objects (per-page)
-      if (settings.panelYPosition && typeof settings.panelYPosition === 'object') {
-        this.main.panelYPosition = {
-          ...this.main.panelYPosition,
-          ...settings.panelYPosition
-        };
-      }
-
-      // Handle panelWidth and panelHeight as objects (per-page)
-      if (settings.panelWidths && typeof settings.panelWidths === 'object') {
-        this.main.panelWidths = {
-          ...this.main.panelWidths,
-          ...settings.panelWidths
-        };
-      }
-
-      if (settings.panelHeights && typeof settings.panelHeights === 'object') {
-        this.main.panelHeights = {
-          ...this.main.panelHeights,
-          ...settings.panelHeights
-        };
-      }
-
-      // Ensure alwaysVisiblePanel is an object and merge settings
-      if (settings.alwaysVisiblePanel && typeof settings.alwaysVisiblePanel === 'object') {
-        this.main.alwaysVisiblePanel = {
-          ...this.main.alwaysVisiblePanel,
-          ...settings.alwaysVisiblePanel
-        };
-      }
+      // Handle object-type settings: merge saved values over defaults
+      this.main.randomVocabulariesType = { ...DEFAULTS.randomVocabulariesType, ...(settings.randomVocabulariesType || {}) };
+      this.main.panelYPosition        = { ...DEFAULTS.panelYPosition,          ...(settings.panelYPosition        || {}) };
+      this.main.panelWidths           = { ...DEFAULTS.panelWidths,              ...(settings.panelWidths           || {}) };
+      this.main.panelHeights          = { ...DEFAULTS.panelHeights,             ...(settings.panelHeights          || {}) };
+      this.main.alwaysVisiblePanel    = { ...DEFAULTS.alwaysVisiblePanel,       ...(settings.alwaysVisiblePanel    || {}) };
 
     } catch (error) {
       console.warn('Could not load settings from localStorage:', error);
@@ -301,6 +271,7 @@ export class SettingsManager {
           main.gamesManager.loadState();
           main.uiManager.refreshContainer();
           main.themeManager.applyTheme();
+          main.applyButtonStates?.();
         } else {
           alert('Файл не содержит валидный JSON настроек.');
         }
@@ -340,10 +311,13 @@ export class SettingsManager {
     localStorage.removeItem('latestGamesSettings');
     localStorage.removeItem('latestGamesData');
     localStorage.removeItem('latestGamesState');
-    main.groupsManager.groups = [main.groupsManager.createGroup('Группа-1')];
-    main.groupsManager.currentGroupId = main.groupsManager.groups[0].id;
+    main.groupsManager.reset();
+    this.loadSettings();
     main.gamesManager.saveGamesData();
     main.gamesManager.saveState();
     main.uiManager.refreshContainer();
+    main.themeManager.applyTheme();
+    main.applyButtonStates?.();
+    this.saveSettings();
   }
 }

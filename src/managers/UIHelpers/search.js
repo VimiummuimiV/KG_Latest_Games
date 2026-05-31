@@ -163,18 +163,18 @@ export function handleSearch(main, query, showAll = false) {
   }
 }
 
-export function toggleSearchBox(main) {
+export function toggleSearchBox(main, show) {
   const searchContainer = document.querySelector('.latest-games-search-container');
   if (!searchContainer) return;
 
-  const isHidden = searchContainer.classList.toggle('latest-games-hidden');
-  main.showSearchBox = !isHidden;
+  searchContainer.classList.toggle('latest-games-hidden', show === undefined ? undefined : !show);
+  main.showSearchBox = !searchContainer.classList.contains('latest-games-hidden');
 
-  if (main.settingsManager && typeof main.settingsManager.saveSettings === 'function') {
+  if (show === undefined && main.settingsManager && typeof main.settingsManager.saveSettings === 'function') {
     main.settingsManager.saveSettings();
   }
 
-  if (!isHidden) {
+  if (main.showSearchBox) {
     const searchInput = document.getElementById('latest-games-search-input');
     if (searchInput) {
       searchInput.focus();
