@@ -1104,6 +1104,25 @@ export const PlaylistsManager = {
       if (!confirm(`Запущен плейлист «${existingName}». Остановить его и запустить «${playlist.title}»?`)) return;
     }
 
+    const shuffle = options.shuffle !== undefined ? options.shuffle : !!playlist.shuffle;
+    const shuffleOrder = shuffle ? _createShuffleOrder(playlist.entries.length) : null;
+
+    const startAt = (ei, rr) => {
+      const firstEntryIndex = shuffleOrder ? shuffleOrder[ei] : ei;
+      const firstEntry = playlist.entries[firstEntryIndex];
+      const game = this.main.gamesManager.findGameById(firstEntry.gameId);
+      if (!game) { alert('⚠️ Первая игра плейлиста не найдена.'); return; }
+      setActivePlaylistSession({
+        playlistId,
+        entryIndex: ei,
+        remainingRepeats: rr ?? firstEntry.repeatCount,
+        remainingCycles: playlist.repeatCount ?? 1,
+        shuffleOrder,
+        shuffleActive: shuffle,
+      });
+      window.location.href = _generatePlaylistEntryLink(this.main, game, firstEntry);
+    };
+
     // Daily task: silently start from the correct position based on server progress.
     // Only applies to today's active (not expired/completed) task playlists.
     if (playlist.dailyTaskRequire && playlist.dailyTaskDate === _getTaskDate() && !playlist.dailyTaskData) {
@@ -1122,40 +1141,12 @@ export const PlaylistsManager = {
           if (alreadyDone < cursor + reps) { ei = i; rr = (cursor + reps) - alreadyDone; break; }
           cursor += reps;
         }
-        const entry = playlist.entries[ei];
-        const game  = entry && this.main.gamesManager.findGameById(entry.gameId);
-        if (!game) { alert('⚠️ Игра плейлиста не найдена.'); return; }
-
-        setActivePlaylistSession({
-          playlistId,
-          entryIndex: ei,
-          remainingRepeats: rr,
-          remainingCycles: playlist.repeatCount ?? 1,
-          shuffleOrder: null,
-          shuffleActive: false
-        });
-
-        window.location.href = _generatePlaylistEntryLink(this.main, game, entry);
+        startAt(ei, rr);
       });
       return;
     }
 
-    const shuffle = options.shuffle !== undefined ? options.shuffle : !!playlist.shuffle;
-    const shuffleOrder = shuffle ? _createShuffleOrder(playlist.entries.length) : null;
-    const firstEntryIndex = shuffle ? shuffleOrder[0] : 0;
-    const firstEntry = playlist.entries[firstEntryIndex];
-    const game = this.main.gamesManager.findGameById(firstEntry.gameId);
-    if (!game) { alert('⚠️ Первая игра плейлиста не найдена.'); return; }
-
-    setActivePlaylistSession({
-      playlistId,
-      entryIndex: 0,
-      remainingRepeats: firstEntry.repeatCount,
-      remainingCycles: playlist.repeatCount ?? 1,
-      shuffleOrder,
-      shuffleActive: shuffle,
-    });
-    window.location.href = _generatePlaylistEntryLink(this.main, game, firstEntry);
+    startAt(0);
   },
 
   startRandomPlaylist() {
