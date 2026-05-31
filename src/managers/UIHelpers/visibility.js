@@ -8,6 +8,12 @@ export function createHoverArea(main) {
   document.body.appendChild(hoverArea);
 }
 
+export function syncHoverArea(main) {
+  const hoverArea = document.getElementById('latest-games-hover-area');
+  if (main.hoverAreaEnabled && !hoverArea) createHoverArea(main);
+  else if (!main.hoverAreaEnabled && hoverArea) hoverArea.remove();
+}
+
 export function toggleHoverArea(main) {
   main.hoverAreaEnabled = !main.hoverAreaEnabled;
   if (main.hoverAreaEnabled) {

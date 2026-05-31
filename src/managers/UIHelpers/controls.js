@@ -10,6 +10,7 @@ import { VocabulariesManager } from "../../vocabulariesManager.js";
 import { PlaylistsManager, advancePlaylist, getActivePlaylistUrl, getActivePlaylistSession, setActivePlaylistSession } from "../../playlistsManager.js";
 import { showVocabularyTypesPopup } from "../../vocabularyType.js";
 import { runVocScan } from "../../vocabularyScanner.js";
+import { applyPanelToggleState } from "./panelToggle.js";
 
 export function createControls(main) {
   const controlsContainer = createElement('div', { className: 'latest-games-controls' });
@@ -1167,7 +1168,7 @@ export function createControls(main) {
     toggleSearchBox(main, main.showSearchBox);
     updateVocabularyDataTooltip();
     updatePlaylistsBtnTooltip();
-
+    applyPanelToggleState(main);
     main.uiManager.updateGameCountDisplay();
   };
 

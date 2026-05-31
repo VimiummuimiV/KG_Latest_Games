@@ -2,7 +2,7 @@ import { createElement, getCurrentPage } from '../../utils.js';
 import { createCustomTooltip, updateTooltipContent } from '../../tooltip.js';
 import { icons } from '../../icons.js';
 import { DEFAULTS } from '../../definitions.js';
-import { toggleHoverArea } from './visibility.js';
+import { toggleHoverArea, syncHoverArea } from './visibility.js';
 import { PlaylistsManager } from '../../playlistsManager.js';
 
 function generatePanelToggleTooltipText(main) {
@@ -110,4 +110,20 @@ export function createPanelToggleButton(main) {
   });
   
   document.body.appendChild(btn);
+}
+
+export function applyPanelToggleState(main) {
+  const btn = document.getElementById('latest-games-panel-toggle');
+  const container = document.getElementById('latest-games-container');
+  const currentPage = getCurrentPage();
+  const isAlwaysVisible = main.alwaysVisiblePanel[currentPage] ?? false;
+  if (btn) {
+    btn.classList.toggle('always-visible', isAlwaysVisible);
+    btn.innerHTML = isAlwaysVisible ? icons.panelToggleOpened : icons.panelToggleClosed;
+  }
+  if (container) {
+    container.classList.toggle('visible', isAlwaysVisible);
+    if (!isAlwaysVisible) main.viewManager.updateContainerLeftOffset();
+  }
+  syncHoverArea(main);
 }
