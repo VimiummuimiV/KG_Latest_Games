@@ -100,8 +100,8 @@ export const TASK_GAME_DEFAULTS = {
 export const DEFAULTS = {
   maxGameCount: 5,
   currentTheme: 'light',
-  displayMode: 'scroll',
-  groupViewMode: 'tabs',
+  displayMode: 'wrap', // 'wrap' | 'scroll'
+  groupViewMode: 'tabs', // 'tabs' | 'unified'
   previousScrollPosition: 0,
   panelWidth: '70vw',
   panelHeight: '40vh',
