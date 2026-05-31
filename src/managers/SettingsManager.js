@@ -271,6 +271,7 @@ export class SettingsManager {
           main.gamesManager.loadState();
           main.uiManager.refreshContainer();
           main.themeManager.applyTheme();
+          main.uiManager.setupPanel();
           main.applyButtonStates?.();
         } else {
           alert('Файл не содержит валидный JSON настроек.');
@@ -317,6 +318,7 @@ export class SettingsManager {
     main.gamesManager.saveState();
     main.uiManager.refreshContainer();
     main.themeManager.applyTheme();
+    main.uiManager.setupPanel();
     main.applyButtonStates?.();
     this.saveSettings();
   }

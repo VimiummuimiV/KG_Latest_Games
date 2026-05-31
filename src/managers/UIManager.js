@@ -132,8 +132,12 @@ export class UIManager {
       container.appendChild(vHandleTop);
     }
 
-    setupResizeHandle(this, container, hHandle, vHandleBot, vHandleTop);
-    setupYPositioning(this, container);
+    this.container = container;
+    this.hHandle = hHandle;
+    this.vHandleBot = vHandleBot;
+    this.vHandleTop = vHandleTop;
+
+    this.setupPanel();
 
     document.body.appendChild(container);
 
@@ -150,8 +154,7 @@ export class UIManager {
     const origUpdateDisplayModeClass = this.main.viewManager.updateDisplayModeClass.bind(this.main.viewManager);
     this.main.viewManager.updateDisplayModeClass = (...args) => {
       origUpdateDisplayModeClass(...args);
-      setupResizeHandle(this, container, hHandle, vHandleBot, vHandleTop);
-      setupYPositioning(this, container);
+      this.setupPanel();
     };
 
     this.updateRemoveIcons();
@@ -217,6 +220,12 @@ export class UIManager {
     if (removeAllBtn) {
       removeAllBtn.innerHTML = hasAnyData ? icons.trashSomething : icons.trashNothing;
     }
+  }
+
+  setupPanel() {
+    if (!this.container) return;
+    setupResizeHandle(this, this.container, this.hHandle, this.vHandleBot, this.vHandleTop);
+    setupYPositioning(this, this.container);
   }
 
   refreshContainer() {
