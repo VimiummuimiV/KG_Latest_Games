@@ -919,6 +919,9 @@ $gametypes: (
       // Locked state: yellow tint on count only, no extra content
       &--locked .playlist-stepper-count {
         color: var(--rg-enabled-yellow) !important;
+        background: color-mix(in srgb, var(--rg-enabled-yellow) 10%, transparent);
+        border: 1px solid color-mix(in srgb, var(--rg-enabled-yellow) 35%, transparent);
+        border-radius: 3px !important;
       }
     }
 
