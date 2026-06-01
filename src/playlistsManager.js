@@ -1297,10 +1297,14 @@ export const PlaylistsManager = {
   },
 
   // Only close on click that is truly outside the popup and not a prompt/confirm dialog
-  // Returns true only when state 2 is active AND we are on the game page.
-  // On all other pages the panel always behaves normally regardless of state.
+  // Returns true only when ALL of: state 2 is active, we are on the game page,
+  // and a playlist is currently playing (active, non-paused session).
+  // On all other pages, or when no playlist is running, the panel behaves normally.
   _isPinned() {
-    return PlaylistsManager.main?.playlistPanelAutoOpen === 2 && getCurrentPage() === 'game';
+    if (getCurrentPage() !== 'game') return false;
+    if (PlaylistsManager.main?.playlistPanelAutoOpen !== 2) return false;
+    const session = getActivePlaylistSession();
+    return !!(session && !session.paused);
   },
 
   _outside: e => {
