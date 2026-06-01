@@ -1264,6 +1264,10 @@ export const PlaylistsManager = {
         if (playlist) {
           const newBlock = this._buildPlaylistBlock(playlist, session);
           oldBlock.parentNode.replaceChild(newBlock, oldBlock);
+          // Full rebuild resets the header cursor via _buildPanel, but partial refresh
+          // skips that — so sync it here whenever pin state may have changed.
+          const panelHeader = this.popup.querySelector('.popup-header');
+          if (panelHeader) panelHeader.style.cursor = this._isPinned() ? '' : 'move';
           _dtaskSyncBtn();
           return;
         }
