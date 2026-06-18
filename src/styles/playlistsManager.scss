@@ -323,12 +323,19 @@ $gametypes: (
       gap: 0.4em;
     }
 
-    .playlists-random-btn,
-    .playlists-import-btn {
+    .playlists-random-btn {
       @include playlist-header-icon-btn(
         16px, 28px,
         hsl(var(--rg-popup-btn-sort)),
         hsla(var(--rg-popup-btn-sort) / 0.15)
+      );
+    }
+
+    .playlists-import-btn {
+      @include playlist-header-icon-btn(
+        16px, 28px,
+        hsl(var(--rg-popup-btn-fetch)),
+        hsla(var(--rg-popup-btn-fetch) / 0.15)
       );
     }
 
