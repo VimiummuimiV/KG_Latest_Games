@@ -182,25 +182,12 @@ export class UIManager {
     if (this.main.groupsManager.getGroupViewMode() === 'tabs') {
       const currentGroup = this.main.groupsManager.getCurrentGroup();
       if (!currentGroup) return;
-      const pinnedCount = this.main.groupsManager.getPinnedGameCount();
-      const maxGamesToShow = Math.min(currentGroup.games.length, this.main.maxGameCount + pinnedCount);
-      for (let i = 0; i < maxGamesToShow; i++) {
-        const game = currentGroup.games[i];
-        const gameElement = this.createGameElement(game, game.id);
-        gamesList.appendChild(gameElement);
-      }
+      currentGroup.games.forEach(game => gamesList.appendChild(this.createGameElement(game, game.id)));
     } else {
       this.main.groupsManager.groups.forEach(group => {
         if (group.games.length > 0) {
-          const groupHeader = this.main.groupsManager.createGroupHeader(group);
-          gamesList.appendChild(groupHeader);
-          const pinnedCount = group.games.filter(game => game.pin).length;
-          const maxGamesToShow = Math.min(group.games.length, this.main.maxGameCount + pinnedCount);
-          for (let i = 0; i < maxGamesToShow; i++) {
-            const game = group.games[i];
-            const gameElement = this.createGameElement(game, game.id);
-            gamesList.appendChild(gameElement);
-          }
+          gamesList.appendChild(this.main.groupsManager.createGroupHeader(group));
+          group.games.forEach(game => gamesList.appendChild(this.createGameElement(game, game.id)));
         }
       });
     }
