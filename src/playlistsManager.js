@@ -606,6 +606,23 @@ export const PlaylistsManager = {
     }
   },
 
+  // Find a games group by title, creating and registering it if absent.
+  // Shared by import-stub creation and daily-task game resolution.
+  _getOrCreateGroup(groups, title) {
+    let group = groups.groups.find(g => g.title === title);
+    if (!group) { group = groups.createGroup(title); groups.groups.push(group); }
+    return group;
+  },
+
+  // Persist newly-added games and refresh the panel. Run once after pushing
+  // new game(s) into a group, so any game missing an id gets one assigned.
+  // Shared by import-stub creation and daily-task game resolution.
+  _commitGameAdditions(main) {
+    main.gamesManager.assignGameIds();
+    main.gamesManager.saveGamesData();
+    main.uiManager.refreshContainer();
+  },
+
   _importFromFile() {
     const input = document.createElement('input');
     input.type = 'file';
@@ -629,7 +646,17 @@ export const PlaylistsManager = {
       return;
     }
     this._pushUndo(`Импорт плейлиста «${p.title}»`);
-    const playlists = this.load();
+    // Create entries in 'Импорт' group for any games not present in the main panel.
+    if (this.main) {
+      const { groupsManager: groups } = this.main;
+      const allIds = new Set(groups.groups.flatMap(g => g.games).map(g => g.id));
+      const missingGames = p.entries.filter(e => !allIds.has(e.gameId)).map(e => ({ id: e.gameId, params: e.params ?? {}, pin: 0 }));
+      if (missingGames.length) {
+        const group = this._getOrCreateGroup(groups, 'Импорт');
+        missingGames.forEach(g => group.games.push(g));
+        this._commitGameAdditions(this.main);
+      }
+    }
     const imported = {
       id: generateRandomString(),
       title: p.title,
@@ -644,6 +671,7 @@ export const PlaylistsManager = {
       shuffle: !!p.shuffle,
       ...(p.repeatCount ? { repeatCount: p.repeatCount } : {}),
     };
+    const playlists = this.load();
     playlists.push(imported);
     this.save(playlists);
     this.expandedPlaylistId = imported.id;
@@ -3584,9 +3612,7 @@ export const PlaylistsManager = {
     const titleDate    = /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? dateStr.split('-').reverse().join('.') : dateStr;
     const playlistTitle = `Задача дня ${titleDate}`;
 
-    const gm     = this.main.gamesManager;
     const groups = this.main.groupsManager;
-    const um     = this.main.uiManager;
 
     // Read-only lookup per condition — no group mutation yet.
     // Existing games are reused as-is; new ones get a stub { id: null } just for display.
@@ -3639,11 +3665,7 @@ export const PlaylistsManager = {
       }
 
       // Get-or-create the Задачи group and resolve/create games only for confirmed selection.
-      let taskGroup = groups.groups.find(g => g.title === 'Задачи');
-      if (!taskGroup) {
-        taskGroup = groups.createGroup('Задачи');
-        groups.groups.push(taskGroup);
-      }
+      const taskGroup = this._getOrCreateGroup(groups, 'Задачи');
 
       const findOrCreate = (predicate, params) => {
         const found = groups.groups.flatMap(g => g.games).find(predicate);
@@ -3655,9 +3677,7 @@ export const PlaylistsManager = {
 
       const selectedGames = selected.map(c => findOrCreate(c.predicate, c.params));
 
-      gm.assignGameIds();
-      gm.saveGamesData();
-      um.refreshContainer();
+      this._commitGameAdditions(this.main);
 
       const created = this.createPlaylist(playlistTitle);
       this._updatePlaylist(created.id, p => {
