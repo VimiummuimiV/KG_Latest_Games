@@ -589,6 +589,67 @@ export const PlaylistsManager = {
     return playlist;
   },
 
+  exportPlaylist(id, toFile = false) {
+    const playlist = this.load().find(p => p.id === id);
+    if (!playlist) return;
+    const json = JSON.stringify({ playlist }, null, 2);
+    if (toFile) {
+      const a = document.createElement('a');
+      a.href = `data:application/json;charset=utf-8,${encodeURIComponent(json)}`;
+      a.download = `${playlist.title}.json`;
+      a.click();
+    } else {
+      navigator.clipboard.writeText(json).then(
+        () => alert(`✅ Плейлист «${playlist.title}» скопирован в буфер.`),
+        () => alert('⚠️ Не удалось скопировать в буфер.')
+      );
+    }
+  },
+
+  _importFromFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.addEventListener('change', () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => this.importPlaylist(reader.result);
+      reader.readAsText(file, 'utf-8');
+    });
+    input.click();
+  },
+
+  importPlaylist(jsonStr) {
+    let data;
+    try { data = JSON.parse(jsonStr); } catch { alert('⚠️ Некорректный формат JSON.'); return; }
+    const p = data?.playlist;
+    if (!p || typeof p.title !== 'string' || !Array.isArray(p.entries)) {
+      alert('⚠️ Файл не содержит корректного плейлиста.');
+      return;
+    }
+    this._pushUndo(`Импорт плейлиста «${p.title}»`);
+    const playlists = this.load();
+    const imported = {
+      id: generateRandomString(),
+      title: p.title,
+      entries: p.entries.map(e => ({
+        id: generateRandomString(),
+        gameId: e.gameId,
+        repeatCount: Math.max(1, e.repeatCount ?? 1),
+        params: e.params ? { ...e.params } : {},
+        ...(e.label        ? { label:        e.label }        : {}),
+        ...(e.repeatLocked ? { repeatLocked: e.repeatLocked } : {}),
+      })),
+      shuffle: !!p.shuffle,
+      ...(p.repeatCount ? { repeatCount: p.repeatCount } : {}),
+    };
+    playlists.push(imported);
+    this.save(playlists);
+    this.expandedPlaylistId = imported.id;
+    this.refresh();
+  },
+
   renamePlaylist(id, newTitle) {
     if (!newTitle.trim()) return;
     this._updatePlaylist(id, p => { p.title = newTitle.trim(); });
@@ -1662,8 +1723,26 @@ export const PlaylistsManager = {
       this.refresh();
     });
 
+    const importBtn = _el('button', 'playlists-import-btn');
+    importBtn.innerHTML = icons.import;
+    createCustomTooltip(importBtn,
+      '[Клик] Импортировать из буфера' +
+      '[Ctrl + Клик] Импортировать из файла'
+    );
+    importBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (e.ctrlKey) {
+        this._importFromFile();
+      } else {
+        navigator.clipboard.readText().then(
+          text => this.importPlaylist(text),
+          () => alert('⚠️ Не удалось прочитать буфер обмена.')
+        );
+      }
+    });
+
     const actions = _el('div', 'playlists-header-actions');
-    actions.append(undoBtn, clearBtn, randomBtn, addBtn);
+    actions.append(undoBtn, clearBtn, importBtn, randomBtn, addBtn);
     // If any picker is open when a header action is clicked, close it first so the
     // user lands back on the playlists list before the button's own handler runs.
     actions.addEventListener('click', () => {
@@ -1884,6 +1963,17 @@ export const PlaylistsManager = {
         if (copy) { this.expandedPlaylistId = null; this.refresh(); }
       });
 
+      const exportBtn = _el('button', 'playlist-export-btn');
+      exportBtn.innerHTML = icons.export;
+      createCustomTooltip(exportBtn,
+        '[Клик] Экспортировать в буфер' +
+        '[Ctrl + Клик] Экспортировать как файл'
+      );
+      exportBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        this.exportPlaylist(playlist.id, e.ctrlKey);
+      });
+
       const delBtn = _el('button', 'playlist-delete-btn');
       delBtn.innerHTML = icons.trashNothing;
       createCustomTooltip(delBtn, 'Удалить плейлист');
@@ -1902,7 +1992,7 @@ export const PlaylistsManager = {
       leftActions.append(playBtn, blockHandle);
 
       const rightActions = _el('div', 'playlist-header-right-actions');
-      rightActions.append(cycleStepper, shufflePlayBtn, renameBtn, dupPlaylistBtn, delBtn);
+      rightActions.append(cycleStepper, shufflePlayBtn, renameBtn, dupPlaylistBtn, exportBtn, delBtn);
 
       row.append(leftActions, titleSpan, meta, rightActions);
     }

@@ -323,7 +323,8 @@ $gametypes: (
       gap: 0.4em;
     }
 
-    .playlists-random-btn {
+    .playlists-random-btn,
+    .playlists-import-btn {
       @include playlist-header-icon-btn(
         16px, 28px,
         hsl(var(--rg-popup-btn-sort)),
@@ -635,7 +636,8 @@ $gametypes: (
     .playlist-pause-btn,
     .playlist-play-shuffle-btn,
     .playlist-rename-btn,
-    .playlist-duplicate-btn {
+    .playlist-duplicate-btn,
+    .playlist-export-btn {
       @include playlist-header-icon-btn(16px);
     }
 
