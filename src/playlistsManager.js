@@ -592,7 +592,19 @@ export const PlaylistsManager = {
   exportPlaylist(id, toFile = false) {
     const playlist = this.load().find(p => p.id === id);
     if (!playlist) return;
-    const json = JSON.stringify({ playlist }, null, 2);
+    // Embed each entry's actual game params as a snapshot so the playlist can be
+    // reconstructed on another panel where these games don't exist yet (see
+    // importPlaylist). entry.params itself stays untouched — it's a sparse
+    // override layer (type/timeout/idletime), not a copy of the full game.
+    const gm = this.main?.gamesManager;
+    const portablePlaylist = {
+      ...playlist,
+      entries: playlist.entries.map(e => {
+        const game = gm?.findGameById(e.gameId);
+        return game ? { ...e, gameSnapshot: { ...game.params } } : e;
+      })
+    };
+    const json = JSON.stringify({ playlist: portablePlaylist }, null, 2);
     if (toFile) {
       const a = document.createElement('a');
       a.href = `data:application/json;charset=utf-8,${encodeURIComponent(json)}`;
@@ -650,7 +662,9 @@ export const PlaylistsManager = {
     if (this.main) {
       const { groupsManager: groups } = this.main;
       const allIds = new Set(groups.groups.flatMap(g => g.games).map(g => g.id));
-      const missingGames = p.entries.filter(e => !allIds.has(e.gameId)).map(e => ({ id: e.gameId, params: e.params ?? {}, pin: 0 }));
+      const missingEntries = p.entries.filter(e => !allIds.has(e.gameId));
+      const missingGames = [...new Map(missingEntries.map(e => [e.gameId, e])).values()]
+        .map(e => ({ id: e.gameId, params: { ...TASK_GAME_DEFAULTS, ...e.gameSnapshot }, pin: 0 }));
       if (missingGames.length) {
         const group = this._getOrCreateGroup(groups, 'Импорт');
         missingGames.forEach(g => group.games.push(g));
