@@ -2023,6 +2023,7 @@ export const PlaylistsManager = {
         e.stopPropagation();
         if (!confirm(`Удалить плейлист «${playlist.title}»?`)) return;
         if (playlist.dailyTaskRequire) this._cleanTaskGroup(playlist);
+        this._cleanTaskGroup(playlist, 'Импорт');
         this.deletePlaylist(playlist.id);
         this.refresh();
       });
@@ -3720,11 +3721,11 @@ export const PlaylistsManager = {
     }
   },
 
-  // Remove playlist's games from the Задачи group only if no remaining playlist still references them.
-  _cleanTaskGroup(playlist) {
+  // Remove playlist's games from a managed group only if no remaining playlist still references them.
+  _cleanTaskGroup(playlist, groupTitle = 'Задачи') {
     if (!this.main) return;
     const groups    = this.main.groupsManager;
-    const taskGroup = groups.groups.find(g => g.title === 'Задачи');
+    const taskGroup = groups.groups.find(g => g.title === groupTitle);
     if (!taskGroup) return;
 
     const remainingReferencedGameIds = new Set(
