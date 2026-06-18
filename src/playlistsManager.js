@@ -1754,12 +1754,15 @@ export const PlaylistsManager = {
         if (!confirm('Удалить все плейлисты?')) return;
         this._pushUndo(`Удаление всех плейлистов (${all.length} шт.)`);
         this.save([]);
+        // After wiping all playlists, clean both managed groups unconditionally
+        ['Задачи', 'Импорт'].forEach(title => this._cleanTaskGroup({ id: '' }, title));
       } else {
         const remaining = all.filter(p => !p.dailyTaskRequire);
         if (all.length === remaining.length) return;
         if (!confirm('Удалить все плейлисты задачи дня?')) return;
         this._pushUndo(`Удаление ${all.length - remaining.length} плейлистов задачи дня`);
         this.save(remaining);
+        all.filter(p => p.dailyTaskRequire).forEach(p => this._cleanTaskGroup(p));
       }
       cancelActivePlaylist();
       this.refresh();
