@@ -3678,12 +3678,14 @@ export const PlaylistsManager = {
         if (!confirm(`Плейлист «${playlistTitle}» уже существует. Создать новый?`)) return;
       }
 
-      // Get-or-create the Задачи group and resolve/create games only for confirmed selection.
-      const taskGroup = this._getOrCreateGroup(groups, 'Задачи');
+      // Resolve/create games only for confirmed selection; the 'Задачи' group
+      // itself is only created lazily, the first time a new game is actually needed.
+      let taskGroup = null;
 
       const findOrCreate = (predicate, params) => {
         const found = groups.groups.flatMap(g => g.games).find(predicate);
         if (found) return found;
+        if (!taskGroup) taskGroup = this._getOrCreateGroup(groups, 'Задачи');
         const game = { id: generateUniqueId(groups.groups), params, pin: 0 };
         taskGroup.games.push(game);
         return game;
@@ -3691,7 +3693,7 @@ export const PlaylistsManager = {
 
       const selectedGames = selected.map(c => findOrCreate(c.predicate, c.params));
 
-      this._commitGameAdditions(this.main);
+      if (taskGroup) this._commitGameAdditions(this.main);
 
       const created = this.createPlaylist(playlistTitle);
       this._updatePlaylist(created.id, p => {
