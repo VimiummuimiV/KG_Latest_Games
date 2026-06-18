@@ -629,7 +629,8 @@ export const PlaylistsManager = {
     const playlists = this.load().filter(p => !p.dailyTaskRequire);
     if (!playlists.length) return alert('⚠️ Нет плейлистов для экспорта.');
     const json = JSON.stringify({ playlists: playlists.map(p => this._toPortable(p)) }, null, 2);
-    this._exportJson(json, toFile && 'playlists.json', `${playlists.length} плейлист(ов) скопировано в буфер.`);
+    const stamp = new Date().toISOString().slice(0, 19).replace('T', '_').replace(/:/g, '-');
+    this._exportJson(json, toFile && `playlists_${stamp}.json`, `${playlists.length} плейлист(ов) скопировано в буфер.`);
   },
 
   // Find a games group by title, creating and registering it if absent.
