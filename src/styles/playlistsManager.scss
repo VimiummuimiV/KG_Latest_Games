@@ -331,7 +331,8 @@ $gametypes: (
       );
     }
 
-    .playlists-import-btn {
+    .playlists-import-btn,
+    .playlists-export-all-btn {
       @include playlist-header-icon-btn(
         16px, 28px,
         hsl(var(--rg-popup-btn-fetch)),

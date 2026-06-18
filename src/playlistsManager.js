@@ -589,33 +589,47 @@ export const PlaylistsManager = {
     return playlist;
   },
 
-  exportPlaylist(id, toFile = false) {
-    const playlist = this.load().find(p => p.id === id);
-    if (!playlist) return;
-    // Embed each entry's actual game params as a snapshot so the playlist can be
-    // reconstructed on another panel where these games don't exist yet (see
-    // importPlaylist). entry.params itself stays untouched — it's a sparse
-    // override layer (type/timeout/idletime), not a copy of the full game.
+  // Embed each entry's actual game params as a snapshot so the playlist can be
+  // reconstructed on another panel where these games don't exist yet (see
+  // importPlaylist). entry.params itself stays untouched — it's a sparse
+  // override layer (type/timeout/idletime), not a copy of the full game.
+  _toPortable(playlist) {
     const gm = this.main?.gamesManager;
-    const portablePlaylist = {
+    return {
       ...playlist,
       entries: playlist.entries.map(e => {
         const game = gm?.findGameById(e.gameId);
         return game ? { ...e, gameSnapshot: { ...game.params } } : e;
       })
     };
-    const json = JSON.stringify({ playlist: portablePlaylist }, null, 2);
-    if (toFile) {
+  },
+
+  _exportJson(json, filename, successMsg) {
+    if (filename) {
       const a = document.createElement('a');
       a.href = `data:application/json;charset=utf-8,${encodeURIComponent(json)}`;
-      a.download = `${playlist.title}.json`;
+      a.download = filename;
       a.click();
     } else {
       navigator.clipboard.writeText(json).then(
-        () => alert(`✅ Плейлист «${playlist.title}» скопирован в буфер.`),
+        () => alert(`✅ ${successMsg}`),
         () => alert('⚠️ Не удалось скопировать в буфер.')
       );
     }
+  },
+
+  exportPlaylist(id, toFile = false) {
+    const playlist = this.load().find(p => p.id === id);
+    if (!playlist) return;
+    const json = JSON.stringify({ playlist: this._toPortable(playlist) }, null, 2);
+    this._exportJson(json, toFile && `${playlist.title}.json`, `Плейлист «${playlist.title}» скопирован в буфер.`);
+  },
+
+  exportAllPlaylists(toFile = false) {
+    const playlists = this.load().filter(p => !p.dailyTaskRequire);
+    if (!playlists.length) return alert('⚠️ Нет плейлистов для экспорта.');
+    const json = JSON.stringify({ playlists: playlists.map(p => this._toPortable(p)) }, null, 2);
+    this._exportJson(json, toFile && 'playlists.json', `${playlists.length} плейлист(ов) скопировано в буфер.`);
   },
 
   // Find a games group by title, creating and registering it if absent.
@@ -1786,8 +1800,19 @@ export const PlaylistsManager = {
       }
     });
 
+    const exportAllBtn = _el('button', 'playlists-export-all-btn');
+    exportAllBtn.innerHTML = icons.export;
+    createCustomTooltip(exportAllBtn,
+      '[Клик] Экспортировать все плейлисты в буфер' +
+      '[Ctrl + Клик] Экспортировать все плейлисты как файл'
+    );
+    exportAllBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      this.exportAllPlaylists(e.ctrlKey);
+    });
+
     const actions = _el('div', 'playlists-header-actions');
-    actions.append(undoBtn, clearBtn, importBtn, randomBtn, addBtn);
+    actions.append(undoBtn, clearBtn, importBtn, exportAllBtn, randomBtn, addBtn);
     // If any picker is open when a header action is clicked, close it first so the
     // user lands back on the playlists list before the button's own handler runs.
     actions.addEventListener('click', () => {
